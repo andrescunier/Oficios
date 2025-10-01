@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  iamerican-ecommerce:
+    build: .
+    container_name: iamerican-app
+    ports:
+      - "80:80"
+      - "443:443"
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - ./logs:/var/log/nginx
+    networks:
+      - iamerican-network
+
+networks:
+  iamerican-network:
+    driver: bridge
+
+# Para desarrollo local (opcional)
+  # iamerican-dev:
+  #   build: .
+  #   container_name: iamerican-dev
+  #   ports:
+  #     - "3000:80"
+  #   restart: unless-stopped

@@ -128,3 +128,7 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+# Deploy files
+logs/
+*.log
+.dockerignore

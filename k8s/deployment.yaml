@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: iamerican-ecommerce
+  namespace: iamerican
+  labels:
+    app: iamerican-ecommerce
+    version: v1
+spec:
+  replicas: 3  # 3 réplicas para alta disponibilidad
+  selector:
+    matchLabels:
+      app: iamerican-ecommerce
+  template:
+    metadata:
+      labels:
+        app: iamerican-ecommerce
+        version: v1
+    spec:
+      containers:
+      - name: iamerican-app
+        image: iamerican-ecommerce:latest  # Cambiar por tu imagen en registry
+        ports:
+        - containerPort: 80
+          name: http
+        envFrom:
+        - configMapRef:
+            name: iamerican-config
+        - secretRef:
+            name: iamerican-secrets
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        volumeMounts:
+        - name: nginx-cache
+          mountPath: /var/cache/nginx
+        - name: nginx-logs
+          mountPath: /var/log/nginx
+      volumes:
+      - name: nginx-cache
+        emptyDir: {}
+      - name: nginx-logs
+        emptyDir: {}
+      restartPolicy: Always

@@ -1,0 +1,47 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: iamerican-ingress
+  namespace: iamerican
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"  # Para SSL automático
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    # Configuración para SPA
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      try_files $uri $uri/ /index.html;
+    # Headers de seguridad
+    nginx.ingress.kubernetes.io/server-snippet: |
+      add_header X-Frame-Options "SAMEORIGIN" always;
+      add_header X-Content-Type-Options "nosniff" always;
+      add_header X-XSS-Protection "1; mode=block" always;
+      add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+spec:
+  tls:
+  - hosts:
+    - tu-dominio.com  # Cambiar por tu dominio
+    - www.tu-dominio.com
+    secretName: iamerican-tls
+  rules:
+  - host: tu-dominio.com  # Cambiar por tu dominio
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: iamerican-service
+            port:
+              number: 80
+  - host: www.tu-dominio.com  # Cambiar por tu dominio
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: iamerican-service
+            port:
+              number: 80

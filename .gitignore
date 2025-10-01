@@ -132,3 +132,8 @@ Thumbs.db
 logs/
 *.log
 .dockerignore
+
+# Kubernetes files
+kubeconfig
+*.kubeconfig
+secrets.yaml

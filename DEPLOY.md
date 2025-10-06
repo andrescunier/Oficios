@@ -1,9 +1,107 @@
-# 🚀 Guía de Deploy para VPS
+# 🚀 Guía Completa: Despliegue en VPS
 
-## 📋 Requisitos del VPS
+## 🎯 **Opciones de Despliegue Disponibles**
 
-### Especificaciones Mínimas
-- **RAM**: 2GB mínimo (4GB recomendado)
+1. **🐳 Docker Compose (Recomendado)** - Simple y eficiente
+2. **☸️ Kubernetes** - Para alta disponibilidad  
+3. **📦 Build Estático + Nginx** - Máximo rendimiento
+4. **🔄 CI/CD Automático** - Deploy automático desde Git
+
+---
+
+## 🐳 **OPCIÓN 1: Docker Compose (Recomendado)**
+
+### **🔧 Preparación del VPS**
+
+```bash
+# 1. Conectar al VPS
+ssh usuario@tu-vps-ip
+
+# 2. Actualizar sistema
+sudo apt update && sudo apt upgrade -y
+
+# 3. Instalar Docker
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+sudo usermod -aG docker $USER
+
+# 4. Instalar Docker Compose
+sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+
+# 5. Reiniciar sesión para aplicar permisos
+exit
+ssh usuario@tu-vps-ip
+```
+
+### **� Subir Código al VPS**
+
+**Opción A: Git Clone (Recomendado)**
+```bash
+# En el VPS
+git clone https://github.com/andrescunier/IAMERICANS.git
+cd IAMERICANS
+```
+
+**Opción B: SCP/SFTP**
+```bash
+# Desde tu máquina local
+scp -r /home/andis/IAMERICANS usuario@tu-vps-ip:/home/usuario/
+```
+
+**Opción C: Rsync**
+```bash
+# Desde tu máquina local
+rsync -avz --exclude node_modules /home/andis/IAMERICANS/ usuario@tu-vps-ip:/home/usuario/IAMERICANS/
+```
+
+### **⚙️ Configuración de Variables**
+
+```bash
+# En el VPS, dentro del directorio IAMERICANS
+cp .env.example .env
+
+# Editar variables para producción
+nano .env
+```
+
+**Configuración típica de producción:**
+```bash
+# API Configuration
+VITE_API_BASE_URL=https://api.cumar.com.ar
+VITE_ACCOUNT_ID=37b694f4-f2c9-4500-8e47-52b8ad8daaea
+
+# App Configuration
+VITE_APP_ENV=production
+VITE_DEBUG_MODE=false
+VITE_ENABLE_API_LOGGING=false
+
+# Branding
+VITE_APP_NAME=iAmerican
+VITE_APP_URL=https://tu-dominio.com
+
+# Features (producción)
+VITE_FEATURE_ANALYTICS=true
+VITE_FEATURE_REAL_PAYMENTS=true
+VITE_FEATURE_DEMO_MODE=false
+```
+
+### **🚀 Despliegue**
+
+```bash
+# Opción 1: Usar el script automático
+chmod +x deploy.sh
+./deploy.sh produccion
+
+# Opción 2: Manual con Docker Compose
+docker-compose down
+docker-compose build --no-cache
+docker-compose up -d
+
+# Verificar estado
+docker-compose ps
+docker-compose logs -f
+```
 - **CPU**: 1 vCore (2 vCores recomendado)
 - **Disco**: 20GB mínimo (50GB recomendado)
 - **OS**: Ubuntu 20.04+ / CentOS 8+ / Debian 11+

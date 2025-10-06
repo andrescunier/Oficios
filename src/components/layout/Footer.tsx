@@ -20,6 +20,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import { BRANDING, ASSETS, SOCIAL_LINKS, FEATURES } from '@/config/branding';
 
 export const Footer: React.FC = () => {
   const handleNewsletterSubmit = (e: React.FormEvent) => {
@@ -52,11 +53,11 @@ export const Footer: React.FC = () => {
     categories: {
       title: 'Categorías',
       links: [
-        { label: 'Baño', href: '/categoria/bano' },
-        { label: 'Cocina', href: '/categoria/cocina' },
-        { label: 'Dormitorio', href: '/categoria/dormitorio' },
-        { label: 'Sala', href: '/categoria/sala' },
-        { label: 'Jardín', href: '/categoria/jardin' },
+        { label: 'Componentes', href: '/categoria/componentes' },
+        { label: 'Gaming', href: '/categoria/gaming' },
+        { label: 'SSD M.2', href: '/categoria/ssd-m2' },
+        { label: 'SSD SATA', href: '/categoria/ssd-sata' },
+        { label: 'Memoria RAM', href: '/categoria/memoria-ram' },
       ]
     },
     legal: {
@@ -71,34 +72,11 @@ export const Footer: React.FC = () => {
     }
   };
 
-  const features = [
-    {
-      icon: Truck,
-      title: 'Envío Gratis',
-      description: 'En compras superiores a $50.000'
-    },
-    {
-      icon: RotateCcw,
-      title: 'Devolución Gratis',
-      description: 'Hasta 30 días para devolver'
-    },
-    {
-      icon: Shield,
-      title: 'Compra Segura',
-      description: 'Protegemos tus datos'
-    },
-    {
-      icon: CreditCard,
-      title: 'Múltiples Pagos',
-      description: 'Tarjetas, transferencia y más'
-    }
-  ];
-
   const socialLinks = [
-    { icon: Facebook, href: 'https://facebook.com/iamerican', label: 'Facebook' },
-    { icon: Instagram, href: 'https://instagram.com/iamerican', label: 'Instagram' },
-    { icon: Twitter, href: 'https://twitter.com/iamerican', label: 'Twitter' },
-    { icon: Youtube, href: 'https://youtube.com/iamerican', label: 'YouTube' },
+    { icon: Facebook, href: SOCIAL_LINKS.FACEBOOK, label: 'Facebook' },
+    { icon: Instagram, href: SOCIAL_LINKS.INSTAGRAM, label: 'Instagram' },
+    { icon: Twitter, href: SOCIAL_LINKS.TWITTER, label: 'Twitter' },
+    { icon: Youtube, href: SOCIAL_LINKS.YOUTUBE, label: 'YouTube' },
   ];
 
   return (
@@ -107,11 +85,14 @@ export const Footer: React.FC = () => {
       <div className="border-b">
         <div className="container mx-auto px-4 py-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {features.map((feature, index) => (
+            {FEATURES.SHIPPING_BENEFITS.map((feature: any, index: number) => (
               <div key={index} className="flex items-center space-x-3">
                 <div className="flex-shrink-0">
                   <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <feature.icon className="w-6 h-6 text-primary" />
+                    {feature.icon === 'Truck' && <Truck className="w-6 h-6 text-primary" />}
+                    {feature.icon === 'RotateCcw' && <RotateCcw className="w-6 h-6 text-primary" />}
+                    {feature.icon === 'Shield' && <Shield className="w-6 h-6 text-primary" />}
+                    {feature.icon === 'CreditCard' && <CreditCard className="w-6 h-6 text-primary" />}
                   </div>
                 </div>
                 <div>
@@ -130,32 +111,41 @@ export const Footer: React.FC = () => {
           {/* Company info */}
           <div className="lg:col-span-2">
             <Link to="/" className="flex items-center space-x-2 mb-4">
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
-                <span className="text-white font-bold text-lg">iA</span>
-              </div>
+              {ASSETS.HEADER_LOGO_PATH ? (
+                <img
+                  src={ASSETS.HEADER_LOGO_PATH}
+                  alt={`${BRANDING.APP_NAME} Logo`}
+                  className="h-8 w-auto"
+                />
+              ) : (
+                <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
+                  <span className="text-white font-bold text-lg">
+                    {BRANDING.APP_NAME.slice(0, 2).toUpperCase()}
+                  </span>
+                </div>
+              )}
               <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                iAmerican
+                {BRANDING.APP_NAME}
               </span>
             </Link>
             
             <p className="text-sm text-muted-foreground mb-6">
-              Tu tienda online de confianza. Ofrecemos productos de calidad para el hogar 
-              con la mejor atención al cliente y envíos a todo el país.
+              {BRANDING.APP_DESCRIPTION}
             </p>
 
             {/* Contact info */}
             <div className="space-y-2 mb-6">
               <div className="flex items-center space-x-2 text-sm">
                 <MapPin className="w-4 h-4 text-muted-foreground" />
-                <span>Av. Corrientes 1234, CABA, Argentina</span>
+                <span>{BRANDING.CONTACT_ADDRESS}</span>
               </div>
               <div className="flex items-center space-x-2 text-sm">
                 <Phone className="w-4 h-4 text-muted-foreground" />
-                <span>+54 11 1234-5678</span>
+                <span>{BRANDING.CONTACT_PHONE}</span>
               </div>
               <div className="flex items-center space-x-2 text-sm">
                 <Mail className="w-4 h-4 text-muted-foreground" />
-                <span>info@iamerican.com</span>
+                <span>{BRANDING.CONTACT_EMAIL}</span>
               </div>
             </div>
 
@@ -227,7 +217,7 @@ export const Footer: React.FC = () => {
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <div className="text-sm text-muted-foreground">
-              © 2024 iAmerican. Todos los derechos reservados.
+              © 2024 {BRANDING.COMPANY_NAME}. Todos los derechos reservados.
             </div>
             
             <div className="flex items-center space-x-4">

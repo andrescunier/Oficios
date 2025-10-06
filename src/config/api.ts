@@ -3,18 +3,16 @@
  * Integración con SIGP (Simple Gestión API)
  */
 
+import { getAPIHeaders } from './branding';
+
 // Base URL desde variable de entorno
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.iamerican.com';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.cumar.com.ar';
 
 // Account ID para multi-tenant
-export const ACCOUNT_ID = import.meta.env.VITE_ACCOUNT_ID || '';
+export const ACCOUNT_ID = import.meta.env.VITE_ACCOUNT_ID || '37b694f4-f2c9-4500-8e47-52b8ad8daaea';
 
 // Configuración de headers por defecto
-export const DEFAULT_HEADERS = {
-  'Content-Type': 'application/json',
-  'Accept': 'application/json',
-  ...(ACCOUNT_ID && { 'X-Account-ID': ACCOUNT_ID })
-};
+export const DEFAULT_HEADERS = getAPIHeaders();
 
 // Endpoints de la API SIGP
 export const API_ENDPOINTS = {

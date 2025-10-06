@@ -8,11 +8,11 @@ import {
   Search, 
   ShoppingCart, 
   User, 
-  Heart, 
-  Menu, 
-  X,
+  Menu,
   LogIn,
-  UserPlus
+  UserPlus,
+  X,
+  Heart
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,7 +25,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useStore, useCartItemCount, useAuth } from '@/store/useStore';
+import { useStore } from '@/store/useStore';
+import { BRANDING, ASSETS } from '@/config/branding';
+
+// Hooks temporales para desarrollo
+const useAuth = () => ({
+  isAuthenticated: false,
+  user: null
+});
+
+const useCartItemCount = () => 0;
 
 export const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -39,7 +48,6 @@ export const Header: React.FC = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      // Navegar a página de búsqueda
       console.log('Searching for:', searchQuery);
     }
   };
@@ -49,102 +57,95 @@ export const Header: React.FC = () => {
     setIsMenuOpen(false);
   };
 
-  const navigationItems = [
-    { label: 'Inicio', href: '/' },
-    { label: 'SSDs', href: '/categoria/ssds' },
-    { label: 'Memoria RAM', href: '/categoria/memoria' },
-    { label: 'Componentes', href: '/categoria/componentes' },
-    { label: 'Gaming', href: '/categoria/gaming' },
-    { label: 'Contacto', href: '/contacto' },
+  const categories = [
+    { name: 'Componentes', href: '/categoria/componentes' },
+    { name: 'Gaming', href: '/categoria/gaming' },
+    { name: 'SSD M.2', href: '/categoria/ssd-m2' },
+    { name: 'SSD SATA', href: '/categoria/ssd-sata' },
+    { name: 'Memoria RAM', href: '/categoria/memoria-ram' },
   ];
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      {/* Top bar */}
       <div className="bg-primary text-primary-foreground">
         <div className="container mx-auto px-4 py-2">
-          <div className="flex items-center justify-between text-sm">
-            <div className="hidden md:block">
-              <span>🚚 Tecnología de vanguardia con envío gratuito</span>
-            </div>
-            <div className="flex items-center space-x-4">
-              <span>📞 +1 (786) 813-3980</span>
-              <span className="hidden sm:inline">✉️ info@aimerican.pro</span>
-            </div>
-          </div>
+          <p className="text-center text-sm font-medium">
+            🎉 {BRANDING.APP_SLOGAN} - Envío gratis en compras superiores a $50.000
+          </p>
         </div>
       </div>
 
-      {/* Main header */}
-      <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
-          {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
-              <span className="text-white font-bold text-lg">A</span>
-            </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Aimerican
-            </span>
-          </Link>
+      <div className="container mx-auto px-4">
+        <div className="flex h-16 items-center justify-between">
+          <div className="flex items-center space-x-8">
+            <Link to="/" className="flex items-center space-x-2">
+              {ASSETS.HEADER_LOGO_PATH ? (
+                <img
+                  src={ASSETS.HEADER_LOGO_PATH}
+                  alt={`${BRANDING.APP_NAME} Logo`}
+                  className="h-8 w-auto"
+                />
+              ) : (
+                <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
+                  <span className="text-white font-bold text-lg">
+                    {BRANDING.APP_NAME.slice(0, 2).toUpperCase()}
+                  </span>
+                </div>
+              )}
+              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                {BRANDING.APP_NAME}
+              </span>
+            </Link>
 
-          {/* Search bar - Desktop */}
-          <div className="hidden md:flex flex-1 max-w-md mx-8">
-            <form onSubmit={handleSearch} className="flex w-full">
+            <nav className="hidden lg:flex space-x-8">
+              {categories.map((category) => (
+                <Link
+                  key={category.name}
+                  to={category.href}
+                  className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+                >
+                  {category.name}
+                </Link>
+              ))}
+            </nav>
+          </div>
+
+          <div className="hidden md:block flex-1 max-w-md mx-8">
+            <form onSubmit={handleSearch} className="relative">
               <Input
                 type="search"
                 placeholder="Buscar productos..."
+                className="pl-10 pr-4"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="rounded-r-none"
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
               />
-              <Button 
-                type="submit" 
-                size="icon" 
-                className="rounded-l-none"
-                variant="secondary"
-              >
-                <Search className="h-4 w-4" />
-              </Button>
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             </form>
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center space-x-2">
-            {/* Search button - Mobile */}
-            <Button variant="ghost" size="icon" className="md:hidden">
-              <Search className="h-5 w-5" />
+          <div className="hidden md:flex items-center space-x-4">
+            <Button variant="ghost" size="icon" asChild>
+              <Link to="/favoritos" className="relative">
+                <Heart className="h-5 w-5" />
+                {favorites.length > 0 && (
+                  <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center text-xs">
+                    {favorites.length}
+                  </Badge>
+                )}
+              </Link>
             </Button>
 
-            {/* Favorites */}
-            <Button variant="ghost" size="icon" className="relative">
-              <Heart className="h-5 w-5" />
-              {favorites.length > 0 && (
-                <Badge 
-                  variant="destructive" 
-                  className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
-                >
-                  {favorites.length}
-                </Badge>
-              )}
-            </Button>
-
-            {/* Cart */}
-            <Link to="/carrito">
-              <Button variant="ghost" size="icon" className="relative">
+            <Button variant="ghost" size="icon" asChild>
+              <Link to="/carrito" className="relative">
                 <ShoppingCart className="h-5 w-5" />
                 {cartItemCount > 0 && (
-                  <Badge 
-                    variant="destructive" 
-                    className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
-                  >
+                  <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center text-xs">
                     {cartItemCount}
                   </Badge>
                 )}
-              </Button>
-            </Link>
+              </Link>
+            </Button>
 
-            {/* User menu */}
             {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -152,10 +153,8 @@ export const Header: React.FC = () => {
                     <User className="h-5 w-5" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>
-                    {user?.person?.first_name} {user?.person?.last_name}
-                  </DropdownMenuLabel>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
                     <Link to="/perfil">Mi Perfil</Link>
@@ -173,108 +172,80 @@ export const Header: React.FC = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <div className="hidden sm:flex items-center space-x-2">
-                <Link to="/login">
-                  <Button variant="ghost" size="sm">
+              <div className="flex items-center space-x-2">
+                <Button variant="ghost" size="sm" asChild>
+                  <Link to="/login">
                     <LogIn className="h-4 w-4 mr-2" />
                     Ingresar
-                  </Button>
-                </Link>
-                <Link to="/registro">
-                  <Button size="sm">
+                  </Link>
+                </Button>
+                <Button size="sm" asChild>
+                  <Link to="/register">
                     <UserPlus className="h-4 w-4 mr-2" />
                     Registrarse
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               </div>
             )}
-
-            {/* Mobile menu button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-            >
-              {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </Button>
           </div>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+          >
+            {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </Button>
         </div>
 
-        {/* Navigation - Desktop */}
-        <nav className="hidden md:flex items-center space-x-6 mt-4">
-          {navigationItems.map((item) => (
-            <Link
-              key={item.href}
-              to={item.href}
-              className="text-sm font-medium transition-colors hover:text-primary"
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
+        {isMenuOpen && (
+          <div className="md:hidden border-t py-4">
+            <form onSubmit={handleSearch} className="relative mb-4">
+              <Input
+                type="search"
+                placeholder="Buscar productos..."
+                className="pl-10 pr-4"
+                value={searchQuery}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+              />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            </form>
 
-        {/* Mobile search */}
-        <div className="md:hidden mt-4">
-          <form onSubmit={handleSearch} className="flex">
-            <Input
-              type="search"
-              placeholder="Buscar productos..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="rounded-r-none"
-            />
-            <Button 
-              type="submit" 
-              size="icon" 
-              className="rounded-l-none"
-              variant="secondary"
-            >
-              <Search className="h-4 w-4" />
-            </Button>
-          </form>
-        </div>
-      </div>
-
-      {/* Mobile menu */}
-      {isMenuOpen && (
-        <div className="md:hidden border-t bg-background">
-          <div className="container mx-auto px-4 py-4">
-            <nav className="flex flex-col space-y-4">
-              {navigationItems.map((item) => (
+            <nav className="space-y-2 mb-4">
+              {categories.map((category) => (
                 <Link
-                  key={item.href}
-                  to={item.href}
-                  className="text-sm font-medium transition-colors hover:text-primary"
+                  key={category.name}
+                  to={category.href}
+                  className="block py-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  {item.label}
+                  {category.name}
                 </Link>
               ))}
-              
+            </nav>
+
+            <div className="space-y-2 border-t pt-4">
               {!isAuthenticated && (
                 <>
-                  <hr className="my-2" />
-                  <Link
-                    to="/login"
-                    className="text-sm font-medium transition-colors hover:text-primary"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Ingresar
-                  </Link>
-                  <Link
-                    to="/registro"
-                    className="text-sm font-medium transition-colors hover:text-primary"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Registrarse
-                  </Link>
+                  <Button variant="ghost" className="w-full justify-start" asChild>
+                    <Link to="/login" onClick={() => setIsMenuOpen(false)}>
+                      <LogIn className="h-4 w-4 mr-2" />
+                      Ingresar
+                    </Link>
+                  </Button>
+                  <Button className="w-full justify-start" asChild>
+                    <Link to="/register" onClick={() => setIsMenuOpen(false)}>
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Registrarse
+                    </Link>
+                  </Button>
                 </>
               )}
-            </nav>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </header>
   );
 };

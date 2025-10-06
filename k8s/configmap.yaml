@@ -4,26 +4,115 @@ metadata:
   name: iamerican-config
   namespace: iamerican
 data:
-  # API Configuration
+  # =========================================
+  # API CONFIGURATION
+  # =========================================
   VITE_API_BASE_URL: "https://api.cumar.com.ar"
   VITE_ACCOUNT_ID: "37b694f4-f2c9-4500-8e47-52b8ad8daaea"
+  VITE_API_EXTRA_HEADERS: "{}"
   
-  # Environment
-  NODE_ENV: "production"
+  # =========================================
+  # BRANDING & COMPANY INFO
+  # =========================================
+  VITE_APP_NAME: "iAmerican"
+  VITE_COMPANY_NAME: "iAmerican Technology"
+  VITE_APP_SLOGAN: "Tecnología de vanguardia con envío gratuito"
+  VITE_APP_URL: "https://iamerican.com"
+  VITE_APP_DESCRIPTION: "Tu tienda online de confianza. Ofrecemos productos de tecnología de calidad con la mejor atención al cliente y envíos a todo el país."
+  
+  # =========================================
+  # CONTACT INFORMATION
+  # =========================================
+  VITE_CONTACT_EMAIL: "info@iamerican.com"
+  VITE_CONTACT_PHONE: "+1 (786) 513-3960"
+  VITE_CONTACT_ADDRESS: "Av. Corrientes 1234, CABA, Argentina"
+  
+  # =========================================
+  # LOGOS & IMAGES
+  # =========================================
+  VITE_LOGO_PATH: "/americanlog3_1x.png"
+  VITE_FAVICON_PATH: "/favicon.ico"
+  VITE_HEADER_LOGO_PATH: "/americanlog3_1x.png"
+  VITE_FOOTER_LOGO_PATH: "/americanlog3_1x.png"
+  
+  # =========================================
+  # HERO SLIDER IMAGES
+  # =========================================
+  VITE_HERO_SLIDE_1: "/images/heroes/slide-1.jpg"
+  VITE_HERO_SLIDE_2: "/images/heroes/slide-2.jpg"
+  VITE_HERO_SLIDE_3: "/images/heroes/slide-3.jpg"
+  
+  # Hero Slider Texts
+  VITE_HERO_SLIDE_1_TITLE: "Tecnología de Vanguardia"
+  VITE_HERO_SLIDE_1_SUBTITLE: "Descubre los mejores productos tecnológicos"
+  VITE_HERO_SLIDE_1_CTA: "Ver Productos"
+  VITE_HERO_SLIDE_2_TITLE: "Gaming Premium"
+  VITE_HERO_SLIDE_2_SUBTITLE: "Lleva tu experiencia gaming al siguiente nivel"
+  VITE_HERO_SLIDE_2_CTA: "Explorar Gaming"
+  VITE_HERO_SLIDE_3_TITLE: "Componentes Pro"
+  VITE_HERO_SLIDE_3_SUBTITLE: "Hardware profesional para desarrolladores"
+  VITE_HERO_SLIDE_3_CTA: "Ver Componentes"
+  
+  # =========================================
+  # CATEGORY IMAGES
+  # =========================================
+  VITE_CATEGORY_COMPONENTES_IMG: "/images/categories/componentes.jpg"
+  VITE_CATEGORY_GAMING_IMG: "/images/categories/gaming.jpg"
+  VITE_CATEGORY_DDR4_IMG: "/images/categories/ddr4.jpg"
+  VITE_CATEGORY_DDR5_IMG: "/images/categories/ddr5.jpg"
+  VITE_CATEGORY_SSD_M2_IMG: "/images/categories/ssd-m2.jpg"
+  VITE_CATEGORY_SSD_SATA_IMG: "/images/categories/ssd-sata.jpg"
+  
+  # =========================================
+  # PLACEHOLDER IMAGES
+  # =========================================
+  VITE_PLACEHOLDER_PRODUCT: "/images/placeholders/product-placeholder.jpg"
+  VITE_PLACEHOLDER_CATEGORY: "/images/placeholders/category-placeholder.jpg"
+  VITE_PLACEHOLDER_USER: "/images/placeholders/user-placeholder.jpg"
+  
+  # =========================================
+  # SOCIAL MEDIA
+  # =========================================
+  VITE_FACEBOOK_URL: "https://facebook.com/iamerican"
+  VITE_INSTAGRAM_URL: "https://instagram.com/iamerican"
+  VITE_TWITTER_URL: "https://twitter.com/iamerican"
+  VITE_LINKEDIN_URL: "https://linkedin.com/company/iamerican"
+  
+  # =========================================
+  # APP CONFIGURATION
+  # =========================================
   VITE_APP_ENV: "production"
-  
-  # App Configuration
-  VITE_APP_NAME: "iAmerican E-commerce"
   VITE_APP_VERSION: "1.0.0"
+  VITE_DEBUG_MODE: "false"
+  VITE_ENABLE_API_LOGGING: "false"
+  NODE_ENV: "production"
   
-  # Feature Flags
-  VITE_ENABLE_ANALYTICS: "true"
-  VITE_ENABLE_NOTIFICATIONS: "true"
-  VITE_ENABLE_REAL_PAYMENTS: "true"
+  # =========================================
+  # FEATURE FLAGS
+  # =========================================
+  VITE_FEATURE_NOTIFICATIONS: "true"
+  VITE_FEATURE_ANALYTICS: "true"
+  VITE_FEATURE_REAL_PAYMENTS: "true"
+  VITE_FEATURE_DEMO_MODE: "false"
   
-  # Security
-  VITE_ENABLE_HTTPS: "true"
-  VITE_ENABLE_CORS: "true"
+  # =========================================
+  # SHIPPING & BENEFITS FEATURES
+  # =========================================
+  VITE_FEATURE_FREE_SHIPPING_TITLE: "Envío Gratis"
+  VITE_FEATURE_FREE_SHIPPING_DESC: "En compras superiores a $50.000"
+  VITE_FEATURE_FREE_RETURNS_TITLE: "Devolución Gratis"
+  VITE_FEATURE_FREE_RETURNS_DESC: "Hasta 30 días para devolver"
+  VITE_FEATURE_SECURE_PURCHASE_TITLE: "Compra Segura"
+  VITE_FEATURE_SECURE_PURCHASE_DESC: "Protegemos tus datos"
+  VITE_FEATURE_MULTIPLE_PAYMENTS_TITLE: "Múltiples Pagos"
+  VITE_FEATURE_MULTIPLE_PAYMENTS_DESC: "Tarjetas, transferencia y más"
+  
+  # =========================================
+  # COLORS & THEMING
+  # =========================================
+  VITE_PRIMARY_COLOR: "#2563eb"
+  VITE_SECONDARY_COLOR: "#7c3aed"
+  VITE_ACCENT_COLOR: "#059669"
 
 ---
 apiVersion: v1

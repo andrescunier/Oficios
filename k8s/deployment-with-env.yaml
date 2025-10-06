@@ -1,0 +1,118 @@
+# =========================================
+# DEPLOYMENT CON SELECCIÓN DE ENTORNO
+# =========================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: iamerican-ecommerce
+  namespace: iamerican
+  labels:
+    app: iamerican-ecommerce
+    version: v1
+    environment: production  # Cambiar por: production, staging, development
+spec:
+  replicas: 3  # Ajustar según entorno: prod=3, staging=2, dev=1
+  selector:
+    matchLabels:
+      app: iamerican-ecommerce
+  template:
+    metadata:
+      labels:
+        app: iamerican-ecommerce
+        version: v1
+        environment: production
+      annotations:
+        # Forzar restart si cambian las variables
+        configmap/checksum: "{{ .Values.configmapChecksum | default "none" }}"
+    spec:
+      containers:
+      - name: iamerican-app
+        image: iamerican-ecommerce:latest
+        ports:
+        - containerPort: 80
+          name: http
+        
+        # =========================================
+        # VARIABLES DE ENTORNO POR CONFIGMAP
+        # =========================================
+        envFrom:
+        - configMapRef:
+            name: iamerican-config  # Para producción
+            # Para cambiar entorno, usar:
+            # name: iamerican-config-staging  # Para staging
+            # name: iamerican-config-dev      # Para desarrollo
+        - secretRef:
+            name: iamerican-secrets
+        
+        # Variables adicionales específicas del contenedor
+        env:
+        - name: CONTAINER_ENVIRONMENT
+          value: "kubernetes"
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        
+        # Health checks
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        
+        # Volumes para cache y logs
+        volumeMounts:
+        - name: nginx-cache
+          mountPath: /var/cache/nginx
+        - name: nginx-logs
+          mountPath: /var/log/nginx
+        - name: app-config
+          mountPath: /app/config
+          readOnly: true
+      
+      volumes:
+      - name: nginx-cache
+        emptyDir: {}
+      - name: nginx-logs
+        emptyDir: {}
+      - name: app-config
+        configMap:
+          name: iamerican-config
+          defaultMode: 0644
+      
+      # Restart policy
+      restartPolicy: Always
+      
+      # Security context
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000

@@ -1,0 +1,109 @@
+# =========================================
+# CONFIGMAP PARA STAGING/DESARROLLO
+# =========================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: iamerican-config-staging
+  namespace: iamerican
+data:
+  # API Configuration (Staging)
+  VITE_API_BASE_URL: "https://api-staging.cumar.com.ar"
+  VITE_ACCOUNT_ID: "37b694f4-f2c9-4500-8e47-52b8ad8daaea"
+  VITE_API_EXTRA_HEADERS: "{}"
+  
+  # Environment
+  VITE_APP_ENV: "staging"
+  VITE_APP_VERSION: "1.0.0-staging"
+  VITE_DEBUG_MODE: "true"
+  VITE_ENABLE_API_LOGGING: "true"
+  NODE_ENV: "development"
+  
+  # Branding (mismo que producción)
+  VITE_APP_NAME: "iAmerican (Staging)"
+  VITE_COMPANY_NAME: "iAmerican Technology"
+  VITE_APP_SLOGAN: "Tecnología de vanguardia con envío gratuito"
+  VITE_APP_URL: "https://staging.iamerican.com"
+  VITE_APP_DESCRIPTION: "Tu tienda online de confianza. Ofrecemos productos de tecnología de calidad con la mejor atención al cliente y envíos a todo el país."
+  
+  # Contact (mismo que producción)
+  VITE_CONTACT_EMAIL: "info@iamerican.com"
+  VITE_CONTACT_PHONE: "+1 (786) 513-3960"
+  VITE_CONTACT_ADDRESS: "Av. Corrientes 1234, CABA, Argentina"
+  
+  # Logos (mismo que producción)
+  VITE_LOGO_PATH: "/americanlog3_1x.png"
+  VITE_FAVICON_PATH: "/favicon.ico"
+  VITE_HEADER_LOGO_PATH: "/americanlog3_1x.png"
+  
+  # Social Media (mismo que producción)
+  VITE_FACEBOOK_URL: "https://facebook.com/iamerican"
+  VITE_INSTAGRAM_URL: "https://instagram.com/iamerican"
+  VITE_TWITTER_URL: "https://twitter.com/iamerican"
+  VITE_LINKEDIN_URL: "https://linkedin.com/company/iamerican"
+  
+  # Feature Flags (Staging - más permisivo)
+  VITE_FEATURE_NOTIFICATIONS: "true"
+  VITE_FEATURE_ANALYTICS: "false"  # Sin analytics en staging
+  VITE_FEATURE_REAL_PAYMENTS: "false"  # Pagos demo en staging
+  VITE_FEATURE_DEMO_MODE: "true"  # Modo demo activado
+  
+  # Shipping Features (mismo que producción)
+  VITE_FEATURE_FREE_SHIPPING_TITLE: "Envío Gratis"
+  VITE_FEATURE_FREE_SHIPPING_DESC: "En compras superiores a $50.000"
+  VITE_FEATURE_FREE_RETURNS_TITLE: "Devolución Gratis"
+  VITE_FEATURE_FREE_RETURNS_DESC: "Hasta 30 días para devolver"
+  VITE_FEATURE_SECURE_PURCHASE_TITLE: "Compra Segura"
+  VITE_FEATURE_SECURE_PURCHASE_DESC: "Protegemos tus datos"
+  VITE_FEATURE_MULTIPLE_PAYMENTS_TITLE: "Múltiples Pagos"
+  VITE_FEATURE_MULTIPLE_PAYMENTS_DESC: "Tarjetas, transferencia y más"
+  
+  # Colors (mismo que producción)
+  VITE_PRIMARY_COLOR: "#2563eb"
+  VITE_SECONDARY_COLOR: "#7c3aed"
+  VITE_ACCENT_COLOR: "#059669"
+
+---
+# =========================================
+# CONFIGMAP PARA DESARROLLO LOCAL
+# =========================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: iamerican-config-dev
+  namespace: iamerican
+data:
+  # API Configuration (Local)
+  VITE_API_BASE_URL: "http://localhost:3001"
+  VITE_ACCOUNT_ID: "37b694f4-f2c9-4500-8e47-52b8ad8daaea"
+  VITE_API_EXTRA_HEADERS: "{}"
+  
+  # Environment
+  VITE_APP_ENV: "development"
+  VITE_APP_VERSION: "1.0.0-dev"
+  VITE_DEBUG_MODE: "true"
+  VITE_ENABLE_API_LOGGING: "true"
+  NODE_ENV: "development"
+  
+  # Branding
+  VITE_APP_NAME: "iAmerican (Dev)"
+  VITE_COMPANY_NAME: "iAmerican Technology"
+  VITE_APP_SLOGAN: "Tecnología de vanguardia con envío gratuito"
+  VITE_APP_URL: "http://localhost:5173"
+  VITE_APP_DESCRIPTION: "Tu tienda online de confianza. Ofrecemos productos de tecnología de calidad con la mejor atención al cliente y envíos a todo el país."
+  
+  # Contact
+  VITE_CONTACT_EMAIL: "dev@iamerican.com"
+  VITE_CONTACT_PHONE: "+1 (786) 513-3960"
+  VITE_CONTACT_ADDRESS: "Av. Corrientes 1234, CABA, Argentina"
+  
+  # Feature Flags (Dev - todos en demo)
+  VITE_FEATURE_NOTIFICATIONS: "true"
+  VITE_FEATURE_ANALYTICS: "false"
+  VITE_FEATURE_REAL_PAYMENTS: "false"
+  VITE_FEATURE_DEMO_MODE: "true"
+  
+  # Colors (Dev - colores de desarrollo)
+  VITE_PRIMARY_COLOR: "#dc2626"  # Rojo para indicar dev
+  VITE_SECONDARY_COLOR: "#7c3aed"
+  VITE_ACCENT_COLOR: "#059669"

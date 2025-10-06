@@ -38,13 +38,89 @@ show_help() {
     echo -e "  ${GREEN}backup${NC}    - Crear backup de la aplicación"
     echo -e "  ${GREEN}logs${NC}      - Ver logs de la aplicación"
     echo -e "  ${GREEN}status${NC}    - Ver estado de los servicios"
+    echo -e "  ${GREEN}find${NC}      - Encontrar instalaciones existentes de iAmerican"
     echo ""
     echo -e "${BLUE}Ejemplos:${NC}"
     echo -e "  ./vps-deploy.sh setup"
+    echo -e "  ./vps-deploy.sh find"
     echo -e "  ./vps-deploy.sh deploy"
     echo -e "  ./vps-deploy.sh ssl tu-dominio.com tu-email@ejemplo.com"
     echo -e "  ./vps-deploy.sh update"
     echo ""
+}
+
+# Función para encontrar instalaciones existentes
+find_installations() {
+    echo -e "${BLUE}🔍 Buscando instalaciones existentes de iAmerican...${NC}"
+    echo ""
+    
+    POSSIBLE_DIRS=(
+        "$HOME/iamericans"
+        "$HOME/IAMERICANS" 
+        "$HOME/apps/iamerican"
+        "$HOME/iamerican"
+        "$HOME/iAmerican"
+        "$HOME/projects/iamerican"
+        "$HOME/www/iamerican"
+        "/var/www/iamerican"
+        "$(pwd)"
+    )
+    
+    FOUND=false
+    
+    for dir in "${POSSIBLE_DIRS[@]}"; do
+        if [ -d "$dir" ]; then
+            echo -e "${YELLOW}📂 Carpeta encontrada: $dir${NC}"
+            
+            # Verificar si contiene archivos de iAmerican
+            if [ -f "$dir/package.json" ]; then
+                if grep -q "iamerican\|iAmerican" "$dir/package.json" 2>/dev/null; then
+                    echo -e "${GREEN}   ✅ Contiene proyecto iAmerican (package.json)${NC}"
+                    FOUND=true
+                elif grep -q "react\|vite" "$dir/package.json" 2>/dev/null; then
+                    echo -e "${BLUE}   🔵 Contiene proyecto React/Vite${NC}"
+                    FOUND=true
+                fi
+            fi
+            
+            if [ -f "$dir/docker-compose.yml" ]; then
+                echo -e "${GREEN}   ✅ Contiene Docker Compose${NC}"
+                FOUND=true
+            fi
+            
+            if [ -f "$dir/Dockerfile" ]; then
+                echo -e "${GREEN}   ✅ Contiene Dockerfile${NC}"
+                FOUND=true
+            fi
+            
+            if [ -d "$dir/.git" ]; then
+                echo -e "${BLUE}   🔵 Es un repositorio Git${NC}"
+                REMOTE=$(cd "$dir" && git remote get-url origin 2>/dev/null || echo "Sin remote")
+                echo -e "${BLUE}   📡 Remote: $REMOTE${NC}"
+            fi
+            
+            # Verificar si hay contenedores Docker corriendo
+            if [ -f "$dir/docker-compose.yml" ]; then
+                cd "$dir"
+                if docker-compose ps 2>/dev/null | grep -q "Up"; then
+                    echo -e "${GREEN}   🚀 Aplicación corriendo${NC}"
+                else
+                    echo -e "${YELLOW}   ⏸️  Aplicación detenida${NC}"
+                fi
+            fi
+            
+            echo ""
+        fi
+    done
+    
+    if [ "$FOUND" = false ]; then
+        echo -e "${YELLOW}⚠️  No se encontraron instalaciones de iAmerican${NC}"
+        echo -e "${BLUE}💡 Usa './vps-deploy.sh deploy' para crear una nueva instalación${NC}"
+    else
+        echo -e "${GREEN}✅ Se encontraron instalaciones existentes${NC}"
+        echo -e "${BLUE}💡 Usa './vps-deploy.sh status' para ver el estado actual${NC}"
+        echo -e "${BLUE}💡 Usa './vps-deploy.sh update' para actualizar una instalación existente${NC}"
+    fi
 }
 
 # Función para verificar si es root
@@ -119,20 +195,63 @@ deploy_app() {
         exit 1
     fi
     
-    # Verificar si existe el directorio
-    if [ ! -d "~/apps/iamerican" ]; then
-        mkdir -p ~/apps/iamerican
+    # Detectar carpeta existente de iamerican
+    POSSIBLE_DIRS=(
+        "$HOME/iamericans"
+        "$HOME/IAMERICANS" 
+        "$HOME/apps/iamerican"
+        "$HOME/iamerican"
+        "$(pwd)"
+    )
+    
+    APP_DIR=""
+    for dir in "${POSSIBLE_DIRS[@]}"; do
+        if [ -d "$dir" ] && ([ -f "$dir/package.json" ] || [ -f "$dir/docker-compose.yml" ]); then
+            echo -e "${GREEN}✅ Encontrada carpeta iAmerican existente: $dir${NC}"
+            APP_DIR="$dir"
+            break
+        fi
+    done
+    
+    # Si no se encuentra, crear nueva
+    if [ -z "$APP_DIR" ]; then
+        echo -e "${YELLOW}📁 No se encontró carpeta existente, creando nueva...${NC}"
+        APP_DIR="$HOME/apps/iamerican"
+        mkdir -p "$APP_DIR"
     fi
     
-    cd ~/apps/iamerican
+    cd "$APP_DIR"
+    echo -e "${BLUE}📂 Trabajando en: $APP_DIR${NC}"
     
-    # Clonar o actualizar repositorio
-    if [ ! -d ".git" ]; then
-        echo -e "${YELLOW}📥 Clonando repositorio...${NC}"
-        git clone https://github.com/andrescunier/IAMERICANS.git .
+    # Si hay archivos del proyecto, actualizar; si no, clonar
+    if [ -f "package.json" ] && [ -f "docker-compose.yml" ]; then
+        echo -e "${YELLOW}🔄 Actualizando proyecto existente...${NC}"
+        
+        # Crear backup si hay cambios locales
+        if [ -d ".git" ]; then
+            if ! git diff --quiet 2>/dev/null; then
+                echo -e "${YELLOW}� Creando backup de cambios locales...${NC}"
+                DATE=$(date +%Y%m%d_%H%M%S)
+                git stash push -m "backup_before_deploy_$DATE" 2>/dev/null || true
+            fi
+            git pull origin main 2>/dev/null || echo -e "${YELLOW}⚠️  No se pudo actualizar desde Git${NC}"
+        else
+            echo -e "${YELLOW}⚠️  Usando archivos locales (no es un repositorio Git)${NC}"
+        fi
     else
-        echo -e "${YELLOW}🔄 Actualizando repositorio...${NC}"
-        git pull origin main
+        echo -e "${YELLOW}📥 Descargando proyecto...${NC}"
+        # Si la carpeta existe pero está vacía o sin los archivos correctos
+        if [ "$(ls -A . 2>/dev/null)" ]; then
+            echo -e "${YELLOW}💾 Respaldando contenido existente...${NC}"
+            mkdir -p ../backup_$(date +%Y%m%d_%H%M%S)
+            mv * ../backup_$(date +%Y%m%d_%H%M%S)/ 2>/dev/null || true
+        fi
+        
+        git clone https://github.com/andrescunier/IAMERICANS.git . 2>/dev/null || {
+            echo -e "${RED}❌ Error clonando repositorio${NC}"
+            echo -e "${YELLOW}💡 Asegúrate de tener acceso a internet y Git instalado${NC}"
+            exit 1
+        }
     fi
     
     # Configurar variables de entorno
@@ -193,15 +312,57 @@ deploy_app() {
 update_app() {
     echo -e "${BLUE}🔄 Actualizando iAmerican...${NC}"
     
-    cd ~/apps/iamerican
+    # Detectar carpeta existente
+    POSSIBLE_DIRS=(
+        "$HOME/iamericans"
+        "$HOME/IAMERICANS" 
+        "$HOME/apps/iamerican"
+        "$HOME/iamerican"
+        "$(pwd)"
+    )
+    
+    APP_DIR=""
+    for dir in "${POSSIBLE_DIRS[@]}"; do
+        if [ -d "$dir" ] && ([ -f "$dir/package.json" ] || [ -f "$dir/docker-compose.yml" ]); then
+            APP_DIR="$dir"
+            break
+        fi
+    done
+    
+    if [ -z "$APP_DIR" ]; then
+        echo -e "${RED}❌ No se encontró una instalación existente de iAmerican${NC}"
+        echo -e "${YELLOW}💡 Usa './vps-deploy.sh deploy' para una instalación nueva${NC}"
+        exit 1
+    fi
+    
+    cd "$APP_DIR"
+    echo -e "${BLUE}📂 Actualizando en: $APP_DIR${NC}"
     
     # Crear backup antes de actualizar
     echo -e "${YELLOW}💾 Creando backup...${NC}"
     backup_app
     
     # Actualizar código
-    echo -e "${YELLOW}📥 Actualizando código...${NC}"
-    git pull origin main
+    if [ -d ".git" ]; then
+        echo -e "${YELLOW}📥 Actualizando desde Git...${NC}"
+        git pull origin main
+    else
+        echo -e "${YELLOW}⚠️  No es un repositorio Git, descargando archivos nuevos...${NC}"
+        
+        # Crear backup de archivos importantes
+        [ -f ".env" ] && cp .env .env.backup
+        [ -f "docker-compose.override.yml" ] && cp docker-compose.override.yml docker-compose.override.yml.backup
+        
+        # Descargar archivos nuevos
+        curl -sL https://github.com/andrescunier/IAMERICANS/archive/main.zip -o update.zip
+        unzip -q update.zip
+        cp -r IAMERICANS-main/* .
+        rm -rf IAMERICANS-main update.zip
+        
+        # Restaurar archivos importantes
+        [ -f ".env.backup" ] && mv .env.backup .env
+        [ -f "docker-compose.override.yml.backup" ] && mv docker-compose.override.yml.backup docker-compose.override.yml
+    fi
     
     # Reconstruir y reiniciar
     echo -e "${YELLOW}🔨 Reconstruyendo aplicación...${NC}"
@@ -269,35 +430,81 @@ EOF
     echo -e "${BLUE}🌐 Sitio disponible en: https://${DOMAIN}${NC}"
 }
 
+# Función para encontrar la carpeta de iAmerican
+find_app_dir() {
+    POSSIBLE_DIRS=(
+        "$HOME/iamericans"
+        "$HOME/IAMERICANS" 
+        "$HOME/apps/iamerican"
+        "$HOME/iamerican"
+        "$(pwd)"
+    )
+    
+    for dir in "${POSSIBLE_DIRS[@]}"; do
+        if [ -d "$dir" ] && ([ -f "$dir/package.json" ] || [ -f "$dir/docker-compose.yml" ]); then
+            echo "$dir"
+            return 0
+        fi
+    done
+    
+    return 1
+}
+
 # Función para crear backup
 backup_app() {
     echo -e "${BLUE}💾 Creando backup...${NC}"
+    
+    APP_DIR=$(find_app_dir)
+    if [ -z "$APP_DIR" ]; then
+        echo -e "${RED}❌ No se encontró instalación de iAmerican${NC}"
+        exit 1
+    fi
     
     DATE=$(date +%Y%m%d_%H%M%S)
     BACKUP_DIR=~/backups
     
     mkdir -p $BACKUP_DIR
     
-    cd ~/apps/iamerican
+    cd "$APP_DIR"
     tar -czf $BACKUP_DIR/iamerican_$DATE.tar.gz .
     
     # Mantener solo los últimos 7 backups
     find $BACKUP_DIR -name "iamerican_*.tar.gz" -mtime +7 -delete
     
     echo -e "${GREEN}✅ Backup creado: iamerican_$DATE.tar.gz${NC}"
+    echo -e "${BLUE}📂 Ubicación: $BACKUP_DIR/iamerican_$DATE.tar.gz${NC}"
 }
 
 # Función para mostrar logs
 show_logs() {
     echo -e "${BLUE}📊 Logs de iAmerican:${NC}"
-    cd ~/apps/iamerican
+    
+    APP_DIR=$(find_app_dir)
+    if [ -z "$APP_DIR" ]; then
+        echo -e "${RED}❌ No se encontró instalación de iAmerican${NC}"
+        exit 1
+    fi
+    
+    cd "$APP_DIR"
+    echo -e "${YELLOW}📂 Directorio: $APP_DIR${NC}"
     docker-compose logs -f --tail=100
 }
 
 # Función para mostrar estado
 show_status() {
     echo -e "${BLUE}📊 Estado de los servicios:${NC}"
-    cd ~/apps/iamerican
+    
+    APP_DIR=$(find_app_dir)
+    if [ -z "$APP_DIR" ]; then
+        echo -e "${RED}❌ No se encontró instalación de iAmerican${NC}"
+        echo -e "${YELLOW}💡 Usa './vps-deploy.sh deploy' para instalar${NC}"
+        return 1
+    fi
+    
+    cd "$APP_DIR"
+    echo -e "${YELLOW}📂 Directorio: $APP_DIR${NC}"
+    echo ""
+    
     docker-compose ps
     
     echo ""
@@ -307,6 +514,20 @@ show_status() {
     echo ""
     echo -e "${BLUE}💾 Espacio en disco:${NC}"
     df -h /
+    
+    echo ""
+    echo -e "${BLUE}🌐 URLs disponibles:${NC}"
+    SERVER_IP=$(curl -s ifconfig.me 2>/dev/null || hostname -I | awk '{print $1}')
+    echo -e "   - Local: http://localhost"
+    echo -e "   - VPS IP: http://${SERVER_IP}"
+    
+    # Verificar si hay configuración de dominio
+    if [ -f ".env" ] && grep -q "VITE_APP_URL" .env; then
+        DOMAIN=$(grep "VITE_APP_URL" .env | cut -d'=' -f2 | tr -d '"' | sed 's|https\?://||')
+        if [ -n "$DOMAIN" ] && [ "$DOMAIN" != "localhost:5173" ]; then
+            echo -e "   - Dominio: https://${DOMAIN}"
+        fi
+    fi
 }
 
 # Main script
@@ -336,6 +557,9 @@ case $ACTION in
         ;;
     "status")
         show_status
+        ;;
+    "find")
+        find_installations
         ;;
     "help"|"-h"|"--help")
         show_help

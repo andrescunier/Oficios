@@ -12,6 +12,7 @@ import { Register } from '@/pages/Register';
 import { CartPage } from '@/pages/CartPage';
 import { CheckoutPage } from '@/pages/CheckoutPage';
 import { QUERY_CONFIG } from '@/config/api';
+import { DebugAuth } from '@/components/DebugAuth';
 import './App.css';
 
 // Crear cliente de React Query
@@ -48,6 +49,7 @@ function App() {
             </Routes>
           </main>
           <Footer />
+          <DebugAuth />
         </div>
       </Router>
     </QueryClientProvider>

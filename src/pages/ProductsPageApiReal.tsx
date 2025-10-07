@@ -4,9 +4,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Plus, Minus } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { productService } from '@/services/productService';
 import { useStore } from '@/store/useStore';
+import { ProductCard } from '@/components/product/ProductCard';
 import type { Product } from '@/types/api';
 
 export const ProductsPageApiReal: React.FC = () => {
@@ -14,9 +15,8 @@ export const ProductsPageApiReal: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [quantities, setQuantities] = useState<Record<string, number>>({});
 
-  const { addToCart, addNotification } = useStore();
+  const { addNotification } = useStore();
 
   useEffect(() => {
     loadProducts();
@@ -211,43 +211,10 @@ export const ProductsPageApiReal: React.FC = () => {
     setError('Usando productos de demostración (API no disponible)');
   };
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('es-AR', {
-      style: 'currency',
-      currency: 'ARS',
-      minimumFractionDigits: 0,
-    }).format(price);
-  };
-
   const filteredProducts = products.filter(product =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  // Funciones para manejar cantidades
-  const updateQuantity = (productId: string, quantity: number) => {
-    if (quantity < 1) quantity = 1;
-    setQuantities(prev => ({
-      ...prev,
-      [productId]: quantity
-    }));
-  };
-
-  const getQuantity = (productId: string) => {
-    return quantities[productId] || 1;
-  };
-
-  // Función para agregar al carrito
-  const handleAddToCart = (product: Product) => {
-    const quantity = getQuantity(product.id.toString());
-
-    addToCart(product, quantity);
-    addNotification({
-      type: 'success', 
-      title: 'Producto agregado',
-      message: `${product.name} agregado al carrito (${quantity} unidad${quantity > 1 ? 'es' : ''})`,
-    });
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -324,89 +291,12 @@ export const ProductsPageApiReal: React.FC = () => {
         {!loading && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredProducts.map((product) => (
-              <div key={product.id} className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-all duration-300 group">
-                {/* Product Image */}
-                <div className="aspect-square bg-gray-100 overflow-hidden">
-                  <img 
-                    src={product.image_url} 
-                    alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    onError={(e) => {
-                      e.currentTarget.src = '/placeholder-product.jpg';
-                    }}
-                  />
-                </div>
-
-                {/* Product Info */}
-                <div className="p-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <h3 className="font-semibold text-gray-900 line-clamp-2 flex-1">
-                      {product.name}
-                    </h3>
-                    {product.is_featured && (
-                      <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full ml-2">
-                        Destacado
-                      </span>
-                    )}
-                  </div>
-                  
-                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                    {product.description || 'Sin descripción disponible'}
-                  </p>
-                  
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-lg font-bold text-blue-600">
-                      {formatPrice(product.unit_price)}
-                    </span>
-                    {product.stock_quantity !== undefined && (
-                      <span className={`text-sm ${product.stock_quantity > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {product.stock_quantity > 0 ? `Stock: ${product.stock_quantity}` : 'Sin stock'}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs text-gray-500">
-                      SKU: {product.sku}
-                    </span>
-                    {product.category && (
-                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
-                        {product.category}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Selector de cantidad */}
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-medium text-gray-700">Cantidad:</span>
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => updateQuantity(product.id.toString(), getQuantity(product.id.toString()) - 1)}
-                        className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-300 text-gray-600 hover:bg-gray-100"
-                        disabled={getQuantity(product.id.toString()) <= 1}
-                      >
-                        <Minus className="w-4 h-4" />
-                      </button>
-                      <span className="w-8 text-center font-medium">
-                        {getQuantity(product.id.toString())}
-                      </span>
-                      <button
-                        onClick={() => updateQuantity(product.id.toString(), getQuantity(product.id.toString()) + 1)}
-                        className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-300 text-gray-600 hover:bg-gray-100"
-                      >
-                        <Plus className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-
-                  <button 
-                    onClick={() => handleAddToCart(product)}
-                    className="w-full py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-                  >
-                    Agregar al Carrito
-                  </button>
-                </div>
-              </div>
+              <ProductCard 
+                key={product.id} 
+                product={product} 
+                variant="default"
+                showQuickView={true}
+              />
             ))}
           </div>
         )}

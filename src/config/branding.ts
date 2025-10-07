@@ -23,14 +23,14 @@ export const API_CONFIG = {
 // =========================================
 export const BRANDING = {
   // App Information
-  APP_NAME: import.meta.env.VITE_APP_NAME || 'iAmerican',
-  COMPANY_NAME: import.meta.env.VITE_COMPANY_NAME || 'iAmerican Technology',
-  APP_SLOGAN: import.meta.env.VITE_APP_SLOGAN || 'Tecnología de vanguardia con envío gratuito',
-  APP_URL: import.meta.env.VITE_APP_URL || 'https://iamerican.com',
-  APP_DESCRIPTION: import.meta.env.VITE_APP_DESCRIPTION || 'Tu tienda online de confianza. Ofrecemos productos de tecnología de calidad con la mejor atención al cliente y envíos a todo el país.',
+  APP_NAME: import.meta.env.VITE_APP_NAME || 'DIAP',
+  COMPANY_NAME: import.meta.env.VITE_COMPANY_NAME || 'DIAP Technology',
+  APP_SLOGAN: import.meta.env.VITE_APP_SLOGAN || 'Tecnología profesional para empresas',
+  APP_URL: import.meta.env.VITE_APP_URL || 'https://diap.com',
+  APP_DESCRIPTION: import.meta.env.VITE_APP_DESCRIPTION || 'Plataforma B2B de tecnología con precios exclusivos para clientes registrados.',
   
   // Contact Information
-  CONTACT_EMAIL: import.meta.env.VITE_CONTACT_EMAIL || 'info@iamerican.com',
+  CONTACT_EMAIL: import.meta.env.VITE_CONTACT_EMAIL || 'info@diap.com',
   CONTACT_PHONE: import.meta.env.VITE_CONTACT_PHONE || '+54 11 1234-5678',
   CONTACT_ADDRESS: import.meta.env.VITE_CONTACT_ADDRESS || 'Av. Corrientes 1234, CABA, Argentina',
 } as const;
@@ -146,27 +146,32 @@ export const FEATURES = {
   REAL_PAYMENTS: import.meta.env.VITE_FEATURE_REAL_PAYMENTS === 'true',
   DEMO_MODE: import.meta.env.VITE_FEATURE_DEMO_MODE === 'true',
   
+  // DIAP Specific Features
+  HIDE_PRICES_FOR_GUESTS: import.meta.env.VITE_HIDE_PRICES_FOR_GUESTS === 'true',
+  LOGIN_TO_VIEW_PRICES_MESSAGE: import.meta.env.VITE_LOGIN_TO_VIEW_PRICES_MESSAGE || 'Inicia sesión para ver precios',
+  LOGIN_FOR_PRICES_CTA: import.meta.env.VITE_LOGIN_FOR_PRICES_CTA || 'Iniciar Sesión',
+  
   // Shipping and benefits features
   SHIPPING_BENEFITS: [
     {
       icon: 'Truck',
       title: import.meta.env.VITE_FEATURE_FREE_SHIPPING_TITLE || 'Envío Gratis',
-      description: import.meta.env.VITE_FEATURE_FREE_SHIPPING_DESC || 'En compras superiores a $50.000'
+      description: import.meta.env.VITE_FEATURE_FREE_SHIPPING_DESC || 'En compras mayoristas'
     },
     {
       icon: 'RotateCcw',
-      title: import.meta.env.VITE_FEATURE_FREE_RETURNS_TITLE || 'Devolución Gratis',
-      description: import.meta.env.VITE_FEATURE_FREE_RETURNS_DESC || 'Hasta 30 días para devolver'
+      title: import.meta.env.VITE_FEATURE_FREE_RETURNS_TITLE || 'Garantía Extendida',
+      description: import.meta.env.VITE_FEATURE_FREE_RETURNS_DESC || 'Soporte técnico especializado'
     },
     {
       icon: 'Shield',
       title: import.meta.env.VITE_FEATURE_SECURE_PURCHASE_TITLE || 'Compra Segura',
-      description: import.meta.env.VITE_FEATURE_SECURE_PURCHASE_DESC || 'Protegemos tus datos'
+      description: import.meta.env.VITE_FEATURE_SECURE_PURCHASE_DESC || 'Protegemos tus datos empresariales'
     },
     {
       icon: 'CreditCard',
-      title: import.meta.env.VITE_FEATURE_MULTIPLE_PAYMENTS_TITLE || 'Múltiples Pagos',
-      description: import.meta.env.VITE_FEATURE_MULTIPLE_PAYMENTS_DESC || 'Tarjetas, transferencia y más'
+      title: import.meta.env.VITE_FEATURE_MULTIPLE_PAYMENTS_TITLE || 'Crédito Empresarial',
+      description: import.meta.env.VITE_FEATURE_MULTIPLE_PAYMENTS_DESC || 'Términos de pago flexibles'
     }
   ]
 } as const;

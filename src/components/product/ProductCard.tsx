@@ -1,16 +1,18 @@
 /**
- * Tarjeta de producto profesional
+ * Tarjeta de producto profesional para DIAP
+ * Con funcionalidad de ocultar precios para usuarios no autenticados
  */
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   Heart, 
   ShoppingCart, 
   Star, 
   Eye,
   Plus,
-  Minus
+  Minus,
+  LogIn
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +24,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { PriceDisplay, usePriceVisibility } from '@/hooks/usePriceVisibility';
 import { useStore } from '@/store/useStore';
 import type { Product } from '@/types/api';
 
@@ -38,6 +41,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 }) => {
   const [quantity, setQuantity] = useState(1);
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
+  
+  const { canViewPrices, loginMessage, loginCTA } = usePriceVisibility();
+  const navigate = useNavigate();
   
   const { 
     addToCart, 
@@ -60,10 +66,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     e.preventDefault();
     e.stopPropagation();
     
-    console.log('🛒 Intentando agregar producto al carrito:', product.name);
+    if (!canViewPrices) {
+      // Redirigir al login si no puede ver precios
+      navigate('/login');
+      return;
+    }
     
     if (isOutOfStock) {
-      console.log('❌ Producto sin stock');
       addNotification({
         type: 'error',
         title: 'Producto sin stock',
@@ -72,7 +81,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       return;
     }
 
-    console.log('✅ Agregando producto al carrito:', { product: product.name, quantity });
     addToCart(product, quantity);
     setQuantity(1);
     
@@ -96,11 +104,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       });
     } else {
       addToFavorites(product.id);
+      addNotification({
+        type: 'success',
+        title: 'Agregado a favoritos',
+        message: `${product.name} agregado a favoritos`,
+      });
     }
   };
 
   const handleProductClick = () => {
     addToRecent(product.id);
+  };
+
+  const handleLoginRedirect = () => {
+    navigate('/login');
   };
 
   const formatPrice = (price: number) => {
@@ -169,6 +186,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                   Sin Stock
                 </Badge>
               )}
+              {/* Badge B2B si no puede ver precios */}
+              {!canViewPrices && (
+                <Badge className="bg-blue-500 hover:bg-blue-600 text-xs">
+                  B2B
+                </Badge>
+              )}
             </div>
 
             {/* Action buttons */}
@@ -223,14 +246,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                           </div>
                           
                           <div className="flex items-center space-x-2 mb-4">
-                            <span className="text-2xl font-bold">
-                              {formatPrice(product.unit_price)}
-                            </span>
-                            {hasDiscount && (
-                              <span className="text-lg text-muted-foreground line-through">
-                                {formatPrice(product.metadata.original_price)}
-                              </span>
-                            )}
+                            <PriceDisplay 
+                              price={product.unit_price} 
+                              originalPrice={hasDiscount ? product.metadata?.original_price : undefined} 
+                              showLoginButton={true}
+                              onLoginClick={handleLoginRedirect}
+                            />
                           </div>
                         </div>
 
@@ -238,40 +259,44 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                           {product.description}
                         </p>
 
-                        <div className="flex items-center space-x-2">
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setQuantity(Math.max(1, quantity - 1));
-                            }}
-                            disabled={quantity <= 1}
-                          >
-                            <Minus className="w-4 h-4" />
-                          </Button>
-                          <span className="w-12 text-center font-medium">{quantity}</span>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setQuantity(quantity + 1);
-                            }}
-                            disabled={quantity >= (product.stock_quantity || 0)}
-                          >
-                            <Plus className="w-4 h-4" />
-                          </Button>
-                        </div>
+                        {canViewPrices && (
+                          <>
+                            <div className="flex items-center space-x-2">
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setQuantity(Math.max(1, quantity - 1));
+                                }}
+                                disabled={quantity <= 1}
+                              >
+                                <Minus className="w-4 h-4" />
+                              </Button>
+                              <span className="w-12 text-center font-medium">{quantity}</span>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setQuantity(quantity + 1);
+                                }}
+                                disabled={quantity >= (product.stock_quantity || 0)}
+                              >
+                                <Plus className="w-4 h-4" />
+                              </Button>
+                            </div>
 
-                        <Button 
-                          className="w-full" 
-                          onClick={handleAddToCart}
-                          disabled={isOutOfStock}
-                        >
-                          <ShoppingCart className="w-4 h-4 mr-2" />
-                          {isOutOfStock ? 'Sin Stock' : 'Agregar al Carrito'}
-                        </Button>
+                            <Button 
+                              className="w-full" 
+                              onClick={handleAddToCart}
+                              disabled={isOutOfStock}
+                            >
+                              <ShoppingCart className="w-4 h-4 mr-2" />
+                              {isOutOfStock ? 'Sin Stock' : 'Agregar al Carrito'}
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </div>
                   </DialogContent>
@@ -280,17 +305,19 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             </div>
 
             {/* Quick add to cart overlay */}
-            <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <Button 
-                size="sm" 
-                className="w-full" 
-                onClick={handleAddToCart}
-                disabled={isOutOfStock}
-              >
-                <ShoppingCart className="w-4 h-4 mr-2" />
-                {isOutOfStock ? 'Sin Stock' : 'Agregar'}
-              </Button>
-            </div>
+            {canViewPrices && (
+              <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <Button 
+                  size="sm" 
+                  className="w-full" 
+                  onClick={handleAddToCart}
+                  disabled={isOutOfStock}
+                >
+                  <ShoppingCart className="w-4 h-4 mr-2" />
+                  {isOutOfStock ? 'Sin Stock' : 'Agregar'}
+                </Button>
+              </div>
+            )}
           </div>
         </Link>
 
@@ -315,15 +342,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           )}
 
           {/* Price */}
-          <div className="flex items-center space-x-2 mb-2">
-            <span className="font-bold text-lg">
-              {formatPrice(product.unit_price)}
-            </span>
-            {hasDiscount && (
-              <span className="text-sm text-muted-foreground line-through">
-                {formatPrice(product.metadata.original_price)}
-              </span>
-            )}
+          <div className="mb-2">
+            <PriceDisplay 
+              price={product.unit_price} 
+              originalPrice={hasDiscount ? product.metadata?.original_price : undefined} 
+              showLoginButton={true}
+              onLoginClick={handleLoginRedirect}
+            />
           </div>
 
           {/* Stock info */}
@@ -338,6 +363,29 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             <p className="text-xs text-muted-foreground">
               {product.category}
             </p>
+          )}
+
+          {/* Action button */}
+          {canViewPrices ? (
+            <Button 
+              className="w-full mt-2" 
+              size="sm"
+              onClick={handleAddToCart}
+              disabled={isOutOfStock}
+            >
+              <ShoppingCart className="h-4 w-4 mr-2" />
+              {isOutOfStock ? 'Sin Stock' : 'Agregar al Carrito'}
+            </Button>
+          ) : (
+            <Button 
+              variant="outline" 
+              className="w-full mt-2" 
+              size="sm"
+              onClick={handleLoginRedirect}
+            >
+              <LogIn className="h-4 w-4 mr-2" />
+              {loginCTA}
+            </Button>
           )}
         </div>
       </CardContent>

@@ -1,28 +1,32 @@
 version: '3.8'
 
 services:
-  iamerican-ecommerce:
+  diap-ecommerce:
     build: .
-    container_name: iamerican-app
+    container_name: diap-app
     ports:
       - "80:80"
       - "443:443"
     restart: unless-stopped
     environment:
       - NODE_ENV=production
+      - VITE_APP_NAME=DIAP
+      - VITE_COMPANY_NAME=DIAP Technology
+      - VITE_CONTACT_EMAIL=info@diap.com
+      - VITE_HIDE_PRICES_FOR_GUESTS=true
+      - VITE_LOGIN_TO_VIEW_PRICES_MESSAGE=Inicie sesión para ver precios
     volumes:
       - ./logs:/var/log/nginx
     networks:
-      - iamerican-network
+      - diap-network
 
 networks:
-  iamerican-network:
+  diap-network:
     driver: bridge
 
 # Para desarrollo local (opcional)
-  # iamerican-dev:
+  # diap-dev:
   #   build: .
-  #   container_name: iamerican-dev
+  #   container_name: diap-dev
   #   ports:
   #     - "3000:80"
-  #   restart: unless-stopped

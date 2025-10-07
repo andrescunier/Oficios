@@ -1,97 +1,26 @@
 version: '3.8'
 
 services:
-  # Aplicación Principal
-  iamerican-app:
-    build: 
+  diap-frontend:
+    build:
       context: .
       dockerfile: Dockerfile
-    container_name: iamerican-ecommerce
-    restart: unless-stopped
+    container_name: diap-frontend
     ports:
-      - "80:80"
+      - "3001:80"
     environment:
       - NODE_ENV=production
-      - VIRTUAL_HOST=${DOMAIN:-localhost}
-      - VIRTUAL_PORT=80
+      - VITE_APP_NAME=DIAP
+      - VITE_COMPANY_NAME=DIAP Technology
+      - VITE_CONTACT_EMAIL=info@diap.com
+      - VITE_HIDE_PRICES_FOR_GUESTS=true
+      - VITE_LOGIN_TO_VIEW_PRICES_MESSAGE=Inicie sesión para ver precios
     volumes:
-      - ./logs:/var/log/nginx:rw
-      - app_data:/app/data
+      - ./nginx-vps.conf:/etc/nginx/conf.d/default.conf
+    restart: unless-stopped
     networks:
-      - iamerican-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.iamerican.rule=Host(`${DOMAIN:-localhost}`)"
-      - "traefik.http.routers.iamerican.entrypoints=web"
-      - "traefik.http.services.iamerican.loadbalancer.server.port=80"
-
-  # Reverse Proxy con SSL automático (opcional)
-  # Descomenta si quieres usar Traefik en lugar de Nginx
-  # traefik:
-  #   image: traefik:v2.9
-  #   container_name: traefik
-  #   restart: unless-stopped
-  #   ports:
-  #     - "80:80"
-  #     - "443:443"
-  #   command:
-  #     - --api.dashboard=true
-  #     - --api.insecure=true
-  #     - --entrypoints.web.address=:80
-  #     - --entrypoints.websecure.address=:443
-  #     - --providers.docker=true
-  #     - --providers.docker.exposedbydefault=false
-  #     - --certificatesresolvers.le.acme.httpchallenge=true
-  #     - --certificatesresolvers.le.acme.httpchallenge.entrypoint=web
-  #     - --certificatesresolvers.le.acme.email=${ACME_EMAIL:-admin@example.com}
-  #     - --certificatesresolvers.le.acme.storage=/letsencrypt/acme.json
-  #   volumes:
-  #     - /var/run/docker.sock:/var/run/docker.sock:ro
-  #     - traefik_letsencrypt:/letsencrypt
-  #   networks:
-  #     - iamerican-network
-
-  # Base de datos (opcional - si necesitas persistencia local)
-  # redis:
-  #   image: redis:7-alpine
-  #   container_name: iamerican-redis
-  #   restart: unless-stopped
-  #   volumes:
-  #     - redis_data:/data
-  #   networks:
-  #     - iamerican-network
-  #   command: redis-server --appendonly yes
-
-  # Monitoreo (opcional)
-  # watchtower:
-  #   image: containrrr/watchtower
-  #   container_name: watchtower
-  #   restart: unless-stopped
-  #   volumes:
-  #     - /var/run/docker.sock:/var/run/docker.sock
-  #   command: --interval 30 --cleanup
-  #   environment:
-  #     - WATCHTOWER_NOTIFICATIONS=email
-  #     - WATCHTOWER_NOTIFICATION_EMAIL_FROM=${EMAIL:-admin@example.com}
-  #     - WATCHTOWER_NOTIFICATION_EMAIL_TO=${EMAIL:-admin@example.com}
-
-volumes:
-  app_data:
-    driver: local
-  # redis_data:
-  #   driver: local
-  # traefik_letsencrypt:
-  #   driver: local
+      - diap-network
 
 networks:
-  iamerican-network:
+  diap-network:
     driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16

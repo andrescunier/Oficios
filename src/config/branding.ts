@@ -23,14 +23,14 @@ export const API_CONFIG = {
 // =========================================
 export const BRANDING = {
   // App Information
-  APP_NAME: import.meta.env.VITE_APP_NAME || 'iAmerican',
-  COMPANY_NAME: import.meta.env.VITE_COMPANY_NAME || 'iAmerican Technology',
-  APP_SLOGAN: import.meta.env.VITE_APP_SLOGAN || 'Tecnología de vanguardia con envío gratuito',
-  APP_URL: import.meta.env.VITE_APP_URL || 'https://iamerican.com',
-  APP_DESCRIPTION: import.meta.env.VITE_APP_DESCRIPTION || 'Tu tienda online de confianza. Ofrecemos productos de tecnología de calidad con la mejor atención al cliente y envíos a todo el país.',
+  APP_NAME: import.meta.env.VITE_APP_NAME || 'DIAP',
+  COMPANY_NAME: import.meta.env.VITE_COMPANY_NAME || 'DIAP',
+  APP_SLOGAN: import.meta.env.VITE_APP_SLOGAN || 'Tecnología profesional para empresas',
+  APP_URL: import.meta.env.VITE_APP_URL || 'https://diap.com',
+  APP_DESCRIPTION: import.meta.env.VITE_APP_DESCRIPTION || 'DIAP - Distribuidora de productos tecnológicos de primera calidad. Soluciones profesionales para tu empresa.',
   
   // Contact Information
-  CONTACT_EMAIL: import.meta.env.VITE_CONTACT_EMAIL || 'info@iamerican.com',
+  CONTACT_EMAIL: import.meta.env.VITE_CONTACT_EMAIL || 'info@diap.com',
   CONTACT_PHONE: import.meta.env.VITE_CONTACT_PHONE || '+54 11 1234-5678',
   CONTACT_ADDRESS: import.meta.env.VITE_CONTACT_ADDRESS || 'Av. Corrientes 1234, CABA, Argentina',
 } as const;
@@ -40,10 +40,10 @@ export const BRANDING = {
 // =========================================
 export const ASSETS = {
   // Logos
-  LOGO_PATH: import.meta.env.VITE_LOGO_PATH || '/americanlog3_1x.png',
+  LOGO_PATH: import.meta.env.VITE_LOGO_PATH || '/diap-logo.png',
   FAVICON_PATH: import.meta.env.VITE_FAVICON_PATH || '/favicon.ico',
-  HEADER_LOGO_PATH: import.meta.env.VITE_HEADER_LOGO_PATH || '/americanlog3_1x.png',
-  FOOTER_LOGO_PATH: import.meta.env.VITE_FOOTER_LOGO_PATH || '/americanlog3_1x.png',
+  HEADER_LOGO_PATH: import.meta.env.VITE_HEADER_LOGO_PATH || '/diap-logo.png',
+  FOOTER_LOGO_PATH: import.meta.env.VITE_FOOTER_LOGO_PATH || '/diap-logo.png',
   
   // Hero Slider Images
   HERO_SLIDES: [

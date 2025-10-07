@@ -1,8 +1,14 @@
 {
-  "name": "iamerican-react-pro",
+  "name": "diap-ecommerce",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
+  "description": "DIAP - Distribuidora de productos tecnológicos de primera calidad",
+  "homepage": "https://diap.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/andrescunier/DIAP.git"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",

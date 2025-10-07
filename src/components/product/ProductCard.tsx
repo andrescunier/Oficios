@@ -24,6 +24,9 @@ import {
 } from '@/components/ui/dialog';
 import { useStore } from '@/store/useStore';
 import type { Product } from '@/types/api';
+import { PriceDisplay, usePriceVisibility } from '@/hooks/usePriceVisibility';
+import { useNavigate } from 'react-router-dom';
+import { FEATURES } from '@/config/branding';
 
 interface ProductCardProps {
   product: Product;
@@ -38,6 +41,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 }) => {
   const [quantity, setQuantity] = useState(1);
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
+  const navigate = useNavigate();
   
   const { 
     addToCart, 
@@ -45,8 +49,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     removeFromFavorites, 
     isFavorite,
     addToRecent,
-    addNotification 
+    addNotification,
+    auth
   } = useStore();
+
+  const { canViewPrices } = usePriceVisibility();
+  const isAuthenticated = auth.isAuthenticated;
 
   const isProductFavorite = isFavorite(product.id);
   const isOutOfStock = (product.stock_quantity || 0) <= 0;
@@ -61,6 +69,21 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     e.stopPropagation();
     
     console.log('🛒 Intentando agregar producto al carrito:', product.name);
+    
+    // Verificar si el usuario está autenticado (solo si el feature está habilitado)
+    if (FEATURES.REQUIRE_AUTH_FOR_CART && !isAuthenticated) {
+      console.log('❌ Usuario no autenticado');
+      addNotification({
+        type: 'warning',
+        title: 'Inicia sesión',
+        message: 'Debes iniciar sesión para agregar productos al carrito',
+      });
+      // Redirigir a login después de 1 segundo
+      setTimeout(() => {
+        navigate('/login');
+      }, 1000);
+      return;
+    }
     
     if (isOutOfStock) {
       console.log('❌ Producto sin stock');
@@ -222,16 +245,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                             </span>
                           </div>
                           
-                          <div className="flex items-center space-x-2 mb-4">
-                            <span className="text-2xl font-bold">
-                              {formatPrice(product.unit_price)}
-                            </span>
-                            {hasDiscount && (
-                              <span className="text-lg text-muted-foreground line-through">
-                                {formatPrice(product.metadata.original_price)}
-                              </span>
-                            )}
-                          </div>
+                          <PriceDisplay
+                            price={product.unit_price}
+                            originalPrice={hasDiscount ? product.metadata?.original_price : undefined}
+                            showLoginButton={true}
+                          />
                         </div>
 
                         <p className="text-sm text-muted-foreground">
@@ -315,16 +333,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           )}
 
           {/* Price */}
-          <div className="flex items-center space-x-2 mb-2">
-            <span className="font-bold text-lg">
-              {formatPrice(product.unit_price)}
-            </span>
-            {hasDiscount && (
-              <span className="text-sm text-muted-foreground line-through">
-                {formatPrice(product.metadata.original_price)}
-              </span>
-            )}
-          </div>
+          <PriceDisplay
+            price={product.unit_price}
+            originalPrice={hasDiscount ? product.metadata?.original_price : undefined}
+            showLoginButton={true}
+          />
 
           {/* Stock info */}
           {!isOutOfStock && (product.stock_quantity || 0) <= 5 && (

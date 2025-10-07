@@ -82,6 +82,12 @@ interface ImportMetaEnv {
   readonly VITE_ENABLE_REAL_PAYMENTS: string
   readonly VITE_DEMO_MODE: string
   
+  // DIAP B2B Specific Features
+  readonly VITE_HIDE_PRICES_FOR_GUESTS: string
+  readonly VITE_LOGIN_TO_VIEW_PRICES_MESSAGE: string
+  readonly VITE_LOGIN_FOR_PRICES_CTA: string
+  readonly VITE_REQUIRE_AUTH_FOR_CART: string
+  
   // Colors & Theming
   readonly VITE_PRIMARY_COLOR: string
   readonly VITE_SECONDARY_COLOR: string

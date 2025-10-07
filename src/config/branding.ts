@@ -49,24 +49,24 @@ export const ASSETS = {
   HERO_SLIDES: [
     {
       image: import.meta.env.VITE_HERO_SLIDE_1 || '/images/heroes/slide-1.jpg',
-      title: import.meta.env.VITE_HERO_SLIDE_1_TITLE || 'Tecnología de Vanguardia',
-      subtitle: import.meta.env.VITE_HERO_SLIDE_1_SUBTITLE || 'Descubre los mejores productos tecnológicos',
-      cta: import.meta.env.VITE_HERO_SLIDE_1_CTA || 'Ver Productos',
+      title: import.meta.env.VITE_HERO_SLIDE_1_TITLE || 'Tecnología Profesional para Empresas',
+      subtitle: import.meta.env.VITE_HERO_SLIDE_1_SUBTITLE || 'Soluciones B2B en componentes de alta gama',
+      cta: import.meta.env.VITE_HERO_SLIDE_1_CTA || 'Ver Catálogo',
       link: '/productos'
     },
     {
       image: import.meta.env.VITE_HERO_SLIDE_2 || '/images/heroes/slide-2.jpg',
-      title: import.meta.env.VITE_HERO_SLIDE_2_TITLE || 'Gaming Premium',
-      subtitle: import.meta.env.VITE_HERO_SLIDE_2_SUBTITLE || 'Lleva tu experiencia gaming al siguiente nivel',
-      cta: import.meta.env.VITE_HERO_SLIDE_2_CTA || 'Explorar Gaming',
-      link: '/categoria/gaming'
+      title: import.meta.env.VITE_HERO_SLIDE_2_TITLE || 'SSDs de Alto Rendimiento',
+      subtitle: import.meta.env.VITE_HERO_SLIDE_2_SUBTITLE || 'Almacenamiento profesional para tu negocio',
+      cta: import.meta.env.VITE_HERO_SLIDE_2_CTA || 'Explorar SSDs',
+      link: '/productos'
     },
     {
       image: import.meta.env.VITE_HERO_SLIDE_3 || '/images/heroes/slide-3.jpg',
-      title: import.meta.env.VITE_HERO_SLIDE_3_TITLE || 'Componentes Pro',
-      subtitle: import.meta.env.VITE_HERO_SLIDE_3_SUBTITLE || 'Hardware profesional para desarrolladores',
-      cta: import.meta.env.VITE_HERO_SLIDE_3_CTA || 'Ver Componentes',
-      link: '/categoria/componentes'
+      title: import.meta.env.VITE_HERO_SLIDE_3_TITLE || 'Memorias RAM DDR4 & DDR5',
+      subtitle: import.meta.env.VITE_HERO_SLIDE_3_SUBTITLE || 'Maximiza el rendimiento de tus equipos',
+      cta: import.meta.env.VITE_HERO_SLIDE_3_CTA || 'Ver Memorias',
+      link: '/productos'
     }
   ],
   
@@ -145,6 +145,12 @@ export const FEATURES = {
   ANALYTICS: import.meta.env.VITE_FEATURE_ANALYTICS === 'true',
   REAL_PAYMENTS: import.meta.env.VITE_FEATURE_REAL_PAYMENTS === 'true',
   DEMO_MODE: import.meta.env.VITE_FEATURE_DEMO_MODE === 'true',
+  
+  // DIAP B2B Specific Features
+  HIDE_PRICES_FOR_GUESTS: import.meta.env.VITE_HIDE_PRICES_FOR_GUESTS === 'true',
+  LOGIN_TO_VIEW_PRICES_MESSAGE: import.meta.env.VITE_LOGIN_TO_VIEW_PRICES_MESSAGE || 'Inicia sesión para ver precios',
+  LOGIN_FOR_PRICES_CTA: import.meta.env.VITE_LOGIN_FOR_PRICES_CTA || 'Iniciar Sesión',
+  REQUIRE_AUTH_FOR_CART: import.meta.env.VITE_REQUIRE_AUTH_FOR_CART === 'true',
   
   // Shipping and benefits features
   SHIPPING_BENEFITS: [

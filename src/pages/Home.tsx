@@ -21,6 +21,7 @@ import { ProductCard } from '@/components/product/ProductCard';
 import { useStore } from '@/store/useStore';
 import { productService } from '@/services/productService';
 import type { Product } from '@/types/api';
+import { ASSETS, BRANDING } from '@/config/branding';
 
 export const Home: React.FC = () => {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
@@ -31,36 +32,8 @@ export const Home: React.FC = () => {
   
   const { setError, addNotification } = useStore();
 
-  // Hero slides
-  const heroSlides = [
-    {
-      id: 1,
-      title: "DEFEND YOUR WALLET. UPGRADE YOUR POWER!",
-      subtitle: "Tecnología de vanguardia a precios justos",
-      description: "SSDs, memoria RAM y componentes de alta calidad para potenciar tu equipo",
-      image: "/images/heroes/slide-1.jpg",
-      cta: "Explorar Productos",
-      link: "/productos"
-    },
-    {
-      id: 2,
-      title: "Soluciones Innovadoras",
-      subtitle: "SSDs M.2 PCIe NVMe de última generación",
-      description: "Experimenta velocidades extremas y rendimiento sin límites",
-      image: "/images/heroes/slide-2.jpg",
-      cta: "Ver SSDs",
-      link: "/categoria/ssds"
-    },
-    {
-      id: 3,
-      title: "Memoria del Futuro",
-      subtitle: "DDR4 y DDR5 para máximo rendimiento",
-      description: "Revoluciona tu flujo de trabajo con nuestra tecnología de memoria avanzada",
-      image: "/images/heroes/slide-3.jpg",
-      cta: "Ver Memoria",
-      link: "/categoria/memoria"
-    }
-  ];
+  // Hero slides - usando configuración de branding
+  const heroSlides = ASSETS.HERO_SLIDES;
 
   // Features
   const features = [
@@ -198,7 +171,7 @@ export const Home: React.FC = () => {
         <div className="relative w-full h-full">
           {heroSlides.map((slide, index) => (
             <div
-              key={slide.id}
+              key={index}
               className={`absolute inset-0 transition-transform duration-500 ease-in-out ${
                 index === currentSlide ? 'translate-x-0' : 
                 index < currentSlide ? '-translate-x-full' : 'translate-x-full'
@@ -214,9 +187,6 @@ export const Home: React.FC = () => {
                     <h2 className="text-xl md:text-2xl mb-4 text-blue-100">
                       {slide.subtitle}
                     </h2>
-                    <p className="text-lg mb-8 text-blue-50">
-                      {slide.description}
-                    </p>
                     <Link to={slide.link}>
                       <Button size="lg" variant="secondary" className="text-lg px-8">
                         {slide.cta}

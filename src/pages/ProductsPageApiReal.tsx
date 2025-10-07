@@ -3,11 +3,13 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Search, Plus, Minus } from 'lucide-react';
 import { productService } from '@/services/productService';
 import { useStore } from '@/store/useStore';
 import type { Product } from '@/types/api';
+import { PriceDisplay } from '@/hooks/usePriceVisibility';
+import { FEATURES } from '@/config/branding';
 
 export const ProductsPageApiReal: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -15,8 +17,10 @@ export const ProductsPageApiReal: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [quantities, setQuantities] = useState<Record<string, number>>({});
+  const navigate = useNavigate();
 
-  const { addToCart, addNotification } = useStore();
+  const { addToCart, addNotification, auth } = useStore();
+  const isAuthenticated = auth.isAuthenticated;
 
   useEffect(() => {
     loadProducts();
@@ -239,6 +243,20 @@ export const ProductsPageApiReal: React.FC = () => {
 
   // Función para agregar al carrito
   const handleAddToCart = (product: Product) => {
+    // Verificar autenticación (solo si el feature está habilitado)
+    if (FEATURES.REQUIRE_AUTH_FOR_CART && !isAuthenticated) {
+      addNotification({
+        type: 'warning',
+        title: 'Inicia sesión',
+        message: 'Debes iniciar sesión para agregar productos al carrito',
+      });
+      // Redirigir a login después de 1 segundo
+      setTimeout(() => {
+        navigate('/login');
+      }, 1000);
+      return;
+    }
+
     const quantity = getQuantity(product.id.toString());
 
     addToCart(product, quantity);
@@ -354,10 +372,14 @@ export const ProductsPageApiReal: React.FC = () => {
                     {product.description || 'Sin descripción disponible'}
                   </p>
                   
+                  <div className="mb-2">
+                    <PriceDisplay
+                      price={product.unit_price}
+                      showLoginButton={true}
+                    />
+                  </div>
+                  
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-lg font-bold text-blue-600">
-                      {formatPrice(product.unit_price)}
-                    </span>
                     {product.stock_quantity !== undefined && (
                       <span className={`text-sm ${product.stock_quantity > 0 ? 'text-green-600' : 'text-red-600'}`}>
                         {product.stock_quantity > 0 ? `Stock: ${product.stock_quantity}` : 'Sin stock'}

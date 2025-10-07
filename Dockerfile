@@ -1,4 +1,4 @@
-# Dockerfile para iAmerican E-commerce
+# Dockerfile para DIAP B2B E-commerce Platform
 FROM node:20-alpine AS builder
 
 # Instalar pnpm

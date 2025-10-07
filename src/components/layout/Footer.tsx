@@ -110,23 +110,20 @@ export const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8">
           {/* Company info */}
           <div className="lg:col-span-2">
-            <Link to="/" className="flex items-center space-x-2 mb-4">
+            <Link to="/" className="flex items-center mb-4">
               {ASSETS.HEADER_LOGO_PATH ? (
                 <img
                   src={ASSETS.HEADER_LOGO_PATH}
                   alt={`${BRANDING.APP_NAME} Logo`}
-                  className="h-8 w-auto"
+                  className="h-10 w-auto"
                 />
               ) : (
-                <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
+                <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
                   <span className="text-white font-bold text-lg">
                     {BRANDING.APP_NAME.slice(0, 2).toUpperCase()}
                   </span>
                 </div>
               )}
-              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                {BRANDING.APP_NAME}
-              </span>
             </Link>
             
             <p className="text-sm text-muted-foreground mb-6">

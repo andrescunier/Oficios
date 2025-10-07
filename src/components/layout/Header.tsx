@@ -78,23 +78,20 @@ export const Header: React.FC = () => {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center space-x-8">
-            <Link to="/" className="flex items-center space-x-2">
+            <Link to="/" className="flex items-center">
               {ASSETS.HEADER_LOGO_PATH ? (
                 <img
                   src={ASSETS.HEADER_LOGO_PATH}
                   alt={`${BRANDING.APP_NAME} Logo`}
-                  className="h-8 w-auto"
+                  className="h-10 w-auto"
                 />
               ) : (
-                <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
+                <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
                   <span className="text-white font-bold text-lg">
                     {BRANDING.APP_NAME.slice(0, 2).toUpperCase()}
                   </span>
                 </div>
               )}
-              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                {BRANDING.APP_NAME}
-              </span>
             </Link>
 
             <nav className="hidden lg:flex space-x-8">

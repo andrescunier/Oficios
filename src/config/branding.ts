@@ -36,33 +36,33 @@ export const BRANDING = {
 } as const;
 
 // =========================================
-// LOGOS & IMAGES
+// ASSETS & IMAGES
 // =========================================
 export const ASSETS = {
   // Logos
-  LOGO_PATH: import.meta.env.VITE_LOGO_PATH || '/diap-logo.png',
+  LOGO_PATH: import.meta.env.VITE_CDN_LOGO || import.meta.env.VITE_LOGO_PATH || '/diap-logo.png',
   FAVICON_PATH: import.meta.env.VITE_FAVICON_PATH || '/favicon.ico',
-  HEADER_LOGO_PATH: import.meta.env.VITE_HEADER_LOGO_PATH || '/diap-logo.png',
-  FOOTER_LOGO_PATH: import.meta.env.VITE_FOOTER_LOGO_PATH || '/diap-logo.png',
+  HEADER_LOGO_PATH: import.meta.env.VITE_CDN_LOGO || import.meta.env.VITE_HEADER_LOGO_PATH || '/diap-logo.png',
+  FOOTER_LOGO_PATH: import.meta.env.VITE_CDN_LOGO || import.meta.env.VITE_FOOTER_LOGO_PATH || '/diap-logo.png',
   
   // Hero Slider Images
   HERO_SLIDES: [
     {
-      image: import.meta.env.VITE_HERO_SLIDE_1 || '/images/heroes/slide-1.jpg',
+      image: import.meta.env.VITE_CDN_HERO_SLIDE_1 || import.meta.env.VITE_HERO_SLIDE_1 || '/images/heroes/slide-1.jpg',
       title: import.meta.env.VITE_HERO_SLIDE_1_TITLE || 'Tecnología Profesional para Empresas',
       subtitle: import.meta.env.VITE_HERO_SLIDE_1_SUBTITLE || 'Soluciones B2B en componentes de alta gama',
       cta: import.meta.env.VITE_HERO_SLIDE_1_CTA || 'Ver Catálogo',
       link: '/productos'
     },
     {
-      image: import.meta.env.VITE_HERO_SLIDE_2 || '/images/heroes/slide-2.jpg',
+      image: import.meta.env.VITE_CDN_HERO_SLIDE_2 || import.meta.env.VITE_HERO_SLIDE_2 || '/images/heroes/slide-2.jpg',
       title: import.meta.env.VITE_HERO_SLIDE_2_TITLE || 'SSDs de Alto Rendimiento',
       subtitle: import.meta.env.VITE_HERO_SLIDE_2_SUBTITLE || 'Almacenamiento profesional para tu negocio',
       cta: import.meta.env.VITE_HERO_SLIDE_2_CTA || 'Explorar SSDs',
       link: '/productos'
     },
     {
-      image: import.meta.env.VITE_HERO_SLIDE_3 || '/images/heroes/slide-3.jpg',
+      image: import.meta.env.VITE_CDN_HERO_SLIDE_3 || import.meta.env.VITE_HERO_SLIDE_3 || '/images/heroes/slide-3.jpg',
       title: import.meta.env.VITE_HERO_SLIDE_3_TITLE || 'Memorias RAM DDR4 & DDR5',
       subtitle: import.meta.env.VITE_HERO_SLIDE_3_SUBTITLE || 'Maximiza el rendimiento de tus equipos',
       cta: import.meta.env.VITE_HERO_SLIDE_3_CTA || 'Ver Memorias',

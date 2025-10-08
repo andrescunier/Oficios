@@ -6,6 +6,13 @@ interface ImportMetaEnv {
   readonly VITE_ACCOUNT_ID: string
   readonly VITE_API_EXTRA_HEADERS: string
   
+  // CDN Configuration
+  readonly VITE_CDN_BASE_URL: string
+  readonly VITE_CDN_HERO_SLIDE_1: string
+  readonly VITE_CDN_HERO_SLIDE_2: string
+  readonly VITE_CDN_HERO_SLIDE_3: string
+  readonly VITE_CDN_LOGO: string
+  
   // Branding & Company Info
   readonly VITE_APP_NAME: string
   readonly VITE_COMPANY_NAME: string

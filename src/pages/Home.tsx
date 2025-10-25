@@ -2,7 +2,7 @@
  * Página principal del ecommerce iAmerican
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   ArrowRight, 
@@ -29,14 +29,66 @@ export const Home: React.FC = () => {
   const [onSaleProducts, setOnSaleProducts] = useState<Product[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [slidesError, setSlidesError] = useState<string | null>(null);
   
   const { setError, addNotification } = useStore();
 
   // Hero slides - usando configuración de branding
-  const heroSlides = ASSETS.HERO_SLIDES;
+  const { heroSlides, usedFallbackSlides } = useMemo(() => {
+    const configuredSlides = (ASSETS.HERO_SLIDES || []).filter(
+      (slide) => slide && typeof slide.image === 'string' && slide.image.trim().length > 0
+    );
+
+    if (configuredSlides.length) {
+      return { heroSlides: configuredSlides, usedFallbackSlides: false };
+    }
+
+    return {
+      heroSlides: [
+        {
+          image: '/images/heroes/slide-1.jpg',
+          title: 'Tecnología Profesional para Empresas',
+          subtitle: 'Soluciones B2B en componentes de alta gama',
+          cta: 'Ver catálogo',
+          link: '/productos',
+        },
+        {
+          image: '/images/heroes/slide-2.jpg',
+          title: 'SSDs de Alto Rendimiento',
+          subtitle: 'Almacenamiento profesional para tu negocio',
+          cta: 'Explorar SSDs',
+          link: '/productos',
+        },
+        {
+          image: '/images/heroes/slide-3.jpg',
+          title: 'Memorias RAM DDR4 & DDR5',
+          subtitle: 'Maximiza el rendimiento de tus equipos',
+          cta: 'Ver memorias',
+          link: '/productos',
+        },
+      ],
+      usedFallbackSlides: true,
+    };
+  }, []);
+
+  useEffect(() => {
+    if (usedFallbackSlides) {
+      setSlidesError('No se encontraron diapositivas configuradas. Mostrando contenido por defecto.');
+    } else {
+      setSlidesError(null);
+    }
+  }, [usedFallbackSlides]);
   
-  // Debug: ver qué imágenes está intentando cargar
-  console.log('🖼️ Hero Slides:', heroSlides);
+  // Pre-cargar imágenes para mejor rendimiento
+  useEffect(() => {
+    heroSlides.forEach((slide, index) => {
+      const img = new Image();
+      img.onerror = () => {
+        setSlidesError('No se pudieron cargar algunas imágenes del slider. Revisa la configuración del CDN.');
+      };
+      img.src = slide.image;
+    });
+  }, [heroSlides]);
 
   // Features
   const features = [
@@ -108,12 +160,14 @@ export const Home: React.FC = () => {
 
   useEffect(() => {
     // Auto-slide del hero
+    if (heroSlides.length <= 1) return undefined;
+
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [heroSlides.length]);
+  }, [heroSlides]);
 
   const loadHomeData = async () => {
     try {
@@ -123,27 +177,37 @@ export const Home: React.FC = () => {
       const featured = await productService.getFeaturedProducts(8);
       setFeaturedProducts(featured);
 
+      const normalizeProducts = (response: any): Product[] => {
+        const productsData = Array.isArray(response) ? response : 
+                           (response?.data && Array.isArray(response.data) ? response.data : []);
+        
+        if (!Array.isArray(productsData)) {
+          return [];
+        }
+        
+        return productsData;
+      };
+
       // Cargar productos nuevos (simulado con los más recientes)
       const newProductsResponse = await productService.getProducts({
         per_page: 8,
         is_active: true
       });
-      setNewProducts(newProductsResponse.data);
+      setNewProducts(normalizeProducts(newProductsResponse));
 
       // Cargar productos en oferta (simulado con productos que tienen descuento)
       const onSaleResponse = await productService.getProducts({
         per_page: 8,
         is_active: true
       });
-      // Filtrar productos con descuento
-      const onSale = onSaleResponse.data.filter(product => 
-        product.metadata?.original_price && 
+      const normalizedOnSale = normalizeProducts(onSaleResponse);
+      const onSale = normalizedOnSale.filter(product => 
+        product?.metadata?.original_price && 
         product.metadata.original_price > product.unit_price
       );
       setOnSaleProducts(onSale);
 
     } catch (error) {
-      console.error('Error loading home data:', error);
       setError('Error al cargar los datos de la página principal');
       addNotification({
         type: 'error',
@@ -155,7 +219,7 @@ export const Home: React.FC = () => {
     }
   };
 
-  const nextSlide = () => {
+  const nextSlide = () => { 
     setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
   };
 
@@ -170,36 +234,34 @@ export const Home: React.FC = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative h-[500px] md:h-[600px] overflow-hidden">
+      <section className="relative h-[500px] md:h-[600px] overflow-hidden bg-gray-900">
         <div className="relative w-full h-full">
           {heroSlides.map((slide, index) => (
             <div
               key={index}
-              className={`absolute inset-0 transition-transform duration-500 ease-in-out ${
-                index === currentSlide ? 'translate-x-0' : 
-                index < currentSlide ? '-translate-x-full' : 'translate-x-full'
+              className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
+                index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
               }`}
             >
               <div 
-                className="relative w-full h-full bg-gradient-to-r from-blue-600 to-purple-600"
+                className="relative w-full h-full"
                 style={{
-                  backgroundImage: `url(${slide.image})`,
+                  backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('${slide.image}')`,
                   backgroundSize: 'cover',
                   backgroundPosition: 'center',
                   backgroundRepeat: 'no-repeat'
                 }}
               >
-                <div className="absolute inset-0 bg-black/40" />
                 <div className="relative container mx-auto px-4 h-full flex items-center">
                   <div className="max-w-2xl text-white">
-                    <h1 className="text-4xl md:text-6xl font-bold mb-4">
+                    <h1 className="text-4xl md:text-6xl font-bold mb-4 drop-shadow-lg">
                       {slide.title}
                     </h1>
-                    <h2 className="text-xl md:text-2xl mb-4 text-blue-100">
+                    <h2 className="text-xl md:text-2xl mb-6 text-blue-100 drop-shadow-md">
                       {slide.subtitle}
                     </h2>
                     <Link to={slide.link}>
-                      <Button size="lg" variant="secondary" className="text-lg px-8">
+                      <Button size="lg" variant="secondary" className="text-lg px-8 shadow-lg hover:shadow-xl transition-shadow">
                         {slide.cta}
                         <ArrowRight className="ml-2 h-5 w-5" />
                       </Button>
@@ -215,29 +277,32 @@ export const Home: React.FC = () => {
         <Button
           variant="secondary"
           size="icon"
-          className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10"
+          className="absolute left-4 top-1/2 transform -translate-y-1/2 z-20 hover:scale-110 transition-transform"
           onClick={prevSlide}
+          aria-label="Slide anterior"
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft className="h-6 w-6" />
         </Button>
         <Button
           variant="secondary"
           size="icon"
-          className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10"
+          className="absolute right-4 top-1/2 transform -translate-y-1/2 z-20 hover:scale-110 transition-transform"
           onClick={nextSlide}
+          aria-label="Siguiente slide"
         >
-          <ChevronRight className="h-4 w-4" />
+          <ChevronRight className="h-6 w-6" />
         </Button>
 
         {/* Dots indicator */}
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex space-x-2 z-20">
           {heroSlides.map((_, index) => (
             <button
               key={index}
-              className={`w-3 h-3 rounded-full transition-colors ${
-                index === currentSlide ? 'bg-white' : 'bg-white/50'
+              className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                index === currentSlide ? 'bg-white w-8' : 'bg-white/50 hover:bg-white/75'
               }`}
               onClick={() => goToSlide(index)}
+              aria-label={`Ir a slide ${index + 1}`}
             />
           ))}
         </div>

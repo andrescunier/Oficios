@@ -48,7 +48,7 @@ export const Header: React.FC = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      console.log('Searching for:', searchQuery);
+      // Lógica de búsqueda
     }
   };
 
@@ -177,7 +177,7 @@ export const Header: React.FC = () => {
                   </Link>
                 </Button>
                 <Button size="sm" asChild>
-                  <Link to="/register">
+                  <Link to="/registro">
                     <UserPlus className="h-4 w-4 mr-2" />
                     Registrarse
                   </Link>
@@ -232,7 +232,7 @@ export const Header: React.FC = () => {
                     </Link>
                   </Button>
                   <Button className="w-full justify-start" asChild>
-                    <Link to="/register" onClick={() => setIsMenuOpen(false)}>
+                    <Link to="/registro" onClick={() => setIsMenuOpen(false)}>
                       <UserPlus className="h-4 w-4 mr-2" />
                       Registrarse
                     </Link>

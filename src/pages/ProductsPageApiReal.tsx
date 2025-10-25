@@ -78,16 +78,12 @@ export const ProductsPageApiReal: React.FC = () => {
       setLoading(true);
       setError(null);
       
-      console.log('🔍 Cargando productos desde la API...');
-      
       // Llamar a la API real
       const response = await productService.getProducts({
         page: 1,
         per_page: 50, // Cargar más productos
         is_active: true
       });
-      
-      console.log('✅ Respuesta de la API:', response);
       
       // Verificar la estructura de la respuesta
       let productArray: Product[] = [];
@@ -99,11 +95,8 @@ export const ProductsPageApiReal: React.FC = () => {
         // La respuesta tiene estructura PaginatedResponse
         productArray = response.data;
       } else {
-        console.error('❌ Estructura de respuesta inesperada:', response);
         throw new Error('Formato de respuesta de API inválido');
       }
-      
-      console.log('✅ Productos encontrados:', productArray.length);
       
       // Procesar productos y asignar imágenes
       const productsWithImages = productArray.map(product => ({
@@ -112,7 +105,6 @@ export const ProductsPageApiReal: React.FC = () => {
       }));
       
       setProducts(productsWithImages);
-      console.log('✅ Productos procesados:', productsWithImages.length);
       
       if (productsWithImages.length === 0) {
         addNotification({
@@ -123,19 +115,16 @@ export const ProductsPageApiReal: React.FC = () => {
       }
       
     } catch (err: any) {
-      console.error('❌ Error loading products:', err);
-      
       const errorMessage = err?.message || 'Error desconocido al cargar productos';
       setError(errorMessage);
-      
+
       addNotification({
         type: 'error',
         title: 'Error de conexión',
         message: 'No se pudieron cargar los productos desde el servidor. Verifica tu conexión.',
       });
-      
+
       // Fallback: cargar productos de ejemplo si la API falla
-      console.log('🔄 Cargando productos de fallback...');
       loadFallbackProducts();
       
     } finally {
@@ -212,7 +201,7 @@ export const ProductsPageApiReal: React.FC = () => {
     ];
 
     setProducts(fallbackProducts);
-    setError('Usando productos de demostración (API no disponible)');
+    setError('Error de conexión - Mostrando productos de ejemplo');
   };
 
   const formatPrice = (price: number) => {
@@ -300,24 +289,12 @@ export const ProductsPageApiReal: React.FC = () => {
         <div className="bg-white rounded-lg shadow-sm p-4 mb-8">
           <div className="flex items-center justify-between">
             <span className="text-gray-600">
-              {loading ? 'Cargando desde API...' : `${filteredProducts.length} productos encontrados`}
+              {loading ? 'Cargando productos...' : `${filteredProducts.length} productos encontrados`}
             </span>
-            <div className="flex space-x-2">
-              <span className={`px-3 py-1 rounded-full text-sm ${
-                error && error.includes('demostración') 
-                  ? 'bg-yellow-100 text-yellow-800' 
-                  : 'bg-green-100 text-green-800'
-              }`}>
-                API: {error && error.includes('demostración') ? 'Fallback' : 'Conectada'}
-              </span>
-              <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-                Tiempo real
-              </span>
-            </div>
           </div>
-          {error && !error.includes('demostración') && (
+          {error && (
             <div className="mt-2 text-sm text-red-600">
-              {error} - <button onClick={loadProducts} className="underline hover:no-underline">Reintentar</button>
+              Error al cargar productos - <button onClick={loadProducts} className="underline hover:no-underline">Reintentar</button>
             </div>
           )}
         </div>

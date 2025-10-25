@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
-import { Home } from '@/pages/Home-simplified';
+import { Home } from '@/pages/Home';
 import { CategoryPage } from '@/pages/CategoryPage';
 import { ProductsPageApiReal as ProductsPage } from '@/pages/ProductsPageApiReal';
 import { ContactPage } from '@/pages/ContactPage';
@@ -11,6 +11,7 @@ import { Login } from '@/pages/Login';
 import { Register } from '@/pages/Register';
 import { CartPage } from '@/pages/CartPage';
 import { CheckoutPage } from '@/pages/CheckoutPage';
+import RegistrationSuccess from '@/pages/RegistrationSuccess';
 import { QUERY_CONFIG } from '@/config/api';
 import './App.css';
 
@@ -30,6 +31,7 @@ function App() {
               <Route path="/contacto" element={<ContactPage />} />
               <Route path="/login" element={<Login />} />
               <Route path="/registro" element={<Register />} />
+              <Route path="/registro-exitoso" element={<RegistrationSuccess />} />
               <Route path="/carrito" element={<CartPage />} />
               <Route path="/checkout" element={<CheckoutPage />} />
               <Route path="/categoria/:category" element={<CategoryPage />} />

@@ -64,46 +64,23 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     ? Math.round(((product.metadata.original_price - product.unit_price) / product.metadata.original_price) * 100)
     : 0;
 
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    console.log('🛒 Intentando agregar producto al carrito:', product.name);
-    
-    // Verificar si el usuario está autenticado (solo si el feature está habilitado)
-    if (FEATURES.REQUIRE_AUTH_FOR_CART && !isAuthenticated) {
-      console.log('❌ Usuario no autenticado');
-      addNotification({
-        type: 'warning',
-        title: 'Inicia sesión',
-        message: 'Debes iniciar sesión para agregar productos al carrito',
-      });
-      // Redirigir a login después de 1 segundo
-      setTimeout(() => {
-        navigate('/login');
-      }, 1000);
+  const handleAddToCart = () => {
+    if (!isAuthenticated) {
+      // Redirigir al login
+      navigate('/login', { state: { from: location } });
       return;
     }
-    
-    if (isOutOfStock) {
-      console.log('❌ Producto sin stock');
+
+    if (!product.stock_quantity || product.stock_quantity <= 0) {
       addNotification({
         type: 'error',
-        title: 'Producto sin stock',
-        message: 'Este producto no está disponible actualmente',
+        title: 'Sin stock',
+        message: 'Este producto no tiene stock disponible',
       });
       return;
     }
 
-    console.log('✅ Agregando producto al carrito:', { product: product.name, quantity });
     addToCart(product, quantity);
-    setQuantity(1);
-    
-    addNotification({
-      type: 'success',
-      title: 'Producto agregado',
-      message: `${product.name} agregado al carrito`,
-    });
   };
 
   const handleToggleFavorite = (e: React.MouseEvent) => {

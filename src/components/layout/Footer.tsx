@@ -26,7 +26,6 @@ export const Footer: React.FC = () => {
   const handleNewsletterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Lógica para suscripción al newsletter
-    console.log('Newsletter subscription');
   };
 
   const footerSections = {

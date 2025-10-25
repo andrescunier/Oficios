@@ -82,45 +82,10 @@ export const Login: React.FC = () => {
     }
   };
 
-  const handleDemoLogin = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      // Credenciales de demo
-      const demoCredentials = {
-        email: 'demo@iamerican.com',
-        password: 'demo123',
-      };
-
-      const { user, token } = await authService.login(demoCredentials);
-      
-      login(user, token);
-
-      addNotification({
-        type: 'success',
-        title: 'Demo iniciada',
-        message: 'Bienvenido a la cuenta de demostración',
-      });
-
-      navigate(from, { replace: true });
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Error al iniciar sesión demo';
-      setError(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/50 px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
-              <span className="text-white font-bold text-xl">iA</span>
-            </div>
-          </div>
           <CardTitle className="text-2xl">Iniciar Sesión</CardTitle>
           <CardDescription>
             Ingresa a tu cuenta de iAmerican
@@ -201,29 +166,6 @@ export const Login: React.FC = () => {
               )}
             </Button>
           </form>
-
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
-                  O continúa con
-                </span>
-              </div>
-            </div>
-
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full mt-4"
-              onClick={handleDemoLogin}
-              disabled={isLoading}
-            >
-              Cuenta Demo
-            </Button>
-          </div>
 
           <div className="mt-6 text-center text-sm">
             <span className="text-muted-foreground">¿No tienes cuenta? </span>

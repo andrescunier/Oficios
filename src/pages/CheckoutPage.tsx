@@ -30,17 +30,18 @@ interface PaymentInfo {
 }
 
 export const CheckoutPage: React.FC = () => {
-  const { cart, clearCart, addNotification } = useStore();
+  const { cart, clearCart, addNotification, auth } = useStore();
   const navigate = useNavigate();
   
   const [currentStep, setCurrentStep] = useState<'shipping' | 'payment' | 'review'>('shipping');
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // Pre-llenar datos del usuario logueado
   const [shippingInfo, setShippingInfo] = useState<ShippingInfo>({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
+    firstName: auth.user?.person?.first_name || '',
+    lastName: auth.user?.person?.last_name || '',
+    email: auth.user?.email || '',
+    phone: auth.user?.person?.phone || '',
     address: '',
     city: '',
     state: '',
@@ -53,7 +54,7 @@ export const CheckoutPage: React.FC = () => {
     expiryDate: '',
     cvv: '',
     cardName: '',
-    paymentMethod: 'credit'
+    paymentMethod: 'transferencia'
   });
 
   const formatPrice = (price: number) => {
@@ -63,6 +64,34 @@ export const CheckoutPage: React.FC = () => {
       minimumFractionDigits: 0,
     }).format(price);
   };
+
+  // Redirigir al login si no está autenticado
+  if (!auth.isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Lock className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+          <h2 className="text-2xl font-bold mb-4">Iniciar Sesión Requerido</h2>
+          <p className="text-gray-600 mb-6">Necesitas iniciar sesión para realizar una compra</p>
+          <div className="space-x-4">
+            <Link 
+              to="/login" 
+              state={{ from: '/checkout' }}
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors inline-block"
+            >
+              Iniciar Sesión
+            </Link>
+            <Link 
+              to="/registro" 
+              className="bg-gray-200 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-300 transition-colors inline-block"
+            >
+              Registrarse
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleShippingSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,16 +123,7 @@ export const CheckoutPage: React.FC = () => {
   };
 
   const validatePayment = () => {
-    if (paymentInfo.paymentMethod === 'credit' || paymentInfo.paymentMethod === 'debit') {
-      if (!paymentInfo.cardNumber || !paymentInfo.expiryDate || !paymentInfo.cvv || !paymentInfo.cardName) {
-        addNotification({
-          type: 'error',
-          title: 'Datos de tarjeta incompletos',
-          message: 'Por favor completa todos los datos de la tarjeta',
-        });
-        return false;
-      }
-    }
+    // Solo transferencia bancaria disponible, siempre válido
     return true;
   };
 
@@ -115,8 +135,8 @@ export const CheckoutPage: React.FC = () => {
       const orderNumber = orderService.generateOrderNumber();
       const paymentNumber = orderService.generatePaymentNumber(orderNumber);
       
-      // ID de cliente temporal (en producción esto vendría del usuario autenticado)
-      const customerId = "d8f5287d-a430-4ec7-8f4c-5d64482358e3";
+      // Usar el ID del usuario autenticado
+      const customerId = auth.user?.id || "customer-not-found";
       
       // Preparar datos de la orden
       const orderData: CreateSalesOrderRequest = {
@@ -158,15 +178,8 @@ export const CheckoutPage: React.FC = () => {
         }
       };
 
-      console.log('🚀 Iniciando proceso de checkout...');
-      console.log('📄 Datos de orden:', orderData);
-      console.log('💳 Datos de pago:', paymentData);
-
-      // Procesar checkout (orden + pago)
       const result = await orderService.processCheckout(orderData, paymentData);
       
-      console.log('✅ Checkout completado:', result);
-
       // Verificar que ambas operaciones fueron exitosas
       if (result.success && result.salesOrder && result.payment) {
         // Pago exitoso
@@ -198,8 +211,6 @@ export const CheckoutPage: React.FC = () => {
       }
       
     } catch (error: any) {
-      console.error('❌ Error en checkout:', error);
-      
       let errorTitle = 'Error al procesar el pago';
       let errorMessage = 'Hubo un problema procesando tu pago. Por favor intenta nuevamente.';
       
@@ -231,15 +242,6 @@ export const CheckoutPage: React.FC = () => {
         type: 'error',
         title: errorTitle,
         message: `${errorMessage} Si el problema persiste, contacta a nuestro soporte con el código de error: ${error.response?.status || 'UNKNOWN'}`,
-      });
-      
-      // Log detallado para debugging
-      console.log('💡 Detalles del error:', {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        message: error.message,
-        code: error.code
       });
       
     } finally {
@@ -325,6 +327,26 @@ export const CheckoutPage: React.FC = () => {
                   <MapPin className="w-5 h-5 text-blue-600 mr-2" />
                   <h2 className="text-lg font-semibold">Información de Envío</h2>
                 </div>
+
+                {/* Mostrar datos del usuario registrado */}
+                {auth.user && (
+                  <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center mb-2">
+                      <User className="w-4 h-4 text-blue-600 mr-2" />
+                      <h3 className="font-medium text-blue-800">Datos de tu cuenta</h3>
+                    </div>
+                    <div className="text-sm text-blue-700">
+                      <p><strong>Usuario:</strong> {auth.user.username}</p>
+                      <p><strong>Email:</strong> {auth.user.email}</p>
+                      {auth.user.person && (
+                        <>
+                          <p><strong>Nombre:</strong> {auth.user.person.first_name} {auth.user.person.last_name}</p>
+                          {auth.user.person.phone && <p><strong>Teléfono:</strong> {auth.user.person.phone}</p>}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
                 
                 <form onSubmit={handleShippingSubmit} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -334,9 +356,14 @@ export const CheckoutPage: React.FC = () => {
                         type="text"
                         value={shippingInfo.firstName}
                         onChange={(e) => setShippingInfo({...shippingInfo, firstName: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
+                        disabled={!!auth.user?.person?.first_name}
+                        title={auth.user?.person?.first_name ? "Este dato se toma de tu cuenta registrada" : ""}
                         required
                       />
+                      {auth.user?.person?.first_name && (
+                        <p className="text-xs text-gray-500 mt-1">✓ Datos de tu cuenta registrada</p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Apellido *</label>
@@ -344,9 +371,14 @@ export const CheckoutPage: React.FC = () => {
                         type="text"
                         value={shippingInfo.lastName}
                         onChange={(e) => setShippingInfo({...shippingInfo, lastName: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
+                        disabled={!!auth.user?.person?.last_name}
+                        title={auth.user?.person?.last_name ? "Este dato se toma de tu cuenta registrada" : ""}
                         required
                       />
+                      {auth.user?.person?.last_name && (
+                        <p className="text-xs text-gray-500 mt-1">✓ Datos de tu cuenta registrada</p>
+                      )}
                     </div>
                   </div>
                   
@@ -356,9 +388,14 @@ export const CheckoutPage: React.FC = () => {
                       type="email"
                       value={shippingInfo.email}
                       onChange={(e) => setShippingInfo({...shippingInfo, email: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
+                      disabled={!!auth.user?.email}
+                      title={auth.user?.email ? "Este dato se toma de tu cuenta registrada" : ""}
                       required
                     />
+                    {auth.user?.email && (
+                      <p className="text-xs text-gray-500 mt-1">✓ Datos de tu cuenta registrada</p>
+                    )}
                   </div>
                   
                   <div>
@@ -367,17 +404,32 @@ export const CheckoutPage: React.FC = () => {
                       type="tel"
                       value={shippingInfo.phone}
                       onChange={(e) => setShippingInfo({...shippingInfo, phone: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${auth.user?.person?.phone ? 'bg-gray-50' : ''}`}
+                      disabled={!!auth.user?.person?.phone}
+                      title={auth.user?.person?.phone ? "Este dato se toma de tu cuenta registrada" : ""}
                       required
                     />
+                    {auth.user?.person?.phone && (
+                      <p className="text-xs text-gray-500 mt-1">✓ Datos de tu cuenta registrada</p>
+                    )}
+                  </div>
+                  
+                  <div className="border-t pt-4 mt-6">
+                    <h3 className="font-medium text-gray-800 mb-4">📦 Dirección de Entrega</h3>
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                      <p className="text-sm text-yellow-800">
+                        💡 Solo necesitas completar la dirección de entrega. Los demás datos ya los tenemos de tu cuenta.
+                      </p>
+                    </div>
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Dirección *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Dirección de Entrega *</label>
                     <input
                       type="text"
                       value={shippingInfo.address}
                       onChange={(e) => setShippingInfo({...shippingInfo, address: e.target.value})}
+                      placeholder="Ej: Av. Corrientes 1234, Piso 5, Depto B"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       required
                     />
@@ -390,6 +442,7 @@ export const CheckoutPage: React.FC = () => {
                         type="text"
                         value={shippingInfo.city}
                         onChange={(e) => setShippingInfo({...shippingInfo, city: e.target.value})}
+                        placeholder="Ej: Buenos Aires"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         required
                       />
@@ -400,6 +453,7 @@ export const CheckoutPage: React.FC = () => {
                         type="text"
                         value={shippingInfo.state}
                         onChange={(e) => setShippingInfo({...shippingInfo, state: e.target.value})}
+                        placeholder="Ej: CABA"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
@@ -409,6 +463,7 @@ export const CheckoutPage: React.FC = () => {
                         type="text"
                         value={shippingInfo.zipCode}
                         onChange={(e) => setShippingInfo({...shippingInfo, zipCode: e.target.value})}
+                        placeholder="Ej: 1001"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         required
                       />
@@ -436,105 +491,55 @@ export const CheckoutPage: React.FC = () => {
                 <form onSubmit={handlePaymentSubmit} className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Método de Pago</label>
-                    <div className="grid grid-cols-2 gap-4">
-                      <label className="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
-                        <input
-                          type="radio"
-                          name="paymentMethod"
-                          value="credit"
-                          checked={paymentInfo.paymentMethod === 'credit'}
-                          onChange={(e) => setPaymentInfo({...paymentInfo, paymentMethod: e.target.value as any})}
-                          className="mr-2"
-                        />
-                        <span>Tarjeta de Crédito</span>
-                      </label>
-                      <label className="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
-                        <input
-                          type="radio"
-                          name="paymentMethod"
-                          value="debit"
-                          checked={paymentInfo.paymentMethod === 'debit'}
-                          onChange={(e) => setPaymentInfo({...paymentInfo, paymentMethod: e.target.value as any})}
-                          className="mr-2"
-                        />
-                        <span>Tarjeta de Débito</span>
-                      </label>
-                      <label className="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
-                        <input
-                          type="radio"
-                          name="paymentMethod"
-                          value="mercadopago"
-                          checked={paymentInfo.paymentMethod === 'mercadopago'}
-                          onChange={(e) => setPaymentInfo({...paymentInfo, paymentMethod: e.target.value as any})}
-                          className="mr-2"
-                        />
-                        <span>MercadoPago</span>
-                      </label>
-                      <label className="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                    <div className="w-full">
+                      <div className="flex items-center p-4 border-2 border-blue-500 bg-blue-50 rounded-lg">
                         <input
                           type="radio"
                           name="paymentMethod"
                           value="transferencia"
-                          checked={paymentInfo.paymentMethod === 'transferencia'}
-                          onChange={(e) => setPaymentInfo({...paymentInfo, paymentMethod: e.target.value as any})}
-                          className="mr-2"
+                          checked={true}
+                          readOnly
+                          className="mr-3 text-blue-600"
                         />
-                        <span>Transferencia</span>
-                      </label>
+                        <div className="flex-1">
+                          <span className="font-medium text-blue-800">Transferencia Bancaria</span>
+                          <p className="text-sm text-blue-600 mt-1">
+                            💳 Método de pago seguro y directo
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                   
-                  {(paymentInfo.paymentMethod === 'credit' || paymentInfo.paymentMethod === 'debit') && (
-                    <>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Número de Tarjeta *</label>
-                        <input
-                          type="text"
-                          value={paymentInfo.cardNumber}
-                          onChange={(e) => setPaymentInfo({...paymentInfo, cardNumber: e.target.value})}
-                          placeholder="1234 5678 9012 3456"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          required
-                        />
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-4">
+                  {/* Información de transferencia */}
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <h3 className="font-medium text-gray-800 mb-3">📋 Datos para la Transferencia</h3>
+                    <div className="space-y-2 text-sm">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de Vencimiento *</label>
-                          <input
-                            type="text"
-                            value={paymentInfo.expiryDate}
-                            onChange={(e) => setPaymentInfo({...paymentInfo, expiryDate: e.target.value})}
-                            placeholder="MM/AA"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            required
-                          />
+                          <span className="font-medium text-gray-700">Banco:</span>
+                          <p className="text-gray-600">Banco Galicia</p>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">CVV *</label>
-                          <input
-                            type="text"
-                            value={paymentInfo.cvv}
-                            onChange={(e) => setPaymentInfo({...paymentInfo, cvv: e.target.value})}
-                            placeholder="123"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            required
-                          />
+                          <span className="font-medium text-gray-700">Titular:</span>
+                          <p className="text-gray-600">iAmerican S.A.</p>
+                        </div>
+                        <div>
+                          <span className="font-medium text-gray-700">CBU:</span>
+                          <p className="text-gray-600 font-mono">0070999930004567891234</p>
+                        </div>
+                        <div>
+                          <span className="font-medium text-gray-700">Alias:</span>
+                          <p className="text-gray-600">IAMERICAN.PAGOS</p>
                         </div>
                       </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Nombre en la Tarjeta *</label>
-                        <input
-                          type="text"
-                          value={paymentInfo.cardName}
-                          onChange={(e) => setPaymentInfo({...paymentInfo, cardName: e.target.value})}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          required
-                        />
-                      </div>
-                    </>
-                  )}
+                    </div>
+                    <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded">
+                      <p className="text-sm text-yellow-800">
+                        <strong>📝 Importante:</strong> Una vez realizada la transferencia, envía el comprobante por WhatsApp al +54 9 11 1234-5678 con tu número de orden para acelerar la confirmación.
+                      </p>
+                    </div>
+                  </div>
                   
                   <div className="flex space-x-4">
                     <button
@@ -573,12 +578,12 @@ export const CheckoutPage: React.FC = () => {
                 {/* Payment Info Review */}
                 <div className="mb-6 p-4 bg-gray-50 rounded-lg">
                   <h3 className="font-medium mb-2">Método de Pago</h3>
-                  <p>{paymentInfo.paymentMethod === 'credit' ? 'Tarjeta de Crédito' : 
-                      paymentInfo.paymentMethod === 'debit' ? 'Tarjeta de Débito' :
-                      paymentInfo.paymentMethod === 'mercadopago' ? 'MercadoPago' : 'Transferencia'}</p>
-                  {(paymentInfo.paymentMethod === 'credit' || paymentInfo.paymentMethod === 'debit') && (
-                    <p>**** **** **** {paymentInfo.cardNumber.slice(-4)}</p>
-                  )}
+                  <div className="flex items-center">
+                    <span className="text-blue-600 font-medium">💳 Transferencia Bancaria</span>
+                  </div>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Se te proporcionarán los datos bancarios para realizar la transferencia.
+                  </p>
                 </div>
                 
                 {/* Products Review */}

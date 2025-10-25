@@ -24,7 +24,33 @@ export class ProductService {
     is_featured?: boolean;
   }): Promise<PaginatedResponse<Product>> {
     const url = API_ENDPOINTS.PRODUCTS(ACCOUNT_ID);
-    return httpClient.get(url, { params });
+    const response: any = await httpClient.get(url, { params });
+
+    if (Array.isArray(response)) {
+      return {
+        data: response,
+        pagination: {
+          page: params?.page ?? 1,
+          per_page: params?.per_page ?? response.length,
+          total: response.length,
+          total_pages: 1,
+        },
+      };
+    }
+
+    if (response?.data && Array.isArray(response.data)) {
+      return response;
+    }
+
+    return {
+      data: [],
+      pagination: {
+        page: params?.page ?? 1,
+        per_page: params?.per_page ?? 0,
+        total: 0,
+        total_pages: 0,
+      },
+    };
   }
 
   /**
@@ -111,7 +137,6 @@ export class ProductService {
       const product = await this.getProduct(productId);
       return (product.stock_quantity || 0) >= quantity;
     } catch (error) {
-      console.error('Error checking stock:', error);
       return false;
     }
   }
@@ -135,7 +160,6 @@ export class ProductService {
       
       return Array.from(categories).sort();
     } catch (error) {
-      console.error('Error getting categories:', error);
       return [];
     }
   }

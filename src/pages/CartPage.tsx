@@ -20,15 +20,12 @@ export const CartPage: React.FC = () => {
   };
 
   const handleCheckout = () => {
-    console.log('🛒 Botón Checkout clickeado!');
-    
     try {
       addNotification({
         type: 'info',
         title: 'Checkout',
         message: 'Redirigiendo al proceso de pago...',
       });
-      console.log('Iniciando proceso de checkout', cart);
       
       // Redirigir a la página de checkout
       setTimeout(() => {
@@ -36,14 +33,11 @@ export const CartPage: React.FC = () => {
       }, 1000);
       
     } catch (error) {
-      console.error('Error en checkout:', error);
-      alert('Procesando checkout... (ver consola)');
+      alert('Error al procesar checkout');
     }
   };
 
   const handleSaveForLater = () => {
-    console.log('💾 Botón Guardar clickeado!');
-    
     try {
       // Guardar en localStorage
       localStorage.setItem('savedCart', JSON.stringify(cart));
@@ -54,16 +48,13 @@ export const CartPage: React.FC = () => {
         message: 'Tu carrito se ha guardado para más tarde',
       });
       
-      console.log('Carrito guardado para después', cart);
-      
       // Redirigir a productos después de guardar
       setTimeout(() => {
         navigate('/productos');
       }, 2000);
       
     } catch (error) {
-      console.error('Error al guardar:', error);
-      alert('Carrito guardado en localStorage (ver consola)');
+      alert('Error al guardar el carrito');
     }
   };
 

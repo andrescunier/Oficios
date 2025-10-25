@@ -128,12 +128,11 @@ export const isSocialLinkConfigured = (platform: keyof typeof SOCIAL_LINKS): boo
 // APP CONFIGURATION
 // =========================================
 export const APP_CONFIG = {
-  ENV: import.meta.env.VITE_APP_ENV || 'development',
+  ENV: import.meta.env.VITE_APP_ENV || 'production',
   VERSION: import.meta.env.VITE_APP_VERSION || '1.0.0',
   IS_DEVELOPMENT: import.meta.env.DEV,
   IS_PRODUCTION: import.meta.env.PROD,
-  DEBUG_MODE: import.meta.env.VITE_DEBUG_MODE === 'true',
-  API_LOGGING: import.meta.env.VITE_ENABLE_API_LOGGING === 'true',
+  API_LOGGING: false,
 } as const;
 
 // =========================================
@@ -144,7 +143,6 @@ export const FEATURES = {
   NOTIFICATIONS: import.meta.env.VITE_FEATURE_NOTIFICATIONS === 'true',
   ANALYTICS: import.meta.env.VITE_FEATURE_ANALYTICS === 'true',
   REAL_PAYMENTS: import.meta.env.VITE_FEATURE_REAL_PAYMENTS === 'true',
-  DEMO_MODE: import.meta.env.VITE_FEATURE_DEMO_MODE === 'true',
   
   // DIAP B2B Specific Features
   HIDE_PRICES_FOR_GUESTS: import.meta.env.VITE_HIDE_PRICES_FOR_GUESTS === 'true',
@@ -262,11 +260,9 @@ export const validateEnvironment = () => {
   const missing = required.filter(key => !import.meta.env[key]);
   
   if (missing.length > 0) {
-    console.error('❌ Variables de entorno faltantes:', missing);
     return false;
   }
   
-  console.log('✅ Variables de entorno validadas correctamente');
   return true;
 };
 
@@ -282,10 +278,5 @@ export const initializeApp = () => {
   // Aplicar colores CSS
   THEME.applyCSSVariables();
   
-  // Log de configuración en desarrollo
-  if (APP_CONFIG.DEBUG_MODE) {
-    console.log('🎨 Branding Config:', getBrandingConfig());
-    console.log('⚙️ API Config:', API_CONFIG);
-    console.log('🎯 Features:', FEATURES);
-  }
+  // Configuración inicializada
 };

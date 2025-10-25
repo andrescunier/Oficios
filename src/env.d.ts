@@ -80,14 +80,11 @@ interface ImportMetaEnv {
   // App Configuration
   readonly VITE_APP_ENV: string
   readonly VITE_APP_VERSION: string
-  readonly VITE_DEBUG_MODE: string
-  readonly VITE_ENABLE_API_LOGGING: string
   
   // Feature Flags
   readonly VITE_ENABLE_NOTIFICATIONS: string
   readonly VITE_ENABLE_ANALYTICS: string
   readonly VITE_ENABLE_REAL_PAYMENTS: string
-  readonly VITE_DEMO_MODE: string
   
   // DIAP B2B Specific Features
   readonly VITE_HIDE_PRICES_FOR_GUESTS: string

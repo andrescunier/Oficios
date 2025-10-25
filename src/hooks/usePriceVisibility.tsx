@@ -25,15 +25,8 @@ export const usePriceVisibility = () => {
   const { isAuthenticated } = useAuth();
 
   const priceVisibility = useMemo(() => {
-    console.log('🔍 usePriceVisibility - Checking visibility:', {
-      featureEnabled: FEATURES.HIDE_PRICES_FOR_GUESTS,
-      isAuthenticated,
-      FEATURES
-    });
-
     // Si la funcionalidad está deshabilitada, siempre mostrar precios
     if (!FEATURES.HIDE_PRICES_FOR_GUESTS) {
-      console.log('❌ Feature disabled - showing prices');
       return {
         canViewPrices: true,
         shouldHidePrices: false,
@@ -45,7 +38,6 @@ export const usePriceVisibility = () => {
 
     // Si el usuario está autenticado, puede ver precios
     if (isAuthenticated) {
-      console.log('✅ User authenticated - showing prices');
       return {
         canViewPrices: true,
         shouldHidePrices: false,
@@ -56,7 +48,6 @@ export const usePriceVisibility = () => {
     }
 
     // Usuario no autenticado - ocultar precios
-    console.log('🚫 User NOT authenticated - hiding prices');
     return {
       canViewPrices: false,
       shouldHidePrices: true,

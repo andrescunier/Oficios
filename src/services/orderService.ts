@@ -78,8 +78,6 @@ class OrderService {
    */
   async createSalesOrder(orderData: CreateSalesOrderRequest): Promise<CreateSalesOrderResponse> {
     try {
-      console.log('🛒 Creando orden de venta:', orderData);
-      
       const response = await httpClient.post<CreateSalesOrderResponse>(
         API_ENDPOINTS.SALES_ORDERS(ACCOUNT_ID),
         orderData,
@@ -88,10 +86,8 @@ class OrderService {
         }
       );
 
-      console.log('✅ Orden de venta creada:', response);
       return response;
     } catch (error) {
-      console.error('❌ Error creando orden de venta:', error);
       throw error;
     }
   }
@@ -101,8 +97,6 @@ class OrderService {
    */
   async createPayment(paymentData: CreatePaymentRequest): Promise<CreatePaymentResponse> {
     try {
-      console.log('💳 Creando pago:', paymentData);
-      
       const response = await httpClient.post<CreatePaymentResponse>(
         API_ENDPOINTS.PAYMENTS(ACCOUNT_ID),
         paymentData,
@@ -111,10 +105,8 @@ class OrderService {
         }
       );
 
-      console.log('✅ Pago creado:', response);
       return response;
     } catch (error) {
-      console.error('❌ Error creando pago:', error);
       throw error;
     }
   }
@@ -157,22 +149,15 @@ class OrderService {
     let payment: CreatePaymentResponse | null = null;
     
     try {
-      console.log('🏁 Iniciando proceso de checkout completo...');
-      
       // 1. Crear orden de venta
-      console.log('📝 Paso 1: Creando orden de venta...');
       salesOrder = await this.createSalesOrder(orderData);
-      console.log('✅ Orden de venta creada exitosamente:', salesOrder.order_number);
       
       // 2. Crear pago asociado
-      console.log('💳 Paso 2: Procesando pago...');
       payment = await this.createPayment({
         ...paymentData,
         partner_id: orderData.customer_id,
       });
-      console.log('✅ Pago procesado exitosamente:', payment.payment_number);
 
-      console.log('🎉 Checkout completado exitosamente!');
       return {
         salesOrder,
         payment,
@@ -181,11 +166,8 @@ class OrderService {
       };
       
     } catch (error: any) {
-      console.error('❌ Error durante el checkout:', error);
-      
       // Si la orden se creó pero falló el pago
       if (salesOrder && !payment) {
-        console.warn('⚠️ Orden creada pero pago falló. Orden:', salesOrder.order_number);
         return {
           salesOrder,
           payment: null,
@@ -201,7 +183,6 @@ class OrderService {
       
       // Si falló la creación de la orden
       if (!salesOrder) {
-        console.error('❌ Falló la creación de la orden');
         return {
           salesOrder: null,
           payment: null,

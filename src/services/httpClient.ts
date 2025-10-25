@@ -32,20 +32,9 @@ class HttpClient {
           config.headers['X-Account-ID'] = ACCOUNT_ID;
         }
 
-        if (enableApiLogging) {
-          console.log('🚀 API Request:', {
-            method: config.method?.toUpperCase(),
-            url: config.url,
-            data: config.data,
-            headers: config.headers,
-          });
-        }
         return config;
       },
       (error) => {
-        if (enableApiLogging) {
-          console.error('❌ Request Error:', error);
-        }
         return Promise.reject(error);
       }
     );
@@ -53,25 +42,9 @@ class HttpClient {
     // Response interceptor
     this.client.interceptors.response.use(
       (response: AxiosResponse) => {
-        if (enableApiLogging) {
-          console.log('✅ API Response:', {
-            status: response.status,
-            url: response.config.url,
-            data: response.data,
-          });
-        }
         return response;
       },
       (error) => {
-        if (enableApiLogging) {
-          console.error('❌ Response Error:', {
-            status: error.response?.status,
-            url: error.config?.url,
-            message: error.message,
-            data: error.response?.data,
-          });
-        }
-
         // Transformar errores de la API
         const apiError: ApiError = {
           message: error.response?.data?.message || error.message || 'Error desconocido',
@@ -143,14 +116,14 @@ class HttpClient {
     };
   }
 
-  // Método para depurar configuración
-  debugConfig() {
-    console.log('🔍 HTTP Client Debug:', {
+  // Método para obtener headers de configuración
+  getConfigInfo() {
+    return {
       baseURL: this.client.defaults.baseURL,
       timeout: this.client.defaults.timeout,
       headers: this.getHeaders(),
       accountId: ACCOUNT_ID,
-    });
+    };
   }
 }
 

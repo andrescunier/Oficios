@@ -4,7 +4,7 @@
 
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Eye, EyeOff, UserPlus, Loader2, Check, X } from 'lucide-react';
@@ -17,28 +17,23 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useStore } from '@/store/useStore';
 import { authService } from '@/services/authService';
 
-// Schema de validación
+// Schema de validación actualizado para el nuevo API
 const registerSchema = z.object({
-  firstName: z
+  first_name: z
     .string()
     .min(1, 'El nombre es requerido')
-    .min(2, 'El nombre debe tener al menos 2 caracteres')
-    .max(50, 'El nombre no puede exceder 50 caracteres'),
-  lastName: z
+    .min(2, 'El nombre debe tener al menos 2 caracteres'),
+  last_name: z
     .string()
     .min(1, 'El apellido es requerido')
-    .min(2, 'El apellido debe tener al menos 2 caracteres')
-    .max(50, 'El apellido no puede exceder 50 caracteres'),
+    .min(2, 'El apellido debe tener al menos 2 caracteres'),
   email: z
     .string()
     .min(1, 'El email es requerido')
     .email('Formato de email inválido'),
-  phone: z
+  company_name: z
     .string()
-    .optional()
-    .refine((val) => !val || /^\+?[\d\s-()]+$/.test(val), {
-      message: 'Formato de teléfono inválido',
-    }),
+    .min(1, 'El nombre de empresa es requerido'),
   password: z
     .string()
     .min(8, 'La contraseña debe tener al menos 8 caracteres')
@@ -46,6 +41,12 @@ const registerSchema = z.object({
     .regex(/[a-z]/, 'Debe contener al menos una minúscula')
     .regex(/\d/, 'Debe contener al menos un número'),
   confirmPassword: z.string().min(1, 'Confirma tu contraseña'),
+  phone: z.string().min(1, 'El teléfono es requerido'),
+  title: z.string().min(1, 'El cargo es requerido'),
+  tax_id: z.string().min(1, 'El CUIT/RUT es requerido'),
+  currency: z.string().min(1, 'La moneda es requerida').default('USD'),
+  industry: z.string().min(1, 'La industria es requerida'),
+  username: z.string().min(3, 'El nombre de usuario debe tener al menos 3 caracteres'),
   acceptTerms: z.boolean().refine((val) => val === true, {
     message: 'Debes aceptar los términos y condiciones',
   }),
@@ -69,9 +70,25 @@ export const Register: React.FC = () => {
     register,
     handleSubmit,
     watch,
+    control,
     formState: { errors },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
+    defaultValues: {
+      acceptTerms: false,
+      currency: 'USD',
+      first_name: '',
+      last_name: '',
+      email: '',
+      company_name: '',
+      password: '',
+      confirmPassword: '',
+      phone: '',
+      title: '',
+      tax_id: '',
+      industry: '',
+      username: '',
+    },
   });
 
   const password = watch('password');
@@ -89,12 +106,25 @@ export const Register: React.FC = () => {
       setIsLoading(true);
       setError(null);
 
-      const { user, token } = await authService.register({
-        firstName: data.firstName,
-        lastName: data.lastName,
+      const { user, token, businessPartner } = await authService.register({
+        first_name: data.first_name,
+        last_name: data.last_name,
         email: data.email,
+        company_name: data.company_name,
         password: data.password,
         phone: data.phone,
+        title: data.title,
+        tax_id: data.tax_id,
+        currency: data.currency,
+        industry: data.industry,
+        username: data.username,
+        role: 'customer',
+        person_metadata: {
+          source: 'web_registration'
+        },
+        company_metadata: {
+          sector: 'B2B'
+        },
       });
       
       // Actualizar estado global
@@ -103,12 +133,23 @@ export const Register: React.FC = () => {
       // Mostrar notificación de éxito
       addNotification({
         type: 'success',
-        title: '¡Bienvenido a iAmerican!',
-        message: 'Tu cuenta ha sido creada exitosamente',
+        title: '¡Registro completado!',
+        message: `Cliente ${businessPartner.name} creado correctamente.`,
       });
 
-      // Redirigir al inicio
-      navigate('/', { replace: true });
+      // Redirigir a página de éxito con los datos del registro
+      navigate('/registro-exitoso', { 
+        replace: true, 
+        state: { 
+          user: {
+            email: user.email,
+            username: user.username
+          },
+          businessPartner: {
+            name: businessPartner.name
+          }
+        } 
+      });
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error al crear cuenta';
       setError(errorMessage);
@@ -131,9 +172,9 @@ export const Register: React.FC = () => {
               <span className="text-white font-bold text-xl">iA</span>
             </div>
           </div>
-          <CardTitle className="text-2xl">Crear Cuenta</CardTitle>
+          <CardTitle className="text-2xl">Crear Cuenta B2B</CardTitle>
           <CardDescription>
-            Únete a iAmerican y descubre productos increíbles
+            Únete a DIAP y accede a precios especiales para empresas
           </CardDescription>
         </CardHeader>
         
@@ -149,26 +190,26 @@ export const Register: React.FC = () => {
               <div className="space-y-2">
                 <Label htmlFor="firstName">Nombre</Label>
                 <Input
-                  id="firstName"
+                  id="first_name"
                   placeholder="Juan"
-                  {...register('firstName')}
-                  className={errors.firstName ? 'border-destructive' : ''}
+                  {...register('first_name')}
+                  className={errors.first_name ? 'border-destructive' : ''}
                 />
-                {errors.firstName && (
-                  <p className="text-sm text-destructive">{errors.firstName.message}</p>
+                {errors.first_name && (
+                  <p className="text-sm text-destructive">{errors.first_name.message}</p>
                 )}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="lastName">Apellido</Label>
+                <Label htmlFor="last_name">Apellido</Label>
                 <Input
-                  id="lastName"
+                  id="last_name"
                   placeholder="Pérez"
-                  {...register('lastName')}
-                  className={errors.lastName ? 'border-destructive' : ''}
+                  {...register('last_name')}
+                  className={errors.last_name ? 'border-destructive' : ''}
                 />
-                {errors.lastName && (
-                  <p className="text-sm text-destructive">{errors.lastName.message}</p>
+                {errors.last_name && (
+                  <p className="text-sm text-destructive">{errors.last_name.message}</p>
                 )}
               </div>
             </div>
@@ -188,7 +229,7 @@ export const Register: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="phone">Teléfono (opcional)</Label>
+              <Label htmlFor="phone">Teléfono *</Label>
               <Input
                 id="phone"
                 type="tel"
@@ -198,6 +239,71 @@ export const Register: React.FC = () => {
               />
               {errors.phone && (
                 <p className="text-sm text-destructive">{errors.phone.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="title">Cargo / Puesto *</Label>
+              <Input
+                id="title"
+                placeholder="Gerente General"
+                {...register('title')}
+                className={errors.title ? 'border-destructive' : ''}
+              />
+              {errors.title && (
+                <p className="text-sm text-destructive">{errors.title.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="company_name">Nombre de Empresa *</Label>
+              <Input
+                id="company_name"
+                placeholder="Mi Empresa S.A."
+                {...register('company_name')}
+                className={errors.company_name ? 'border-destructive' : ''}
+              />
+              {errors.company_name && (
+                <p className="text-sm text-destructive">{errors.company_name.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="tax_id">CUIT / RUT *</Label>
+              <Input
+                id="tax_id"
+                placeholder="12345678-9"
+                {...register('tax_id')}
+                className={errors.tax_id ? 'border-destructive' : ''}
+              />
+              {errors.tax_id && (
+                <p className="text-sm text-destructive">{errors.tax_id.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="industry">Industria *</Label>
+              <Input
+                id="industry"
+                placeholder="Tecnología"
+                {...register('industry')}
+                className={errors.industry ? 'border-destructive' : ''}
+              />
+              {errors.industry && (
+                <p className="text-sm text-destructive">{errors.industry.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="username">Nombre de Usuario *</Label>
+              <Input
+                id="username"
+                placeholder="jperez"
+                {...register('username')}
+                className={errors.username ? 'border-destructive' : ''}
+              />
+              {errors.username && (
+                <p className="text-sm text-destructive">{errors.username.message}</p>
               )}
             </div>
 
@@ -279,9 +385,16 @@ export const Register: React.FC = () => {
             </div>
 
             <div className="flex items-center space-x-2">
-              <Checkbox
-                id="acceptTerms"
-                {...register('acceptTerms')}
+              <Controller
+                control={control}
+                name="acceptTerms"
+                render={({ field }) => (
+                  <Checkbox
+                    id="acceptTerms"
+                    checked={field.value}
+                    onCheckedChange={(checked) => field.onChange(checked === true)}
+                  />
+                )}
               />
               <Label htmlFor="acceptTerms" className="text-sm">
                 Acepto los{' '}

@@ -28,22 +28,15 @@ import {
 import { useStore } from '@/store/useStore';
 import { BRANDING, ASSETS } from '@/config/branding';
 
-// Hooks temporales para desarrollo
-const useAuth = () => ({
-  isAuthenticated: false,
-  user: null
-});
-
-const useCartItemCount = () => 0;
-
 export const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   
-  const { isAuthenticated, user } = useAuth();
-  const cartItemCount = useCartItemCount();
-  const favorites = useStore((state) => state.favorites);
-  const { logout } = useStore();
+  // Usar el store real para autenticación y carrito
+  const { auth, cart, favorites, logout } = useStore();
+  const isAuthenticated = auth.isAuthenticated;
+  const user = auth.user;
+  const cartItemCount = cart.items.length;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -123,9 +116,9 @@ export const Header: React.FC = () => {
           <div className="hidden md:flex items-center space-x-4">
             <Button variant="ghost" size="icon" asChild>
               <Link to="/favoritos" className="relative">
-                <Heart className="h-5 w-5" />
+                <Heart className={`h-5 w-5 ${favorites.length > 0 ? 'text-red-500' : ''}`} />
                 {favorites.length > 0 && (
-                  <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center text-xs">
+                  <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center text-xs bg-red-500 hover:bg-red-600">
                     {favorites.length}
                   </Badge>
                 )}
@@ -146,12 +139,25 @@ export const Header: React.FC = () => {
             {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
+                  <Button variant="ghost" size="icon" className="relative">
                     <User className="h-5 w-5" />
+                    {/* Indicador de usuario logueado */}
+                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{user?.username || 'Usuario'}</p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {user?.email || 'Sin email'}
+                      </p>
+                      <div className="flex items-center mt-1">
+                        <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                        <span className="text-xs text-green-600">Conectado</span>
+                      </div>
+                    </div>
+                  </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
                     <Link to="/perfil">Mi Perfil</Link>
@@ -223,7 +229,44 @@ export const Header: React.FC = () => {
             </nav>
 
             <div className="space-y-2 border-t pt-4">
-              {!isAuthenticated && (
+              {isAuthenticated ? (
+                <>
+                  <div className="px-3 py-2 bg-green-50 border border-green-200 rounded-lg mb-3">
+                    <div className="flex items-center">
+                      <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                      <span className="text-sm font-medium text-green-800">Conectado como:</span>
+                    </div>
+                    <p className="text-sm text-green-700 font-medium">{user?.username || 'Usuario'}</p>
+                    <p className="text-xs text-green-600">{user?.email || 'Sin email'}</p>
+                  </div>
+                  <Button variant="ghost" className="w-full justify-start" asChild>
+                    <Link to="/perfil" onClick={() => setIsMenuOpen(false)}>
+                      <User className="h-4 w-4 mr-2" />
+                      Mi Perfil
+                    </Link>
+                  </Button>
+                  <Button variant="ghost" className="w-full justify-start" asChild>
+                    <Link to="/pedidos" onClick={() => setIsMenuOpen(false)}>
+                      <ShoppingCart className="h-4 w-4 mr-2" />
+                      Mis Pedidos
+                    </Link>
+                  </Button>
+                  <Button variant="ghost" className="w-full justify-start" asChild>
+                    <Link to="/favoritos" onClick={() => setIsMenuOpen(false)}>
+                      <Heart className="h-4 w-4 mr-2" />
+                      Favoritos
+                    </Link>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start text-red-600 border-red-200 hover:bg-red-50" 
+                    onClick={handleLogout}
+                  >
+                    <LogIn className="h-4 w-4 mr-2" />
+                    Cerrar Sesión
+                  </Button>
+                </>
+              ) : (
                 <>
                   <Button variant="ghost" className="w-full justify-start" asChild>
                     <Link to="/login" onClick={() => setIsMenuOpen(false)}>

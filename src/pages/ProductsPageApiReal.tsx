@@ -4,7 +4,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Plus, Minus } from 'lucide-react';
+import { Search, Plus, Minus, Heart } from 'lucide-react';
 import { productService } from '@/services/productService';
 import { useStore } from '@/store/useStore';
 import type { Product } from '@/types/api';
@@ -19,7 +19,7 @@ export const ProductsPageApiReal: React.FC = () => {
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const navigate = useNavigate();
 
-  const { addToCart, addNotification, auth } = useStore();
+  const { addToCart, addNotification, auth, addToFavorites, removeFromFavorites, isFavorite } = useStore();
   const isAuthenticated = auth.isAuthenticated;
 
   useEffect(() => {
@@ -231,29 +231,59 @@ export const ProductsPageApiReal: React.FC = () => {
   };
 
   // Función para agregar al carrito
-  const handleAddToCart = (product: Product) => {
-    // Verificar autenticación (solo si el feature está habilitado)
-    if (FEATURES.REQUIRE_AUTH_FOR_CART && !isAuthenticated) {
+    const handleAddToCart = (product: Product) => {
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: '/productos' } });
+      return;
+    }
+
+    if (!product.stock_quantity || product.stock_quantity <= 0) {
       addNotification({
-        type: 'warning',
-        title: 'Inicia sesión',
-        message: 'Debes iniciar sesión para agregar productos al carrito',
+        type: 'error',
+        title: 'Sin stock',
+        message: 'Este producto no tiene stock disponible',
       });
-      // Redirigir a login después de 1 segundo
-      setTimeout(() => {
-        navigate('/login');
-      }, 1000);
       return;
     }
 
     const quantity = getQuantity(product.id.toString());
-
     addToCart(product, quantity);
+    
     addNotification({
-      type: 'success', 
+      type: 'success',
       title: 'Producto agregado',
-      message: `${product.name} agregado al carrito (${quantity} unidad${quantity > 1 ? 'es' : ''})`,
+      message: `${product.name} agregado al carrito`,
     });
+  };
+
+  const handleToggleFavorite = (product: Product) => {
+    if (!isAuthenticated) {
+      addNotification({
+        type: 'warning',
+        title: 'Inicia sesión',
+        message: 'Necesitas iniciar sesión para agregar productos a favoritos',
+      });
+      navigate('/login', { state: { from: '/productos' } });
+      return;
+    }
+    
+    const isProductFavorite = isFavorite(product.id);
+    
+    if (isProductFavorite) {
+      removeFromFavorites(product.id);
+      addNotification({
+        type: 'info',
+        title: 'Eliminado de favoritos',
+        message: `${product.name} eliminado de favoritos`,
+      });
+    } else {
+      addToFavorites(product.id);
+      addNotification({
+        type: 'success',
+        title: 'Agregado a favoritos',
+        message: `${product.name} agregado a tus favoritos`,
+      });
+    }
   };
 
   return (
@@ -319,7 +349,26 @@ export const ProductsPageApiReal: React.FC = () => {
         {!loading && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredProducts.map((product) => (
-              <div key={product.id} className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-all duration-300 group">
+              <div key={product.id} className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-all duration-300 group relative">
+                {/* Botón de favoritos */}
+                <button
+                  onClick={() => handleToggleFavorite(product)}
+                  className={`absolute top-3 right-3 z-10 w-9 h-9 rounded-full shadow-md transition-all duration-200 ${
+                    isFavorite(product.id)
+                      ? 'bg-red-50 border-red-200 hover:bg-red-100' 
+                      : 'bg-white/90 hover:bg-white'
+                  } flex items-center justify-center`}
+                  title={isFavorite(product.id) ? 'Quitar de favoritos' : 'Agregar a favoritos'}
+                >
+                  <Heart 
+                    className={`w-5 h-5 ${
+                      isFavorite(product.id)
+                        ? 'fill-red-500 text-red-500' 
+                        : 'text-gray-600 hover:text-red-400'
+                    }`} 
+                  />
+                </button>
+                
                 {/* Product Image */}
                 <div className="aspect-square bg-gray-100 overflow-hidden">
                   <img 
@@ -375,35 +424,44 @@ export const ProductsPageApiReal: React.FC = () => {
                     )}
                   </div>
 
-                  {/* Selector de cantidad */}
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-medium text-gray-700">Cantidad:</span>
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => updateQuantity(product.id.toString(), getQuantity(product.id.toString()) - 1)}
-                        className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-300 text-gray-600 hover:bg-gray-100"
-                        disabled={getQuantity(product.id.toString()) <= 1}
-                      >
-                        <Minus className="w-4 h-4" />
-                      </button>
-                      <span className="w-8 text-center font-medium">
-                        {getQuantity(product.id.toString())}
-                      </span>
-                      <button
-                        onClick={() => updateQuantity(product.id.toString(), getQuantity(product.id.toString()) + 1)}
-                        className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-300 text-gray-600 hover:bg-gray-100"
-                      >
-                        <Plus className="w-4 h-4" />
-                      </button>
+                  {/* Controles de acción */}
+                  <div className="space-y-3">
+                    {/* Selector de cantidad */}
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-700">Cantidad:</span>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => updateQuantity(product.id.toString(), getQuantity(product.id.toString()) - 1)}
+                          className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-300 text-gray-600 hover:bg-gray-100 transition-colors"
+                          disabled={getQuantity(product.id.toString()) <= 1}
+                        >
+                          <Minus className="w-4 h-4" />
+                        </button>
+                        <span className="w-8 text-center font-medium">
+                          {getQuantity(product.id.toString())}
+                        </span>
+                        <button
+                          onClick={() => updateQuantity(product.id.toString(), getQuantity(product.id.toString()) + 1)}
+                          className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-300 text-gray-600 hover:bg-gray-100 transition-colors"
+                          disabled={(product.stock_quantity || 0) <= getQuantity(product.id.toString())}
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
-                  </div>
 
-                  <button 
-                    onClick={() => handleAddToCart(product)}
-                    className="w-full py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-                  >
-                    Agregar al Carrito
-                  </button>
+                    {/* Botón agregar al carrito */}
+                    <button 
+                      onClick={() => handleAddToCart(product)}
+                      disabled={!product.stock_quantity || product.stock_quantity <= 0}
+                      className="w-full py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    >
+                      {product.stock_quantity && product.stock_quantity > 0 
+                        ? 'Agregar al Carrito' 
+                        : 'Sin Stock'
+                      }
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}

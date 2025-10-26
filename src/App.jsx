@@ -6,11 +6,15 @@ import { Footer } from '@/components/layout/Footer';
 import { Home } from '@/pages/Home';
 import { CategoryPage } from '@/pages/CategoryPage';
 import { ProductsPageApiReal as ProductsPage } from '@/pages/ProductsPageApiReal';
+import { ProductDetailPage } from '@/pages/ProductDetailPage';
 import { ContactPage } from '@/pages/ContactPage';
 import { Login } from '@/pages/Login';
 import { Register } from '@/pages/Register';
 import { CartPage } from '@/pages/CartPage';
 import { CheckoutPage } from '@/pages/CheckoutPage';
+import { ProfilePage } from '@/pages/ProfilePage';
+import { OrdersPage } from '@/pages/OrdersPage';
+import { FavoritesPage } from '@/pages/FavoritesPage';
 import RegistrationSuccess from '@/pages/RegistrationSuccess';
 import { QUERY_CONFIG } from '@/config/api';
 import './App.css';
@@ -28,12 +32,16 @@ function App() {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/productos" element={<ProductsPage />} />
+              <Route path="/productos/:id" element={<ProductDetailPage />} />
               <Route path="/contacto" element={<ContactPage />} />
               <Route path="/login" element={<Login />} />
               <Route path="/registro" element={<Register />} />
               <Route path="/registro-exitoso" element={<RegistrationSuccess />} />
               <Route path="/carrito" element={<CartPage />} />
               <Route path="/checkout" element={<CheckoutPage />} />
+              <Route path="/perfil" element={<ProfilePage />} />
+              <Route path="/pedidos" element={<OrdersPage />} />
+              <Route path="/favoritos" element={<FavoritesPage />} />
               <Route path="/categoria/:category" element={<CategoryPage />} />
               {/* Catch all route para rutas no encontradas */}
               <Route path="*" element={

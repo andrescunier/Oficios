@@ -12,6 +12,8 @@ import type {
   BusinessPartner,
   Account 
 } from '@/types/api';
+import { cartService } from '@/services/cartService';
+import { httpClient } from '@/services/httpClient';
 
 // Tipos del store
 interface AuthState {
@@ -60,6 +62,10 @@ interface AppStore {
   updateCartQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
   calculateCartTotals: () => void;
+  syncCartWithServer: () => Promise<void>;
+  verifyCartItems: () => Promise<void>;
+  saveCartForLater: () => Promise<void>;
+  loadServerCart: () => Promise<void>;
   
   // UI state
   ui: UIState;
@@ -132,53 +138,78 @@ export const useStore = create<AppStore>()(
         auth: { ...state.auth, ...auth }
       })),
       
-      login: (user, token, account) => set((state) => ({
-        auth: {
-          user,
-          account: account || state.auth.account,
-          isAuthenticated: true,
-          token,
-        }
-      })),
+      login: (user, token, account) => {
+        // Configurar token en el cliente HTTP
+        httpClient.setAuthToken(token);
+        
+        set((state) => ({
+          auth: {
+            user,
+            account: account || state.auth.account,
+            isAuthenticated: true,
+            token,
+          }
+        }));
+        
+        // Cargar carrito del servidor después del login
+        setTimeout(() => {
+          get().loadServerCart();
+        }, 1000);
+      },
       
-      logout: () => set({
-        auth: initialAuthState,
-        cart: initialCartState, // Limpiar carrito al logout
-      }),
+      logout: () => {
+        // Remover token del cliente HTTP
+        httpClient.removeAuthToken();
+        
+        set({
+          auth: initialAuthState,
+          cart: initialCartState, // Limpiar carrito al logout
+        });
+      },
       
       // Cart state
       cart: initialCartState,
       
-      addToCart: (product, quantity) => set((state) => {
-        const existingItem = state.cart.items.find(item => item.product.id === product.id);
-        
-        let newItems: CartItem[];
-        if (existingItem) {
-          newItems = state.cart.items.map(item =>
-            item.product.id === product.id
-              ? { ...item, quantity: item.quantity + quantity }
-              : item
-          );
-        } else {
-          newItems = [...state.cart.items, {
-            product,
-            quantity,
-            unit_price: product.unit_price,
-          }];
-        }
-        
-        const newCart = calculateTotals(newItems, state.cart.currency);
-        
-        // Agregar notificación
-        get().addNotification({
-          type: 'success',
-          title: 'Producto agregado',
-          message: `${product.name} agregado al carrito`,
-          duration: 3000,
+      addToCart: (product, quantity) => {
+        set((state) => {
+          const existingItem = state.cart.items.find(item => item.product.id === product.id);
+          
+          let newItems: CartItem[];
+          if (existingItem) {
+            newItems = state.cart.items.map(item =>
+              item.product.id === product.id
+                ? { ...item, quantity: item.quantity + quantity }
+                : item
+            );
+          } else {
+            newItems = [...state.cart.items, {
+              product,
+              quantity,
+              unit_price: product.unit_price,
+            }];
+          }
+          
+          const newCart = calculateTotals(newItems, state.cart.currency);
+          
+          // Agregar notificación
+          get().addNotification({
+            type: 'success',
+            title: 'Producto agregado',
+            message: `${product.name} agregado al carrito`,
+            duration: 3000,
+          });
+          
+          return { cart: newCart };
         });
-        
-        return { cart: newCart };
-      }),
+
+        // Sincronizar con servidor si está autenticado
+        const state = get();
+        if (state.auth.isAuthenticated) {
+          setTimeout(() => {
+            get().syncCartWithServer();
+          }, 500);
+        }
+      },
       
       removeFromCart: (productId) => set((state) => {
         const newItems = state.cart.items.filter(item => item.product.id !== productId);
@@ -220,6 +251,136 @@ export const useStore = create<AppStore>()(
         const newCart = calculateTotals(state.cart.items, state.cart.currency);
         return { cart: newCart };
       }),
+
+      // Sincronización con servidor
+      syncCartWithServer: async () => {
+        const state = get();
+        if (!state.auth.isAuthenticated || state.cart.items.length === 0) {
+          return;
+        }
+
+        try {
+          await cartService.syncCart(state.cart.items, state.cart.currency);
+          
+          get().addNotification({
+            type: 'success',
+            title: 'Carrito sincronizado',
+            message: 'Carrito guardado en el servidor',
+            duration: 3000,
+          });
+        } catch (error: any) {
+          get().addNotification({
+            type: 'error',
+            title: 'Error de sincronización',
+            message: error.message || 'No se pudo sincronizar el carrito',
+            duration: 5000,
+          });
+        }
+      },
+
+      verifyCartItems: async () => {
+        const state = get();
+        if (state.cart.items.length === 0) {
+          return;
+        }
+
+        try {
+          get().setLoading(true);
+          const result = await cartService.verifyCartItems(state.cart.items);
+          
+          if (!result.valid) {
+            // Actualizar carrito con items válidos
+            const newCart = calculateTotals(result.updated_items, state.cart.currency);
+            set({ cart: newCart });
+
+            // Mostrar advertencias
+            result.warnings.forEach(warning => {
+              get().addNotification({
+                type: 'warning',
+                title: 'Cambios en el carrito',
+                message: warning,
+                duration: 5000,
+              });
+            });
+          }
+        } catch (error: any) {
+          get().addNotification({
+            type: 'error',
+            title: 'Error de verificación',
+            message: error.message || 'No se pudo verificar el carrito',
+            duration: 5000,
+          });
+        } finally {
+          get().setLoading(false);
+        }
+      },
+
+      saveCartForLater: async () => {
+        const state = get();
+        if (!state.auth.isAuthenticated || state.cart.items.length === 0) {
+          get().addNotification({
+            type: 'warning',
+            title: 'Carrito vacío',
+            message: 'No hay productos para guardar',
+            duration: 3000,
+          });
+          return;
+        }
+
+        try {
+          await cartService.saveCartForLater(state.cart.items, state.cart.currency);
+          
+          // Limpiar carrito local después de guardar
+          set({ cart: initialCartState });
+          
+          get().addNotification({
+            type: 'success',
+            title: 'Carrito guardado',
+            message: 'Carrito guardado para más tarde',
+            duration: 3000,
+          });
+        } catch (error: any) {
+          get().addNotification({
+            type: 'error',
+            title: 'Error al guardar',
+            message: error.message || 'No se pudo guardar el carrito',
+            duration: 5000,
+          });
+        }
+      },
+
+      loadServerCart: async () => {
+        const state = get();
+        if (!state.auth.isAuthenticated) {
+          return;
+        }
+
+        try {
+          const serverCart = await cartService.getServerCart();
+          
+          if (serverCart && serverCart.success) {
+            const cartData = serverCart.data;
+            set({
+              cart: {
+                items: cartData.items,
+                subtotal: cartData.subtotal,
+                tax_amount: cartData.tax_amount,
+                total_amount: cartData.total_amount,
+                currency: cartData.currency,
+              }
+            });
+
+            get().addNotification({
+              type: 'info',
+              title: 'Carrito recuperado',
+              message: 'Carrito cargado desde el servidor',
+              duration: 3000,
+            });
+          }
+        } catch (error: any) {
+          // Error silencioso - no mostrar notificación si no hay carrito en servidor
+        }
+      },
       
       // UI state
       ui: initialUIState,
@@ -313,6 +474,14 @@ export const useStore = create<AppStore>()(
           theme: state.ui.theme,
         },
       }),
+      onRehydrateStorage: () => {
+        return (state) => {
+          // Configurar token en httpClient cuando se hidrata el store
+          if (state?.auth?.token && state?.auth?.isAuthenticated) {
+            httpClient.setAuthToken(state.auth.token);
+          }
+        };
+      },
     }
   )
 );
@@ -335,3 +504,11 @@ export const useIsProductInCart = (productId: string) => useStore((state) =>
 export const useCartItem = (productId: string) => useStore((state) =>
   state.cart.items.find(item => item.product.id === productId)
 );
+
+// Función para inicializar la autenticación al cargar la aplicación
+export const initializeAuth = () => {
+  const store = useStore.getState();
+  if (store.auth.token && store.auth.isAuthenticated) {
+    httpClient.setAuthToken(store.auth.token);
+  }
+};

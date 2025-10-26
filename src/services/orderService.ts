@@ -38,6 +38,44 @@ interface CreateSalesOrderResponse {
   updated_at: string;
 }
 
+interface SalesOrder {
+  id: string;
+  order_number: string;
+  customer_id: string;
+  currency: string;
+  status: 'draft' | 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  total_amount: number;
+  items: SalesOrderItem[];
+  notes?: string;
+  metadata?: {
+    channel?: string;
+    shipping_info?: any;
+    payment_method?: string;
+    [key: string]: any;
+  };
+  created_at: string;
+  updated_at: string;
+}
+
+interface GetOrdersParams {
+  customer_id?: string;
+  status?: string;
+  page?: number;
+  per_page?: number;
+  order_by?: string;
+  direction?: 'asc' | 'desc';
+}
+
+interface OrdersResponse {
+  data: SalesOrder[];
+  pagination?: {
+    page: number;
+    per_page: number;
+    total: number;
+    total_pages: number;
+  };
+}
+
 interface CreatePaymentRequest {
   payment_number: string;
   source_type: 'customer' | 'supplier' | 'employee' | 'other';
@@ -71,6 +109,84 @@ class OrderService {
       ...DEFAULT_HEADERS,
       'X-Account-ID': ACCOUNT_ID,
     };
+  }
+
+  /**
+   * Obtiene todas las órdenes de venta
+   */
+  async getOrders(params?: GetOrdersParams): Promise<OrdersResponse> {
+    try {
+      const response = await httpClient.get<OrdersResponse>(
+        API_ENDPOINTS.SALES_ORDERS(ACCOUNT_ID),
+        {
+          headers: this.getHeaders(),
+          params: params
+        }
+      );
+
+      // Si la respuesta es un array directo (sin paginación)
+      if (Array.isArray(response)) {
+        return {
+          data: response,
+          pagination: {
+            page: 1,
+            per_page: response.length,
+            total: response.length,
+            total_pages: 1,
+          }
+        };
+      }
+
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Obtiene una orden específica por ID
+   */
+  async getOrder(orderId: string): Promise<SalesOrder> {
+    try {
+      const response = await httpClient.get<SalesOrder>(
+        API_ENDPOINTS.SALES_ORDER(ACCOUNT_ID, orderId),
+        {
+          headers: this.getHeaders(),
+        }
+      );
+
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Obtiene los pedidos de un usuario específico
+   */
+  async getUserOrders(customerId: string, params?: Omit<GetOrdersParams, 'customer_id'>): Promise<OrdersResponse> {
+    return this.getOrders({
+      ...params,
+      customer_id: customerId,
+      order_by: 'created_at',
+      direction: 'desc'
+    });
+  }
+
+  /**
+   * Convierte el estado de la API al formato del frontend
+   */
+  mapOrderStatus(apiStatus: string): 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled' {
+    const statusMap: Record<string, 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'> = {
+      'draft': 'pending',
+      'pending': 'pending',
+      'confirmed': 'processing',
+      'completed': 'delivered',
+      'cancelled': 'cancelled',
+      'shipped': 'shipped', // Si la API soporta este estado
+    };
+    
+    return statusMap[apiStatus] || 'pending';
   }
 
   /**
@@ -207,5 +323,8 @@ export type {
   CreateSalesOrderResponse, 
   CreatePaymentRequest, 
   CreatePaymentResponse,
-  SalesOrderItem 
+  SalesOrderItem,
+  SalesOrder,
+  GetOrdersParams,
+  OrdersResponse
 };

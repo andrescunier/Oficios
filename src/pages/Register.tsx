@@ -106,25 +106,14 @@ export const Register: React.FC = () => {
       setIsLoading(true);
       setError(null);
 
-      const { user, token, businessPartner } = await authService.register({
-        first_name: data.first_name,
-        last_name: data.last_name,
+      const { user, token } = await authService.register({
+        firstName: data.first_name,
+        lastName: data.last_name,
         email: data.email,
-        company_name: data.company_name,
         password: data.password,
         phone: data.phone,
-        title: data.title,
-        tax_id: data.tax_id,
-        currency: data.currency,
-        industry: data.industry,
-        username: data.username,
-        role: 'customer',
-        person_metadata: {
-          source: 'web_registration'
-        },
-        company_metadata: {
-          sector: 'B2B'
-        },
+        companyName: data.company_name,
+        taxId: data.tax_id,
       });
       
       // Actualizar estado global
@@ -134,7 +123,7 @@ export const Register: React.FC = () => {
       addNotification({
         type: 'success',
         title: '¡Registro completado!',
-        message: `Cliente ${businessPartner.name} creado correctamente.`,
+        message: `Usuario registrado correctamente.`,
       });
 
       // Redirigir a página de éxito con los datos del registro
@@ -144,9 +133,6 @@ export const Register: React.FC = () => {
           user: {
             email: user.email,
             username: user.username
-          },
-          businessPartner: {
-            name: businessPartner.name
           }
         } 
       });

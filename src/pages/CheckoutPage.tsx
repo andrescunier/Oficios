@@ -273,7 +273,17 @@ export const CheckoutPage: React.FC = () => {
       <section className="bg-white border-b">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold">Finalizar Compra</h1>
+            <div>
+              <h1 className="text-2xl font-bold">Finalizar Compra</h1>
+              {/* Indicador de usuario logueado */}
+              {auth.user && (
+                <div className="flex items-center mt-2 text-sm text-green-600">
+                  <User className="w-4 h-4 mr-1" />
+                  <span>Sesión iniciada como: <strong>{auth.user.username}</strong></span>
+                  <span className="ml-2 bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">✓ Autenticado</span>
+                </div>
+              )}
+            </div>
             <Link 
               to="/carrito" 
               className="flex items-center text-blue-600 hover:text-blue-700 transition-colors"

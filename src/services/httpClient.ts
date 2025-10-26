@@ -32,9 +32,28 @@ class HttpClient {
           config.headers['X-Account-ID'] = ACCOUNT_ID;
         }
 
+        // Agregar token de autenticación automáticamente si está disponible
+        const authToken = this.getStoredToken();
+        if (authToken && !config.headers?.['Authorization']) {
+          config.headers = config.headers || {};
+          config.headers['Authorization'] = `Bearer ${authToken}`;
+        }
+
+        if (enableApiLogging) {
+          console.log('🚀 Request:', {
+            method: config.method?.toUpperCase(),
+            url: config.url,
+            headers: config.headers,
+            data: config.data
+          });
+        }
+
         return config;
       },
       (error) => {
+        if (enableApiLogging) {
+          console.error('❌ Request Error:', error);
+        }
         return Promise.reject(error);
       }
     );
@@ -42,9 +61,29 @@ class HttpClient {
     // Response interceptor
     this.client.interceptors.response.use(
       (response: AxiosResponse) => {
+        if (enableApiLogging) {
+          console.log('✅ Response:', {
+            status: response.status,
+            url: response.config.url,
+            data: response.data
+          });
+        }
         return response;
       },
       (error) => {
+        if (enableApiLogging) {
+          console.error('❌ Response Error:', {
+            status: error.response?.status,
+            url: error.config?.url,
+            message: error.response?.data?.message || error.message
+          });
+        }
+
+        // Si es error 401, limpiar token y redirigir a login
+        if (error.response?.status === 401) {
+          this.handleUnauthorized();
+        }
+
         // Transformar errores de la API
         const apiError: ApiError = {
           message: error.response?.data?.message || error.message || 'Error desconocido',
@@ -104,6 +143,43 @@ class HttpClient {
   // Método para obtener la instancia de Axios (si es necesario)
   getInstance(): AxiosInstance {
     return this.client;
+  }
+
+  // Método para obtener el token almacenado del localStorage o store
+  private getStoredToken(): string | null {
+    try {
+      // Intentar obtener del localStorage donde Zustand persiste el estado
+      const persistedState = localStorage.getItem('iamerican-store');
+      if (persistedState) {
+        const state = JSON.parse(persistedState);
+        return state?.state?.auth?.token || null;
+      }
+      return null;
+    } catch (error) {
+      console.warn('Error al obtener token del storage:', error);
+      return null;
+    }
+  }
+
+  // Método para manejar errores de autorización (401)
+  private handleUnauthorized(): void {
+    try {
+      // Limpiar token del cliente HTTP
+      this.removeAuthToken();
+      
+      // Limpiar localStorage
+      localStorage.removeItem('iamerican-store');
+      
+      // Redirigir a login (solo si estamos en el navegador)
+      if (typeof window !== 'undefined' && window.location) {
+        // Verificar si ya estamos en login para evitar bucles
+        if (!window.location.pathname.includes('/login')) {
+          window.location.href = '/login?expired=true';
+        }
+      }
+    } catch (error) {
+      console.error('Error al manejar token expirado:', error);
+    }
   }
 
   // Método para verificar headers actuales

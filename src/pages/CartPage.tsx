@@ -8,7 +8,16 @@ import { Minus, Plus, Trash2, ShoppingCart, ArrowLeft } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 
 export const CartPage: React.FC = () => {
-  const { cart, updateCartQuantity, removeFromCart, clearCart, addNotification } = useStore();
+    const { 
+    cart, 
+    removeFromCart, 
+    updateCartQuantity, 
+    clearCart, 
+    addNotification,
+    auth,
+    verifyCartItems,
+    saveCartForLater
+  } = useStore();
   const navigate = useNavigate();
 
   const handleQuantityChange = (productId: string, newQuantity: number) => {
@@ -19,8 +28,22 @@ export const CartPage: React.FC = () => {
     }
   };
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     try {
+      // Verificar autenticación
+      if (!auth.isAuthenticated) {
+        addNotification({
+          type: 'warning',
+          title: 'Autenticación requerida',
+          message: 'Debes iniciar sesión para realizar el checkout',
+        });
+        navigate('/login');
+        return;
+      }
+
+      // Verificar disponibilidad y precios
+      await verifyCartItems();
+
       addNotification({
         type: 'info',
         title: 'Checkout',
@@ -33,20 +56,17 @@ export const CartPage: React.FC = () => {
       }, 1000);
       
     } catch (error) {
-      alert('Error al procesar checkout');
+      addNotification({
+        type: 'error',
+        title: 'Error',
+        message: 'Error al procesar checkout',
+      });
     }
   };
 
-  const handleSaveForLater = () => {
+  const handleSaveForLater = async () => {
     try {
-      // Guardar en localStorage
-      localStorage.setItem('savedCart', JSON.stringify(cart));
-      
-      addNotification({
-        type: 'success',
-        title: 'Carrito guardado',
-        message: 'Tu carrito se ha guardado para más tarde',
-      });
+      await saveCartForLater();
       
       // Redirigir a productos después de guardar
       setTimeout(() => {
@@ -54,7 +74,7 @@ export const CartPage: React.FC = () => {
       }, 2000);
       
     } catch (error) {
-      alert('Error al guardar el carrito');
+      // Error ya manejado en el store
     }
   };
 
@@ -233,6 +253,14 @@ export const CartPage: React.FC = () => {
                 className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors mb-3"
               >
                 Proceder al Checkout
+              </button>
+
+              <button 
+                type="button"
+                onClick={() => verifyCartItems()}
+                className="w-full bg-green-100 text-green-700 py-2 rounded-lg font-medium hover:bg-green-200 transition-colors mb-3"
+              >
+                Verificar Precios y Disponibilidad
               </button>
               
               <button 

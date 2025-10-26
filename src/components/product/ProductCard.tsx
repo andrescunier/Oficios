@@ -87,6 +87,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     e.preventDefault();
     e.stopPropagation();
     
+    // Verificar autenticación
+    if (!isAuthenticated) {
+      addNotification({
+        type: 'warning',
+        title: 'Inicia sesión',
+        message: 'Necesitas iniciar sesión para agregar productos a favoritos',
+      });
+      navigate('/login', { state: { from: location } });
+      return;
+    }
+    
     if (isProductFavorite) {
       removeFromFavorites(product.id);
       addNotification({
@@ -96,6 +107,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       });
     } else {
       addToFavorites(product.id);
+      addNotification({
+        type: 'success',
+        title: 'Agregado a favoritos',
+        message: `${product.name} agregado a tus favoritos`,
+      });
     }
   };
 
@@ -172,15 +188,22 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             </div>
 
             {/* Action buttons */}
-            <div className="absolute top-2 right-2 flex flex-col space-y-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <div className="absolute top-2 right-2 flex flex-col space-y-1 opacity-80 group-hover:opacity-100 transition-opacity duration-300">
               <Button
                 variant="secondary"
                 size="icon"
-                className="w-8 h-8 rounded-full"
+                className={`w-9 h-9 rounded-full shadow-md ${isProductFavorite 
+                  ? 'bg-red-50 border-red-200 hover:bg-red-100' 
+                  : 'bg-white/90 hover:bg-white'
+                }`}
                 onClick={handleToggleFavorite}
+                title={isProductFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos'}
               >
                 <Heart 
-                  className={`w-4 h-4 ${isProductFavorite ? 'fill-red-500 text-red-500' : ''}`} 
+                  className={`w-5 h-5 ${isProductFavorite 
+                    ? 'fill-red-500 text-red-500' 
+                    : 'text-gray-600 hover:text-red-400'
+                  }`} 
                 />
               </Button>
               
@@ -191,7 +214,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                       variant="secondary"
                       size="icon"
                       className="w-8 h-8 rounded-full"
-                      onClick={(e) => {
+                      onClick={(e: React.MouseEvent) => {
                         e.preventDefault();
                         e.stopPropagation();
                       }}
@@ -237,7 +260,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                           <Button
                             variant="outline"
                             size="icon"
-                            onClick={(e) => {
+                            onClick={(e: React.MouseEvent) => {
                               e.stopPropagation();
                               setQuantity(Math.max(1, quantity - 1));
                             }}
@@ -249,7 +272,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                           <Button
                             variant="outline"
                             size="icon"
-                            onClick={(e) => {
+                            onClick={(e: React.MouseEvent) => {
                               e.stopPropagation();
                               setQuantity(quantity + 1);
                             }}

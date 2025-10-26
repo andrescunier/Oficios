@@ -13,8 +13,8 @@ resources:
 
 images:
 - name: iamerican-ecommerce
-  newName: andrescunier/iamerican-ecommerce  # Docker Hub registry
-  newTag: v1.1.0  # Nueva versión con autenticación por tokens
+  newName: ghcr.io/andrescunier/diap-ecommerce  # GitHub Container Registry
+  newTag: latest  # GitHub Actions subirá automáticamente con tag latest
 
 commonLabels:
   app: iamerican-ecommerce

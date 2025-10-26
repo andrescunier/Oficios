@@ -13,11 +13,11 @@ resources:
 
 images:
 - name: iamerican-ecommerce
-  newTag: latest
+  newTag: v1.1.0  # Nueva versión con autenticación por tokens
 
 commonLabels:
   app: iamerican-ecommerce
-  version: v1.0.0
+  version: v1.1.0  # Nueva versión con sistema de autenticación completo
   environment: production
 
 replicas:

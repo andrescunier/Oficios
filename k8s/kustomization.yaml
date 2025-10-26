@@ -13,6 +13,7 @@ resources:
 
 images:
 - name: iamerican-ecommerce
+  newName: andrescunier/iamerican-ecommerce  # Docker Hub registry
   newTag: v1.1.0  # Nueva versión con autenticación por tokens
 
 commonLabels:

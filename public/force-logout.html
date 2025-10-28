@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forzar Limpieza de Sesión</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #e74c3c;
+            margin-top: 0;
+        }
+        button {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px 10px 0;
+        }
+        button:hover {
+            background: #c0392b;
+        }
+        .success {
+            background: #27ae60;
+        }
+        .success:hover {
+            background: #229954;
+        }
+        pre {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 4px;
+            background: #ecf0f1;
+        }
+        .warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Herramienta de Limpieza de Sesión</h1>
+        
+        <div class="warning">
+            <strong>⚠️ Advertencia:</strong> Esta herramienta eliminará TODA la información de sesión almacenada en tu navegador para esta aplicación.
+        </div>
+
+        <div class="status" id="status">
+            <strong>Estado actual:</strong>
+            <pre id="currentState">Cargando...</pre>
+        </div>
+
+        <div style="margin: 20px 0;">
+            <button onclick="checkState()">🔍 Verificar Estado</button>
+            <button onclick="clearEverything()">🗑️ Limpiar Todo</button>
+            <button class="success" onclick="goToLogin()">✅ Ir a Login</button>
+        </div>
+
+        <h3>Información de Debug:</h3>
+        <pre id="debugInfo"></pre>
+    </div>
+
+    <script>
+        function checkState() {
+            const state = {
+                localStorage: {},
+                sessionStorage: {},
+                cookies: document.cookie
+            };
+
+            // Leer localStorage
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                try {
+                    state.localStorage[key] = JSON.parse(localStorage.getItem(key));
+                } catch (e) {
+                    state.localStorage[key] = localStorage.getItem(key);
+                }
+            }
+
+            // Leer sessionStorage
+            for (let i = 0; i < sessionStorage.length; i++) {
+                const key = sessionStorage.key(i);
+                try {
+                    state.sessionStorage[key] = JSON.parse(sessionStorage.getItem(key));
+                } catch (e) {
+                    state.sessionStorage[key] = sessionStorage.getItem(key);
+                }
+            }
+
+            document.getElementById('currentState').textContent = JSON.stringify(state, null, 2);
+
+            // Verificar inconsistencias
+            const storeData = state.localStorage['iamerican-store'];
+            if (storeData) {
+                const auth = storeData.state?.auth || {};
+                const inconsistent = 
+                    (auth.isAuthenticated && !auth.token) ||
+                    (auth.isAuthenticated && !auth.user) ||
+                    (!auth.isAuthenticated && auth.token);
+
+                const debugInfo = {
+                    isAuthenticated: auth.isAuthenticated,
+                    hasToken: !!auth.token,
+                    tokenLength: auth.token?.length || 0,
+                    hasUser: !!auth.user,
+                    userEmail: auth.user?.email,
+                    inconsistentState: inconsistent,
+                };
+
+                document.getElementById('debugInfo').textContent = 
+                    '=== ANÁLISIS DE SESIÓN ===\n' +
+                    JSON.stringify(debugInfo, null, 2) +
+                    '\n\n' +
+                    (inconsistent ? '❌ ESTADO INCONSISTENTE DETECTADO!\n' : '✅ Estado consistente\n') +
+                    (auth.isAuthenticated && auth.token?.length < 50 ? '⚠️ Token sospechosamente corto\n' : '') +
+                    (auth.isAuthenticated && !auth.user ? '⚠️ Autenticado pero sin datos de usuario\n' : '');
+            } else {
+                document.getElementById('debugInfo').textContent = 'No hay datos de sesión almacenados';
+            }
+        }
+
+        function clearEverything() {
+            if (!confirm('¿Estás seguro de que quieres limpiar TODA la información de sesión?')) {
+                return;
+            }
+
+            console.log('🧹 Limpiando todo...');
+
+            // Limpiar localStorage
+            const localStorageKeys = Object.keys(localStorage);
+            console.log('📦 localStorage items antes:', localStorageKeys);
+            localStorage.clear();
+            console.log('✅ localStorage limpiado');
+
+            // Limpiar sessionStorage
+            const sessionStorageKeys = Object.keys(sessionStorage);
+            console.log('📦 sessionStorage items antes:', sessionStorageKeys);
+            sessionStorage.clear();
+            console.log('✅ sessionStorage limpiado');
+
+            // Limpiar cookies (si hay)
+            document.cookie.split(";").forEach(function(c) { 
+                document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+            });
+            console.log('✅ Cookies limpiadas');
+
+            // Verificar limpieza
+            setTimeout(() => {
+                checkState();
+                alert('✅ Limpieza completada!\n\nAhora recarga la página o ve a Login.');
+            }, 100);
+        }
+
+        function goToLogin() {
+            window.location.href = '/login';
+        }
+
+        // Verificar estado al cargar
+        window.addEventListener('load', checkState);
+    </script>
+</body>
+</html>

@@ -2,7 +2,7 @@
  * Servicio de autenticación para DIAP - Integración con API real
  */
 
-import type { User, AuthTokenResponse, BusinessPartner, Person } from '@/types/api';
+import type { User, Account } from '@/types/api';
 import { httpClient } from './httpClient';
 import { API_ENDPOINTS, ACCOUNT_ID } from '@/config/api';
 
@@ -19,51 +19,61 @@ export interface RegisterData {
   phone?: string;
   companyName?: string;
   taxId?: string;
+  title?: string;
+  industry?: string;
+  currency?: string;
+  username?: string;
+  role?: 'customer' | 'supplier';
+  personMetadata?: Record<string, any>;
+  companyMetadata?: Record<string, any>;
 }
 
 export interface LoginResponse {
   success: boolean;
-  message: string;
+  message?: string;
   data: {
     access_token: string;
+    token_type?: string;
     user: User;
-    account: any;
+    account?: Account;
   };
-  error_details?: any;
+  timestamp?: string;
 }
 
-export interface RegisterResponse {
+export interface SimpleRegistrationResponse {
   success: boolean;
-  message: string;
-  data: {
-    access_token: string;
-    user: User;
-    businessPartner: BusinessPartner;
+  message?: string;
+  data?: {
+    person_id: string;
+    partner_id: string;
+    user_id: string;
+    link_id: string;
+    email: string;
+    username: string;
+    company_name: string;
+    role: string;
+    account_id: string;
   };
-  error_details?: any;
 }
 
 export class AuthService {
   /**
    * Iniciar sesión con API real
    */
-  async login(credentials: LoginCredentials): Promise<{ user: User; token: string }> {
+  async login(
+    credentials: LoginCredentials
+  ): Promise<{ user: User; token: string; account: Account | null }> {
     try {
-      const response = await httpClient.post<LoginResponse>('/api/auth/login', {
+      const response = await httpClient.post<LoginResponse>(API_ENDPOINTS.AUTH.LOGIN, {
         email: credentials.email,
         password: credentials.password,
         account_id: ACCOUNT_ID
       });
 
-      // Verificar si la respuesta es exitosa
-      if (!response.success) {
-        throw new Error(response.message || 'Error de autenticación');
-      }
-
-      const { access_token, user, account } = response.data;
+      const { token, user, account } = this.normalizeLoginResponse(response, credentials);
 
       // Configurar token en el cliente HTTP automáticamente
-      httpClient.setAuthToken(access_token);
+      httpClient.setAuthToken(token);
 
       // Guardar información adicional si es necesaria
       if (account) {
@@ -72,7 +82,8 @@ export class AuthService {
 
       return {
         user,
-        token: access_token
+        token,
+        account
       };
 
     } catch (error: any) {
@@ -93,49 +104,49 @@ export class AuthService {
   /**
    * Registrar usuario con API real
    */
-  async register(data: RegisterData): Promise<{ user: User; token: string }> {
+  async register(
+    data: RegisterData
+  ): Promise<{ user: User; token: string; account: Account | null }> {
     try {
-      const response = await httpClient.post<RegisterResponse>('/api/auth/register', {
-        account_id: ACCOUNT_ID,
-        person: {
-          first_name: data.firstName,
-          last_name: data.lastName,
-          email: data.email,
-          phone: data.phone || ''
+      const payload = {
+        first_name: data.firstName,
+        last_name: data.lastName,
+        email: data.email,
+        password: data.password,
+        phone: data.phone,
+        title: data.title,
+        company_name: data.companyName || `${data.firstName} ${data.lastName}`,
+        tax_id: data.taxId,
+        industry: data.industry,
+        currency: data.currency || 'USD',
+        username: data.username || data.email.split('@')[0],
+        role: data.role || 'customer',
+        person_metadata: {
+          phone: data.phone,
+          title: data.title,
+          ...(data.personMetadata || {})
         },
-        user: {
-          email: data.email,
-          username: data.email,
-          password: data.password,
-          role: 'user'
-        },
-        business_partner: {
-          name: data.companyName || `${data.firstName} ${data.lastName}`,
-          partner_type: 'customer',
-          tax_id: data.taxId || '',
-          default_currency: 'ARS'
+        company_metadata: {
+          tax_id: data.taxId,
+          industry: data.industry,
+          ...(data.companyMetadata || {})
         }
-      });
-
-      // Verificar si la respuesta es exitosa
-      if (!response.success) {
-        throw new Error(response.message || 'Error en el registro');
-      }
-
-      const { access_token, user, businessPartner } = response.data;
-
-      // Configurar token en el cliente HTTP automáticamente
-      httpClient.setAuthToken(access_token);
-
-      // Guardar información del business partner
-      if (businessPartner) {
-        localStorage.setItem('business_partner_info', JSON.stringify(businessPartner));
-      }
-
-      return {
-        user,
-        token: access_token
       };
+
+      const response = await httpClient.post<SimpleRegistrationResponse>(
+        API_ENDPOINTS.SIMPLE.REGISTER_CUSTOMER,
+        payload
+      );
+
+      if (!response?.success) {
+        throw new Error(response?.message || 'Error en el registro');
+      }
+
+      // Luego de un registro exitoso, iniciamos sesión automáticamente
+      return await this.login({
+        email: data.email,
+        password: data.password
+      });
 
     } catch (error: any) {
       // Si es un error de la API con estructura conocida
@@ -155,10 +166,13 @@ export class AuthService {
   /**
    * Cerrar sesión
    */
-  async logout(): Promise<void> {
+  async logout(userId?: string): Promise<void> {
     try {
       // Llamar al endpoint de logout si existe
-      await httpClient.post('/api/auth/logout');
+      await httpClient.post(API_ENDPOINTS.AUTH.LOGOUT, {
+        user_id: userId,
+        account_id: ACCOUNT_ID
+      });
     } catch (error) {
       // No importa si el logout falla en el servidor
     } finally {
@@ -210,6 +224,49 @@ export class AuthService {
     } catch (error) {
       return null;
     }
+  }
+
+  private normalizeLoginResponse(
+    response: any,
+    credentials: LoginCredentials
+  ): { user: User; token: string; account: Account | null } {
+    const envelope = response?.success !== undefined
+      ? response
+      : { success: true, data: response };
+
+    if (!envelope.success) {
+      throw new Error(envelope.message || 'Error de autenticación');
+    }
+
+    const payload = envelope.data || {};
+    const token = payload.access_token || payload.token;
+
+    if (!token) {
+      throw new Error('La API no devolvió un token válido');
+    }
+
+    const account = payload.account || null;
+    const user = this.buildUser(payload.user, credentials);
+
+    return { user, token, account };
+  }
+
+  private buildUser(apiUser: any, credentials: LoginCredentials): User {
+    const now = new Date().toISOString();
+
+    const baseUser: User = {
+      id: apiUser?.id || apiUser?.user_id || credentials.email,
+      person_id: apiUser?.person_id || '',
+      email: apiUser?.email || credentials.email,
+      username: apiUser?.username || credentials.email?.split('@')[0] || credentials.email,
+      role: (apiUser?.role as User['role']) || 'customer',
+      status: (apiUser?.status as User['status']) || 'active',
+      created_at: apiUser?.created_at || now,
+      updated_at: apiUser?.updated_at || apiUser?.last_login_at || now,
+      person: apiUser?.person,
+    };
+
+    return baseUser;
   }
 }
 

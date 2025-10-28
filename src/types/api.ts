@@ -49,7 +49,7 @@ export interface User extends BaseEntity {
   person_id: string;
   email: string;
   username: string;
-  role: 'owner' | 'admin' | 'user';
+  role: 'owner' | 'admin' | 'user' | 'customer';
   status: 'active' | 'inactive' | 'suspended';
   person?: Person;
 }

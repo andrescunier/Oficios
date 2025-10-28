@@ -47,11 +47,13 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
   const isEligibleForFreeShipping = total >= freeShippingThreshold;
   const amountForFreeShipping = freeShippingThreshold - total;
 
-  const formatPrice = (price: number) => {
+  const formatPrice = (price: number, currency?: string) => {
+    const currencyCode = currency || 'USD';
+    
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',
-      currency: 'ARS',
-      minimumFractionDigits: 0,
+      currency: currencyCode,
+      minimumFractionDigits: 2,
     }).format(price);
   };
 
@@ -112,26 +114,12 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
           {/* Free shipping indicator */}
           {itemsCount > 0 && (
             <div className="mt-4 p-3 bg-muted rounded-lg">
-              {isEligibleForFreeShipping ? (
-                <div className="flex items-center space-x-2 text-green-600">
-                  <Package className="h-4 w-4" />
-                  <span className="text-sm font-medium">
-                    ¡Felicitaciones! Tienes envío gratis
-                  </span>
-                </div>
-              ) : (
-                <div className="text-sm">
-                  <p className="text-muted-foreground">
-                    Agrega {formatPrice(amountForFreeShipping)} más para envío gratis
-                  </p>
-                  <div className="w-full bg-muted-foreground/20 rounded-full h-2 mt-2">
-                    <div 
-                      className="bg-primary h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${Math.min((total / freeShippingThreshold) * 100, 100)}%` }}
-                    />
-                  </div>
-                </div>
-              )}
+              <div className="flex items-center space-x-2 text-green-600">
+                <Package className="h-4 w-4" />
+                <span className="text-sm font-medium">
+                  ¡Envío gratis en todas tus compras!
+                </span>
+              </div>
             </div>
           )}
 

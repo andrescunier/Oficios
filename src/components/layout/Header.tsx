@@ -38,6 +38,39 @@ export const Header: React.FC = () => {
   const user = auth.user;
   const cartItemCount = cart.items.length;
 
+  // Detectar estado inconsistente
+  const hasInconsistentState = React.useMemo(() => {
+    return (
+      (isAuthenticated && !auth.token) ||
+      (isAuthenticated && !user) ||
+      (!isAuthenticated && auth.token) ||
+      (auth.token && auth.token.length < 10)
+    );
+  }, [isAuthenticated, auth.token, user]);
+
+  // Limpiar automáticamente si hay inconsistencia
+  React.useEffect(() => {
+    if (hasInconsistentState) {
+      console.error('🔴 Estado inconsistente detectado en Header!');
+      console.log({
+        isAuthenticated,
+        hasToken: !!auth.token,
+        tokenLength: auth.token?.length,
+        hasUser: !!user,
+      });
+      
+      // Forzar limpieza
+      logout();
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // Redirigir a login después de un breve delay
+      setTimeout(() => {
+        window.location.href = '/login?session=invalid';
+      }, 100);
+    }
+  }, [hasInconsistentState, isAuthenticated, auth.token, user, logout]);
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -47,13 +80,14 @@ export const Header: React.FC = () => {
 
   const handleLogout = () => {
     logout();
+    localStorage.clear();
+    sessionStorage.clear();
     setIsMenuOpen(false);
+    // Redirigir a home después del logout
+    window.location.href = '/';
   };
 
   const categories = [
-    { name: 'Componentes', href: '/categoria/componentes' },
-    { name: 'Gaming', href: '/categoria/gaming' },
-    { name: 'SSD M.2', href: '/categoria/ssd-m2' },
     { name: 'SSD SATA', href: '/categoria/ssd-sata' },
     { name: 'Memoria RAM', href: '/categoria/memoria-ram' },
   ];
@@ -63,7 +97,7 @@ export const Header: React.FC = () => {
       <div className="bg-primary text-primary-foreground">
         <div className="container mx-auto px-4 py-2">
           <p className="text-center text-sm font-medium">
-            🎉 {BRANDING.APP_SLOGAN} - Envío gratis en compras superiores a $50.000
+            🎉 {BRANDING.APP_SLOGAN} - Envío gratis en todas tus compras
           </p>
         </div>
       </div>

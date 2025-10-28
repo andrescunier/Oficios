@@ -61,11 +61,41 @@ export interface QuoteResponse {
   error_details?: any;
 }
 
+type CartFeature = 
+  | 'sync'
+  | 'server_cart'
+  | 'verify'
+  | 'quotes'
+  | 'save'
+  | 'saved_list';
+
 export class CartService {
+  private disabledFeatures = new Set<CartFeature>();
+
+  private isFeatureDisabled(feature: CartFeature) {
+    return this.disabledFeatures.has(feature);
+  }
+
+  private markFeatureUnavailable(feature: CartFeature) {
+    this.disabledFeatures.add(feature);
+    if (import.meta.env.DEV) {
+      console.info(`[cartService] Feature "${feature}" no disponible en la API actual. Se continuará en modo local.`);
+    }
+  }
+
+  private isFeatureUnsupported(error: any) {
+    const status = error?.response?.status;
+    return status === 404 || status === 405 || status === 501;
+  }
+
   /**
    * Sincronizar carrito local con el servidor
    */
-  async syncCart(items: CartItem[], currency: string = 'ARS'): Promise<CartSyncResponse> {
+  async syncCart(items: CartItem[], currency: string = 'ARS'): Promise<CartSyncResponse | null> {
+    if (this.isFeatureDisabled('sync')) {
+      return null;
+    }
+
     try {
       const cartData: CartSyncRequest = {
         items: items.map(item => ({
@@ -83,6 +113,10 @@ export class CartService {
 
       return response;
     } catch (error: any) {
+      if (this.isFeatureUnsupported(error)) {
+        this.markFeatureUnavailable('sync');
+        return null;
+      }
       throw new Error(error.response?.data?.message || 'Error al sincronizar carrito');
     }
   }
@@ -91,6 +125,10 @@ export class CartService {
    * Obtener carrito guardado del servidor
    */
   async getServerCart(): Promise<CartSyncResponse | null> {
+    if (this.isFeatureDisabled('server_cart')) {
+      return null;
+    }
+
     try {
       const response = await httpClient.get<CartSyncResponse>(
         `/api/accounts/${ACCOUNT_ID}/cart`
@@ -102,6 +140,10 @@ export class CartService {
       
       return null;
     } catch (error) {
+      if (this.isFeatureUnsupported(error)) {
+        this.markFeatureUnavailable('server_cart');
+        return null;
+      }
       // Si no hay carrito en el servidor, no es un error
       return null;
     }
@@ -115,6 +157,14 @@ export class CartService {
     updated_items: CartItem[];
     warnings: string[];
   }> {
+    if (this.isFeatureDisabled('verify')) {
+      return {
+        valid: true,
+        updated_items: items,
+        warnings: [],
+      };
+    }
+
     try {
       const response = await httpClient.post<{
         success: boolean;
@@ -177,6 +227,14 @@ export class CartService {
         warnings
       };
     } catch (error: any) {
+      if (this.isFeatureUnsupported(error)) {
+        this.markFeatureUnavailable('verify');
+        return {
+          valid: true,
+          updated_items: items,
+          warnings: [],
+        };
+      }
       throw new Error(error.response?.data?.message || 'Error al verificar carrito');
     }
   }
@@ -185,6 +243,10 @@ export class CartService {
    * Crear cotización B2B
    */
   async createQuote(customerId: string, items: CartItem[], currency: string = 'ARS'): Promise<QuoteResponse> {
+    if (this.isFeatureDisabled('quotes')) {
+      throw new Error('La creación de cotizaciones no está habilitada en esta instancia');
+    }
+
     try {
       const quoteData: QuoteRequest = {
         customer_id: customerId,
@@ -202,6 +264,10 @@ export class CartService {
 
       return response;
     } catch (error: any) {
+      if (this.isFeatureUnsupported(error)) {
+        this.markFeatureUnavailable('quotes');
+        throw new Error('La API no soporta la creación de cotizaciones');
+      }
       throw new Error(error.response?.data?.message || 'Error al crear cotización');
     }
   }
@@ -210,6 +276,10 @@ export class CartService {
    * Guardar carrito para más tarde
    */
   async saveCartForLater(items: CartItem[], currency: string = 'ARS'): Promise<void> {
+    if (this.isFeatureDisabled('save')) {
+      return;
+    }
+
     try {
       await httpClient.post(`/api/accounts/${ACCOUNT_ID}/cart/save`, {
         items: items.map(item => ({
@@ -221,6 +291,10 @@ export class CartService {
         saved_at: new Date().toISOString()
       });
     } catch (error: any) {
+      if (this.isFeatureUnsupported(error)) {
+        this.markFeatureUnavailable('save');
+        return;
+      }
       throw new Error(error.response?.data?.message || 'Error al guardar carrito');
     }
   }
@@ -237,6 +311,10 @@ export class CartService {
       currency: string;
     }[];
   }> {
+    if (this.isFeatureDisabled('saved_list')) {
+      return { carts: [] };
+    }
+
     try {
       const response = await httpClient.get<{
         success: boolean;
@@ -253,6 +331,10 @@ export class CartService {
 
       return response.data;
     } catch (error: any) {
+      if (this.isFeatureUnsupported(error)) {
+        this.markFeatureUnavailable('saved_list');
+        return { carts: [] };
+      }
       throw new Error(error.response?.data?.message || 'Error al obtener carritos guardados');
     }
   }
@@ -261,9 +343,17 @@ export class CartService {
    * Eliminar carrito guardado
    */
   async deleteSavedCart(cartId: string): Promise<void> {
+    if (this.isFeatureDisabled('saved_list')) {
+      return;
+    }
+
     try {
       await httpClient.delete(`/api/accounts/${ACCOUNT_ID}/cart/saved/${cartId}`);
     } catch (error: any) {
+      if (this.isFeatureUnsupported(error)) {
+        this.markFeatureUnavailable('saved_list');
+        return;
+      }
       throw new Error(error.response?.data?.message || 'Error al eliminar carrito guardado');
     }
   }

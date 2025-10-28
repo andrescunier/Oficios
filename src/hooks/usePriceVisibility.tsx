@@ -66,12 +66,14 @@ export const usePriceVisibility = () => {
 export const PriceDisplay = ({ 
   price, 
   originalPrice, 
+  currency = 'USD',
   className = '',
   showLoginButton = true,
   onLoginClick
 }: {
   price: number;
   originalPrice?: number;
+  currency?: string;
   className?: string;
   showLoginButton?: boolean;
   onLoginClick?: () => void;
@@ -107,16 +109,16 @@ export const PriceDisplay = ({
 
   const formattedPrice = new Intl.NumberFormat('es-AR', {
     style: 'currency',
-    currency: 'ARS',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    currency: currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(price);
 
   const formattedOriginalPrice = originalPrice ? new Intl.NumberFormat('es-AR', {
     style: 'currency',
-    currency: 'ARS',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    currency: currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(originalPrice) : null;
 
   return (

@@ -1,4 +1,4 @@
-/**
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    /**
  * Página de inicio de sesión
  */
 
@@ -37,10 +37,28 @@ export const Login: React.FC = () => {
   
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, addNotification } = useStore();
+  const { login, addNotification, logout } = useStore();
 
   // Obtener la URL de redirección después del login
   const from = (location.state as any)?.from?.pathname || '/';
+
+  // Función para limpiar sesión corrupta
+  const handleClearSession = () => {
+    try {
+      logout();
+      localStorage.clear();
+      sessionStorage.clear();
+      addNotification({
+        type: 'success',
+        title: 'Sesión limpiada',
+        message: 'Todos los datos han sido eliminados correctamente',
+      });
+      // Recargar la página para asegurar estado limpio
+      window.location.reload();
+    } catch (error) {
+      console.error('Error al limpiar sesión:', error);
+    }
+  };
 
   const {
     register,
@@ -55,10 +73,10 @@ export const Login: React.FC = () => {
       setIsLoading(true);
       setError(null);
 
-      const { user, token } = await authService.login(data);
+      const { user, token, account } = await authService.login(data);
       
       // Actualizar estado global
-      login(user, token);
+      login(user, token, account || undefined);
 
       // Mostrar notificación de éxito
       addNotification({
@@ -172,6 +190,19 @@ export const Login: React.FC = () => {
             <Link to="/registro" className="text-primary hover:underline">
               Regístrate aquí
             </Link>
+          </div>
+
+          {/* Botón para limpiar sesión corrupta */}
+          <div className="mt-4 text-center">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleClearSession}
+              className="text-xs text-muted-foreground hover:text-foreground"
+            >
+              ¿Problemas con la sesión? Limpiar datos
+            </Button>
           </div>
         </CardContent>
       </Card>

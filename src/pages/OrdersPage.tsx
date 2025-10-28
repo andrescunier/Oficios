@@ -125,11 +125,13 @@ export const OrdersPage: React.FC = () => {
     }
   };
 
-  const formatPrice = (price: number) => {
+  const formatPrice = (price: number, currency?: string) => {
+    const currencyCode = currency || 'USD';
+    
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',
-      currency: 'ARS',
-      minimumFractionDigits: 0,
+      currency: currencyCode,
+      minimumFractionDigits: 2,
     }).format(price);
   };
 
@@ -256,7 +258,7 @@ export const OrdersPage: React.FC = () => {
                     
                     <div className="flex items-center space-x-4">
                       <div className="text-right">
-                        <p className="text-lg font-semibold">{formatPrice(order.total_amount)}</p>
+                        <p className="text-lg font-semibold">{formatPrice(order.total_amount, order.currency)}</p>
                         <p className="text-sm text-gray-600">{order.items.length} producto(s)</p>
                       </div>
                       <button
@@ -277,7 +279,7 @@ export const OrdersPage: React.FC = () => {
                           <span className="text-gray-700">
                             {item.quantity}x {item.description}
                           </span>
-                          <span className="font-medium">{formatPrice(item.unit_price * item.quantity)}</span>
+                          <span className="font-medium">{formatPrice(item.unit_price * item.quantity, order.currency)}</span>
                         </div>
                       ))}
                     </div>
@@ -334,7 +336,7 @@ export const OrdersPage: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Total</label>
-                  <p className="text-gray-900 font-semibold">{formatPrice(selectedOrder.total_amount)}</p>
+                  <p className="text-gray-900 font-semibold">{formatPrice(selectedOrder.total_amount, selectedOrder.currency)}</p>
                 </div>
               </div>
               
@@ -355,8 +357,8 @@ export const OrdersPage: React.FC = () => {
                         <p className="text-sm text-gray-600">Cantidad: {item.quantity}</p>
                       </div>
                       <div className="text-right">
-                        <p className="font-medium">{formatPrice(item.unit_price * item.quantity)}</p>
-                        <p className="text-sm text-gray-600">{formatPrice(item.unit_price)} c/u</p>
+                        <p className="font-medium">{formatPrice(item.unit_price * item.quantity, selectedOrder.currency)}</p>
+                        <p className="text-sm text-gray-600">{formatPrice(item.unit_price, selectedOrder.currency)} c/u</p>
                       </div>
                     </div>
                   ))}

@@ -167,14 +167,18 @@ class HttpClient {
       // Limpiar token del cliente HTTP
       this.removeAuthToken();
       
-      // Limpiar localStorage
+      // Limpiar localStorage completamente
       localStorage.removeItem('iamerican-store');
+      
+      // Limpiar sessionStorage también
+      sessionStorage.clear();
       
       // Redirigir a login (solo si estamos en el navegador)
       if (typeof window !== 'undefined' && window.location) {
         // Verificar si ya estamos en login para evitar bucles
         if (!window.location.pathname.includes('/login')) {
-          window.location.href = '/login?expired=true';
+          // Forzar recarga completa para limpiar el estado de React
+          window.location.href = '/login?session=expired';
         }
       }
     } catch (error) {

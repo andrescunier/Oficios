@@ -155,12 +155,7 @@ export const FEATURES = {
     {
       icon: 'Truck',
       title: import.meta.env.VITE_FEATURE_FREE_SHIPPING_TITLE || 'Envío Gratis',
-      description: import.meta.env.VITE_FEATURE_FREE_SHIPPING_DESC || 'En compras superiores a $50.000'
-    },
-    {
-      icon: 'RotateCcw',
-      title: import.meta.env.VITE_FEATURE_FREE_RETURNS_TITLE || 'Devolución Gratis',
-      description: import.meta.env.VITE_FEATURE_FREE_RETURNS_DESC || 'Hasta 30 días para devolver'
+      description: import.meta.env.VITE_FEATURE_FREE_SHIPPING_DESC || 'En todas tus compras'
     },
     {
       icon: 'Shield',
@@ -169,8 +164,8 @@ export const FEATURES = {
     },
     {
       icon: 'CreditCard',
-      title: import.meta.env.VITE_FEATURE_MULTIPLE_PAYMENTS_TITLE || 'Múltiples Pagos',
-      description: import.meta.env.VITE_FEATURE_MULTIPLE_PAYMENTS_DESC || 'Tarjetas, transferencia y más'
+      title: import.meta.env.VITE_FEATURE_PAYMENT_METHOD_TITLE || 'Transferencia Bancaria',
+      description: import.meta.env.VITE_FEATURE_PAYMENT_METHOD_DESC || 'Método de pago seguro'
     }
   ]
 } as const;

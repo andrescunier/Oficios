@@ -1,13 +1,15 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
+import { WhatsAppButton } from '@/components/ui/WhatsAppButton';
 import { Home } from '@/pages/Home';
 import { CategoryPage } from '@/pages/CategoryPage';
 import { ProductsPageApiReal as ProductsPage } from '@/pages/ProductsPageApiReal';
 import { ProductDetailPage } from '@/pages/ProductDetailPage';
 import { ContactPage } from '@/pages/ContactPage';
+import { AboutUs } from '@/pages/AboutUs';
 import { Login } from '@/pages/Login';
 import { Register } from '@/pages/Register';
 import { CartPage } from '@/pages/CartPage';
@@ -15,14 +17,35 @@ import { CheckoutPage } from '@/pages/CheckoutPage';
 import { ProfilePage } from '@/pages/ProfilePage';
 import { OrdersPage } from '@/pages/OrdersPage';
 import { FavoritesPage } from '@/pages/FavoritesPage';
+import { TermsAndConditions } from '@/pages/TermsAndConditions';
+import { PrivacyPolicy } from '@/pages/PrivacyPolicy';
+import { LegalNotice } from '@/pages/LegalNotice';
+import { CookiesPolicy } from '@/pages/CookiesPolicy';
+import { OrderTracking } from '@/pages/OrderTracking';
+import { ReturnsPage } from '@/pages/ReturnsPage';
+import { WarrantyPage } from '@/pages/WarrantyPage';
 import RegistrationSuccess from '@/pages/RegistrationSuccess';
 import { QUERY_CONFIG } from '@/config/api';
+import { useStore } from '@/store/useStore';
 import './App.css';
 
 // Crear cliente de React Query
 const queryClient = new QueryClient(QUERY_CONFIG);
 
 function App() {
+  const { auth, logout } = useStore();
+
+  // Validar sesión al cargar la aplicación
+  useEffect(() => {
+    // Si dice que está autenticado pero no hay user o token válido, limpiar
+    if (auth.isAuthenticated && (!auth.user || !auth.token || auth.token.length < 10)) {
+      console.warn('⚠️ Sesión corrupta detectada, limpiando...');
+      logout();
+      localStorage.removeItem('iamerican-store');
+      sessionStorage.clear();
+    }
+  }, [auth.isAuthenticated, auth.user, auth.token, logout]);
+
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
@@ -34,6 +57,7 @@ function App() {
               <Route path="/productos" element={<ProductsPage />} />
               <Route path="/productos/:id" element={<ProductDetailPage />} />
               <Route path="/contacto" element={<ContactPage />} />
+              <Route path="/sobrenosotros" element={<AboutUs />} />
               <Route path="/login" element={<Login />} />
               <Route path="/registro" element={<Register />} />
               <Route path="/registro-exitoso" element={<RegistrationSuccess />} />
@@ -42,6 +66,13 @@ function App() {
               <Route path="/perfil" element={<ProfilePage />} />
               <Route path="/pedidos" element={<OrdersPage />} />
               <Route path="/favoritos" element={<FavoritesPage />} />
+              <Route path="/terminos" element={<TermsAndConditions />} />
+              <Route path="/privacidad" element={<PrivacyPolicy />} />
+              <Route path="/aviso-legal" element={<LegalNotice />} />
+              <Route path="/cookies" element={<CookiesPolicy />} />
+              <Route path="/seguimiento" element={<OrderTracking />} />
+              <Route path="/devoluciones" element={<ReturnsPage />} />
+              <Route path="/garantias" element={<WarrantyPage />} />
               <Route path="/categoria/:category" element={<CategoryPage />} />
               {/* Catch all route para rutas no encontradas */}
               <Route path="*" element={
@@ -58,6 +89,9 @@ function App() {
             </Routes>
           </main>
           <Footer />
+          
+          {/* Botón flotante de WhatsApp */}
+          <WhatsAppButton />
         </div>
       </Router>
     </QueryClientProvider>

@@ -106,7 +106,7 @@ export const Register: React.FC = () => {
       setIsLoading(true);
       setError(null);
 
-      const { user, token } = await authService.register({
+      const { user, token, account } = await authService.register({
         firstName: data.first_name,
         lastName: data.last_name,
         email: data.email,
@@ -114,10 +114,14 @@ export const Register: React.FC = () => {
         phone: data.phone,
         companyName: data.company_name,
         taxId: data.tax_id,
+        title: data.title,
+        industry: data.industry,
+        username: data.username,
+        currency: data.currency,
       });
       
       // Actualizar estado global
-      login(user, token);
+      login(user, token, account || undefined);
 
       // Mostrar notificación de éxito
       addNotification({

@@ -57,11 +57,13 @@ export const CheckoutPage: React.FC = () => {
     paymentMethod: 'transferencia'
   });
 
-  const formatPrice = (price: number) => {
+  const formatPrice = (price: number, currency?: string) => {
+    const currencyCode = currency || 'USD';
+    
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',
-      currency: 'ARS',
-      minimumFractionDigits: 0,
+      currency: currencyCode,
+      minimumFractionDigits: 2,
     }).format(price);
   };
 
@@ -612,7 +614,7 @@ export const CheckoutPage: React.FC = () => {
                           <p className="text-sm text-gray-600">Cantidad: {item.quantity}</p>
                         </div>
                         <div className="text-right">
-                          <p className="font-medium">{formatPrice(item.product.unit_price * item.quantity)}</p>
+                          <p className="font-medium">{formatPrice(item.product.unit_price * item.quantity, item.product.currency)}</p>
                         </div>
                       </div>
                     ))}
@@ -663,7 +665,7 @@ export const CheckoutPage: React.FC = () => {
                       <p className="text-sm font-medium truncate">{item.product.name}</p>
                       <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
                     </div>
-                    <p className="text-sm font-medium">{formatPrice(item.product.unit_price * item.quantity)}</p>
+                    <p className="text-sm font-medium">{formatPrice(item.product.unit_price * item.quantity, item.product.currency)}</p>
                   </div>
                 ))}
               </div>
@@ -671,7 +673,7 @@ export const CheckoutPage: React.FC = () => {
               <div className="space-y-2 mb-6 border-t pt-4">
                 <div className="flex justify-between text-sm">
                   <span>Subtotal</span>
-                  <span>{formatPrice(cart.subtotal)}</span>
+                  <span>{formatPrice(cart.subtotal, cart.currency)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Envío</span>
@@ -680,7 +682,7 @@ export const CheckoutPage: React.FC = () => {
                 <div className="border-t pt-2">
                   <div className="flex justify-between font-semibold text-lg">
                     <span>Total</span>
-                    <span className="text-blue-600">{formatPrice(cart.total_amount)}</span>
+                    <span className="text-blue-600">{formatPrice(cart.total_amount, cart.currency)}</span>
                   </div>
                 </div>
               </div>
@@ -691,6 +693,12 @@ export const CheckoutPage: React.FC = () => {
                   <span>🚚 Envío gratis</span>
                 </div>
                 <p>Compra protegida por SSL</p>
+                <p className="mt-2 text-xs">
+                  Al finalizar tu compra aceptas nuestros{' '}
+                  <Link to="/terminos" className="text-primary hover:underline">
+                    Términos y Condiciones
+                  </Link>
+                </p>
               </div>
             </div>
           </div>

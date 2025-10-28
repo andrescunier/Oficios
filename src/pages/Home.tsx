@@ -95,12 +95,7 @@ export const Home: React.FC = () => {
     {
       icon: Truck,
       title: "Envío Gratis",
-      description: "En compras superiores a $50.000 a todo el país"
-    },
-    {
-      icon: RotateCcw,
-      title: "Devolución Gratis",
-      description: "Hasta 30 días para devolver tu compra"
+      description: "En todas tus compras"
     },
     {
       icon: Shield,
@@ -109,48 +104,24 @@ export const Home: React.FC = () => {
     },
     {
       icon: CreditCard,
-      title: "Múltiples Pagos",
-      description: "Tarjetas, transferencia, efectivo y más"
+      title: "Transferencia Bancaria",
+      description: "Método de pago seguro"
     }
   ];
 
   // Categories
   const categories = [
     {
-      name: "SSDs M.2",
-      image: "/images/categories/ssd-m2.jpg",
-      link: "/categoria/ssd-m2",
-      description: "PCIe NVMe de alta velocidad"
-    },
-    {
-      name: "SSDs 2.5\"",
-      image: "/images/categories/ssd-sata.jpg",
+      name: "SSD SATA",
+      image: "https://dcdn-us.mitiendanube.com/stores/001/498/293/products/f058c1e20b671761b713f47be922719-a2fcf586850d775dac17482988864670-480-0.webp",
       link: "/categoria/ssd-sata",
       description: "SATA III para máximo rendimiento"
     },
     {
-      name: "Memoria DDR4",
-      image: "/images/categories/ddr4.jpg",
-      link: "/categoria/ddr4",
+      name: "Memoria RAM",
+      image: "https://dcdn-us.mitiendanube.com/stores/001/498/293/products/2-78f8d07cb6d82d11a217234745342405-480-0.webp",
+      link: "/categoria/memoria-ram",
       description: "Módulos de memoria de alta velocidad"
-    },
-    {
-      name: "Memoria DDR5",
-      image: "/images/categories/ddr5.jpg",
-      link: "/categoria/ddr5",
-      description: "La nueva generación de memoria"
-    },
-    {
-      name: "Componentes",
-      image: "/images/categories/componentes.jpg",
-      link: "/categoria/componentes",
-      description: "Accesorios y componentes PC"
-    },
-    {
-      name: "Gaming",
-      image: "/images/categories/gaming.jpg",
-      link: "/categoria/gaming",
-      description: "Hardware optimizado para gaming"
     }
   ];
 
@@ -311,7 +282,7 @@ export const Home: React.FC = () => {
       {/* Features Section */}
       <section className="py-16 bg-muted/50">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
             {features.map((feature, index) => (
               <div key={index} className="text-center">
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
@@ -335,19 +306,28 @@ export const Home: React.FC = () => {
             </p>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
             {categories.map((category, index) => (
               <Link key={index} to={category.link}>
                 <Card className="group hover:shadow-lg transition-all duration-300 overflow-hidden">
                   <CardContent className="p-0">
-                    <div className="aspect-square bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
-                      <div className="text-center p-4">
-                        <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-primary/10 flex items-center justify-center">
-                          <span className="text-2xl">{category.name.charAt(0)}</span>
-                        </div>
-                        <h3 className="font-semibold text-sm group-hover:text-primary transition-colors">
+                    <div className="relative h-64 overflow-hidden bg-gray-100">
+                      <img 
+                        src={category.image} 
+                        alt={category.name}
+                        className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => {
+                          e.currentTarget.src = '/images/categories/componentes.jpg';
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                      <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                        <h3 className="text-xl font-bold mb-1 group-hover:text-blue-300 transition-colors">
                           {category.name}
                         </h3>
+                        <p className="text-sm text-gray-200">
+                          {category.description}
+                        </p>
                       </div>
                     </div>
                   </CardContent>

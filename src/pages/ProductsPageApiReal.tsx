@@ -85,18 +85,19 @@ export const ProductsPageApiReal: React.FC = () => {
         is_active: true
       });
       
-      // Verificar la estructura de la respuesta
-      let productArray: Product[] = [];
+      // Normalizar la respuesta de la misma forma que en Home
+      const normalizeProducts = (response: any): Product[] => {
+        const productsData = Array.isArray(response) ? response : 
+                           (response?.data && Array.isArray(response.data) ? response.data : []);
+        
+        if (!Array.isArray(productsData)) {
+          return [];
+        }
+        
+        return productsData;
+      };
       
-      if (Array.isArray(response)) {
-        // La respuesta es directamente un array
-        productArray = response;
-      } else if (response && Array.isArray(response.data)) {
-        // La respuesta tiene estructura PaginatedResponse
-        productArray = response.data;
-      } else {
-        throw new Error('Formato de respuesta de API inválido');
-      }
+      const productArray = normalizeProducts(response);
       
       // Procesar productos y asignar imágenes
       const productsWithImages = productArray.map(product => ({
@@ -124,90 +125,18 @@ export const ProductsPageApiReal: React.FC = () => {
         message: 'No se pudieron cargar los productos desde el servidor. Verifica tu conexión.',
       });
 
-      // Fallback: cargar productos de ejemplo si la API falla
-      loadFallbackProducts();
+      // NO cargar productos fallback, dejar el array vacío
+      setProducts([]);
       
     } finally {
       setLoading(false);
     }
   };
 
-  const loadFallbackProducts = () => {
-    const fallbackProducts: Product[] = [
-      {
-        id: 'fallback-1',
-        sku: 'SAM-980PRO-1TB',
-        name: 'SSD Samsung 980 PRO 1TB M.2 NVMe',
-        description: 'SSD de alta velocidad para gaming y trabajo profesional. Interfaz PCIe 4.0 con velocidades de hasta 7,000 MB/s.',
-        unit_price: 89999,
-        currency: 'ARS',
-        tax_rate: 21,
-        category: 'ssd',
-        image_url: '/images/categories/ssd-m2.jpg',
-        is_featured: true,
-        is_active: true,
-        stock_quantity: 25,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      },
-      {
-        id: 'fallback-2',
-        sku: 'COR-VEN-16GB',
-        name: 'Memoria Corsair Vengeance LPX 16GB DDR4 3200MHz',
-        description: 'Kit de memoria DDR4 optimizada para gaming con disipadores de calor de aluminio.',
-        unit_price: 45999,
-        currency: 'ARS',
-        tax_rate: 21,
-        category: 'memoria',
-        image_url: '/images/categories/ddr4.jpg',
-        is_featured: false,
-        is_active: true,
-        stock_quantity: 15,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      },
-      {
-        id: 'fallback-3',
-        sku: 'GSK-TZ5-32GB',
-        name: 'Memoria G.Skill Trident Z5 32GB DDR5 5600MHz',
-        description: 'Memoria DDR5 de última generación con RGB y disipadores premium para máximo rendimiento.',
-        unit_price: 125999,
-        currency: 'ARS',
-        tax_rate: 21,
-        category: 'memoria',
-        image_url: '/images/categories/ddr5.jpg',
-        is_featured: true,
-        is_active: true,
-        stock_quantity: 8,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      },
-      {
-        id: 'fallback-4',
-        sku: 'KIN-NV2-500GB',
-        name: 'SSD Kingston NV2 500GB M.2 NVMe',
-        description: 'SSD económico con excelente rendimiento para uso general y gaming.',
-        unit_price: 32999,
-        currency: 'ARS',
-        tax_rate: 21,
-        category: 'ssd',
-        image_url: '/images/categories/ssd-m2.jpg',
-        is_featured: false,
-        is_active: true,
-        stock_quantity: 30,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }
-    ];
-
-    setProducts(fallbackProducts);
-    setError('Error de conexión - Mostrando productos de ejemplo');
-  };
-
-  const formatPrice = (price: number) => {
+  const formatPrice = (price: number, currency: string = 'USD') => {
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',
-      currency: 'ARS',
+      currency: currency,
       minimumFractionDigits: 0,
     }).format(price);
   };
@@ -315,20 +244,6 @@ export const ProductsPageApiReal: React.FC = () => {
       </section>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Status */}
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-8">
-          <div className="flex items-center justify-between">
-            <span className="text-gray-600">
-              {loading ? 'Cargando productos...' : `${filteredProducts.length} productos encontrados`}
-            </span>
-          </div>
-          {error && (
-            <div className="mt-2 text-sm text-red-600">
-              Error al cargar productos - <button onClick={loadProducts} className="underline hover:no-underline">Reintentar</button>
-            </div>
-          )}
-        </div>
-
         {/* Loading State */}
         {loading && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -346,7 +261,33 @@ export const ProductsPageApiReal: React.FC = () => {
         )}
 
         {/* Products Grid */}
-        {!loading && (
+        {!loading && filteredProducts.length === 0 && (
+          <div className="text-center py-20">
+            <div className="mb-4">
+              <Search className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-700 mb-2">
+                {error ? 'No se pudieron cargar los productos' : 'No se encontraron productos'}
+              </h3>
+              <p className="text-gray-500">
+                {error 
+                  ? 'Hubo un problema al conectar con el servidor. Por favor, intenta nuevamente.' 
+                  : searchTerm 
+                    ? 'Intenta con otros términos de búsqueda.' 
+                    : 'No hay productos disponibles en este momento.'}
+              </p>
+              {error && (
+                <button 
+                  onClick={loadProducts}
+                  className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Reintentar
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {!loading && filteredProducts.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredProducts.map((product) => (
               <div key={product.id} className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-all duration-300 group relative">
@@ -401,6 +342,7 @@ export const ProductsPageApiReal: React.FC = () => {
                   <div className="mb-2">
                     <PriceDisplay
                       price={product.unit_price}
+                      currency={product.currency}
                       showLoginButton={true}
                     />
                   </div>

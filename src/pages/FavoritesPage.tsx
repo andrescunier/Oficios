@@ -79,11 +79,13 @@ export const FavoritesPage: React.FC = () => {
     }
   };
 
-  const formatPrice = (price: number) => {
+  const formatPrice = (price: number, currency?: string) => {
+    const currencyCode = currency || 'USD';
+    
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',
-      currency: 'ARS',
-      minimumFractionDigits: 0,
+      currency: currencyCode,
+      minimumFractionDigits: 2,
     }).format(price);
   };
 
@@ -270,7 +272,7 @@ export const FavoritesPage: React.FC = () => {
                             
                             <div className="flex items-center space-x-4">
                               <span className="text-2xl font-bold text-blue-600">
-                                {formatPrice(product.unit_price)}
+                                {formatPrice(product.unit_price, product.currency)}
                               </span>
                               
                               {product.stock_quantity !== undefined && (

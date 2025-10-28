@@ -22,6 +22,16 @@ export const API_ENDPOINTS = {
   // Autenticación
   AUTH: {
     TOKEN: '/api/auth/token',
+    LOGIN: '/api/auth/login',
+    LOGOUT: '/api/auth/logout',
+  },
+
+  // Registro simple (embudos públicos)
+  SIMPLE: {
+    REGISTER_CUSTOMER: '/api/simple/register-customer',
+    QUICK_REGISTER: '/api/simple/quick-register',
+    CHECK_EMAIL: (email: string) => `/api/simple/check-email/${encodeURIComponent(email)}`,
+    REGISTRATION_STATS: '/api/simple/registration-stats',
   },
   
   // Cuentas

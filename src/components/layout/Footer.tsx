@@ -32,41 +32,33 @@ export const Footer: React.FC = () => {
     company: {
       title: 'Empresa',
       links: [
-        { label: 'Sobre Nosotros', href: '/sobre-nosotros' },
-        { label: 'Nuestras Tiendas', href: '/tiendas' },
-        { label: 'Trabaja con Nosotros', href: '/empleos' },
-        { label: 'Prensa', href: '/prensa' },
-        { label: 'Inversionistas', href: '/inversionistas' },
+        { label: 'Sobre Nosotros', href: '/sobrenosotros', external: false },
       ]
     },
     customer: {
       title: 'Atención al Cliente',
       links: [
-        { label: 'Centro de Ayuda', href: '/ayuda' },
-        { label: 'Contacto', href: '/contacto' },
-        { label: 'Seguimiento de Pedido', href: '/seguimiento' },
-        { label: 'Devoluciones', href: '/devoluciones' },
-        { label: 'Garantías', href: '/garantias' },
+        { label: 'Centro de Ayuda', href: '/contacto', external: false },
+        { label: 'Seguimiento de Pedido', href: '/seguimiento', external: false },
+        { label: 'Devoluciones', href: '/devoluciones', external: false },
+        { label: 'Garantías', href: '/garantias', external: false },
       ]
     },
     categories: {
       title: 'Categorías',
       links: [
-        { label: 'Componentes', href: '/categoria/componentes' },
-        { label: 'Gaming', href: '/categoria/gaming' },
-        { label: 'SSD M.2', href: '/categoria/ssd-m2' },
-        { label: 'SSD SATA', href: '/categoria/ssd-sata' },
-        { label: 'Memoria RAM', href: '/categoria/memoria-ram' },
+        { label: 'SSD SATA', href: '/categoria/ssd-sata', external: false },
+        { label: 'Memoria RAM', href: '/categoria/memoria-ram', external: false },
       ]
     },
     legal: {
       title: 'Legal',
       links: [
-        { label: 'Términos y Condiciones', href: '/terminos' },
-        { label: 'Política de Privacidad', href: '/privacidad' },
-        { label: 'Política de Cookies', href: '/cookies' },
-        { label: 'Defensa del Consumidor', href: '/defensa-consumidor' },
-        { label: 'Arrepentimiento', href: '/arrepentimiento' },
+        { label: 'Términos y Condiciones', href: '/terminos', external: false },
+        { label: 'Política de Privacidad', href: '/privacidad', external: false },
+        { label: 'Política de Cookies', href: '/cookies', external: false },
+        { label: 'Aviso Legal', href: '/aviso-legal', external: false },
+        { label: 'Arrepentimiento', href: 'https://wa.me/5491126310884?text=' + encodeURIComponent('Me arrepiento de mi compra y deseo ejercer mi derecho de arrepentimiento.'), external: true },
       ]
     }
   };
@@ -83,9 +75,9 @@ export const Footer: React.FC = () => {
       {/* Features section */}
       <div className="border-b">
         <div className="container mx-auto px-4 py-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
             {FEATURES.SHIPPING_BENEFITS.map((feature: any, index: number) => (
-              <div key={index} className="flex items-center space-x-3">
+              <div key={index} className="flex items-center justify-center space-x-3">
                 <div className="flex-shrink-0">
                   <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                     {feature.icon === 'Truck' && <Truck className="w-6 h-6 text-primary" />}
@@ -175,12 +167,23 @@ export const Footer: React.FC = () => {
               <ul className="space-y-2">
                 {section.links.map((link, index) => (
                   <li key={index}>
-                    <Link 
-                      to={link.href}
-                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {link.label}
-                    </Link>
+                    {link.external ? (
+                      <a 
+                        href={link.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {link.label}
+                      </a>
+                    ) : (
+                      <Link 
+                        to={link.href}
+                        className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {link.label}
+                      </Link>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -199,10 +202,12 @@ export const Footer: React.FC = () => {
               <Input
                 type="email"
                 placeholder="Tu email"
-                className="flex-1"
+                className="flex-1 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary focus:border-primary"
                 required
               />
-              <Button type="submit">Suscribirse</Button>
+              <Button type="submit" className="bg-primary hover:bg-primary/90 text-white font-semibold">
+                Suscribirse
+              </Button>
             </form>
           </div>
         </div>
@@ -219,16 +224,11 @@ export const Footer: React.FC = () => {
             <div className="flex items-center space-x-4">
               <span className="text-sm text-muted-foreground">Métodos de pago:</span>
               <div className="flex space-x-2">
-                {['Visa', 'Mastercard', 'American Express', 'Mercado Pago'].map((payment) => (
-                  <div
-                    key={payment}
-                    className="w-8 h-5 bg-muted rounded border flex items-center justify-center"
-                  >
-                    <span className="text-xs font-bold text-muted-foreground">
-                      {payment.slice(0, 2)}
-                    </span>
-                  </div>
-                ))}
+                <div className="px-3 py-1 bg-muted rounded border flex items-center justify-center">
+                  <span className="text-xs font-semibold text-muted-foreground">
+                    Transferencia Bancaria
+                  </span>
+                </div>
               </div>
             </div>
           </div>

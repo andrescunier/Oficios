@@ -475,10 +475,53 @@ export const useStore = create<AppStore>()(
         },
       }),
       onRehydrateStorage: () => {
-        return (state) => {
-          // Configurar token en httpClient cuando se hidrata el store
-          if (state?.auth?.token && state?.auth?.isAuthenticated) {
+        return (state, error) => {
+          if (error) {
+            console.error('❌ Error al hidratar store:', error);
+            localStorage.removeItem('iamerican-store');
+            return;
+          }
+
+          if (!state) {
+            console.log('ℹ️ No hay estado para hidratar');
+            return;
+          }
+
+          // Validar integridad del estado antes de configurar
+          const hasInconsistentState = 
+            (state.auth?.isAuthenticated && !state.auth?.token) ||
+            (state.auth?.isAuthenticated && !state.auth?.user) ||
+            (!state.auth?.isAuthenticated && state.auth?.token) ||
+            (state.auth?.token && state.auth.token.length < 10);
+
+          if (hasInconsistentState) {
+            console.error('🔴 Estado inconsistente detectado durante hidratación!');
+            console.log({
+              isAuthenticated: state.auth?.isAuthenticated,
+              hasToken: !!state.auth?.token,
+              tokenLength: state.auth?.token?.length,
+              hasUser: !!state.auth?.user,
+            });
+            
+            // Limpiar estado corrupto
+            localStorage.removeItem('iamerican-store');
+            sessionStorage.clear();
+            httpClient.removeAuthToken();
+            
+            // Forzar recarga
+            if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+              window.location.href = '/login?session=corrupted_hydration';
+            }
+            return;
+          }
+
+          // Solo configurar token si todo está OK
+          if (state.auth?.token && state.auth?.isAuthenticated && state.auth?.user) {
+            console.log('✅ Configurando token desde hidratación');
             httpClient.setAuthToken(state.auth.token);
+          } else {
+            console.log('ℹ️ No hay sesión válida para hidratar');
+            httpClient.removeAuthToken();
           }
         };
       },
@@ -508,7 +551,57 @@ export const useCartItem = (productId: string) => useStore((state) =>
 // Función para inicializar la autenticación al cargar la aplicación
 export const initializeAuth = () => {
   const store = useStore.getState();
+  
+  // Primero: verificar si hay inconsistencia en el estado
+  const hasInconsistentState = 
+    (store.auth.isAuthenticated && !store.auth.token) ||
+    (store.auth.isAuthenticated && !store.auth.user) ||
+    (!store.auth.isAuthenticated && store.auth.token);
+  
+  if (hasInconsistentState) {
+    console.error('🔴 ESTADO INCONSISTENTE DETECTADO - Limpiando todo...');
+    console.log({
+      isAuthenticated: store.auth.isAuthenticated,
+      hasToken: !!store.auth.token,
+      hasUser: !!store.auth.user,
+    });
+    
+    // Forzar limpieza total
+    store.logout();
+    localStorage.clear();
+    sessionStorage.clear();
+    httpClient.removeAuthToken();
+    
+    // Forzar recarga para reiniciar React
+    if (typeof window !== 'undefined') {
+      console.log('🔄 Recargando página para limpiar estado...');
+      window.location.href = '/login?session=corrupted';
+    }
+    return;
+  }
+  
+  // Si hay token y está marcado como autenticado
   if (store.auth.token && store.auth.isAuthenticated) {
+    // Validar que el token no esté vacío o corrupto
+    if (store.auth.token.length < 10 || !store.auth.user) {
+      // Token inválido - limpiar todo
+      console.warn('⚠️ Token inválido detectado, limpiando sesión...');
+      store.logout();
+      localStorage.clear();
+      sessionStorage.clear();
+      httpClient.removeAuthToken();
+      return;
+    }
+    
+    // Configurar token en httpClient
     httpClient.setAuthToken(store.auth.token);
+    console.log('✅ Sesión restaurada correctamente', {
+      user: store.auth.user?.email,
+      tokenLength: store.auth.token.length,
+    });
+  } else {
+    // No hay sesión - asegurarse que esté limpio
+    httpClient.removeAuthToken();
+    console.log('ℹ️ No hay sesión activa');
   }
 };

@@ -2,7 +2,7 @@
  * Página del carrito de compras
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Minus, Plus, Trash2, ShoppingCart, ArrowLeft } from 'lucide-react';
 import { useStore } from '@/store/useStore';
@@ -19,6 +19,14 @@ export const CartPage: React.FC = () => {
     saveCartForLater
   } = useStore();
   const navigate = useNavigate();
+
+  // Verificar automáticamente stock y precios al cargar la página
+  useEffect(() => {
+    if (cart.items.length > 0) {
+      console.log('🔄 Verificando automáticamente stock y precios del carrito...');
+      verifyCartItems();
+    }
+  }, []); // Solo se ejecuta al montar el componente
 
   const handleQuantityChange = (productId: string, newQuantity: number) => {
     if (newQuantity <= 0) {
@@ -78,11 +86,13 @@ export const CartPage: React.FC = () => {
     }
   };
 
-  const formatPrice = (price: number) => {
+  const formatPrice = (price: number, currency?: string) => {
+    const currencyCode = currency || 'USD';
+    
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',
-      currency: 'ARS',
-      minimumFractionDigits: 0,
+      currency: currencyCode,
+      minimumFractionDigits: 2,
     }).format(price);
   };
 
@@ -188,7 +198,7 @@ export const CartPage: React.FC = () => {
                           {item.product.description}
                         </p>
                         <p className="text-lg font-bold text-blue-600 mt-2">
-                          {formatPrice(item.product.unit_price)}
+                          {formatPrice(item.product.unit_price, item.product.currency)}
                         </p>
                       </div>
 
@@ -233,7 +243,7 @@ export const CartPage: React.FC = () => {
               <div className="space-y-3 mb-6">
                 <div className="flex justify-between text-sm">
                   <span>Subtotal</span>
-                  <span>{formatPrice(cart.subtotal)}</span>
+                  <span>{formatPrice(cart.subtotal, cart.currency)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Envío</span>
@@ -242,7 +252,7 @@ export const CartPage: React.FC = () => {
                 <div className="border-t pt-3">
                   <div className="flex justify-between font-semibold text-lg">
                     <span>Total</span>
-                    <span className="text-blue-600">{formatPrice(cart.total_amount)}</span>
+                    <span className="text-blue-600">{formatPrice(cart.total_amount, cart.currency)}</span>
                   </div>
                 </div>
               </div>
@@ -253,14 +263,6 @@ export const CartPage: React.FC = () => {
                 className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors mb-3"
               >
                 Proceder al Checkout
-              </button>
-
-              <button 
-                type="button"
-                onClick={() => verifyCartItems()}
-                className="w-full bg-green-100 text-green-700 py-2 rounded-lg font-medium hover:bg-green-200 transition-colors mb-3"
-              >
-                Verificar Precios y Disponibilidad
               </button>
               
               <button 
@@ -279,6 +281,12 @@ export const CartPage: React.FC = () => {
                     <span>🚚 Envío gratis</span>
                   </div>
                   <p>Compra protegida por SSL</p>
+                  <p className="mt-2 text-xs">
+                    Al continuar aceptas nuestros{' '}
+                    <Link to="/terminos" className="text-blue-600 hover:underline">
+                      Términos y Condiciones
+                    </Link>
+                  </p>
                 </div>
               </div>
             </div>

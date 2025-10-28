@@ -22,52 +22,20 @@ export const CategoryGrid: React.FC = () => {
   // Configurar categorías usando las imágenes de ASSETS
   const categories: Category[] = [
     {
-      id: 'componentes',
-      name: 'Componentes',
-      description: 'Componentes para PC de alta calidad',
-      image: ASSETS.CATEGORIES.COMPONENTES,
-      link: '/categoria/componentes',
-      count: 150
-    },
-    {
-      id: 'gaming',
-      name: 'Gaming',
-      description: 'Productos gaming de última generación',
-      image: ASSETS.CATEGORIES.GAMING,
-      link: '/categoria/gaming',
-      count: 89
-    },
-    {
-      id: 'ddr4',
-      name: 'Memoria DDR4',
-      description: 'Memoria RAM DDR4 para tu PC',
-      image: ASSETS.CATEGORIES.DDR4,
-      link: '/categoria/ddr4',
-      count: 45
-    },
-    {
-      id: 'ddr5',
-      name: 'Memoria DDR5',
-      description: 'La nueva generación de memoria RAM',
-      image: ASSETS.CATEGORIES.DDR5,
-      link: '/categoria/ddr5',
-      count: 32
-    },
-    {
-      id: 'ssd-m2',
-      name: 'SSD M.2',
-      description: 'Almacenamiento rápido y eficiente',
-      image: ASSETS.CATEGORIES.SSD_M2,
-      link: '/categoria/ssd-m2',
-      count: 67
-    },
-    {
       id: 'ssd-sata',
       name: 'SSD SATA',
       description: 'Almacenamiento SSD tradicional',
-      image: ASSETS.CATEGORIES.SSD_SATA,
+      image: 'https://dcdn-us.mitiendanube.com/stores/001/498/293/products/f058c1e20b671761b713f47be922719-a2fcf586850d775dac17482988864670-480-0.webp',
       link: '/categoria/ssd-sata',
       count: 54
+    },
+    {
+      id: 'memoria-ram',
+      name: 'Memoria RAM',
+      description: 'Memoria RAM de alta velocidad',
+      image: 'https://dcdn-us.mitiendanube.com/stores/001/498/293/products/2-78f8d07cb6d82d11a217234745342405-480-0.webp',
+      link: '/categoria/memoria-ram',
+      count: 77
     }
   ];
 
@@ -83,7 +51,7 @@ export const CategoryGrid: React.FC = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
           {categories.map((category) => (
             <Card
               key={category.id}
@@ -91,11 +59,11 @@ export const CategoryGrid: React.FC = () => {
             >
               <div className="relative overflow-hidden">
                 {/* Image Container */}
-                <div className="relative h-48 overflow-hidden">
+                <div className="relative h-64 overflow-hidden bg-gray-100">
                   <img
                     src={category.image}
                     alt={category.name}
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
                     onError={(e) => {
                       // Fallback to placeholder if image fails to load
                       const target = e.target as HTMLImageElement;
@@ -104,7 +72,7 @@ export const CategoryGrid: React.FC = () => {
                   />
                   
                   {/* Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                   
                   {/* Product Count Badge */}
                   {category.count && (

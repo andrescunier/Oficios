@@ -14,7 +14,7 @@ import {
   Share2,
   Truck,
   Shield,
-  RotateCcw
+  CreditCard
 } from 'lucide-react';
 import { productService } from '@/services/productService';
 import { useStore } from '@/store/useStore';
@@ -320,22 +320,22 @@ export const ProductDetailPage: React.FC = () => {
               <div className="flex items-center space-x-3">
                 <Truck className="w-5 h-5 text-blue-600" />
                 <div>
-                  <p className="font-medium text-sm">Envío gratis</p>
-                  <p className="text-xs text-gray-600">En compras +$50.000</p>
+                  <p className="font-medium text-sm">Envío Gratis</p>
+                  <p className="text-xs text-gray-600">En todas tus compras</p>
                 </div>
               </div>
               <div className="flex items-center space-x-3">
                 <Shield className="w-5 h-5 text-green-600" />
                 <div>
-                  <p className="font-medium text-sm">Garantía oficial</p>
-                  <p className="text-xs text-gray-600">Cobertura completa</p>
+                  <p className="font-medium text-sm">Compra Segura</p>
+                  <p className="text-xs text-gray-600">Tus datos protegidos</p>
                 </div>
               </div>
               <div className="flex items-center space-x-3">
-                <RotateCcw className="w-5 h-5 text-purple-600" />
+                <CreditCard className="w-5 h-5 text-purple-600" />
                 <div>
-                  <p className="font-medium text-sm">Devolución</p>
-                  <p className="text-xs text-gray-600">30 días</p>
+                  <p className="font-medium text-sm">Transferencia Bancaria</p>
+                  <p className="text-xs text-gray-600">Pago seguro</p>
                 </div>
               </div>
             </div>

@@ -19,7 +19,8 @@ spec:
     spec:
       containers:
       - name: iamerican-app
-        image: iamerican-ecommerce:latest  # Cambiar por tu imagen en registry
+        image: ghcr.io/andrescunier/diap-ecommerce:v1.0.1
+        imagePullPolicy: Always
         ports:
         - containerPort: 80
           name: http

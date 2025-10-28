@@ -5,7 +5,7 @@ metadata:
   namespace: diap
   labels:
     app: diap-ecommerce
-    version: v1.0.1
+    version: v1.0.0
 spec:
   replicas: 3  # 3 réplicas para alta disponibilidad
   selector:
@@ -15,20 +15,29 @@ spec:
     metadata:
       labels:
         app: diap-ecommerce
-        version: v1.0.1
+        version: v1.0.0
     spec:
+      # Configurar pull de imagen desde GitHub Container Registry
+      imagePullSecrets:
+      - name: ghcr-secret
+      
       containers:
       - name: diap-app
-        image: ghcr.io/andrescunier/diap-ecommerce:v1.0.1
+        image: ghcr.io/andrescunier/diap-ecommerce:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 80
           name: http
-        envFrom:
-        - configMapRef:
-            name: iamerican-config
-        - secretRef:
-            name: iamerican-secrets
+          protocol: TCP
+        
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: VITE_API_URL
+          value: "https://api.cumar.com.ar"
+        - name: VITE_HIDE_PRICES_FOR_GUESTS
+          value: "true"
+        
         resources:
           requests:
             memory: "256Mi"
@@ -36,26 +45,52 @@ spec:
           limits:
             memory: "512Mi"
             cpu: "500m"
+        
         livenessProbe:
           httpGet:
             path: /
             port: 80
           initialDelaySeconds: 30
           periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
         readinessProbe:
           httpGet:
             path: /
             port: 80
           initialDelaySeconds: 5
           periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        
         volumeMounts:
         - name: nginx-cache
           mountPath: /var/cache/nginx
         - name: nginx-logs
           mountPath: /var/log/nginx
+      
       volumes:
       - name: nginx-cache
         emptyDir: {}
       - name: nginx-logs
         emptyDir: {}
+      
       restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: diap-ecommerce
+  namespace: diap
+  labels:
+    app: diap-ecommerce
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+    name: http
+  selector:
+    app: diap-ecommerce

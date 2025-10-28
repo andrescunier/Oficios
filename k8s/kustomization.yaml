@@ -1,7 +1,7 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-namespace: iamerican
+namespace: diap
 
 resources:
 - namespace.yaml
@@ -14,15 +14,15 @@ resources:
 images:
 - name: iamerican-ecommerce
   newName: ghcr.io/andrescunier/diap-ecommerce  # GitHub Container Registry
-  newTag: latest  # GitHub Actions subirá automáticamente con tag latest
+  newTag: v1.0.1  # Versión actualizada con DIAP Store branding
 
 commonLabels:
-  app: iamerican-ecommerce
-  version: v1.1.0  # Nueva versión con sistema de autenticación completo
+  app: diap-ecommerce
+  version: v1.0.1  # Nueva versión con DIAP Store branding
   environment: production
 
 replicas:
-- name: iamerican-ecommerce
+- name: diap-ecommerce
   count: 3
 
 patchesStrategicMerge:

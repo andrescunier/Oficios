@@ -1,5 +1,5 @@
 /**
- * Footer profesional para iAmerican Ecommerce
+ * Footer profesional para DIAP Store Ecommerce
  */
 
 import React from 'react';

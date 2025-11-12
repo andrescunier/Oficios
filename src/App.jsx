@@ -41,7 +41,7 @@ function App() {
     if (auth.isAuthenticated && (!auth.user || !auth.token || auth.token.length < 10)) {
       console.warn('⚠️ Sesión corrupta detectada, limpiando...');
       logout();
-      localStorage.removeItem('iamerican-store');
+      localStorage.removeItem('diapstore-store');
       sessionStorage.clear();
     }
   }, [auth.isAuthenticated, auth.user, auth.token, logout]);

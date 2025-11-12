@@ -463,7 +463,7 @@ export const useStore = create<AppStore>()(
       }),
     }),
     {
-      name: 'iamerican-store',
+      name: 'diapstore-store',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         auth: state.auth,
@@ -478,7 +478,7 @@ export const useStore = create<AppStore>()(
         return (state, error) => {
           if (error) {
             console.error('❌ Error al hidratar store:', error);
-            localStorage.removeItem('iamerican-store');
+            localStorage.removeItem('diapstore-store');
             return;
           }
 
@@ -504,7 +504,7 @@ export const useStore = create<AppStore>()(
             });
             
             // Limpiar estado corrupto
-            localStorage.removeItem('iamerican-store');
+            localStorage.removeItem('diapstore-store');
             sessionStorage.clear();
             httpClient.removeAuthToken();
             

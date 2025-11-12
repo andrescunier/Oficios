@@ -1,5 +1,5 @@
 /**
- * Página principal del ecommerce iAmerican
+ * Página principal del ecommerce DIAP Store
  */
 
 import React, { useEffect, useMemo, useState } from 'react';

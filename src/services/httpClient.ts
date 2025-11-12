@@ -149,7 +149,7 @@ class HttpClient {
   private getStoredToken(): string | null {
     try {
       // Intentar obtener del localStorage donde Zustand persiste el estado
-      const persistedState = localStorage.getItem('iamerican-store');
+      const persistedState = localStorage.getItem('diapstore-store');
       if (persistedState) {
         const state = JSON.parse(persistedState);
         return state?.state?.auth?.token || null;
@@ -168,7 +168,7 @@ class HttpClient {
       this.removeAuthToken();
       
       // Limpiar localStorage completamente
-      localStorage.removeItem('iamerican-store');
+      localStorage.removeItem('diapstore-store');
       
       // Limpiar sessionStorage también
       sessionStorage.clear();

@@ -534,7 +534,7 @@ export const CheckoutPage: React.FC = () => {
                         </div>
                         <div>
                           <span className="font-medium text-gray-700">Titular:</span>
-                          <p className="text-gray-600">iAmerican S.A.</p>
+                          <p className="text-gray-600">DIAP INGENIERÍA S.A.</p>
                         </div>
                         <div>
                           <span className="font-medium text-gray-700">CBU:</span>
@@ -542,7 +542,7 @@ export const CheckoutPage: React.FC = () => {
                         </div>
                         <div>
                           <span className="font-medium text-gray-700">Alias:</span>
-                          <p className="text-gray-600">IAMERICAN.PAGOS</p>
+                          <p className="text-gray-600">DIAPSTORE.PAGOS</p>
                         </div>
                       </div>
                     </div>

@@ -1,5 +1,5 @@
 /**
- * Header profesional para iAmerican Ecommerce
+ * Header profesional para DIAP Store Ecommerce
  */
 
 import React, { useState } from 'react';

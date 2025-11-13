@@ -14,11 +14,11 @@ resources:
 images:
 - name: iamerican-ecommerce
   newName: ghcr.io/andrescunier/diap-ecommerce  # GitHub Container Registry
-  newTag: v1.0.1  # Versión actualizada con DIAP Store branding
+  newTag: v1.1.0  # Versión con rebranding completo de DIAP Store
 
 commonLabels:
   app: diap-ecommerce
-  version: v1.0.1  # Nueva versión con DIAP Store branding
+  version: v1.1.0  # Nueva versión con rebranding completo de DIAP Store
   environment: production
 
 replicas:

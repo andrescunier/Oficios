@@ -260,15 +260,28 @@ export const useStore = create<AppStore>()(
         }
 
         try {
-          await cartService.syncCart(state.cart.items, state.cart.currency);
+          const result = await cartService.syncCart(state.cart.items, state.cart.currency);
           
-          get().addNotification({
-            type: 'success',
-            title: 'Carrito sincronizado',
-            message: 'Carrito guardado en el servidor',
-            duration: 3000,
-          });
+          // Si el servicio retorna null, significa que la feature no está disponible
+          // No mostrar ninguna notificación en ese caso
+          if (result === null) {
+            return;
+          }
+          
+          // Solo mostrar notificación si realmente se sincronizó
+          if (result.success) {
+            get().addNotification({
+              type: 'success',
+              title: 'Carrito sincronizado',
+              message: 'Carrito guardado en el servidor',
+              duration: 3000,
+            });
+          }
         } catch (error: any) {
+          // No mostrar error si es un 404 (feature no disponible)
+          if (error?.response?.status === 404) {
+            return;
+          }
           get().addNotification({
             type: 'error',
             title: 'Error de sincronización',
@@ -288,6 +301,12 @@ export const useStore = create<AppStore>()(
           get().setLoading(true);
           const result = await cartService.verifyCartItems(state.cart.items);
           
+          // Si no hay warnings y es válido, la feature probablemente no está disponible
+          // o todo está ok - no hacer nada
+          if (result.valid && result.warnings.length === 0) {
+            return;
+          }
+          
           if (!result.valid) {
             // Actualizar carrito con items válidos
             const newCart = calculateTotals(result.updated_items, state.cart.currency);
@@ -304,6 +323,10 @@ export const useStore = create<AppStore>()(
             });
           }
         } catch (error: any) {
+          // No mostrar error si es un 404 (feature no disponible)
+          if (error?.response?.status === 404) {
+            return;
+          }
           get().addNotification({
             type: 'error',
             title: 'Error de verificación',

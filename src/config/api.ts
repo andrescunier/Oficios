@@ -26,12 +26,12 @@ export const API_ENDPOINTS = {
     LOGOUT: '/api/auth/logout',
   },
 
-  // Registro de clientes (endpoints públicos)
-  REGISTRATION: {
-    REGISTER_CUSTOMER: '/api/registration/register-customer',
-    QUICK_REGISTER: '/api/registration/quick-register',
-    CHECK_EMAIL: (email: string) => `/api/registration/check-email/${encodeURIComponent(email)}`,
-    REGISTRATION_STATS: '/api/registration/registration-stats',
+  // Registro de clientes (endpoints públicos) - Simple Registration
+  SIMPLE: {
+    REGISTER_CUSTOMER: '/api/simple/register-customer',
+    QUICK_REGISTER: '/api/simple/quick-register',
+    CHECK_EMAIL: (email: string) => `/api/simple/check-email/${encodeURIComponent(email)}`,
+    REGISTRATION_STATS: '/api/simple/registration-stats',
   },
   
   // Cuentas

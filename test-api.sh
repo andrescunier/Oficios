@@ -6,7 +6,7 @@
 echo "🧪 Probando endpoint de registro B2B..."
 
 # Configuración
-API_URL="http://localhost:8000/registration/register-customer"
+API_URL="http://localhost:8000/api/simple/register-customer"
 ACCOUNT_ID="bed2df35-717f-4900-a4b1-7c3a7fb59b7c"
 
 # Datos de prueba

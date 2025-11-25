@@ -69,7 +69,7 @@ nano .env
 ```bash
 # API Configuration
 VITE_API_BASE_URL=https://api.cumar.com.ar
-VITE_ACCOUNT_ID=37b694f4-f2c9-4500-8e47-52b8ad8daaea
+VITE_ACCOUNT_ID=bed2df35-717f-4900-a4b1-7c3a7fb59b7c
 
 # App Configuration
 VITE_APP_ENV=production
@@ -77,8 +77,8 @@ VITE_DEBUG_MODE=false
 VITE_ENABLE_API_LOGGING=false
 
 # Branding
-VITE_APP_NAME=iAmerican
-VITE_APP_URL=https://tu-dominio.com
+VITE_APP_NAME=DIAP Store
+VITE_APP_URL=https://diapstore.com
 
 # Features (producción)
 VITE_FEATURE_ANALYTICS=true

@@ -1,39 +1,39 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: iamerican-config
-  namespace: iamerican
+  name: diap-config
+  namespace: diap
 data:
   # =========================================
   # API CONFIGURATION
   # =========================================
   VITE_API_BASE_URL: "https://api.cumar.com.ar"
-  VITE_ACCOUNT_ID: "37b694f4-f2c9-4500-8e47-52b8ad8daaea"
+  VITE_ACCOUNT_ID: "bed2df35-717f-4900-a4b1-7c3a7fb59b7c"
   VITE_API_EXTRA_HEADERS: "{}"
   
   # =========================================
   # BRANDING & COMPANY INFO
   # =========================================
-  VITE_APP_NAME: "iAmerican"
-  VITE_COMPANY_NAME: "iAmerican Technology"
-  VITE_APP_SLOGAN: "Tecnología de vanguardia con envío gratuito"
-  VITE_APP_URL: "https://iamerican.com"
-  VITE_APP_DESCRIPTION: "Tu tienda online de confianza. Ofrecemos productos de tecnología de calidad con la mejor atención al cliente y envíos a todo el país."
+  VITE_APP_NAME: "DIAP Store"
+  VITE_COMPANY_NAME: "DIAP INGENIERÍA S.A."
+  VITE_APP_SLOGAN: "Tecnología profesional para empresas"
+  VITE_APP_URL: "https://diapstore.com"
+  VITE_APP_DESCRIPTION: "DIAP Store - Distribuidora de productos tecnológicos de primera calidad. Soluciones profesionales B2B para tu empresa."
   
   # =========================================
   # CONTACT INFORMATION
   # =========================================
-  VITE_CONTACT_EMAIL: "info@iamerican.com"
-  VITE_CONTACT_PHONE: "+1 (786) 513-3960"
-  VITE_CONTACT_ADDRESS: "Av. Corrientes 1234, CABA, Argentina"
+  VITE_CONTACT_EMAIL: "ventas@diapstore.com"
+  VITE_CONTACT_PHONE: "+54 9 11 2631-0884"
+  VITE_CONTACT_ADDRESS: "Buenos Aires, Argentina"
   
   # =========================================
   # LOGOS & IMAGES
   # =========================================
-  VITE_LOGO_PATH: "/americanlog3_1x.png"
+  VITE_LOGO_PATH: "/diap-logo.png"
   VITE_FAVICON_PATH: "/favicon.ico"
-  VITE_HEADER_LOGO_PATH: "/americanlog3_1x.png"
-  VITE_FOOTER_LOGO_PATH: "/americanlog3_1x.png"
+  VITE_HEADER_LOGO_PATH: "/diap-logo.png"
+  VITE_FOOTER_LOGO_PATH: "/diap-logo.png"
   
   # =========================================
   # HERO SLIDER IMAGES
@@ -73,10 +73,10 @@ data:
   # =========================================
   # SOCIAL MEDIA
   # =========================================
-  VITE_FACEBOOK_URL: "https://facebook.com/iamerican"
-  VITE_INSTAGRAM_URL: "https://instagram.com/iamerican"
-  VITE_TWITTER_URL: "https://twitter.com/iamerican"
-  VITE_LINKEDIN_URL: "https://linkedin.com/company/iamerican"
+  VITE_FACEBOOK_URL: ""
+  VITE_INSTAGRAM_URL: ""
+  VITE_TWITTER_URL: ""
+  VITE_LINKEDIN_URL: ""
   
   # =========================================
   # APP CONFIGURATION
@@ -118,8 +118,8 @@ data:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: iamerican-secrets
-  namespace: iamerican
+  name: diap-secrets
+  namespace: diap
 type: Opaque
 data:
   # Base64 encoded secrets (ejemplo)

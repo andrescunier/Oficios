@@ -7,7 +7,7 @@
 // =========================================
 export const API_CONFIG = {
   BASE_URL: import.meta.env.VITE_API_BASE_URL || 'https://api.cumar.com.ar',
-  ACCOUNT_ID: import.meta.env.VITE_ACCOUNT_ID || '37b694f4-f2c9-4500-8e47-52b8ad8daaea',
+  ACCOUNT_ID: import.meta.env.VITE_ACCOUNT_ID || 'bed2df35-717f-4900-a4b1-7c3a7fb59b7c',
   TIMEOUT: 30000,
   EXTRA_HEADERS: (() => {
     try {

@@ -106,7 +106,7 @@ export const Login: React.FC = () => {
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Iniciar Sesión</CardTitle>
           <CardDescription>
-            Ingresa a tu cuenta de iAmerican
+            Ingresa a tu cuenta de DIAP Store
           </CardDescription>
         </CardHeader>
         

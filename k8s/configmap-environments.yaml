@@ -4,12 +4,12 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: iamerican-config-staging
-  namespace: iamerican
+  name: diap-config-staging
+  namespace: diap
 data:
   # API Configuration (Staging)
   VITE_API_BASE_URL: "https://api-staging.cumar.com.ar"
-  VITE_ACCOUNT_ID: "37b694f4-f2c9-4500-8e47-52b8ad8daaea"
+  VITE_ACCOUNT_ID: "bed2df35-717f-4900-a4b1-7c3a7fb59b7c"
   VITE_API_EXTRA_HEADERS: "{}"
   
   # Environment
@@ -20,27 +20,27 @@ data:
   NODE_ENV: "development"
   
   # Branding (mismo que producción)
-  VITE_APP_NAME: "iAmerican (Staging)"
-  VITE_COMPANY_NAME: "iAmerican Technology"
-  VITE_APP_SLOGAN: "Tecnología de vanguardia con envío gratuito"
-  VITE_APP_URL: "https://staging.iamerican.com"
-  VITE_APP_DESCRIPTION: "Tu tienda online de confianza. Ofrecemos productos de tecnología de calidad con la mejor atención al cliente y envíos a todo el país."
+  VITE_APP_NAME: "DIAP Store (Staging)"
+  VITE_COMPANY_NAME: "DIAP INGENIERÍA S.A."
+  VITE_APP_SLOGAN: "Tecnología profesional para empresas"
+  VITE_APP_URL: "https://staging.diapstore.com"
+  VITE_APP_DESCRIPTION: "DIAP Store - Distribuidora de productos tecnológicos de primera calidad. Soluciones profesionales B2B para tu empresa."
   
   # Contact (mismo que producción)
-  VITE_CONTACT_EMAIL: "info@iamerican.com"
-  VITE_CONTACT_PHONE: "+1 (786) 513-3960"
-  VITE_CONTACT_ADDRESS: "Av. Corrientes 1234, CABA, Argentina"
+  VITE_CONTACT_EMAIL: "ventas@diapstore.com"
+  VITE_CONTACT_PHONE: "+54 9 11 2631-0884"
+  VITE_CONTACT_ADDRESS: "Buenos Aires, Argentina"
   
   # Logos (mismo que producción)
-  VITE_LOGO_PATH: "/americanlog3_1x.png"
+  VITE_LOGO_PATH: "/diap-logo.png"
   VITE_FAVICON_PATH: "/favicon.ico"
-  VITE_HEADER_LOGO_PATH: "/americanlog3_1x.png"
+  VITE_HEADER_LOGO_PATH: "/diap-logo.png"
   
-  # Social Media (mismo que producción)
-  VITE_FACEBOOK_URL: "https://facebook.com/iamerican"
-  VITE_INSTAGRAM_URL: "https://instagram.com/iamerican"
-  VITE_TWITTER_URL: "https://twitter.com/iamerican"
-  VITE_LINKEDIN_URL: "https://linkedin.com/company/iamerican"
+  # Social Media (vaciar para DIAP)
+  VITE_FACEBOOK_URL: ""
+  VITE_INSTAGRAM_URL: ""
+  VITE_TWITTER_URL: ""
+  VITE_LINKEDIN_URL: ""
   
   # Feature Flags (Staging - más permisivo)
   VITE_FEATURE_NOTIFICATIONS: "true"
@@ -70,12 +70,12 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: iamerican-config-dev
-  namespace: iamerican
+  name: diap-config-dev
+  namespace: diap
 data:
   # API Configuration (Local)
   VITE_API_BASE_URL: "http://localhost:3001"
-  VITE_ACCOUNT_ID: "37b694f4-f2c9-4500-8e47-52b8ad8daaea"
+  VITE_ACCOUNT_ID: "bed2df35-717f-4900-a4b1-7c3a7fb59b7c"
   VITE_API_EXTRA_HEADERS: "{}"
   
   # Environment
@@ -86,16 +86,16 @@ data:
   NODE_ENV: "development"
   
   # Branding
-  VITE_APP_NAME: "iAmerican (Dev)"
-  VITE_COMPANY_NAME: "iAmerican Technology"
-  VITE_APP_SLOGAN: "Tecnología de vanguardia con envío gratuito"
+  VITE_APP_NAME: "DIAP Store (Dev)"
+  VITE_COMPANY_NAME: "DIAP INGENIERÍA S.A."
+  VITE_APP_SLOGAN: "Tecnología profesional para empresas"
   VITE_APP_URL: "http://localhost:5173"
-  VITE_APP_DESCRIPTION: "Tu tienda online de confianza. Ofrecemos productos de tecnología de calidad con la mejor atención al cliente y envíos a todo el país."
+  VITE_APP_DESCRIPTION: "DIAP Store - Distribuidora de productos tecnológicos de primera calidad. Soluciones profesionales B2B para tu empresa."
   
   # Contact
-  VITE_CONTACT_EMAIL: "dev@iamerican.com"
-  VITE_CONTACT_PHONE: "+1 (786) 513-3960"
-  VITE_CONTACT_ADDRESS: "Av. Corrientes 1234, CABA, Argentina"
+  VITE_CONTACT_EMAIL: "ventas@diapstore.com"
+  VITE_CONTACT_PHONE: "+54 9 11 2631-0884"
+  VITE_CONTACT_ADDRESS: "Buenos Aires, Argentina"
   
   # Feature Flags (Dev - todos en demo)
   VITE_FEATURE_NOTIFICATIONS: "true"

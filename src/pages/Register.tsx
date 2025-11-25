@@ -158,9 +158,15 @@ export const Register: React.FC = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
-              <span className="text-white font-bold text-xl">iA</span>
-            </div>
+            <img 
+              src="/diap-logo.png" 
+              alt="DIAP Store" 
+              className="h-12 w-auto"
+              onError={(e) => {
+                // Fallback si no existe la imagen
+                e.currentTarget.style.display = 'none';
+              }}
+            />
           </div>
           <CardTitle className="text-2xl">Crear Cuenta B2B</CardTitle>
           <CardDescription>

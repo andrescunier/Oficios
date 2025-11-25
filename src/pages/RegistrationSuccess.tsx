@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, ShoppingBag, Home } from 'lucide-react';
 
 export const RegistrationSuccess = () => {
   const navigate = useNavigate();
@@ -14,36 +14,38 @@ export const RegistrationSuccess = () => {
             <CheckCircle2 className="h-16 w-16 text-green-500" />
           </div>
           <CardTitle className="text-2xl font-bold text-green-700">
-            ¡Registro Exitoso!
+            ¡Bienvenido a DIAP Store!
           </CardTitle>
           <CardDescription className="text-gray-600">
-            Tu cuenta ha sido creada correctamente
+            Tu cuenta ha sido creada y ya estás conectado
           </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-6">
-          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-            <h3 className="font-semibold text-gray-800 mb-2">Próximos Pasos:</h3>
+          <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+            <h3 className="font-semibold text-green-800 mb-2">¡Todo listo!</h3>
             <ul className="text-sm text-gray-600 space-y-1">
-              <li>• Tu cuenta está lista para usar</li>
-              <li>• Puedes iniciar sesión con tus credenciales</li>
-              <li>• Explora nuestro catálogo de productos</li>
-              <li>• Contacta a nuestro equipo para soporte</li>
+              <li>✓ Tu cuenta empresarial está activa</li>
+              <li>✓ Ya puedes ver precios exclusivos B2B</li>
+              <li>✓ Explora nuestro catálogo de productos</li>
+              <li>✓ Realiza pedidos cuando quieras</li>
             </ul>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3">
             <Button 
-              onClick={() => navigate('/login')}
+              onClick={() => navigate('/productos')}
               className="flex-1 bg-blue-600 hover:bg-blue-700"
             >
-              Iniciar Sesión
+              <ShoppingBag className="w-4 h-4 mr-2" />
+              Ver Productos
             </Button>
             <Button 
               onClick={() => navigate('/')}
               variant="outline"
               className="flex-1"
             >
+              <Home className="w-4 h-4 mr-2" />
               Ir al Inicio
             </Button>
           </div>

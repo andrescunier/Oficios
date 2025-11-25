@@ -80,6 +80,9 @@ export const FavoritesPage: React.FC = () => {
   };
 
   const formatPrice = (price: number, currency?: string) => {
+    if (typeof price !== 'number' || isNaN(price)) {
+      return 'Precio no disponible';
+    }
     const currencyCode = currency || 'USD';
     
     return new Intl.NumberFormat('es-AR', {

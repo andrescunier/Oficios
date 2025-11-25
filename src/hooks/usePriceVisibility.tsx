@@ -107,6 +107,17 @@ export const PriceDisplay = ({
     );
   }
 
+  // Validar que el precio sea un número válido
+  if (typeof price !== 'number' || isNaN(price) || price === null || price === undefined) {
+    return (
+      <div className={className}>
+        <span className="text-sm text-muted-foreground italic">
+          Precio no disponible
+        </span>
+      </div>
+    );
+  }
+
   const formattedPrice = new Intl.NumberFormat('es-AR', {
     style: 'currency',
     currency: currency,

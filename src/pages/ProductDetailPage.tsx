@@ -123,9 +123,12 @@ export const ProductDetailPage: React.FC = () => {
   };
 
   const formatPrice = (price: number) => {
+    if (typeof price !== 'number' || isNaN(price)) {
+      return 'Precio no disponible';
+    }
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',
-      currency: product?.currency || 'ARS',
+      currency: product?.currency || 'USD',
       minimumFractionDigits: 0,
     }).format(price);
   };

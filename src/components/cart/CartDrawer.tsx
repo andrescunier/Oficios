@@ -48,6 +48,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
   const amountForFreeShipping = freeShippingThreshold - total;
 
   const formatPrice = (price: number, currency?: string) => {
+    if (typeof price !== 'number' || isNaN(price)) {
+      return 'Precio no disponible';
+    }
     const currencyCode = currency || 'USD';
     
     return new Intl.NumberFormat('es-AR', {

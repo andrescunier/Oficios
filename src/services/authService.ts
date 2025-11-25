@@ -134,7 +134,7 @@ export class AuthService {
       };
 
       const response = await httpClient.post<SimpleRegistrationResponse>(
-        API_ENDPOINTS.SIMPLE.REGISTER_CUSTOMER,
+        API_ENDPOINTS.REGISTRATION.REGISTER_CUSTOMER,
         payload
       );
 

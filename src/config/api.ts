@@ -1,6 +1,6 @@
 /**
- * Configuración de API para iAmerican Ecommerce
- * Integración con SIGP (Simple Gestión API)
+ * Configuración de API para DIAP Store
+ * Integración con Simple Gestión API v1.1.1
  */
 
 import { getAPIHeaders } from './branding';
@@ -14,7 +14,7 @@ export const ACCOUNT_ID = import.meta.env.VITE_ACCOUNT_ID || 'bed2df35-717f-4900
 // Configuración de headers por defecto
 export const DEFAULT_HEADERS = getAPIHeaders();
 
-// Endpoints de la API SIGP
+// Endpoints de la API Simple Gestión v1.1.1
 export const API_ENDPOINTS = {
   // Health Check
   HEALTH: '/health',
@@ -26,39 +26,49 @@ export const API_ENDPOINTS = {
     LOGOUT: '/api/auth/logout',
   },
 
-  // Registro simple (embudos públicos)
-  SIMPLE: {
-    REGISTER_CUSTOMER: '/api/simple/register-customer',
-    QUICK_REGISTER: '/api/simple/quick-register',
-    CHECK_EMAIL: (email: string) => `/api/simple/check-email/${encodeURIComponent(email)}`,
-    REGISTRATION_STATS: '/api/simple/registration-stats',
+  // Registro de clientes (endpoints públicos)
+  REGISTRATION: {
+    REGISTER_CUSTOMER: '/api/registration/register-customer',
+    QUICK_REGISTER: '/api/registration/quick-register',
+    CHECK_EMAIL: (email: string) => `/api/registration/check-email/${encodeURIComponent(email)}`,
+    REGISTRATION_STATS: '/api/registration/registration-stats',
   },
   
   // Cuentas
   ACCOUNTS: '/api/accounts',
   
-  // Personas (dentro de una cuenta)
-  PEOPLE: (accountId: string) => `/api/accounts/${accountId}/people`,
+  // Personas
+  PEOPLE: '/api/people',
+  PERSON: (personId: string) => `/api/people/${personId}`,
+  PERSON_DOCUMENTS: (personId: string) => `/api/people/${personId}/documents`,
   
-  // Usuarios
+  // Usuarios (dentro de una cuenta)
   USERS: (accountId: string) => `/api/accounts/${accountId}/users`,
+  USER: (accountId: string, userId: string) => `/api/accounts/${accountId}/users/${userId}`,
   
-  // Business Partners (Clientes)
+  // Business Partners (Clientes/Proveedores)
   BUSINESS_PARTNERS: (accountId: string) => `/api/accounts/${accountId}/business-partners`,
-  BUSINESS_PARTNER_USERS: (accountId: string, partnerId: string) => 
-    `/api/accounts/${accountId}/business-partners/${partnerId}/users`,
+  BUSINESS_PARTNER: (accountId: string, partnerId: string) => 
+    `/api/accounts/${accountId}/business-partners/${partnerId}`,
   
-  // Productos
+  // Productos (GET público sin auth = sin precios, con auth = con precios)
   PRODUCTS: (accountId: string) => `/api/accounts/${accountId}/products`,
   PRODUCT: (accountId: string, productId: string) => 
     `/api/accounts/${accountId}/products/${productId}`,
+  PRODUCTS_LOW_STOCK: (accountId: string) => `/api/accounts/${accountId}/products/low-stock`,
+  PRODUCT_STOCK: (accountId: string, productId: string) => 
+    `/api/accounts/${accountId}/products/${productId}/stock`,
   
   // Órdenes de Venta
   SALES_ORDERS: (accountId: string) => `/api/accounts/${accountId}/sales-orders`,
   SALES_ORDER: (accountId: string, orderId: string) => 
     `/api/accounts/${accountId}/sales-orders/${orderId}`,
+  SALES_ORDER_ITEMS: (accountId: string, orderId: string) => 
+    `/api/accounts/${accountId}/sales-orders/${orderId}/items`,
   CONFIRM_ORDER: (accountId: string, orderId: string) => 
     `/api/accounts/${accountId}/sales-orders/${orderId}/confirm`,
+  COMPLETE_ORDER: (accountId: string, orderId: string) => 
+    `/api/accounts/${accountId}/sales-orders/${orderId}/complete`,
   ORDER_INVOICE: (accountId: string, orderId: string) => 
     `/api/accounts/${accountId}/sales-orders/${orderId}/invoice`,
   
@@ -68,11 +78,19 @@ export const API_ENDPOINTS = {
     `/api/accounts/${accountId}/deliveries/${deliveryId}`,
   COMPLETE_DELIVERY: (accountId: string, deliveryId: string) => 
     `/api/accounts/${accountId}/deliveries/${deliveryId}/complete`,
+  CANCEL_DELIVERY: (accountId: string, deliveryId: string) => 
+    `/api/accounts/${accountId}/deliveries/${deliveryId}/cancel`,
   
   // Facturas
   INVOICES: (accountId: string) => `/api/accounts/${accountId}/invoices`,
   INVOICE: (accountId: string, invoiceId: string) => 
     `/api/accounts/${accountId}/invoices/${invoiceId}`,
+  INVOICE_ITEMS: (accountId: string, invoiceId: string) => 
+    `/api/accounts/${accountId}/invoices/${invoiceId}/items`,
+  SEND_INVOICE: (accountId: string, invoiceId: string) => 
+    `/api/accounts/${accountId}/invoices/${invoiceId}/send`,
+  VOID_INVOICE: (accountId: string, invoiceId: string) => 
+    `/api/accounts/${accountId}/invoices/${invoiceId}/void`,
   
   // Pagos
   PAYMENTS: (accountId: string) => `/api/accounts/${accountId}/payments`,
@@ -80,6 +98,10 @@ export const API_ENDPOINTS = {
     `/api/accounts/${accountId}/payments/${paymentId}`,
   PAYMENT_APPLICATIONS: (accountId: string, paymentId: string) => 
     `/api/accounts/${accountId}/payments/${paymentId}/applications`,
+  
+  // Direcciones
+  ADDRESSES: '/api/addresses',
+  ADDRESS: (addressId: string) => `/api/addresses/${addressId}`,
 } as const;
 
 // Configuración de timeouts

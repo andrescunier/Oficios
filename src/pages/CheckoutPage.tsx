@@ -679,6 +679,10 @@ export const CheckoutPage: React.FC = () => {
                   <span>{formatPrice(cart.subtotal, cart.currency)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
+                  <span>IVA (21%)</span>
+                  <span>{formatPrice(cart.tax_amount, cart.currency)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
                   <span>Envío</span>
                   <span className="text-green-600">Gratis</span>
                 </div>

@@ -69,8 +69,35 @@ type CartFeature =
   | 'save'
   | 'saved_list';
 
+const DISABLED_FEATURES_KEY = 'diapstore-disabled-cart-features';
+
 export class CartService {
-  private disabledFeatures = new Set<CartFeature>();
+  private disabledFeatures: Set<CartFeature>;
+
+  constructor() {
+    // Cargar features deshabilitadas desde localStorage
+    this.disabledFeatures = this.loadDisabledFeatures();
+  }
+
+  private loadDisabledFeatures(): Set<CartFeature> {
+    try {
+      const stored = localStorage.getItem(DISABLED_FEATURES_KEY);
+      if (stored) {
+        return new Set(JSON.parse(stored) as CartFeature[]);
+      }
+    } catch {
+      // Ignorar errores de parsing
+    }
+    return new Set();
+  }
+
+  private saveDisabledFeatures() {
+    try {
+      localStorage.setItem(DISABLED_FEATURES_KEY, JSON.stringify([...this.disabledFeatures]));
+    } catch {
+      // Ignorar errores de localStorage
+    }
+  }
 
   private isFeatureDisabled(feature: CartFeature) {
     return this.disabledFeatures.has(feature);
@@ -78,6 +105,7 @@ export class CartService {
 
   private markFeatureUnavailable(feature: CartFeature) {
     this.disabledFeatures.add(feature);
+    this.saveDisabledFeatures();
     if (import.meta.env.DEV) {
       console.info(`[cartService] Feature "${feature}" no disponible en la API actual. Se continuará en modo local.`);
     }

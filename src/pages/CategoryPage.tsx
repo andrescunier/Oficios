@@ -151,33 +151,45 @@ export const CategoryPage: React.FC = () => {
       
       let filtered = response.data;
       
+      console.log('Total products from API:', filtered.length);
+      console.log('Category filter:', category);
+      
       if (category === 'ssd-sata') {
-        // Filtrar SSDs SATA
+        // Filtrar SSDs - buscar en nombre, descripción y metadata.category
         filtered = filtered.filter(p => {
           const name = p.name?.toLowerCase() || '';
           const desc = p.description?.toLowerCase() || '';
-          const cat = p.category?.toLowerCase() || '';
+          // Buscar en metadata.category si existe
+          const metaCat = (p.metadata as any)?.category?.toLowerCase() || '';
           
-          return (name.includes('ssd') && name.includes('sata')) ||
-                 (desc.includes('ssd') && desc.includes('sata')) ||
-                 cat.includes('ssd');
+          const isSSD = name.includes('ssd') || 
+                        desc.includes('ssd') || 
+                        metaCat.includes('ssd');
+          
+          return isSSD;
         });
+        console.log('After SSD filter:', filtered.length);
       } else if (category === 'memoria-ram' || category === 'memoria') {
-        // Filtrar Memoria RAM - buscar por RAM, DDR, memoria
+        // Filtrar Memoria RAM - buscar por RAM, DDR, memoria en nombre, descripción y metadata
         filtered = filtered.filter(p => {
           const name = p.name?.toLowerCase() || '';
           const desc = p.description?.toLowerCase() || '';
-          const cat = p.category?.toLowerCase() || '';
+          // Buscar en metadata.category si existe
+          const metaCat = (p.metadata as any)?.category?.toLowerCase() || '';
           
-          return name.includes('ram') ||
-                 name.includes('ddr') ||
-                 name.includes('memoria') ||
-                 desc.includes('ram') ||
-                 desc.includes('ddr') ||
-                 cat.includes('memoria') ||
-                 cat.includes('ram') ||
-                 cat.includes('memory');
+          const isRAM = name.includes('ram') ||
+                        name.includes('ddr') ||
+                        desc.includes('ram') ||
+                        desc.includes('ddr') ||
+                        desc.includes('sodimm') ||
+                        desc.includes('udimm') ||
+                        metaCat.includes('memoria') ||
+                        metaCat.includes('ram') ||
+                        metaCat.includes('memory');
+          
+          return isRAM;
         });
+        console.log('After RAM filter:', filtered.length);
       }
       
       // Asignar imágenes

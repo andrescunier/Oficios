@@ -160,7 +160,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   return (
     <Card className={cardClasses[variant]}>
       <CardContent className="p-0">
-        <Link to={`/producto/${product.id}`} onClick={handleProductClick}>
+        <Link to={`/productos/${product.id}`} onClick={handleProductClick}>
           {/* Image container */}
           <div className="relative aspect-square overflow-hidden bg-gray-100">
             {/* Product image */}
@@ -317,7 +317,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
         {/* Product info */}
         <div className="p-4">
-          <Link to={`/producto/${product.id}`} onClick={handleProductClick}>
+          <Link to={`/productos/${product.id}`} onClick={handleProductClick}>
             <h3 className="font-medium text-sm mb-2 line-clamp-2 hover:text-primary transition-colors">
               {product.name}
             </h3>

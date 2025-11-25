@@ -162,12 +162,14 @@ export const Login: React.FC = () => {
             </div>
 
             <div className="flex items-center justify-between">
-              <Link
-                to="/recuperar-password"
+              <a
+                href="https://wa.me/5491126310884?text=Hola%2C%20necesito%20recuperar%20mi%20contrase%C3%B1a"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-sm text-primary hover:underline"
               >
                 ¿Olvidaste tu contraseña?
-              </Link>
+              </a>
             </div>
 
             <Button type="submit" className="w-full" disabled={isLoading}>

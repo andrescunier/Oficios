@@ -415,7 +415,7 @@ export const Home: React.FC = () => {
                 </h2>
                 <p className="text-muted-foreground">Aprovecha estos descuentos por tiempo limitado</p>
               </div>
-              <Link to="/ofertas">
+              <Link to="/productos">
                 <Button variant="outline">
                   Ver Todas
                   <ArrowRight className="ml-2 h-4 w-4" />

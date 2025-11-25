@@ -1,47 +1,44 @@
 /**
- * Página de categoría genérica con filtros
+ * Página de categoría con filtros y cards unificadas
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { useParams, Link, useSearchParams } from 'react-router-dom';
+import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { productService } from '@/services/productService';
-import { ProductCard } from '@/components/product/ProductCard';
 import type { Product } from '@/types/api';
-import { Loader2, Filter, X, ChevronDown, ChevronUp, SlidersHorizontal } from 'lucide-react';
+import { Loader2, Filter, X, ChevronDown, ChevronUp, SlidersHorizontal, Plus, Minus, Heart } from 'lucide-react';
 import { useStore } from '@/store/useStore';
+import { PriceDisplay } from '@/hooks/usePriceVisibility';
 
 // Tipos para filtros
 interface FilterOption {
   value: string;
   label: string;
-  count?: number;
 }
 
 interface ActiveFilters {
   capacidad?: string[];
-  marca?: string[];
-  tipo?: string[];
   velocidad?: string[];
-  precio?: { min?: number; max?: number };
   enStock?: boolean;
 }
 
 export const CategoryPage: React.FC = () => {
   const { category } = useParams<{ category: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { auth } = useStore();
+  const navigate = useNavigate();
+  const { auth, addToCart, addToFavorites, removeFromFavorites, isFavorite, addNotification } = useStore();
+  const isAuthenticated = auth.isAuthenticated;
   
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
-  const [expandedFilters, setExpandedFilters] = useState<string[]>(['capacidad', 'marca']);
+  const [expandedFilters, setExpandedFilters] = useState<string[]>(['capacidad', 'velocidad']);
+  const [quantities, setQuantities] = useState<Record<string, number>>({});
   
   // Filtros activos
   const [activeFilters, setActiveFilters] = useState<ActiveFilters>({
     capacidad: [],
-    marca: [],
-    tipo: [],
     velocidad: [],
     enStock: false,
   });
@@ -58,39 +55,21 @@ export const CategoryPage: React.FC = () => {
 
   const categoryName = categoryNames[category || ''] || 'Productos';
 
-  // Configuración de filtros según categoría
+  // Configuración de filtros según categoría (solo capacidad y velocidad)
   const filterConfig = useMemo(() => {
     if (category === 'ssd-sata') {
       return {
         capacidad: {
           label: 'Capacidad',
           options: [
-            { value: '120gb', label: '120 GB' },
-            { value: '240gb', label: '240 GB' },
-            { value: '256gb', label: '256 GB' },
-            { value: '480gb', label: '480 GB' },
-            { value: '500gb', label: '500 GB' },
-            { value: '512gb', label: '512 GB' },
+            { value: '120', label: '120 GB' },
+            { value: '240', label: '240 GB' },
+            { value: '256', label: '256 GB' },
+            { value: '480', label: '480 GB' },
+            { value: '500', label: '500 GB' },
+            { value: '512', label: '512 GB' },
             { value: '1tb', label: '1 TB' },
             { value: '2tb', label: '2 TB' },
-          ]
-        },
-        marca: {
-          label: 'Marca',
-          options: [
-            { value: 'kingston', label: 'Kingston' },
-            { value: 'adata', label: 'ADATA' },
-            { value: 'crucial', label: 'Crucial' },
-            { value: 'samsung', label: 'Samsung' },
-            { value: 'wd', label: 'Western Digital' },
-            { value: 'seagate', label: 'Seagate' },
-          ]
-        },
-        tipo: {
-          label: 'Tipo',
-          options: [
-            { value: 'sata-iii', label: 'SATA III' },
-            { value: '2.5', label: '2.5"' },
           ]
         }
       };
@@ -104,26 +83,6 @@ export const CategoryPage: React.FC = () => {
             { value: '16gb', label: '16 GB' },
             { value: '32gb', label: '32 GB' },
             { value: '64gb', label: '64 GB' },
-          ]
-        },
-        marca: {
-          label: 'Marca',
-          options: [
-            { value: 'kingston', label: 'Kingston' },
-            { value: 'corsair', label: 'Corsair' },
-            { value: 'gskill', label: 'G.Skill' },
-            { value: 'crucial', label: 'Crucial' },
-            { value: 'hyperx', label: 'HyperX' },
-            { value: 'adata', label: 'ADATA' },
-          ]
-        },
-        tipo: {
-          label: 'Tipo',
-          options: [
-            { value: 'ddr4', label: 'DDR4' },
-            { value: 'ddr5', label: 'DDR5' },
-            { value: 'sodimm', label: 'SODIMM (Notebook)' },
-            { value: 'dimm', label: 'DIMM (Desktop)' },
           ]
         },
         velocidad: {
@@ -144,6 +103,28 @@ export const CategoryPage: React.FC = () => {
     return {};
   }, [category]);
 
+  // Función para obtener imagen del producto
+  const getProductImage = (product: Product): string => {
+    if (product.image_url) return product.image_url;
+    
+    const name = product.name?.toLowerCase() || '';
+    
+    if (name.includes('ssd') && (name.includes('m.2') || name.includes('nvme'))) {
+      return '/images/categories/ssd-m2.jpg';
+    }
+    if (name.includes('ssd')) {
+      return '/images/categories/ssd-sata.jpg';
+    }
+    if (name.includes('ddr5')) {
+      return '/images/categories/ddr5.jpg';
+    }
+    if (name.includes('ddr4') || name.includes('ram') || name.includes('memoria')) {
+      return '/images/categories/ddr4.jpg';
+    }
+    
+    return '/images/categories/componentes.jpg';
+  };
+
   useEffect(() => {
     loadProducts();
   }, [category]);
@@ -152,8 +133,6 @@ export const CategoryPage: React.FC = () => {
   useEffect(() => {
     const urlFilters: ActiveFilters = {
       capacidad: searchParams.getAll('capacidad'),
-      marca: searchParams.getAll('marca'),
-      tipo: searchParams.getAll('tipo'),
       velocidad: searchParams.getAll('velocidad'),
       enStock: searchParams.get('stock') === 'true',
     };
@@ -173,22 +152,41 @@ export const CategoryPage: React.FC = () => {
       let filtered = response.data;
       
       if (category === 'ssd-sata') {
-        filtered = filtered.filter(p => 
-          (p.name?.toLowerCase().includes('ssd') && p.name?.toLowerCase().includes('sata')) ||
-          (p.description?.toLowerCase().includes('ssd') && p.description?.toLowerCase().includes('sata')) ||
-          p.category?.toLowerCase().includes('ssd')
-        );
+        // Filtrar SSDs SATA
+        filtered = filtered.filter(p => {
+          const name = p.name?.toLowerCase() || '';
+          const desc = p.description?.toLowerCase() || '';
+          const cat = p.category?.toLowerCase() || '';
+          
+          return (name.includes('ssd') && name.includes('sata')) ||
+                 (desc.includes('ssd') && desc.includes('sata')) ||
+                 cat.includes('ssd');
+        });
       } else if (category === 'memoria-ram' || category === 'memoria') {
-        filtered = filtered.filter(p => 
-          p.name?.toLowerCase().includes('memoria') ||
-          p.name?.toLowerCase().includes('ram') ||
-          p.name?.toLowerCase().includes('ddr') ||
-          p.category?.toLowerCase().includes('memoria') ||
-          p.category?.toLowerCase().includes('ram')
-        );
+        // Filtrar Memoria RAM - buscar por RAM, DDR, memoria
+        filtered = filtered.filter(p => {
+          const name = p.name?.toLowerCase() || '';
+          const desc = p.description?.toLowerCase() || '';
+          const cat = p.category?.toLowerCase() || '';
+          
+          return name.includes('ram') ||
+                 name.includes('ddr') ||
+                 name.includes('memoria') ||
+                 desc.includes('ram') ||
+                 desc.includes('ddr') ||
+                 cat.includes('memoria') ||
+                 cat.includes('ram') ||
+                 cat.includes('memory');
+        });
       }
       
-      setProducts(filtered);
+      // Asignar imágenes
+      const productsWithImages = filtered.map(p => ({
+        ...p,
+        image_url: getProductImage(p)
+      }));
+      
+      setProducts(productsWithImages);
     } catch (err) {
       console.error('Error loading products:', err);
       setError('Error al cargar los productos');
@@ -205,23 +203,15 @@ export const CategoryPage: React.FC = () => {
     if (activeFilters.capacidad && activeFilters.capacidad.length > 0) {
       result = result.filter(p => {
         const productText = `${p.name} ${p.description}`.toLowerCase();
-        return activeFilters.capacidad!.some(cap => productText.includes(cap.replace('gb', ' gb').replace('tb', ' tb')) || productText.includes(cap));
-      });
-    }
-    
-    // Filtrar por marca
-    if (activeFilters.marca && activeFilters.marca.length > 0) {
-      result = result.filter(p => {
-        const productText = `${p.name} ${p.description}`.toLowerCase();
-        return activeFilters.marca!.some(marca => productText.includes(marca));
-      });
-    }
-    
-    // Filtrar por tipo
-    if (activeFilters.tipo && activeFilters.tipo.length > 0) {
-      result = result.filter(p => {
-        const productText = `${p.name} ${p.description}`.toLowerCase();
-        return activeFilters.tipo!.some(tipo => productText.includes(tipo));
+        return activeFilters.capacidad!.some(cap => {
+          // Buscar variaciones como "8gb", "8 gb", "8GB"
+          const variations = [
+            cap,
+            cap.replace('gb', ' gb'),
+            cap.replace('tb', ' tb'),
+          ];
+          return variations.some(v => productText.includes(v));
+        });
       });
     }
     
@@ -229,7 +219,11 @@ export const CategoryPage: React.FC = () => {
     if (activeFilters.velocidad && activeFilters.velocidad.length > 0) {
       result = result.filter(p => {
         const productText = `${p.name} ${p.description}`.toLowerCase();
-        return activeFilters.velocidad!.some(vel => productText.includes(vel + 'mhz') || productText.includes(vel + ' mhz'));
+        return activeFilters.velocidad!.some(vel => 
+          productText.includes(vel + 'mhz') || 
+          productText.includes(vel + ' mhz') ||
+          productText.includes(vel)
+        );
       });
     }
     
@@ -292,8 +286,6 @@ export const CategoryPage: React.FC = () => {
   const clearFilters = () => {
     setActiveFilters({
       capacidad: [],
-      marca: [],
-      tipo: [],
       velocidad: [],
       enStock: false,
     });
@@ -310,10 +302,77 @@ export const CategoryPage: React.FC = () => {
 
   const activeFilterCount = 
     (activeFilters.capacidad?.length || 0) +
-    (activeFilters.marca?.length || 0) +
-    (activeFilters.tipo?.length || 0) +
     (activeFilters.velocidad?.length || 0) +
     (activeFilters.enStock ? 1 : 0);
+
+  // Funciones para manejar cantidades
+  const updateQuantity = (productId: string, quantity: number) => {
+    if (quantity < 1) quantity = 1;
+    setQuantities(prev => ({
+      ...prev,
+      [productId]: quantity
+    }));
+  };
+
+  const getQuantity = (productId: string) => {
+    return quantities[productId] || 1;
+  };
+
+  // Función para agregar al carrito
+  const handleAddToCart = (product: Product) => {
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: `/categoria/${category}` } });
+      return;
+    }
+
+    if (!product.stock_quantity || product.stock_quantity <= 0) {
+      addNotification({
+        type: 'error',
+        title: 'Sin stock',
+        message: 'Este producto no tiene stock disponible',
+      });
+      return;
+    }
+
+    const quantity = getQuantity(product.id.toString());
+    addToCart(product, quantity);
+    
+    addNotification({
+      type: 'success',
+      title: 'Producto agregado',
+      message: `${product.name} agregado al carrito`,
+    });
+  };
+
+  const handleToggleFavorite = (product: Product) => {
+    if (!isAuthenticated) {
+      addNotification({
+        type: 'warning',
+        title: 'Inicia sesión',
+        message: 'Necesitas iniciar sesión para agregar productos a favoritos',
+      });
+      navigate('/login', { state: { from: `/categoria/${category}` } });
+      return;
+    }
+    
+    const isProductFavorite = isFavorite(product.id);
+    
+    if (isProductFavorite) {
+      removeFromFavorites(product.id);
+      addNotification({
+        type: 'info',
+        title: 'Eliminado de favoritos',
+        message: `${product.name} eliminado de favoritos`,
+      });
+    } else {
+      addToFavorites(product.id);
+      addNotification({
+        type: 'success',
+        title: 'Agregado a favoritos',
+        message: `${product.name} agregado a tus favoritos`,
+      });
+    }
+  };
 
   // Componente de filtro individual
   const FilterSection = ({ filterKey, config }: { filterKey: string; config: { label: string; options: FilterOption[] } }) => {
@@ -432,7 +491,7 @@ export const CategoryPage: React.FC = () => {
               >
                 <option value="nombre-asc">Nombre A-Z</option>
                 <option value="nombre-desc">Nombre Z-A</option>
-                {auth.isAuthenticated && (
+                {isAuthenticated && (
                   <>
                     <option value="precio-asc">Precio: Menor a Mayor</option>
                     <option value="precio-desc">Precio: Mayor a Menor</option>
@@ -512,7 +571,7 @@ export const CategoryPage: React.FC = () => {
                   >
                     <option value="nombre-asc">Nombre A-Z</option>
                     <option value="nombre-desc">Nombre Z-A</option>
-                    {auth.isAuthenticated && (
+                    {isAuthenticated && (
                       <>
                         <option value="precio-asc">Precio: Menor a Mayor</option>
                         <option value="precio-desc">Precio: Mayor a Menor</option>
@@ -548,8 +607,17 @@ export const CategoryPage: React.FC = () => {
               )}
 
               {loading && (
-                <div className="flex justify-center items-center py-20">
-                  <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {[...Array(6)].map((_, i) => (
+                    <div key={i} className="bg-white rounded-lg shadow-sm animate-pulse">
+                      <div className="aspect-square bg-gray-200 rounded-t-lg" />
+                      <div className="p-4 space-y-3">
+                        <div className="h-4 bg-gray-200 rounded" />
+                        <div className="h-4 bg-gray-200 rounded w-2/3" />
+                        <div className="h-6 bg-gray-200 rounded w-1/2" />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
 
@@ -599,7 +667,138 @@ export const CategoryPage: React.FC = () => {
               {!loading && !error && filteredProducts.length > 0 && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                   {filteredProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} />
+                    <div key={product.id} className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-all duration-300 group relative">
+                      {/* Botón de favoritos */}
+                      <button
+                        onClick={() => handleToggleFavorite(product)}
+                        className={`absolute top-3 right-3 z-10 w-9 h-9 rounded-full shadow-md transition-all duration-200 ${
+                          isFavorite(product.id)
+                            ? 'bg-red-50 border-red-200 hover:bg-red-100' 
+                            : 'bg-white/90 hover:bg-white'
+                        } flex items-center justify-center`}
+                        title={isFavorite(product.id) ? 'Quitar de favoritos' : 'Agregar a favoritos'}
+                      >
+                        <Heart 
+                          className={`w-5 h-5 ${
+                            isFavorite(product.id)
+                              ? 'fill-red-500 text-red-500' 
+                              : 'text-gray-600 hover:text-red-400'
+                          }`} 
+                        />
+                      </button>
+                      
+                      {/* Product Image */}
+                      <Link to={`/productos/${product.id}`}>
+                        <div className="aspect-square bg-gray-100 overflow-hidden">
+                          <img 
+                            src={product.image_url} 
+                            alt={product.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            onError={(e) => {
+                              e.currentTarget.src = '/placeholder-product.jpg';
+                            }}
+                          />
+                        </div>
+                      </Link>
+
+                      {/* Product Info */}
+                      <div className="p-4">
+                        <Link to={`/productos/${product.id}`}>
+                          <div className="flex items-start justify-between mb-2">
+                            <h3 className="font-semibold text-gray-900 line-clamp-2 flex-1 hover:text-blue-600 transition-colors">
+                              {product.name}
+                            </h3>
+                            {product.is_featured && (
+                              <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full ml-2">
+                                Destacado
+                              </span>
+                            )}
+                          </div>
+                        </Link>
+                        
+                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                          {product.description || 'Sin descripción disponible'}
+                        </p>
+                        
+                        {/* Precio - Solo visible para autenticados */}
+                        <div className="mb-2">
+                          <PriceDisplay
+                            price={product.unit_price}
+                            currency={product.currency}
+                            showLoginButton={true}
+                          />
+                        </div>
+                        
+                        {/* Stock - Solo visible para autenticados */}
+                        {isAuthenticated && (
+                          <div className="flex items-center justify-between mb-2">
+                            {product.stock_quantity !== undefined && (
+                              <span className={`text-sm ${product.stock_quantity > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                {product.stock_quantity > 0 ? `Stock: ${product.stock_quantity}` : 'Sin stock'}
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-xs text-gray-500">
+                            SKU: {product.sku}
+                          </span>
+                        </div>
+
+                        {/* Controles de acción - Solo para autenticados */}
+                        {isAuthenticated && (
+                          <div className="space-y-3">
+                            {/* Selector de cantidad */}
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium text-gray-700">Cantidad:</span>
+                              <div className="flex items-center space-x-2">
+                                <button
+                                  onClick={() => updateQuantity(product.id.toString(), getQuantity(product.id.toString()) - 1)}
+                                  className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-300 text-gray-600 hover:bg-gray-100 transition-colors"
+                                  disabled={getQuantity(product.id.toString()) <= 1}
+                                >
+                                  <Minus className="w-4 h-4" />
+                                </button>
+                                <span className="w-8 text-center font-medium">
+                                  {getQuantity(product.id.toString())}
+                                </span>
+                                <button
+                                  onClick={() => updateQuantity(product.id.toString(), getQuantity(product.id.toString()) + 1)}
+                                  className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-300 text-gray-600 hover:bg-gray-100 transition-colors"
+                                  disabled={(product.stock_quantity || 0) <= getQuantity(product.id.toString())}
+                                >
+                                  <Plus className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Botón agregar al carrito */}
+                            <button 
+                              onClick={() => handleAddToCart(product)}
+                              disabled={!product.stock_quantity || product.stock_quantity <= 0}
+                              className="w-full py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                            >
+                              {product.stock_quantity && product.stock_quantity > 0 
+                                ? 'Agregar al Carrito' 
+                                : 'Sin Stock'
+                              }
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Para usuarios no autenticados, mostrar botón de login */}
+                        {!isAuthenticated && (
+                          <Link 
+                            to="/login"
+                            state={{ from: `/categoria/${category}` }}
+                            className="block w-full py-2 text-center rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors text-sm"
+                          >
+                            Inicia sesión para ver precios
+                          </Link>
+                        )}
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}

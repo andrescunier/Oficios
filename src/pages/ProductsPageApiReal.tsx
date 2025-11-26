@@ -3,7 +3,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, Plus, Minus, Heart } from 'lucide-react';
 import { productService } from '@/services/productService';
 import { useStore } from '@/store/useStore';
@@ -18,6 +18,15 @@ export const ProductsPageApiReal: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Leer búsqueda desde URL al cargar
+  useEffect(() => {
+    const buscarParam = searchParams.get('buscar');
+    if (buscarParam) {
+      setSearchTerm(buscarParam);
+    }
+  }, [searchParams]);
 
   const { addToCart, addNotification, auth, addToFavorites, removeFromFavorites, isFavorite } = useStore();
   const isAuthenticated = auth.isAuthenticated;
@@ -237,10 +246,29 @@ export const ProductsPageApiReal: React.FC = () => {
                 type="text"
                 placeholder="Buscar productos..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  // Actualizar URL sin recargar página
+                  if (e.target.value) {
+                    setSearchParams({ buscar: e.target.value });
+                  } else {
+                    setSearchParams({});
+                  }
+                }}
                 className="w-full pl-10 pr-4 py-3 rounded-lg text-gray-900 placeholder-gray-500"
               />
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              {searchTerm && (
+                <button
+                  onClick={() => {
+                    setSearchTerm('');
+                    setSearchParams({});
+                  }}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  ✕
+                </button>
+              )}
             </div>
           </div>
         </div>

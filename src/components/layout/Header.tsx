@@ -3,7 +3,7 @@
  */
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   Search, 
   ShoppingCart, 
@@ -31,6 +31,7 @@ import { BRANDING, ASSETS } from '@/config/branding';
 export const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const navigate = useNavigate();
   
   // Usar el store real para autenticación y carrito
   const { auth, cart, favorites, logout } = useStore();
@@ -74,7 +75,9 @@ export const Header: React.FC = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      // Lógica de búsqueda
+      navigate(`/productos?buscar=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery('');
+      setIsMenuOpen(false);
     }
   };
 

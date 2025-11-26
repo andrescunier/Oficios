@@ -29,6 +29,20 @@ interface PaymentInfo {
   paymentMethod: 'credit' | 'debit' | 'mercadopago' | 'transferencia';
 }
 
+// Función para obtener datos del usuario desde múltiples fuentes
+const getUserData = () => {
+  // Intentar obtener de registration_data (datos del registro)
+  const registrationData = localStorage.getItem('registration_data');
+  if (registrationData) {
+    try {
+      return JSON.parse(registrationData);
+    } catch (e) {
+      console.error('Error parsing registration data:', e);
+    }
+  }
+  return null;
+};
+
 export const CheckoutPage: React.FC = () => {
   const { cart, clearCart, addNotification, auth } = useStore();
   const navigate = useNavigate();
@@ -36,12 +50,15 @@ export const CheckoutPage: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<'shipping' | 'payment' | 'review'>('shipping');
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Pre-llenar datos del usuario logueado
+  // Obtener datos guardados del registro
+  const savedUserData = getUserData();
+
+  // Pre-llenar datos del usuario logueado (prioridad: person > savedUserData > vacío)
   const [shippingInfo, setShippingInfo] = useState<ShippingInfo>({
-    firstName: auth.user?.person?.first_name || '',
-    lastName: auth.user?.person?.last_name || '',
+    firstName: auth.user?.person?.first_name || savedUserData?.first_name || '',
+    lastName: auth.user?.person?.last_name || savedUserData?.last_name || '',
     email: auth.user?.email || '',
-    phone: auth.user?.person?.phone || '',
+    phone: auth.user?.person?.phone || savedUserData?.phone || '',
     address: '',
     city: '',
     state: '',
@@ -353,12 +370,10 @@ export const CheckoutPage: React.FC = () => {
                     <div className="text-sm text-blue-700">
                       <p><strong>Usuario:</strong> {auth.user.username}</p>
                       <p><strong>Email:</strong> {auth.user.email}</p>
-                      {auth.user.person && (
-                        <>
-                          <p><strong>Nombre:</strong> {auth.user.person.first_name} {auth.user.person.last_name}</p>
-                          {auth.user.person.phone && <p><strong>Teléfono:</strong> {auth.user.person.phone}</p>}
-                        </>
+                      {(shippingInfo.firstName || shippingInfo.lastName) && (
+                        <p><strong>Nombre:</strong> {shippingInfo.firstName} {shippingInfo.lastName}</p>
                       )}
+                      {shippingInfo.phone && <p><strong>Teléfono:</strong> {shippingInfo.phone}</p>}
                     </div>
                   </div>
                 )}
@@ -371,13 +386,12 @@ export const CheckoutPage: React.FC = () => {
                         type="text"
                         value={shippingInfo.firstName}
                         onChange={(e) => setShippingInfo({...shippingInfo, firstName: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
-                        disabled={!!auth.user?.person?.first_name}
-                        title={auth.user?.person?.first_name ? "Este dato se toma de tu cuenta registrada" : ""}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Tu nombre"
                         required
                       />
-                      {auth.user?.person?.first_name && (
-                        <p className="text-xs text-gray-500 mt-1">✓ Datos de tu cuenta registrada</p>
+                      {shippingInfo.firstName && (
+                        <p className="text-xs text-gray-500 mt-1">✓ Datos de tu cuenta</p>
                       )}
                     </div>
                     <div>
@@ -386,13 +400,12 @@ export const CheckoutPage: React.FC = () => {
                         type="text"
                         value={shippingInfo.lastName}
                         onChange={(e) => setShippingInfo({...shippingInfo, lastName: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
-                        disabled={!!auth.user?.person?.last_name}
-                        title={auth.user?.person?.last_name ? "Este dato se toma de tu cuenta registrada" : ""}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Tu apellido"
                         required
                       />
-                      {auth.user?.person?.last_name && (
-                        <p className="text-xs text-gray-500 mt-1">✓ Datos de tu cuenta registrada</p>
+                      {shippingInfo.lastName && (
+                        <p className="text-xs text-gray-500 mt-1">✓ Datos de tu cuenta</p>
                       )}
                     </div>
                   </div>
@@ -405,11 +418,10 @@ export const CheckoutPage: React.FC = () => {
                       onChange={(e) => setShippingInfo({...shippingInfo, email: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
                       disabled={!!auth.user?.email}
-                      title={auth.user?.email ? "Este dato se toma de tu cuenta registrada" : ""}
                       required
                     />
                     {auth.user?.email && (
-                      <p className="text-xs text-gray-500 mt-1">✓ Datos de tu cuenta registrada</p>
+                      <p className="text-xs text-gray-500 mt-1">✓ Email de tu cuenta (no editable)</p>
                     )}
                   </div>
                   
@@ -419,23 +431,17 @@ export const CheckoutPage: React.FC = () => {
                       type="tel"
                       value={shippingInfo.phone}
                       onChange={(e) => setShippingInfo({...shippingInfo, phone: e.target.value})}
-                      className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${auth.user?.person?.phone ? 'bg-gray-50' : ''}`}
-                      disabled={!!auth.user?.person?.phone}
-                      title={auth.user?.person?.phone ? "Este dato se toma de tu cuenta registrada" : ""}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Ej: +54 9 11 1234-5678"
                       required
                     />
-                    {auth.user?.person?.phone && (
-                      <p className="text-xs text-gray-500 mt-1">✓ Datos de tu cuenta registrada</p>
+                    {shippingInfo.phone && (
+                      <p className="text-xs text-gray-500 mt-1">✓ Datos de tu cuenta</p>
                     )}
                   </div>
                   
                   <div className="border-t pt-4 mt-6">
                     <h3 className="font-medium text-gray-800 mb-4">📦 Dirección de Entrega</h3>
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
-                      <p className="text-sm text-yellow-800">
-                        💡 Solo necesitas completar la dirección de entrega. Los demás datos ya los tenemos de tu cuenta.
-                      </p>
-                    </div>
                   </div>
                   
                   <div>

@@ -142,6 +142,15 @@ export class AuthService {
         throw new Error(response?.message || 'Error en el registro');
       }
 
+      // Guardar datos del registro para usar en checkout
+      const registrationData = {
+        first_name: data.firstName,
+        last_name: data.lastName,
+        phone: data.phone,
+        company_name: data.companyName
+      };
+      localStorage.setItem('registration_data', JSON.stringify(registrationData));
+
       // Luego de un registro exitoso, iniciamos sesión automáticamente
       return await this.login({
         email: data.email,

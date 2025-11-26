@@ -59,10 +59,10 @@ export const CheckoutPage: React.FC = () => {
     lastName: auth.user?.person?.last_name || savedUserData?.last_name || '',
     email: auth.user?.email || '',
     phone: auth.user?.person?.phone || savedUserData?.phone || '',
-    address: '',
-    city: '',
-    state: '',
-    zipCode: '',
+    address: savedUserData?.address || '',
+    city: savedUserData?.city || '',
+    state: savedUserData?.state || '',
+    zipCode: savedUserData?.zipCode || '',
     country: 'Argentina'
   });
 
@@ -141,6 +141,20 @@ export const CheckoutPage: React.FC = () => {
         return false;
       }
     }
+    
+    // Guardar datos del usuario para próximas compras
+    const userData = {
+      first_name: shippingInfo.firstName,
+      last_name: shippingInfo.lastName,
+      phone: shippingInfo.phone,
+      // También guardar dirección para próximas compras
+      address: shippingInfo.address,
+      city: shippingInfo.city,
+      state: shippingInfo.state,
+      zipCode: shippingInfo.zipCode
+    };
+    localStorage.setItem('registration_data', JSON.stringify(userData));
+    
     return true;
   };
 

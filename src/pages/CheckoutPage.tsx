@@ -7,7 +7,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CreditCard, MapPin, User, Mail, Phone, Lock } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { orderService } from '@/services/orderService';
-import type { CreateSalesOrderRequest, CreatePaymentRequest } from '@/services/orderService';
 
 interface ShippingInfo {
   firstName: string;
@@ -167,19 +166,23 @@ export const CheckoutPage: React.FC = () => {
     setIsProcessing(true);
     
     try {
-      // Generar números únicos
-      const orderNumber = orderService.generateOrderNumber();
-      const paymentNumber = orderService.generatePaymentNumber(orderNumber);
-      
-      // Usar el ID del usuario autenticado
-      const customerId = auth.user?.id || "customer-not-found";
-      
-      // Preparar datos de la orden
-      const orderData: CreateSalesOrderRequest = {
-        order_number: orderNumber,
-        customer_id: customerId,
-        currency: "ARS", // Cambiado a ARS ya que los precios están en pesos argentinos
-        status: "pending",
+      // Preparar datos del checkout con la nueva estructura
+      // El servicio se encarga de:
+      // 1. Crear el BusinessPartner
+      // 2. Crear la orden con el ID del BusinessPartner
+      // 3. Crear el pago
+      const checkoutData = {
+        shippingInfo: {
+          firstName: shippingInfo.firstName,
+          lastName: shippingInfo.lastName,
+          email: shippingInfo.email,
+          phone: shippingInfo.phone,
+          address: shippingInfo.address,
+          city: shippingInfo.city,
+          state: shippingInfo.state,
+          zipCode: shippingInfo.zipCode,
+          country: shippingInfo.country,
+        },
         items: cart.items.map(item => ({
           product_id: item.product.id,
           description: item.product.name,
@@ -187,42 +190,21 @@ export const CheckoutPage: React.FC = () => {
           unit_price: item.product.unit_price,
           tax_rate: item.product.tax_rate || 21.0
         })),
-        notes: `Entrega a: ${shippingInfo.address}, ${shippingInfo.city}, ${shippingInfo.state} ${shippingInfo.zipCode}. Tel: ${shippingInfo.phone}`,
-        metadata: {
-          channel: "online",
-          shipping_info: shippingInfo,
-          payment_method: paymentInfo.paymentMethod
-        }
+        currency: "USD",
+        totalAmount: cart.total_amount,
+        paymentMethod: paymentInfo.paymentMethod,
+        notes: `Pedido web - ${shippingInfo.firstName} ${shippingInfo.lastName}`
       };
 
-      // Preparar datos del pago
-      const paymentData: Omit<CreatePaymentRequest, 'partner_id'> = {
-        payment_number: paymentNumber,
-        source_type: "customer",
-        currency: "ARS",
-        amount: cart.total_amount,
-        method: orderService.mapPaymentMethod(paymentInfo.paymentMethod),
-        reference: `TRX${orderNumber.replace('SO-', '')}`,
-        status: "received", // En producción, esto dependería del método de pago
-        metadata: {
-          payment_method_details: paymentInfo.paymentMethod,
-          card_last_four: paymentInfo.cardNumber ? paymentInfo.cardNumber.slice(-4) : null,
-          customer_info: {
-            name: `${shippingInfo.firstName} ${shippingInfo.lastName}`,
-            email: shippingInfo.email
-          }
-        }
-      };
-
-      const result = await orderService.processCheckout(orderData, paymentData);
+      const result = await orderService.processCheckout(checkoutData);
       
-      // Verificar que ambas operaciones fueron exitosas
+      // Verificar que todas las operaciones fueron exitosas
       if (result.success && result.salesOrder && result.payment) {
         // Pago exitoso
         addNotification({
           type: 'success',
-          title: '¡Pago procesado exitosamente! 🎉',
-          message: `Tu orden ${orderNumber} ha sido creada y tu pago ${paymentNumber} fue procesado correctamente. Te contactaremos pronto con novedades de tu pedido.`,
+          title: '¡Pedido procesado exitosamente! 🎉',
+          message: `Tu orden ${result.orderNumber} ha sido creada. Te contactaremos pronto con novedades de tu pedido.`,
         });
 
         // Limpiar carrito
@@ -233,22 +215,33 @@ export const CheckoutPage: React.FC = () => {
           navigate('/', { 
             state: { 
               orderSuccess: true, 
-              orderNumber,
-              paymentNumber,
+              orderNumber: result.orderNumber,
+              paymentNumber: result.paymentNumber,
               customerEmail: shippingInfo.email,
               totalAmount: cart.total_amount
             } 
           });
-        }, 3000); // Dar más tiempo para que el usuario lea el mensaje
+        }, 3000);
         
       } else {
         // Error en el procesamiento
-        throw new Error('El pago no pudo ser procesado completamente');
+        const errorStep = result.error?.step || 'unknown';
+        let errorMessage = result.message || 'Error al procesar el pedido';
+        
+        if (errorStep === 'business_partner') {
+          errorMessage = 'No pudimos crear tu cuenta de cliente. Por favor intenta nuevamente.';
+        } else if (errorStep === 'order') {
+          errorMessage = 'No pudimos crear tu orden. Por favor intenta nuevamente.';
+        } else if (errorStep === 'payment') {
+          errorMessage = 'Tu orden fue creada pero hubo un problema con el pago. Te contactaremos pronto.';
+        }
+        
+        throw new Error(errorMessage);
       }
       
     } catch (error: any) {
-      let errorTitle = 'Error al procesar el pago';
-      let errorMessage = 'Hubo un problema procesando tu pago. Por favor intenta nuevamente.';
+      let errorTitle = 'Error al procesar el pedido';
+      let errorMessage = error.message || 'Hubo un problema procesando tu pedido. Por favor intenta nuevamente.';
       
       // Personalizar mensaje según el tipo de error
       if (error.response?.status === 400) {
@@ -256,7 +249,7 @@ export const CheckoutPage: React.FC = () => {
         errorMessage = 'Por favor revisa la información ingresada e intenta nuevamente.';
       } else if (error.response?.status === 401) {
         errorTitle = 'Error de autenticación';
-        errorMessage = 'Problema de autenticación con el sistema de pagos. Intenta nuevamente.';
+        errorMessage = 'Tu sesión ha expirado. Por favor inicia sesión nuevamente.';
       } else if (error.response?.status === 402) {
         errorTitle = 'Pago rechazado';
         errorMessage = 'El pago fue rechazado. Verifica los datos de tu tarjeta o prueba con otro método de pago.';

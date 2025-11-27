@@ -103,6 +103,59 @@ interface CreatePaymentResponse {
   updated_at: string;
 }
 
+// Nuevas interfaces para BusinessPartner
+interface CreateBusinessPartnerRequest {
+  name: string;
+  type: 'customer' | 'supplier' | 'both';
+  email?: string;
+  phone?: string;
+  tax_id?: string;
+  currency?: string;
+  notes?: string;
+  metadata?: {
+    shipping_address?: {
+      address: string;
+      city: string;
+      state: string;
+      zip_code: string;
+      country: string;
+    };
+    [key: string]: any;
+  };
+}
+
+interface BusinessPartnerResponse {
+  id: string;
+  name: string;
+  type: string;
+  email?: string;
+  phone?: string;
+  tax_id?: string;
+  currency?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Datos del checkout para crear orden
+interface CheckoutData {
+  shippingInfo: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    address: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  };
+  items: SalesOrderItem[];
+  currency: string;
+  totalAmount: number;
+  paymentMethod: string;
+  notes?: string;
+}
+
 class OrderService {
   private getHeaders() {
     return {
@@ -258,33 +311,161 @@ class OrderService {
   }
 
   /**
-   * Procesa una compra completa: orden + pago
+   * Crea un Business Partner (cliente) en el backend
+   * IMPORTANTE: Siempre crear el BP antes de la orden para obtener un ID válido
    */
-  async processCheckout(orderData: CreateSalesOrderRequest, paymentData: Omit<CreatePaymentRequest, 'partner_id'>) {
+  async createBusinessPartner(data: CreateBusinessPartnerRequest): Promise<BusinessPartnerResponse> {
+    try {
+      const response = await httpClient.post<{ success: boolean; data: BusinessPartnerResponse }>(
+        API_ENDPOINTS.BUSINESS_PARTNERS(ACCOUNT_ID),
+        data,
+        {
+          headers: this.getHeaders(),
+        }
+      );
+
+      // La API puede devolver { success, data } o directamente el objeto
+      if (response.data) {
+        return response.data;
+      }
+      return response as unknown as BusinessPartnerResponse;
+    } catch (error) {
+      console.error('Error creating business partner:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Procesa una compra completa: BusinessPartner + Orden + Pago
+   * Flujo correcto:
+   * 1. Crear BusinessPartner con datos del cliente
+   * 2. Usar el ID del BusinessPartner como customer_id
+   * 3. Crear la orden de venta
+   * 4. Crear el pago
+   */
+  async processCheckout(checkoutData: CheckoutData) {
+    let businessPartner: BusinessPartnerResponse | null = null;
     let salesOrder: CreateSalesOrderResponse | null = null;
     let payment: CreatePaymentResponse | null = null;
     
     try {
-      // 1. Crear orden de venta
-      salesOrder = await this.createSalesOrder(orderData);
+      const { shippingInfo, items, currency, totalAmount, paymentMethod, notes } = checkoutData;
       
-      // 2. Crear pago asociado
-      payment = await this.createPayment({
-        ...paymentData,
-        partner_id: orderData.customer_id,
+      // 1. Crear Business Partner (cliente)
+      console.log('📝 Paso 1: Creando Business Partner...');
+      businessPartner = await this.createBusinessPartner({
+        name: `${shippingInfo.firstName} ${shippingInfo.lastName}`,
+        type: 'customer',
+        email: shippingInfo.email,
+        phone: shippingInfo.phone,
+        currency: currency,
+        metadata: {
+          shipping_address: {
+            address: shippingInfo.address,
+            city: shippingInfo.city,
+            state: shippingInfo.state,
+            zip_code: shippingInfo.zipCode,
+            country: shippingInfo.country,
+          },
+          source: 'web_checkout',
+          created_at: new Date().toISOString(),
+        }
       });
+      
+      console.log('✅ Business Partner creado:', businessPartner.id);
+      
+      // 2. Crear orden de venta usando el ID del BusinessPartner
+      const orderNumber = this.generateOrderNumber();
+      console.log('📝 Paso 2: Creando orden de venta...');
+      
+      salesOrder = await this.createSalesOrder({
+        order_number: orderNumber,
+        customer_id: businessPartner.id, // ← ID real del backend
+        currency: currency,
+        status: 'pending',
+        items: items,
+        notes: notes || `Entrega a: ${shippingInfo.address}, ${shippingInfo.city}, ${shippingInfo.state} ${shippingInfo.zipCode}. Tel: ${shippingInfo.phone}`,
+        metadata: {
+          channel: 'online',
+          shipping_info: shippingInfo,
+          payment_method: paymentMethod
+        }
+      });
+      
+      console.log('✅ Orden creada:', salesOrder.order_number);
+      
+      // 3. Crear pago asociado
+      const paymentNumber = this.generatePaymentNumber(orderNumber);
+      console.log('📝 Paso 3: Creando pago...');
+      
+      payment = await this.createPayment({
+        payment_number: paymentNumber,
+        source_type: 'customer',
+        partner_id: businessPartner.id, // ← ID real del backend
+        currency: currency,
+        amount: totalAmount,
+        method: this.mapPaymentMethod(paymentMethod),
+        reference: `TRX${orderNumber.replace('SO-', '')}`,
+        status: 'received',
+        metadata: {
+          payment_method_details: paymentMethod,
+          customer_info: {
+            name: `${shippingInfo.firstName} ${shippingInfo.lastName}`,
+            email: shippingInfo.email
+          }
+        }
+      });
+      
+      console.log('✅ Pago creado:', payment.payment_number);
 
       return {
+        businessPartner,
         salesOrder,
         payment,
         success: true,
         message: 'Checkout procesado exitosamente',
+        orderNumber: salesOrder.order_number,
+        paymentNumber: payment.payment_number,
       };
       
     } catch (error: any) {
-      // Si la orden se creó pero falló el pago
+      console.error('❌ Error en checkout:', error);
+      
+      // Error al crear Business Partner
+      if (!businessPartner) {
+        return {
+          businessPartner: null,
+          salesOrder: null,
+          payment: null,
+          success: false,
+          message: 'Error al crear el cliente',
+          error: {
+            step: 'business_partner',
+            details: error.response?.data || error.message,
+          }
+        };
+      }
+      
+      // Error al crear la orden (pero BP ya existe)
+      if (businessPartner && !salesOrder) {
+        return {
+          businessPartner,
+          salesOrder: null,
+          payment: null,
+          success: false,
+          message: 'Error al crear la orden de venta',
+          error: {
+            step: 'order',
+            details: error.response?.data || error.message,
+            businessPartnerId: businessPartner.id,
+          }
+        };
+      }
+      
+      // Error al crear el pago (pero orden ya existe)
       if (salesOrder && !payment) {
         return {
+          businessPartner,
           salesOrder,
           payment: null,
           success: false,
@@ -293,20 +474,6 @@ class OrderService {
             step: 'payment',
             details: error.response?.data || error.message,
             orderNumber: salesOrder.order_number,
-          }
-        };
-      }
-      
-      // Si falló la creación de la orden
-      if (!salesOrder) {
-        return {
-          salesOrder: null,
-          payment: null,
-          success: false,
-          message: 'Error al crear la orden de venta',
-          error: {
-            step: 'order',
-            details: error.response?.data || error.message,
           }
         };
       }
@@ -326,5 +493,8 @@ export type {
   SalesOrderItem,
   SalesOrder,
   GetOrdersParams,
-  OrdersResponse
+  OrdersResponse,
+  CheckoutData,
+  CreateBusinessPartnerRequest,
+  BusinessPartnerResponse
 };

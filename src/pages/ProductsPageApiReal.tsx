@@ -37,9 +37,11 @@ export const ProductsPageApiReal: React.FC = () => {
 
   // Función para asignar imágenes basadas en el nombre o categoría del producto
   const getProductImage = (product: Product): string => {
+    if (product.image_url && product.image_url.trim() !== '') {
+      return product.image_url;
+    }
     const name = product.name.toLowerCase();
     const category = product.category?.toLowerCase() || '';
-    
     // Asignar imágenes basadas en palabras clave
     if (name.includes('ssd') && (name.includes('m.2') || name.includes('nvme') || name.includes('pcie'))) {
       return '/images/categories/ssd-m2.jpg';
@@ -50,10 +52,10 @@ export const ProductsPageApiReal: React.FC = () => {
     if (name.includes('ssd')) {
       return '/images/categories/ssd-m2.jpg'; // Default para SSDs
     }
-    if (name.includes('ddr5') || name.includes('memoria') && name.includes('ddr5')) {
+    if (name.includes('ddr5') || (name.includes('memoria') && name.includes('ddr5'))) {
       return '/images/categories/ddr5.jpg';
     }
-    if (name.includes('ddr4') || name.includes('memoria') && name.includes('ddr4')) {
+    if (name.includes('ddr4') || (name.includes('memoria') && name.includes('ddr4'))) {
       return '/images/categories/ddr4.jpg';
     }
     if (name.includes('memoria') || name.includes('ram')) {
@@ -62,7 +64,6 @@ export const ProductsPageApiReal: React.FC = () => {
     if (name.includes('gaming') || name.includes('gamer')) {
       return '/images/categories/gaming.jpg';
     }
-    
     // Asignar por categoría si no se encontró por nombre
     switch (category) {
       case 'ssd':

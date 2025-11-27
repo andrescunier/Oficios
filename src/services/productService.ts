@@ -58,8 +58,24 @@ export class ProductService {
    */
   async getProduct(productId: string): Promise<Product> {
     const url = API_ENDPOINTS.PRODUCT(ACCOUNT_ID, productId);
-    const response = await httpClient.get<ApiResponse<Product>>(url);
-    return response.data;
+    const response: any = await httpClient.get(url);
+    
+    // La API puede devolver { success, data: {...} } o directamente el producto
+    if (response?.data && typeof response.data === 'object' && !Array.isArray(response.data)) {
+      return response.data;
+    }
+    
+    // Si la respuesta es directamente el producto
+    if (response?.id) {
+      return response;
+    }
+    
+    // Si viene en success/data wrapper
+    if (response?.success && response?.data) {
+      return response.data;
+    }
+    
+    throw new Error('Producto no encontrado');
   }
 
   /**

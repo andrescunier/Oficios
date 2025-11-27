@@ -125,12 +125,11 @@ export const CategoryPage: React.FC = () => {
     return '/images/categories/componentes.jpg';
   };
 
+  // Cargar productos cuando cambia la categoría
   useEffect(() => {
     loadProducts();
-  }, [category]);
-
-  // Sincronizar filtros desde URL
-  useEffect(() => {
+    
+    // Sincronizar filtros desde URL solo al montar o cambiar categoría
     const urlFilters: ActiveFilters = {
       capacidad: searchParams.getAll('capacidad'),
       velocidad: searchParams.getAll('velocidad'),
@@ -140,7 +139,8 @@ export const CategoryPage: React.FC = () => {
     
     const urlSort = searchParams.get('orden');
     if (urlSort) setSortBy(urlSort);
-  }, [searchParams]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [category]);
 
   const loadProducts = async () => {
     try {

@@ -343,29 +343,33 @@ export const ProductsPageApiReal: React.FC = () => {
                 </button>
                 
                 {/* Product Image */}
-                <div className="aspect-square bg-gray-100 overflow-hidden">
-                  <img 
-                    src={product.image_url} 
-                    alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    onError={(e) => {
-                      e.currentTarget.src = '/placeholder-product.jpg';
-                    }}
-                  />
-                </div>
+                <Link to={`/productos/${product.id}`}>
+                  <div className="aspect-square bg-gray-100 overflow-hidden">
+                    <img 
+                      src={product.image_url} 
+                      alt={product.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      onError={(e) => {
+                        e.currentTarget.src = '/placeholder-product.jpg';
+                      }}
+                    />
+                  </div>
+                </Link>
 
                 {/* Product Info */}
                 <div className="p-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <h3 className="font-semibold text-gray-900 line-clamp-2 flex-1">
-                      {product.name}
-                    </h3>
-                    {product.is_featured && (
-                      <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full ml-2">
-                        Destacado
-                      </span>
-                    )}
-                  </div>
+                  <Link to={`/productos/${product.id}`}>
+                    <div className="flex items-start justify-between mb-2">
+                      <h3 className="font-semibold text-gray-900 line-clamp-2 flex-1 hover:text-blue-600 transition-colors">
+                        {product.name}
+                      </h3>
+                      {product.is_featured && (
+                        <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full ml-2">
+                          Destacado
+                        </span>
+                      )}
+                    </div>
+                  </Link>
                   
                   <p className="text-sm text-gray-600 mb-3 line-clamp-2">
                     {product.description || 'Sin descripción disponible'}

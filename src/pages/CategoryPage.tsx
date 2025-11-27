@@ -619,8 +619,8 @@ export const CategoryPage: React.FC = () => {
               )}
 
               {loading && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {[...Array(6)].map((_, i) => (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {[...Array(8)].map((_, i) => (
                     <div key={i} className="bg-white rounded-lg shadow-sm animate-pulse">
                       <div className="aspect-square bg-gray-200 rounded-t-lg" />
                       <div className="p-4 space-y-3">
@@ -677,7 +677,7 @@ export const CategoryPage: React.FC = () => {
               )}
 
               {!loading && !error && filteredProducts.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {filteredProducts.map((product) => (
                     <div key={product.id} className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-all duration-300 group relative">
                       {/* Botón de favoritos */}

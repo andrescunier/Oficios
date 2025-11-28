@@ -5,10 +5,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { 
-  Facebook, 
-  Instagram, 
-  Twitter, 
-  Youtube,
+  Linkedin,
+  Instagram,
   Mail,
   Phone,
   MapPin,
@@ -23,9 +21,15 @@ import { Separator } from '@/components/ui/separator';
 import { BRANDING, ASSETS, SOCIAL_LINKS, FEATURES } from '@/config/branding';
 
 export const Footer: React.FC = () => {
-  const handleNewsletterSubmit = (e: React.FormEvent) => {
+  const [phoneNumber, setPhoneNumber] = React.useState('');
+
+  const handleWhatsAppSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Lógica para suscripción al newsletter
+    if (phoneNumber.trim()) {
+      const message = encodeURIComponent('Hola! Quiero recibir notificaciones de ofertas y novedades.');
+      window.open(`https://wa.me/${phoneNumber.replace(/\D/g, '')}?text=${message}`, '_blank');
+      setPhoneNumber('');
+    }
   };
 
   const footerSections = {
@@ -64,10 +68,8 @@ export const Footer: React.FC = () => {
   };
 
   const socialLinks = [
-    { icon: Facebook, href: SOCIAL_LINKS.FACEBOOK, label: 'Facebook' },
-    { icon: Instagram, href: SOCIAL_LINKS.INSTAGRAM, label: 'Instagram' },
-    { icon: Twitter, href: SOCIAL_LINKS.TWITTER, label: 'Twitter' },
-    { icon: Youtube, href: SOCIAL_LINKS.YOUTUBE, label: 'YouTube' },
+    { icon: Linkedin, href: 'https://www.linkedin.com/company/aimerican/about/', label: 'LinkedIn' },
+    { icon: Instagram, href: 'https://www.instagram.com/aimerican_arg', label: 'Instagram' },
   ];
 
   return (
@@ -191,21 +193,24 @@ export const Footer: React.FC = () => {
           ))}
         </div>
 
-        {/* Newsletter */}
+        {/* WhatsApp Notifications */}
         <div className="mt-12 pt-8 border-t">
           <div className="max-w-md">
-            <h3 className="font-semibold mb-2">Suscríbete a nuestro newsletter</h3>
+            <h3 className="font-semibold mb-2">Recibe notificaciones por WhatsApp</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              Recibe ofertas exclusivas y novedades directamente en tu email.
+              Ingresa tu número y recibe ofertas exclusivas y novedades directamente en WhatsApp.
             </p>
-            <form onSubmit={handleNewsletterSubmit} className="flex space-x-2">
+            <form onSubmit={handleWhatsAppSubmit} className="flex space-x-2">
               <Input
-                type="email"
-                placeholder="Tu email"
+                type="tel"
+                placeholder="Tu número (ej: 5491123456789)"
+                value={phoneNumber}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPhoneNumber(e.target.value)}
                 className="flex-1 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary focus:border-primary"
                 required
+                pattern="[0-9+\s()-]+"
               />
-              <Button type="submit" className="bg-primary hover:bg-primary/90 text-white font-semibold">
+              <Button type="submit" className="bg-green-600 hover:bg-green-700 text-white font-semibold">
                 Suscribirse
               </Button>
             </form>

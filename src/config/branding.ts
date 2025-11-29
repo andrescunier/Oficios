@@ -32,7 +32,7 @@ export const BRANDING = {
   // Contact Information
   CONTACT_EMAIL: import.meta.env.VITE_CONTACT_EMAIL || 'info@diap.com',
   CONTACT_PHONE: import.meta.env.VITE_CONTACT_PHONE || '+54 11 1234-5678',
-  CONTACT_ADDRESS: import.meta.env.VITE_CONTACT_ADDRESS || 'Av. Corrientes 1234, CABA, Argentina',
+  CONTACT_ADDRESS: import.meta.env.VITE_CONTACT_ADDRESS || 'Palomar, Provincia de Buenos Aires',
 } as const;
 
 // =========================================

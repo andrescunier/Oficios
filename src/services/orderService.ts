@@ -106,7 +106,7 @@ interface CreatePaymentResponse {
 // Nuevas interfaces para BusinessPartner
 interface CreateBusinessPartnerRequest {
   name: string;
-  type: 'customer' | 'supplier' | 'both';
+  partner_type: 'customer' | 'supplier' | 'both';
   email?: string;
   phone?: string;
   tax_id?: string;
@@ -355,7 +355,7 @@ class OrderService {
       console.log('📝 Paso 1: Creando Business Partner...');
       businessPartner = await this.createBusinessPartner({
         name: `${shippingInfo.firstName} ${shippingInfo.lastName}`,
-        type: 'customer',
+        partner_type: 'customer',
         email: shippingInfo.email,
         phone: shippingInfo.phone,
         currency: currency,

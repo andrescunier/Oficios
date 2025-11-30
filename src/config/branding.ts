@@ -30,8 +30,8 @@ export const BRANDING = {
   APP_DESCRIPTION: import.meta.env.VITE_APP_DESCRIPTION || 'DIAP - Distribuidora de productos tecnológicos de primera calidad. Soluciones profesionales para tu empresa.',
   
   // Contact Information
-  CONTACT_EMAIL: import.meta.env.VITE_CONTACT_EMAIL || 'info@diap.com',
-  CONTACT_PHONE: import.meta.env.VITE_CONTACT_PHONE || '+54 11 1234-5678',
+  CONTACT_EMAIL: import.meta.env.VITE_CONTACT_EMAIL || 'info@diapstore.com',
+  CONTACT_PHONE: import.meta.env.VITE_CONTACT_PHONE || '+54 11 2631-0884',
   CONTACT_ADDRESS: import.meta.env.VITE_CONTACT_ADDRESS || 'Palomar, Provincia de Buenos Aires',
 } as const;
 

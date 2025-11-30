@@ -115,7 +115,7 @@ const initialUIState: UIState = {
 // Helper para calcular totales del carrito
 const calculateTotals = (items: CartItem[], currency: string = 'USD'): CartState => {
   const subtotal = items.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0);
-  const tax_amount = subtotal * 0.21; // 21% IVA
+  const tax_amount = subtotal * 0.105; // 10.5% IVA
   const total_amount = subtotal + tax_amount;
   
   return {

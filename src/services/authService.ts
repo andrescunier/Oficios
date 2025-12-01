@@ -56,6 +56,34 @@ export interface SimpleRegistrationResponse {
   };
 }
 
+// Interface para respuesta de /auth/me
+export interface MeResponse {
+  success: boolean;
+  data: {
+    id: string;
+    username: string;
+    email: string;
+    full_name?: string;
+    role: string;
+    account_id: string;
+    business_partner_id?: string;  // ID del cliente para órdenes
+    person?: {
+      first_name: string;
+      last_name: string;
+      phone?: string;
+    };
+    addresses?: Array<{
+      id: string;
+      line1: string;
+      city: string;
+      state: string;
+      postal_code: string;
+      country_code: string;
+      is_primary: boolean;
+    }>;
+  };
+}
+
 export class AuthService {
   /**
    * Iniciar sesión con API real
@@ -193,6 +221,34 @@ export class AuthService {
       localStorage.removeItem('user_info');
       localStorage.removeItem('account_info');
       localStorage.removeItem('business_partner_info');
+    }
+  }
+
+  /**
+   * Obtener datos del usuario actual (útil para pre-llenar checkout)
+   * Retorna el business_partner_id si existe
+   */
+  async getMe(): Promise<MeResponse['data'] | null> {
+    try {
+      const response = await httpClient.get<MeResponse>(API_ENDPOINTS.AUTH.ME);
+      
+      if (response?.success && response?.data) {
+        // Guardar business_partner_id para uso en checkout
+        if (response.data.business_partner_id) {
+          localStorage.setItem('business_partner_id', response.data.business_partner_id);
+        }
+        return response.data;
+      }
+      
+      // Si la respuesta no tiene wrapper
+      if ((response as any)?.id) {
+        return response as unknown as MeResponse['data'];
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error obteniendo datos del usuario:', error);
+      return null;
     }
   }
 

@@ -136,6 +136,39 @@ interface BusinessPartnerResponse {
   updated_at: string;
 }
 
+// Interface para validación de stock
+interface ValidateStockRequest {
+  items: Array<{
+    product_id: string;
+    quantity: number;
+  }>;
+}
+
+interface ValidateStockResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    valid: boolean;
+    items: Array<{
+      product_id: string;
+      requested: number;
+      available: number;
+      valid: boolean;
+    }>;
+  };
+}
+
+// Interface para cancelar orden
+interface CancelOrderRequest {
+  reason?: string;
+}
+
+interface CancelOrderResponse {
+  success: boolean;
+  message?: string;
+  data?: SalesOrder;
+}
+
 // Datos del checkout para crear orden
 interface CheckoutData {
   shippingInfo: {
@@ -162,6 +195,79 @@ class OrderService {
       ...DEFAULT_HEADERS,
       'X-Account-ID': ACCOUNT_ID,
     };
+  }
+
+  /**
+   * Valida disponibilidad de stock antes de crear orden
+   * POST /accounts/{account_id}/sales-orders/validate-stock
+   */
+  async validateStock(items: ValidateStockRequest['items']): Promise<ValidateStockResponse> {
+    try {
+      const response = await httpClient.post<ValidateStockResponse>(
+        API_ENDPOINTS.VALIDATE_STOCK(ACCOUNT_ID),
+        { items },
+        { headers: this.getHeaders() }
+      );
+
+      return response;
+    } catch (error: any) {
+      console.error('Error validando stock:', error);
+      // Si el endpoint no existe, retornar success para no bloquear
+      if (error.response?.status === 404) {
+        return {
+          success: true,
+          message: 'Validación de stock no disponible',
+          data: {
+            valid: true,
+            items: items.map(item => ({
+              product_id: item.product_id,
+              requested: item.quantity,
+              available: item.quantity,
+              valid: true
+            }))
+          }
+        };
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Cancela una orden de venta
+   * POST /accounts/{account_id}/sales-orders/{order_id}/cancel
+   */
+  async cancelOrder(orderId: string, reason?: string): Promise<CancelOrderResponse> {
+    try {
+      const response = await httpClient.post<CancelOrderResponse>(
+        API_ENDPOINTS.CANCEL_ORDER(ACCOUNT_ID, orderId),
+        { reason },
+        { headers: this.getHeaders() }
+      );
+
+      return response;
+    } catch (error) {
+      console.error('Error cancelando orden:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Confirma una orden de venta (deduce stock si track_inventory=true)
+   * POST /accounts/{account_id}/sales-orders/{order_id}/confirm
+   */
+  async confirmOrder(orderId: string): Promise<{ success: boolean; data?: SalesOrder }> {
+    try {
+      const response = await httpClient.post<{ success: boolean; data?: SalesOrder }>(
+        API_ENDPOINTS.CONFIRM_ORDER(ACCOUNT_ID, orderId),
+        {},
+        { headers: this.getHeaders() }
+      );
+
+      return response;
+    } catch (error) {
+      console.error('Error confirmando orden:', error);
+      throw error;
+    }
   }
 
   /**
@@ -336,51 +442,93 @@ class OrderService {
   }
 
   /**
-   * Procesa una compra completa: BusinessPartner + Orden + Pago
+   * Procesa una compra completa: Verificar BP existente + Validar Stock + Orden + Pago
    * Flujo correcto:
-   * 1. Crear BusinessPartner con datos del cliente
-   * 2. Usar el ID del BusinessPartner como customer_id
-   * 3. Crear la orden de venta
-   * 4. Crear el pago
+   * 1. Verificar si el usuario ya tiene business_partner_id
+   * 2. Si no tiene, crear BusinessPartner con datos del cliente
+   * 3. Validar disponibilidad de stock
+   * 4. Crear la orden de venta
+   * 5. Crear el pago
    */
-  async processCheckout(checkoutData: CheckoutData) {
+  async processCheckout(checkoutData: CheckoutData, existingBusinessPartnerId?: string) {
     let businessPartner: BusinessPartnerResponse | null = null;
     let salesOrder: CreateSalesOrderResponse | null = null;
     let payment: CreatePaymentResponse | null = null;
+    let customerId: string;
     
     try {
       const { shippingInfo, items, currency, totalAmount, paymentMethod, notes } = checkoutData;
       
-      // 1. Crear Business Partner (cliente)
-      console.log('📝 Paso 1: Creando Business Partner...');
-      businessPartner = await this.createBusinessPartner({
-        name: `${shippingInfo.firstName} ${shippingInfo.lastName}`,
-        partner_type: 'customer',
-        email: shippingInfo.email,
-        phone: shippingInfo.phone,
-        currency: currency,
-        metadata: {
-          shipping_address: {
-            address: shippingInfo.address,
-            city: shippingInfo.city,
-            state: shippingInfo.state,
-            zip_code: shippingInfo.zipCode,
-            country: shippingInfo.country,
-          },
-          source: 'web_checkout',
-          created_at: new Date().toISOString(),
-        }
-      });
+      // 0. Verificar si ya existe un business_partner_id
+      const savedBpId = existingBusinessPartnerId || localStorage.getItem('business_partner_id');
       
-      console.log('✅ Business Partner creado:', businessPartner.id);
+      if (savedBpId) {
+        console.log('✅ Business Partner existente encontrado:', savedBpId);
+        customerId = savedBpId;
+      } else {
+        // 1. Crear Business Partner (cliente)
+        console.log('📝 Paso 1: Creando Business Partner...');
+        businessPartner = await this.createBusinessPartner({
+          name: `${shippingInfo.firstName} ${shippingInfo.lastName}`,
+          partner_type: 'customer',
+          email: shippingInfo.email,
+          phone: shippingInfo.phone,
+          currency: currency,
+          metadata: {
+            shipping_address: {
+              address: shippingInfo.address,
+              city: shippingInfo.city,
+              state: shippingInfo.state,
+              zip_code: shippingInfo.zipCode,
+              country: shippingInfo.country,
+            },
+            source: 'web_checkout',
+            created_at: new Date().toISOString(),
+          }
+        });
+        
+        console.log('✅ Business Partner creado:', businessPartner.id);
+        customerId = businessPartner.id;
+        
+        // Guardar para futuras compras
+        localStorage.setItem('business_partner_id', businessPartner.id);
+      }
       
-      // 2. Crear orden de venta usando el ID del BusinessPartner
+      // 2. Validar disponibilidad de stock
+      console.log('📝 Paso 2: Validando stock...');
+      const stockValidation = await this.validateStock(
+        items.map(item => ({
+          product_id: item.product_id,
+          quantity: item.quantity
+        }))
+      );
+      
+      if (!stockValidation.success || !stockValidation.data?.valid) {
+        const invalidItems = stockValidation.data?.items?.filter(i => !i.valid) || [];
+        const itemNames = invalidItems.map(i => `${i.product_id} (solicitado: ${i.requested}, disponible: ${i.available})`).join(', ');
+        
+        return {
+          businessPartner,
+          salesOrder: null,
+          payment: null,
+          success: false,
+          message: `Stock insuficiente para: ${itemNames}`,
+          error: {
+            step: 'stock_validation',
+            details: stockValidation.data?.items,
+          }
+        };
+      }
+      
+      console.log('✅ Stock validado correctamente');
+      
+      // 3. Crear orden de venta usando el ID del BusinessPartner
       const orderNumber = this.generateOrderNumber();
-      console.log('📝 Paso 2: Creando orden de venta...');
+      console.log('📝 Paso 3: Creando orden de venta...');
       
       salesOrder = await this.createSalesOrder({
         order_number: orderNumber,
-        customer_id: businessPartner.id, // ← ID real del backend
+        customer_id: customerId, // ← ID real del backend (existente o nuevo)
         currency: currency,
         status: 'pending',
         items: items,
@@ -394,14 +542,14 @@ class OrderService {
       
       console.log('✅ Orden creada:', salesOrder.order_number);
       
-      // 3. Crear pago asociado
+      // 4. Crear pago asociado
       const paymentNumber = this.generatePaymentNumber(orderNumber);
-      console.log('📝 Paso 3: Creando pago...');
+      console.log('📝 Paso 4: Creando pago...');
       
       payment = await this.createPayment({
         payment_number: paymentNumber,
         source_type: 'customer',
-        partner_id: businessPartner.id, // ← ID real del backend
+        partner_id: customerId, // ← ID real del backend (existente o nuevo)
         currency: currency,
         amount: totalAmount,
         method: this.mapPaymentMethod(paymentMethod),
@@ -420,6 +568,7 @@ class OrderService {
 
       return {
         businessPartner,
+        customerId, // Incluir el ID usado
         salesOrder,
         payment,
         success: true,
@@ -496,5 +645,9 @@ export type {
   OrdersResponse,
   CheckoutData,
   CreateBusinessPartnerRequest,
-  BusinessPartnerResponse
+  BusinessPartnerResponse,
+  ValidateStockRequest,
+  ValidateStockResponse,
+  CancelOrderRequest,
+  CancelOrderResponse
 };

@@ -2,11 +2,12 @@
  * Página de checkout/finalización de compra
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CreditCard, MapPin, User, Mail, Phone, Lock } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { orderService } from '@/services/orderService';
+import { authService } from '@/services/authService';
 
 interface ShippingInfo {
   firstName: string;
@@ -48,9 +49,37 @@ export const CheckoutPage: React.FC = () => {
   
   const [currentStep, setCurrentStep] = useState<'shipping' | 'payment' | 'review'>('shipping');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [businessPartnerId, setBusinessPartnerId] = useState<string | null>(null);
 
   // Obtener datos guardados del registro
   const savedUserData = getUserData();
+
+  // Efecto para obtener business_partner_id existente al cargar
+  useEffect(() => {
+    const fetchBusinessPartnerId = async () => {
+      try {
+        // Primero intentar desde localStorage
+        const savedBpId = localStorage.getItem('business_partner_id');
+        if (savedBpId) {
+          setBusinessPartnerId(savedBpId);
+          return;
+        }
+
+        // Si no está en localStorage, obtener desde /auth/me
+        if (auth.isAuthenticated) {
+          const meData = await authService.getMe();
+          if (meData?.business_partner_id) {
+            setBusinessPartnerId(meData.business_partner_id);
+            localStorage.setItem('business_partner_id', meData.business_partner_id);
+          }
+        }
+      } catch (error) {
+        console.error('Error obteniendo business_partner_id:', error);
+      }
+    };
+
+    fetchBusinessPartnerId();
+  }, [auth.isAuthenticated]);
 
   // Pre-llenar datos del usuario logueado (prioridad: person > savedUserData > vacío)
   const [shippingInfo, setShippingInfo] = useState<ShippingInfo>({
@@ -168,9 +197,11 @@ export const CheckoutPage: React.FC = () => {
     try {
       // Preparar datos del checkout con la nueva estructura
       // El servicio se encarga de:
-      // 1. Crear el BusinessPartner
-      // 2. Crear la orden con el ID del BusinessPartner
-      // 3. Crear el pago
+      // 1. Verificar si existe business_partner_id
+      // 2. Si no existe, crear el BusinessPartner
+      // 3. Validar disponibilidad de stock
+      // 4. Crear la orden con el ID del BusinessPartner
+      // 5. Crear el pago
       const checkoutData = {
         shippingInfo: {
           firstName: shippingInfo.firstName,
@@ -188,7 +219,7 @@ export const CheckoutPage: React.FC = () => {
           description: item.product.name,
           quantity: item.quantity,
           unit_price: item.product.unit_price,
-          tax_rate: item.product.tax_rate || 21.0
+          tax_rate: item.product.tax_rate || 10.5 // IVA 10.5%
         })),
         currency: "USD",
         totalAmount: cart.total_amount,
@@ -196,7 +227,8 @@ export const CheckoutPage: React.FC = () => {
         notes: `Pedido web - ${shippingInfo.firstName} ${shippingInfo.lastName}`
       };
 
-      const result = await orderService.processCheckout(checkoutData);
+      // Pasar el business_partner_id existente si lo tenemos
+      const result = await orderService.processCheckout(checkoutData, businessPartnerId || undefined);
       
       // Verificar que todas las operaciones fueron exitosas
       if (result.success && result.salesOrder && result.payment) {
@@ -230,6 +262,8 @@ export const CheckoutPage: React.FC = () => {
         
         if (errorStep === 'business_partner') {
           errorMessage = 'No pudimos crear tu cuenta de cliente. Por favor intenta nuevamente.';
+        } else if (errorStep === 'stock_validation') {
+          errorMessage = result.message || 'Algunos productos no tienen stock suficiente. Por favor revisa tu carrito.';
         } else if (errorStep === 'order') {
           errorMessage = 'No pudimos crear tu orden. Por favor intenta nuevamente.';
         } else if (errorStep === 'payment') {

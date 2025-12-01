@@ -30,6 +30,8 @@ export const OrdersPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedOrder, setSelectedOrder] = useState<SalesOrder | null>(null);
+  const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
+  const [cancelReason, setCancelReason] = useState<string>('');
 
   // Redirigir si no está autenticado
   if (!auth.isAuthenticated) {
@@ -146,6 +148,53 @@ export const OrdersPage: React.FC = () => {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  // Verificar si una orden se puede cancelar (solo pending o draft)
+  const canCancelOrder = (status: string): boolean => {
+    const mappedStatus = orderService.mapOrderStatus(status);
+    return mappedStatus === 'pending' || status === 'draft';
+  };
+
+  // Cancelar una orden
+  const handleCancelOrder = async (orderId: string) => {
+    setCancellingOrderId(orderId);
+    try {
+      const result = await orderService.cancelOrder(orderId, cancelReason || 'Cancelado por el cliente');
+      
+      if (result.success) {
+        addNotification({
+          type: 'success',
+          title: 'Pedido cancelado',
+          message: 'Tu pedido ha sido cancelado exitosamente.',
+        });
+        
+        // Actualizar la lista de órdenes
+        setOrders(prevOrders => 
+          prevOrders.map(order => 
+            order.id === orderId 
+              ? { ...order, status: 'cancelled' as const }
+              : order
+          )
+        );
+        
+        // Si el modal está abierto con esta orden, actualizarla
+        if (selectedOrder?.id === orderId) {
+          setSelectedOrder({ ...selectedOrder, status: 'cancelled' as const });
+        }
+      } else {
+        throw new Error(result.message || 'Error al cancelar el pedido');
+      }
+    } catch (error: any) {
+      addNotification({
+        type: 'error',
+        title: 'Error al cancelar',
+        message: error.message || 'No se pudo cancelar el pedido. Intenta nuevamente.',
+      });
+    } finally {
+      setCancellingOrderId(null);
+      setCancelReason('');
+    }
   };
 
   const filteredOrders = orders.filter(order => {
@@ -271,6 +320,25 @@ export const OrdersPage: React.FC = () => {
                         <Eye className="w-4 h-4 mr-2" />
                         Ver Detalles
                       </button>
+                      {canCancelOrder(order.status) && (
+                        <button
+                          onClick={() => handleCancelOrder(order.id)}
+                          disabled={cancellingOrderId === order.id}
+                          className="flex items-center px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-colors disabled:opacity-50"
+                        >
+                          {cancellingOrderId === order.id ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-700 mr-2"></div>
+                              Cancelando...
+                            </>
+                          ) : (
+                            <>
+                              <XCircle className="w-4 h-4 mr-2" />
+                              Cancelar
+                            </>
+                          )}
+                        </button>
+                      )}
                     </div>
                   </div>
                   
@@ -378,6 +446,47 @@ export const OrdersPage: React.FC = () => {
                         Número de seguimiento: <strong>{selectedOrder.metadata.tracking_number}</strong>
                       </p>
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Botón de cancelar pedido */}
+              {canCancelOrder(selectedOrder.status) && (
+                <div className="mt-6 pt-6 border-t">
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <h4 className="font-medium text-red-800 mb-2">¿Cancelar este pedido?</h4>
+                    <p className="text-sm text-red-600 mb-4">
+                      Esta acción no se puede deshacer. El pedido será cancelado permanentemente.
+                    </p>
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-red-700 mb-1">
+                        Motivo de cancelación (opcional)
+                      </label>
+                      <input
+                        type="text"
+                        value={cancelReason}
+                        onChange={(e) => setCancelReason(e.target.value)}
+                        placeholder="Ej: Ya no necesito el producto"
+                        className="w-full px-3 py-2 border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                      />
+                    </div>
+                    <button
+                      onClick={() => handleCancelOrder(selectedOrder.id)}
+                      disabled={cancellingOrderId === selectedOrder.id}
+                      className="flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50"
+                    >
+                      {cancellingOrderId === selectedOrder.id ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Cancelando...
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="w-4 h-4 mr-2" />
+                          Confirmar Cancelación
+                        </>
+                      )}
+                    </button>
                   </div>
                 </div>
               )}

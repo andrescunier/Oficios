@@ -129,7 +129,7 @@ export const isSocialLinkConfigured = (platform: keyof typeof SOCIAL_LINKS): boo
 // =========================================
 export const APP_CONFIG = {
   ENV: import.meta.env.VITE_APP_ENV || 'production',
-  VERSION: import.meta.env.VITE_APP_VERSION || '1.2.0',
+  VERSION: import.meta.env.VITE_APP_VERSION || '1.2.14',
   IS_DEVELOPMENT: import.meta.env.DEV,
   IS_PRODUCTION: import.meta.env.PROD,
   API_LOGGING: false,

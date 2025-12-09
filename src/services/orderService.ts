@@ -199,56 +199,38 @@ class OrderService {
 
   /**
    * Valida disponibilidad de stock antes de crear orden
-   * POST /accounts/{account_id}/sales-orders/validate-stock
+   * NOTA: Endpoint no disponible en la API actual - siempre retorna success
    */
   async validateStock(items: ValidateStockRequest['items']): Promise<ValidateStockResponse> {
-    try {
-      const response = await httpClient.post<ValidateStockResponse>(
-        API_ENDPOINTS.VALIDATE_STOCK(ACCOUNT_ID),
-        { items },
-        { headers: this.getHeaders() }
-      );
-
-      return response;
-    } catch (error: any) {
-      console.error('Error validando stock:', error);
-      // Si el endpoint no existe, retornar success para no bloquear
-      if (error.response?.status === 404) {
-        return {
-          success: true,
-          message: 'Validación de stock no disponible',
-          data: {
-            valid: true,
-            items: items.map(item => ({
-              product_id: item.product_id,
-              requested: item.quantity,
-              available: item.quantity,
-              valid: true
-            }))
-          }
-        };
+    // El endpoint /validate-stock no existe en la API
+    // Retornamos success para no bloquear el checkout
+    console.log('⚠️ Validación de stock omitida - endpoint no disponible');
+    return {
+      success: true,
+      message: 'Validación de stock omitida',
+      data: {
+        valid: true,
+        items: items.map(item => ({
+          product_id: item.product_id,
+          requested: item.quantity,
+          available: item.quantity,
+          valid: true
+        }))
       }
-      throw error;
-    }
+    };
   }
 
   /**
    * Cancela una orden de venta
-   * POST /accounts/{account_id}/sales-orders/{order_id}/cancel
+   * NOTA: Endpoint no disponible en la API actual
    */
   async cancelOrder(orderId: string, reason?: string): Promise<CancelOrderResponse> {
-    try {
-      const response = await httpClient.post<CancelOrderResponse>(
-        API_ENDPOINTS.CANCEL_ORDER(ACCOUNT_ID, orderId),
-        { reason },
-        { headers: this.getHeaders() }
-      );
-
-      return response;
-    } catch (error) {
-      console.error('Error cancelando orden:', error);
-      throw error;
-    }
+    // El endpoint /cancel no existe en la API
+    console.log('⚠️ Cancelación de orden no disponible - endpoint no existe');
+    return {
+      success: false,
+      message: 'La cancelación de órdenes no está disponible. Contacte a soporte.'
+    };
   }
 
   /**
@@ -444,58 +426,42 @@ class OrderService {
   /**
    * Procesa una compra completa: Verificar BP existente + Validar Stock + Orden + Pago
    * Flujo correcto:
-   * 1. Verificar si el usuario ya tiene business_partner_id
-   * 2. Si no tiene, crear BusinessPartner con datos del cliente
-   * 3. Validar disponibilidad de stock
-   * 4. Crear la orden de venta
-   * 5. Crear el pago
+   * 1. Obtener business_partner_id del perfil (/auth/me)
+   * 2. Validar disponibilidad de stock
+   * 3. Crear la orden de venta
+   * 4. Crear el pago
+   * 
+   * NOTA: El business_partner_id viene de /auth/me después del login
    */
-  async processCheckout(checkoutData: CheckoutData, existingBusinessPartnerId?: string) {
-    let businessPartner: BusinessPartnerResponse | null = null;
+  async processCheckout(checkoutData: CheckoutData, businessPartnerId?: string) {
     let salesOrder: CreateSalesOrderResponse | null = null;
     let payment: CreatePaymentResponse | null = null;
-    let customerId: string;
     
     try {
       const { shippingInfo, items, currency, totalAmount, paymentMethod, notes } = checkoutData;
       
-      // 0. Verificar si ya existe un business_partner_id
-      const savedBpId = existingBusinessPartnerId || localStorage.getItem('business_partner_id');
+      // 1. Obtener business_partner_id (guardado en localStorage después de /auth/me)
+      const customerId = businessPartnerId || localStorage.getItem('business_partner_id');
       
-      if (savedBpId) {
-        console.log('✅ Business Partner existente encontrado:', savedBpId);
-        customerId = savedBpId;
-      } else {
-        // 1. Crear Business Partner (cliente)
-        console.log('📝 Paso 1: Creando Business Partner...');
-        businessPartner = await this.createBusinessPartner({
-          name: `${shippingInfo.firstName} ${shippingInfo.lastName}`,
-          partner_type: 'customer',
-          email: shippingInfo.email,
-          phone: shippingInfo.phone,
-          currency: currency,
-          metadata: {
-            shipping_address: {
-              address: shippingInfo.address,
-              city: shippingInfo.city,
-              state: shippingInfo.state,
-              zip_code: shippingInfo.zipCode,
-              country: shippingInfo.country,
-            },
-            source: 'web_checkout',
-            created_at: new Date().toISOString(),
+      if (!customerId) {
+        console.error('❌ No se encontró business_partner_id - el usuario debe estar logueado');
+        return {
+          businessPartner: null,
+          salesOrder: null,
+          payment: null,
+          success: false,
+          message: 'Debes iniciar sesión para realizar una compra. Si ya iniciaste sesión, intenta cerrar sesión y volver a entrar.',
+          error: {
+            step: 'authentication',
+            details: 'No se encontró business_partner_id'
           }
-        });
-        
-        console.log('✅ Business Partner creado:', businessPartner.id);
-        customerId = businessPartner.id;
-        
-        // Guardar para futuras compras
-        localStorage.setItem('business_partner_id', businessPartner.id);
+        };
       }
       
+      console.log('✅ Business Partner ID:', customerId);
+      
       // 2. Validar disponibilidad de stock
-      console.log('📝 Paso 2: Validando stock...');
+      console.log('📝 Paso 1: Validando stock...');
       const stockValidation = await this.validateStock(
         items.map(item => ({
           product_id: item.product_id,
@@ -522,13 +488,13 @@ class OrderService {
       
       console.log('✅ Stock validado correctamente');
       
-      // 3. Crear orden de venta usando el ID del BusinessPartner
+      // 3. Crear orden de venta usando el business_partner_id
       const orderNumber = this.generateOrderNumber();
-      console.log('📝 Paso 3: Creando orden de venta...');
+      console.log('📝 Paso 2: Creando orden de venta...');
       
       salesOrder = await this.createSalesOrder({
         order_number: orderNumber,
-        customer_id: customerId, // ← ID real del backend (existente o nuevo)
+        customer_id: customerId, // ← business_partner_id de /auth/me
         currency: currency,
         status: 'pending',
         items: items,
@@ -544,12 +510,12 @@ class OrderService {
       
       // 4. Crear pago asociado
       const paymentNumber = this.generatePaymentNumber(orderNumber);
-      console.log('📝 Paso 4: Creando pago...');
+      console.log('📝 Paso 3: Creando pago...');
       
       payment = await this.createPayment({
         payment_number: paymentNumber,
         source_type: 'customer',
-        partner_id: customerId, // ← ID real del backend (existente o nuevo)
+        partner_id: customerId, // ← business_partner_id de /auth/me
         currency: currency,
         amount: totalAmount,
         method: this.mapPaymentMethod(paymentMethod),
@@ -567,8 +533,8 @@ class OrderService {
       console.log('✅ Pago creado:', payment.payment_number);
 
       return {
-        businessPartner,
-        customerId, // Incluir el ID usado
+        businessPartner: null,
+        customerId: customerId, // business_partner_id usado
         salesOrder,
         payment,
         success: true,
@@ -580,16 +546,16 @@ class OrderService {
     } catch (error: any) {
       console.error('❌ Error en checkout:', error);
       
-      // Error al crear Business Partner
-      if (!businessPartner) {
+      // Error al crear orden
+      if (!salesOrder) {
         return {
           businessPartner: null,
           salesOrder: null,
           payment: null,
           success: false,
-          message: 'Error al crear el cliente',
+          message: 'Error al crear la orden de venta',
           error: {
-            step: 'business_partner',
+            step: 'order',
             details: error.response?.data || error.message,
           }
         };

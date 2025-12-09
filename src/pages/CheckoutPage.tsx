@@ -7,7 +7,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CreditCard, MapPin, User, Mail, Phone, Lock } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { orderService } from '@/services/orderService';
-import { authService } from '@/services/authService';
 
 interface ShippingInfo {
   firstName: string;
@@ -49,37 +48,12 @@ export const CheckoutPage: React.FC = () => {
   
   const [currentStep, setCurrentStep] = useState<'shipping' | 'payment' | 'review'>('shipping');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [businessPartnerId, setBusinessPartnerId] = useState<string | null>(null);
 
   // Obtener datos guardados del registro
   const savedUserData = getUserData();
 
-  // Efecto para obtener business_partner_id existente al cargar
-  useEffect(() => {
-    const fetchBusinessPartnerId = async () => {
-      try {
-        // Primero intentar desde localStorage
-        const savedBpId = localStorage.getItem('business_partner_id');
-        if (savedBpId) {
-          setBusinessPartnerId(savedBpId);
-          return;
-        }
-
-        // Si no está en localStorage, obtener desde /auth/me
-        if (auth.isAuthenticated) {
-          const meData = await authService.getMe();
-          if (meData?.business_partner_id) {
-            setBusinessPartnerId(meData.business_partner_id);
-            localStorage.setItem('business_partner_id', meData.business_partner_id);
-          }
-        }
-      } catch (error) {
-        console.error('Error obteniendo business_partner_id:', error);
-      }
-    };
-
-    fetchBusinessPartnerId();
-  }, [auth.isAuthenticated]);
+  // El business_partner_id viene de /auth/me (guardado automáticamente en localStorage después del login)
+  const businessPartnerId = localStorage.getItem('business_partner_id');
 
   // Pre-llenar datos del usuario logueado (prioridad: person > savedUserData > vacío)
   const [shippingInfo, setShippingInfo] = useState<ShippingInfo>({
@@ -227,7 +201,7 @@ export const CheckoutPage: React.FC = () => {
         notes: `Pedido web - ${shippingInfo.firstName} ${shippingInfo.lastName}`
       };
 
-      // Pasar el business_partner_id existente si lo tenemos
+      // Pasar el business_partner_id del usuario logueado
       const result = await orderService.processCheckout(checkoutData, businessPartnerId || undefined);
       
       // Verificar que todas las operaciones fueron exitosas
@@ -242,9 +216,9 @@ export const CheckoutPage: React.FC = () => {
         // Limpiar carrito
         clearCart();
         
-        // Redirigir con información de éxito
+        // Redirigir a página de éxito
         setTimeout(() => {
-          navigate('/', { 
+          navigate('/pedido-exitoso', { 
             state: { 
               orderSuccess: true, 
               orderNumber: result.orderNumber,
@@ -253,7 +227,7 @@ export const CheckoutPage: React.FC = () => {
               totalAmount: cart.total_amount
             } 
           });
-        }, 3000);
+        }, 1500);
         
       } else {
         // Error en el procesamiento

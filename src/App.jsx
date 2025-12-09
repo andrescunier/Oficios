@@ -25,6 +25,7 @@ import { OrderTracking } from '@/pages/OrderTracking';
 import { ReturnsPage } from '@/pages/ReturnsPage';
 import { WarrantyPage } from '@/pages/WarrantyPage';
 import RegistrationSuccess from '@/pages/RegistrationSuccess';
+import OrderSuccessPage from '@/pages/OrderSuccessPage';
 import { QUERY_CONFIG } from '@/config/api';
 import { useStore } from '@/store/useStore';
 import './App.css';
@@ -63,8 +64,10 @@ function App() {
               <Route path="/registro-exitoso" element={<RegistrationSuccess />} />
               <Route path="/carrito" element={<CartPage />} />
               <Route path="/checkout" element={<CheckoutPage />} />
+              <Route path="/pedido-exitoso" element={<OrderSuccessPage />} />
               <Route path="/perfil" element={<ProfilePage />} />
               <Route path="/pedidos" element={<OrdersPage />} />
+              <Route path="/orders" element={<OrdersPage />} />
               <Route path="/favoritos" element={<FavoritesPage />} />
               <Route path="/terminos" element={<TermsAndConditions />} />
               <Route path="/privacidad" element={<PrivacyPolicy />} />

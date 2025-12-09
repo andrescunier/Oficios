@@ -60,11 +60,14 @@ export const OrdersPage: React.FC = () => {
   const loadOrders = async () => {
     setIsLoading(true);
     try {
-      if (!auth.user?.id) {
-        throw new Error('Usuario no identificado');
+      // Usar business_partner_id de /auth/me (guardado en localStorage)
+      const businessPartnerId = localStorage.getItem('business_partner_id');
+      
+      if (!businessPartnerId) {
+        throw new Error('No se encontró tu información de cliente. Intenta cerrar sesión y volver a entrar.');
       }
 
-      const response = await orderService.getUserOrders(auth.user.id, {
+      const response = await orderService.getUserOrders(businessPartnerId, {
         per_page: 50 // Cargar hasta 50 pedidos
       });
       
@@ -150,10 +153,10 @@ export const OrdersPage: React.FC = () => {
     });
   };
 
-  // Verificar si una orden se puede cancelar (solo pending o draft)
-  const canCancelOrder = (status: string): boolean => {
-    const mappedStatus = orderService.mapOrderStatus(status);
-    return mappedStatus === 'pending' || status === 'draft';
+  // Verificar si una orden se puede cancelar
+  // NOTA: Funcionalidad deshabilitada - endpoint de cancelación no disponible en la API
+  const canCancelOrder = (_status: string): boolean => {
+    return false; // Cancelación no soportada por la API actual
   };
 
   // Cancelar una orden

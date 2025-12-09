@@ -218,11 +218,20 @@ export const CartPage: React.FC = () => {
                         </span>
                         <button
                           onClick={() => handleQuantityChange(item.product.id, item.quantity + 1)}
-                          className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors"
+                          disabled={item.quantity >= 5}
+                          className={`w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center transition-colors ${
+                            item.quantity >= 5 
+                              ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                              : 'hover:bg-gray-50'
+                          }`}
+                          title={item.quantity >= 5 ? 'Máximo 5 unidades por producto' : ''}
                         >
                           <Plus className="w-4 h-4" />
                         </button>
                       </div>
+                      {item.quantity >= 5 && (
+                        <span className="text-xs text-orange-600 ml-2">Máx. 5 uds.</span>
+                      )}
 
                       {/* Remove Button */}
                       <button

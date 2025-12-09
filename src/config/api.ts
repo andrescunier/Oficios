@@ -24,7 +24,7 @@ export const API_ENDPOINTS = {
     TOKEN: '/api/auth/token',
     LOGIN: '/api/auth/login',
     LOGOUT: '/api/auth/logout',
-    ME: '/api/auth/me',
+    ME: '/api/auth/me',  // Obtener perfil con business_partner_id
   },
 
   // Registro de clientes (endpoints públicos) - Simple Registration
@@ -66,10 +66,6 @@ export const API_ENDPOINTS = {
     `/api/accounts/${accountId}/sales-orders/${orderId}`,
   SALES_ORDER_ITEMS: (accountId: string, orderId: string) => 
     `/api/accounts/${accountId}/sales-orders/${orderId}/items`,
-  VALIDATE_STOCK: (accountId: string) =>
-    `/api/accounts/${accountId}/sales-orders/validate-stock`,
-  CANCEL_ORDER: (accountId: string, orderId: string) =>
-    `/api/accounts/${accountId}/sales-orders/${orderId}/cancel`,
   CONFIRM_ORDER: (accountId: string, orderId: string) => 
     `/api/accounts/${accountId}/sales-orders/${orderId}/confirm`,
   COMPLETE_ORDER: (accountId: string, orderId: string) => 

@@ -14,6 +14,7 @@ import type {
 } from '@/types/api';
 import { cartService } from '@/services/cartService';
 import { httpClient } from '@/services/httpClient';
+import { authService } from '@/services/authService';
 
 // Tipos del store
 interface AuthState {
@@ -127,6 +128,9 @@ const calculateTotals = (items: CartItem[], currency: string = 'USD'): CartState
   };
 };
 
+// Límite máximo de unidades por producto
+const MAX_QUANTITY_PER_PRODUCT = 5;
+
 // Store principal
 export const useStore = create<AppStore>()(
   persist(
@@ -151,6 +155,34 @@ export const useStore = create<AppStore>()(
           }
         }));
         
+        // Después del login, obtener el perfil completo con business_partner_id
+        authService.getMe().then((meResponse) => {
+          if (meResponse?.success && meResponse.data) {
+            const bpId = meResponse.data.billing?.business_partner_id;
+            if (bpId) {
+              localStorage.setItem('business_partner_id', bpId);
+              console.log('✅ Business Partner ID obtenido de /auth/me:', bpId);
+            }
+            
+            // Actualizar datos del usuario con la información de person
+            if (meResponse.data.person) {
+              set((state) => ({
+                auth: {
+                  ...state.auth,
+                  user: state.auth.user ? {
+                    ...state.auth.user,
+                    person: {
+                      first_name: meResponse.data.person?.first_name || '',
+                      last_name: meResponse.data.person?.last_name || '',
+                      phone: meResponse.data.person?.phone,
+                    }
+                  } : null
+                }
+              }));
+            }
+          }
+        }).catch(console.error);
+        
         // Cargar carrito del servidor después del login
         setTimeout(() => {
           get().loadServerCart();
@@ -160,6 +192,9 @@ export const useStore = create<AppStore>()(
       logout: () => {
         // Remover token del cliente HTTP
         httpClient.removeAuthToken();
+        
+        // Limpiar business_partner_id
+        localStorage.removeItem('business_partner_id');
         
         set({
           auth: initialAuthState,
@@ -173,6 +208,47 @@ export const useStore = create<AppStore>()(
       addToCart: (product, quantity) => {
         set((state) => {
           const existingItem = state.cart.items.find(item => item.product.id === product.id);
+          const currentQuantity = existingItem ? existingItem.quantity : 0;
+          const newQuantity = currentQuantity + quantity;
+          
+          // Verificar límite de 5 unidades por producto
+          if (newQuantity > MAX_QUANTITY_PER_PRODUCT) {
+            get().addNotification({
+              type: 'warning',
+              title: 'Límite alcanzado',
+              message: `Máximo ${MAX_QUANTITY_PER_PRODUCT} unidades por producto. Ya tienes ${currentQuantity} en el carrito.`,
+              duration: 4000,
+            });
+            
+            // Si ya tiene el máximo, no agregar más
+            if (currentQuantity >= MAX_QUANTITY_PER_PRODUCT) {
+              return state;
+            }
+            
+            // Ajustar cantidad al máximo permitido
+            const adjustedQuantity = MAX_QUANTITY_PER_PRODUCT - currentQuantity;
+            if (adjustedQuantity <= 0) {
+              return state;
+            }
+            
+            let newItems: CartItem[];
+            if (existingItem) {
+              newItems = state.cart.items.map(item =>
+                item.product.id === product.id
+                  ? { ...item, quantity: MAX_QUANTITY_PER_PRODUCT }
+                  : item
+              );
+            } else {
+              newItems = [...state.cart.items, {
+                product,
+                quantity: adjustedQuantity,
+                unit_price: product.unit_price,
+              }];
+            }
+            
+            const newCart = calculateTotals(newItems, state.cart.currency);
+            return { cart: newCart };
+          }
           
           let newItems: CartItem[];
           if (existingItem) {
@@ -231,6 +307,17 @@ export const useStore = create<AppStore>()(
           const newItems = state.cart.items.filter(item => item.product.id !== productId);
           const newCart = calculateTotals(newItems, state.cart.currency);
           return { cart: newCart };
+        }
+        
+        // Verificar límite de 5 unidades por producto
+        if (quantity > MAX_QUANTITY_PER_PRODUCT) {
+          get().addNotification({
+            type: 'warning',
+            title: 'Límite alcanzado',
+            message: `Máximo ${MAX_QUANTITY_PER_PRODUCT} unidades por producto`,
+            duration: 3000,
+          });
+          quantity = MAX_QUANTITY_PER_PRODUCT;
         }
         
         const newItems = state.cart.items.map(item =>

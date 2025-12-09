@@ -56,31 +56,45 @@ export interface SimpleRegistrationResponse {
   };
 }
 
-// Interface para respuesta de /auth/me
+// Interface para respuesta de /auth/me (actualizada según API v1.1.1)
 export interface MeResponse {
   success: boolean;
   data: {
-    id: string;
-    username: string;
-    email: string;
-    full_name?: string;
-    role: string;
-    account_id: string;
-    business_partner_id?: string;  // ID del cliente para órdenes
+    user: {
+      id: string;
+      username: string;
+      email: string;
+      role: string;
+    };
     person?: {
+      id: string;
       first_name: string;
       last_name: string;
       phone?: string;
+      email?: string;
+      document_type?: string;
+      document_number?: string;
     };
-    addresses?: Array<{
-      id: string;
-      line1: string;
-      city: string;
-      state: string;
-      postal_code: string;
-      country_code: string;
-      is_primary: boolean;
-    }>;
+    billing?: {
+      business_partner_id: string;  // ← Este es el customer_id para órdenes
+      company_name?: string;
+      tax_id?: string;
+      tax_condition?: string;
+      address?: {
+        line1?: string;
+        city?: string;
+        state?: string;
+        postal_code?: string;
+        country_code?: string;
+      };
+    };
+    shipping?: {
+      address?: string;
+      city?: string;
+      state?: string;
+      zip_code?: string;
+      country?: string;
+    };
   };
 }
 
@@ -221,49 +235,68 @@ export class AuthService {
       localStorage.removeItem('user_info');
       localStorage.removeItem('account_info');
       localStorage.removeItem('business_partner_info');
+      localStorage.removeItem('business_partner_id');
     }
   }
 
   /**
-   * Obtener datos del usuario actual (útil para pre-llenar checkout)
-   * Retorna el business_partner_id si existe
+   * Obtener perfil del usuario autenticado con business_partner_id
+   * GET /auth/me
    */
-  async getMe(): Promise<MeResponse['data'] | null> {
+  async getMe(): Promise<MeResponse | null> {
     try {
-      const response = await httpClient.get<MeResponse>(API_ENDPOINTS.AUTH.ME);
-      
-      if (response?.success && response?.data) {
-        // Guardar business_partner_id para uso en checkout
-        if (response.data.business_partner_id) {
-          localStorage.setItem('business_partner_id', response.data.business_partner_id);
-        }
-        return response.data;
-      }
-      
-      // Si la respuesta no tiene wrapper
-      if ((response as any)?.id) {
-        return response as unknown as MeResponse['data'];
-      }
-      
-      return null;
-    } catch (error) {
-      console.error('Error obteniendo datos del usuario:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Verificar si el token es válido
-   */
-  async verifyToken(token: string): Promise<User | null> {
-    try {
-      const response = await httpClient.get<{ user: User }>('/api/auth/me', {
+      const response = await httpClient.get<MeResponse>(API_ENDPOINTS.AUTH.ME, {
         headers: {
-          Authorization: `Bearer ${token}`
+          'X-Account-ID': ACCOUNT_ID,
         }
       });
 
-      return response.user;
+      if (response.success && response.data) {
+        // Guardar el business_partner_id para usar en órdenes
+        const bpId = response.data.billing?.business_partner_id;
+        if (bpId) {
+          localStorage.setItem('business_partner_id', bpId);
+          console.log('✅ Business Partner ID guardado:', bpId);
+        }
+        return response;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error obteniendo perfil:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Verificar si el token es válido usando /auth/me
+   */
+  async verifyToken(token: string): Promise<User | null> {
+    try {
+      // Ahora usamos /auth/me para verificar el token
+      const meResponse = await this.getMe();
+      if (meResponse?.success && meResponse.data?.user) {
+        const now = new Date().toISOString();
+        return {
+          id: meResponse.data.user.id,
+          person_id: meResponse.data.person?.id || '',
+          email: meResponse.data.user.email,
+          username: meResponse.data.user.username,
+          role: meResponse.data.user.role as User['role'],
+          status: 'active',
+          created_at: now,
+          updated_at: now,
+          person: meResponse.data.person ? {
+            id: meResponse.data.person.id,
+            first_name: meResponse.data.person.first_name,
+            last_name: meResponse.data.person.last_name,
+            email: meResponse.data.person.email || meResponse.data.user.email,
+            phone: meResponse.data.person.phone,
+            created_at: now,
+            updated_at: now,
+          } : undefined,
+        };
+      }
+      return null;
     } catch (error) {
       return null;
     }

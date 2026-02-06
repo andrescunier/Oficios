@@ -1,6 +1,16 @@
 # Dockerfile para DIAP B2B E-commerce Platform
 FROM node:20-alpine AS builder
 
+# Build arguments para configuración por ambiente
+ARG VITE_API_BASE_URL=https://api.cumar.com.ar
+ARG VITE_ACCOUNT_ID=37b694f4-f2c9-4500-8e47-52b8ad8daaea
+ARG VITE_APP_ENV=production
+
+# Pasar ARGs a ENV para que Vite los use en build
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+ENV VITE_ACCOUNT_ID=$VITE_ACCOUNT_ID
+ENV VITE_APP_ENV=$VITE_APP_ENV
+
 # Instalar pnpm
 RUN npm install -g pnpm
 

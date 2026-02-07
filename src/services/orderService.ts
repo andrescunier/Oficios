@@ -78,16 +78,52 @@ interface OrdersResponse {
 
 interface CreatePaymentRequest {
   payment_number: string;
-  source_type: 'customer' | 'supplier' | 'employee' | 'other';
-  partner_id: string;
+  source_type: 'customer' | 'supplier' | 'other';
+  partner_id?: string;
   currency: string;
   amount: number;
-  method: 'cash' | 'bank_transfer' | 'wire_transfer' | 'credit_card' | 'debit_card' | 'check' | 'other';
+  method: 'cash' | 'transfer' | 'check' | 'card' | 'other';
   reference?: string;
-  status: 'pending' | 'received' | 'rejected' | 'cancelled';
+  received_at?: string;
+  status: 'pending' | 'received' | 'rejected';
   metadata?: {
     [key: string]: any;
   };
+}
+
+// Interface para aplicar pago a factura/orden
+interface ApplyPaymentRequest {
+  invoice_id?: string;
+  sales_order_id?: string;
+  amount_applied: number;
+}
+
+interface ApplyPaymentResponse {
+  id: string;
+  payment_id: string;
+  invoice_id?: string;
+  sales_order_id?: string;
+  amount_applied: number;
+  created_at: string;
+}
+
+// Interface para generar factura desde orden
+interface GenerateInvoiceRequest {
+  invoice_number: string;
+  due_at?: string;
+  status?: 'draft' | 'sent';
+  metadata?: Record<string, any>;
+}
+
+interface GenerateInvoiceResponse {
+  id: string;
+  invoice_number: string;
+  customer_id: string;
+  sales_order_id: string;
+  currency: string;
+  status: string;
+  total_amount: number;
+  created_at: string;
 }
 
 interface CreatePaymentResponse {
@@ -199,48 +235,87 @@ class OrderService {
 
   /**
    * Valida disponibilidad de stock antes de crear orden
-   * NOTA: Endpoint no disponible en la API actual - siempre retorna success
+   * POST /accounts/{account_id}/sales-orders/validate-stock
    */
   async validateStock(items: ValidateStockRequest['items']): Promise<ValidateStockResponse> {
-    // El endpoint /validate-stock no existe en la API
-    // Retornamos success para no bloquear el checkout
-    console.log('⚠️ Validación de stock omitida - endpoint no disponible');
-    return {
-      success: true,
-      message: 'Validación de stock omitida',
-      data: {
-        valid: true,
-        items: items.map(item => ({
+    try {
+      const response = await httpClient.post<ValidateStockResponse>(
+        API_ENDPOINTS.VALIDATE_STOCK(ACCOUNT_ID),
+        items.map(item => ({
           product_id: item.product_id,
-          requested: item.quantity,
-          available: item.quantity,
-          valid: true
-        }))
+          description: '',
+          quantity: item.quantity,
+          unit_price: 0,
+          tax_rate: 0
+        })),
+        { headers: this.getHeaders() }
+      );
+      
+      return response;
+    } catch (error: any) {
+      // Si el endpoint no existe (404), retornar success para no bloquear
+      if (error.code === 'E3001' || error.response?.status === 404) {
+        console.log('⚠️ Validación de stock omitida - endpoint no disponible');
+        return {
+          success: true,
+          message: 'Validación de stock omitida',
+          data: {
+            valid: true,
+            items: items.map(item => ({
+              product_id: item.product_id,
+              requested: item.quantity,
+              available: item.quantity,
+              valid: true
+            }))
+          }
+        };
       }
-    };
+      throw error;
+    }
   }
 
   /**
    * Cancela una orden de venta
-   * NOTA: Endpoint no disponible en la API actual
+   * POST /accounts/{account_id}/sales-orders/{order_id}/cancel?reason=...&restore_stock=true
    */
-  async cancelOrder(orderId: string, reason?: string): Promise<CancelOrderResponse> {
-    // El endpoint /cancel no existe en la API
-    console.log('⚠️ Cancelación de orden no disponible - endpoint no existe');
-    return {
-      success: false,
-      message: 'La cancelación de órdenes no está disponible. Contacte a soporte.'
-    };
+  async cancelOrder(orderId: string, reason?: string, restoreStock: boolean = true): Promise<CancelOrderResponse> {
+    try {
+      const queryParams = new URLSearchParams();
+      if (reason) queryParams.append('reason', reason);
+      queryParams.append('restore_stock', restoreStock.toString());
+      
+      const url = `${API_ENDPOINTS.CANCEL_ORDER(ACCOUNT_ID, orderId)}?${queryParams.toString()}`;
+      
+      const response = await httpClient.post<CancelOrderResponse>(
+        url,
+        {},
+        { headers: this.getHeaders() }
+      );
+      
+      return response;
+    } catch (error: any) {
+      // Si el endpoint no existe (404)
+      if (error.code === 'E3001' || error.response?.status === 404) {
+        console.log('⚠️ Cancelación de orden no disponible - endpoint no existe');
+        return {
+          success: false,
+          message: 'La cancelación de órdenes no está disponible. Contacte a soporte.'
+        };
+      }
+      throw error;
+    }
   }
 
   /**
-   * Confirma una orden de venta (deduce stock si track_inventory=true)
-   * POST /accounts/{account_id}/sales-orders/{order_id}/confirm
+   * Confirma una orden de venta (deduce stock si deduct_stock=true)
+   * POST /accounts/{account_id}/sales-orders/{order_id}/confirm?deduct_stock=true
    */
-  async confirmOrder(orderId: string): Promise<{ success: boolean; data?: SalesOrder }> {
+  async confirmOrder(orderId: string, deductStock: boolean = true): Promise<{ success: boolean; data?: SalesOrder }> {
     try {
+      const url = `${API_ENDPOINTS.CONFIRM_ORDER(ACCOUNT_ID, orderId)}?deduct_stock=${deductStock}`;
+      
       const response = await httpClient.post<{ success: boolean; data?: SalesOrder }>(
-        API_ENDPOINTS.CONFIRM_ORDER(ACCOUNT_ID, orderId),
+        url,
         {},
         { headers: this.getHeaders() }
       );
@@ -369,6 +444,42 @@ class OrderService {
   }
 
   /**
+   * Aplica un pago a una factura u orden
+   * POST /accounts/{account_id}/payments/{payment_id}/applications
+   */
+  async applyPayment(paymentId: string, application: ApplyPaymentRequest): Promise<ApplyPaymentResponse> {
+    try {
+      const response = await httpClient.post<ApplyPaymentResponse>(
+        API_ENDPOINTS.PAYMENT_APPLICATIONS(ACCOUNT_ID, paymentId),
+        application,
+        { headers: this.getHeaders() }
+      );
+      return response;
+    } catch (error) {
+      console.error('Error aplicando pago:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Genera una factura desde una orden de venta
+   * POST /accounts/{account_id}/sales-orders/{order_id}/invoice
+   */
+  async generateInvoice(orderId: string, invoiceData: GenerateInvoiceRequest): Promise<GenerateInvoiceResponse> {
+    try {
+      const response = await httpClient.post<GenerateInvoiceResponse>(
+        API_ENDPOINTS.ORDER_INVOICE(ACCOUNT_ID, orderId),
+        invoiceData,
+        { headers: this.getHeaders() }
+      );
+      return response;
+    } catch (error) {
+      console.error('Error generando factura:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Genera un número de orden único
    */
   generateOrderNumber(): string {
@@ -392,7 +503,11 @@ class OrderService {
       'credit': 'credit_card',
       'debit': 'debit_card',
       'mercadopago': 'other',
-      'transferencia': 'wire_transfer',
+      'transferencia': 'bank_transfer',
+      'efectivo': 'cash',
+      'tarjeta': 'credit_card',
+      'transfer': 'bank_transfer',
+      'wire_transfer': 'bank_transfer',
     };
     
     return methodMap[frontendMethod] || 'other';

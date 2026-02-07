@@ -14,14 +14,22 @@ import type {
 export class ProductService {
   /**
    * Obtener todos los productos
+   * Soporta todos los parámetros de la API v1.2.1
    */
   async getProducts(params?: {
     page?: number;
     per_page?: number;
     search?: string;
     category?: string;
+    sku?: string;
+    name?: string;
     is_active?: boolean;
     is_featured?: boolean;
+    in_stock?: boolean;
+    min_price?: number;
+    max_price?: number;
+    sort_by?: 'name' | 'price' | 'stock' | 'created';
+    sort_order?: 'asc' | 'desc';
   }): Promise<PaginatedResponse<Product>> {
     const url = API_ENDPOINTS.PRODUCTS(ACCOUNT_ID);
     const response: any = await httpClient.get(url, { params });
@@ -137,12 +145,63 @@ export class ProductService {
   async getProductsByCategory(category: string, params?: {
     page?: number;
     per_page?: number;
+    sort_by?: 'name' | 'price' | 'stock' | 'created';
+    sort_order?: 'asc' | 'desc';
   }): Promise<PaginatedResponse<Product>> {
     return this.getProducts({
       category,
       is_active: true,
       ...params
     });
+  }
+
+  /**
+   * Obtener productos con stock bajo
+   * GET /accounts/{account_id}/products/low-stock
+   */
+  async getLowStockProducts(params?: {
+    page?: number;
+    per_page?: number;
+  }): Promise<PaginatedResponse<{
+    product_id: string;
+    sku: string;
+    name: string;
+    current_stock: number;
+    min_stock: number;
+    stock_unit: string;
+    deficit: number;
+  }>> {
+    const url = API_ENDPOINTS.PRODUCTS_LOW_STOCK(ACCOUNT_ID);
+    const response: any = await httpClient.get(url, { params });
+    
+    if (Array.isArray(response)) {
+      return {
+        data: response,
+        pagination: {
+          page: params?.page ?? 1,
+          per_page: params?.per_page ?? response.length,
+          total: response.length,
+          total_pages: 1,
+        },
+      };
+    }
+    
+    return response;
+  }
+
+  /**
+   * Actualizar stock de un producto
+   * PATCH /accounts/{account_id}/products/{product_id}/stock
+   */
+  async updateStock(productId: string, data: {
+    quantity: number;
+    operation: 'set' | 'add' | 'subtract';
+    reason: string;
+    reference?: string;
+  }): Promise<Product> {
+    const url = API_ENDPOINTS.PRODUCT_STOCK(ACCOUNT_ID, productId);
+    const response = await httpClient.patch<ApiResponse<Product>>(url, data);
+    return response.data;
   }
 
   /**

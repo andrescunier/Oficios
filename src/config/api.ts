@@ -76,15 +76,25 @@ export const API_ENDPOINTS = {
     `/api/accounts/${accountId}/sales-orders/${orderId}/items`,
   CONFIRM_ORDER: (accountId: string, orderId: string) => 
     `/api/accounts/${accountId}/sales-orders/${orderId}/confirm`,
+  CANCEL_ORDER: (accountId: string, orderId: string) => 
+    `/api/accounts/${accountId}/sales-orders/${orderId}/cancel`,
   COMPLETE_ORDER: (accountId: string, orderId: string) => 
     `/api/accounts/${accountId}/sales-orders/${orderId}/complete`,
+  VALIDATE_STOCK: (accountId: string) => 
+    `/api/accounts/${accountId}/sales-orders/validate-stock`,
   ORDER_INVOICE: (accountId: string, orderId: string) => 
     `/api/accounts/${accountId}/sales-orders/${orderId}/invoice`,
+  GENERATE_INVOICE: (accountId: string, orderId: string) => 
+    `/api/accounts/${accountId}/sales-orders/${orderId}/generate-invoice`,
   
   // Entregas
   DELIVERIES: (accountId: string) => `/api/accounts/${accountId}/deliveries`,
   DELIVERY: (accountId: string, deliveryId: string) => 
     `/api/accounts/${accountId}/deliveries/${deliveryId}`,
+  SHIP_DELIVERY: (accountId: string, deliveryId: string) => 
+    `/api/accounts/${accountId}/deliveries/${deliveryId}/ship`,
+  DELIVER_DELIVERY: (accountId: string, deliveryId: string) => 
+    `/api/accounts/${accountId}/deliveries/${deliveryId}/deliver`,
   COMPLETE_DELIVERY: (accountId: string, deliveryId: string) => 
     `/api/accounts/${accountId}/deliveries/${deliveryId}/complete`,
   CANCEL_DELIVERY: (accountId: string, deliveryId: string) => 
@@ -109,8 +119,11 @@ export const API_ENDPOINTS = {
     `/api/accounts/${accountId}/payments/${paymentId}/applications`,
   
   // Direcciones
-  ADDRESSES: '/api/addresses',
-  ADDRESS: (addressId: string) => `/api/addresses/${addressId}`,
+  ADDRESSES: (accountId: string) => `/api/accounts/${accountId}/addresses`,
+  ADDRESS: (accountId: string, addressId: string) => `/api/accounts/${accountId}/addresses/${addressId}`,
+  
+  // Inventario
+  INVENTORY_MOVEMENTS: (accountId: string) => `/api/accounts/${accountId}/inventory/movements`,
 } as const;
 
 // Configuración de timeouts

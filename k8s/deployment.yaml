@@ -26,9 +26,10 @@ spec:
           name: http
         envFrom:
         - configMapRef:
-            name: iamerican-config
+            name: diap-runtime-config
         - secretRef:
-            name: iamerican-secrets
+            name: diap-secrets
+            optional: true
         resources:
           requests:
             memory: "256Mi"

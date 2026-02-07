@@ -131,6 +131,28 @@ const calculateTotals = (items: CartItem[], currency: string = 'USD'): CartState
 // Límite máximo de unidades por producto
 const MAX_QUANTITY_PER_PRODUCT = 5;
 
+// Funciones helper para favoritos por usuario
+const FAVORITES_STORAGE_KEY = 'diapstore-user-favorites';
+
+const getUserFavoritesKey = (userId: string) => `${FAVORITES_STORAGE_KEY}-${userId}`;
+
+const loadUserFavorites = (userId: string): string[] => {
+  try {
+    const stored = localStorage.getItem(getUserFavoritesKey(userId));
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+};
+
+const saveUserFavorites = (userId: string, favorites: string[]) => {
+  try {
+    localStorage.setItem(getUserFavoritesKey(userId), JSON.stringify(favorites));
+  } catch (e) {
+    console.error('Error saving favorites:', e);
+  }
+};
+
 // Store principal
 export const useStore = create<AppStore>()(
   persist(
@@ -146,13 +168,17 @@ export const useStore = create<AppStore>()(
         // Configurar token en el cliente HTTP
         httpClient.setAuthToken(token);
         
+        // Cargar favoritos del usuario
+        const userFavorites = loadUserFavorites(user.id);
+        
         set((state) => ({
           auth: {
             user,
             account: account || state.auth.account,
             isAuthenticated: true,
             token,
-          }
+          },
+          favorites: userFavorites, // Cargar favoritos del usuario
         }));
         
         // Después del login, obtener el perfil completo con business_partner_id
@@ -199,6 +225,7 @@ export const useStore = create<AppStore>()(
         set({
           auth: initialAuthState,
           cart: initialCartState, // Limpiar carrito al logout
+          favorites: [], // Limpiar favoritos al logout (se mantienen guardados en localStorage por usuario)
         });
       },
       
@@ -542,6 +569,14 @@ export const useStore = create<AppStore>()(
       
       addToFavorites: (productId) => set((state) => {
         if (!state.favorites.includes(productId)) {
+          const newFavorites = [...state.favorites, productId];
+          
+          // Persistir en localStorage por usuario
+          const userId = state.auth.user?.id;
+          if (userId) {
+            saveUserFavorites(userId, newFavorites);
+          }
+          
           get().addNotification({
             type: 'success',
             title: 'Agregado a favoritos',
@@ -549,16 +584,22 @@ export const useStore = create<AppStore>()(
             duration: 3000,
           });
           
-          return {
-            favorites: [...state.favorites, productId]
-          };
+          return { favorites: newFavorites };
         }
         return state;
       }),
       
-      removeFromFavorites: (productId) => set((state) => ({
-        favorites: state.favorites.filter(id => id !== productId)
-      })),
+      removeFromFavorites: (productId) => set((state) => {
+        const newFavorites = state.favorites.filter(id => id !== productId);
+        
+        // Persistir en localStorage por usuario
+        const userId = state.auth.user?.id;
+        if (userId) {
+          saveUserFavorites(userId, newFavorites);
+        }
+        
+        return { favorites: newFavorites };
+      }),
       
       isFavorite: (productId) => get().favorites.includes(productId),
       

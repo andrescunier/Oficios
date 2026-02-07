@@ -1,13 +1,27 @@
 /**
  * Configuración central de la aplicación basada en variables de entorno
+ * NOTA: Este archivo mantiene compatibilidad con el código existente
+ * pero ahora usa la configuración runtime como fuente principal
  */
 
+import { 
+  getApiConfig, 
+  getAppConfig, 
+  getContactConfig, 
+  getBrandingConfig as getRuntimeBranding,
+  getThemeConfig,
+  getSocialConfig,
+  getFeaturesConfig 
+} from './runtime';
+
 // =========================================
-// API CONFIGURATION
+// API CONFIGURATION (desde runtime)
 // =========================================
+const runtimeApi = getApiConfig();
 export const API_CONFIG = {
-  BASE_URL: import.meta.env.VITE_API_BASE_URL || 'https://api.cumar.com.ar',
-  ACCOUNT_ID: import.meta.env.VITE_ACCOUNT_ID || 'bed2df35-717f-4900-a4b1-7c3a7fb59b7c',
+  BASE_URL: runtimeApi.url,
+  ACCOUNT_ID: runtimeApi.accountId,
+  ACCOUNT_SLUG: runtimeApi.accountSlug,
   TIMEOUT: 30000,
   EXTRA_HEADERS: (() => {
     try {
@@ -19,33 +33,37 @@ export const API_CONFIG = {
 } as const;
 
 // =========================================
-// BRANDING & COMPANY INFO
+// BRANDING & COMPANY INFO (desde runtime)
 // =========================================
+const runtimeApp = getAppConfig();
+const runtimeContact = getContactConfig();
 export const BRANDING = {
   // App Information
-  APP_NAME: import.meta.env.VITE_APP_NAME || 'DIAP',
-  COMPANY_NAME: import.meta.env.VITE_COMPANY_NAME || 'DIAP',
-  APP_SLOGAN: import.meta.env.VITE_APP_SLOGAN || 'Tecnología profesional para empresas',
-  APP_URL: import.meta.env.VITE_APP_URL || 'https://diap.com',
-  APP_DESCRIPTION: import.meta.env.VITE_APP_DESCRIPTION || 'DIAP - Distribuidora de productos tecnológicos de primera calidad. Soluciones profesionales para tu empresa.',
+  APP_NAME: runtimeApp.name,
+  COMPANY_NAME: runtimeApp.companyName,
+  APP_SLOGAN: runtimeApp.slogan,
+  APP_URL: runtimeApp.url,
+  APP_DESCRIPTION: runtimeApp.description,
   
   // Contact Information
-  CONTACT_EMAIL: import.meta.env.VITE_CONTACT_EMAIL || 'info@diapstore.com',
-  CONTACT_PHONE: import.meta.env.VITE_CONTACT_PHONE || '+54 11 2631-0884',
-  CONTACT_ADDRESS: import.meta.env.VITE_CONTACT_ADDRESS || 'Palomar, Provincia de Buenos Aires',
+  CONTACT_EMAIL: runtimeContact.email,
+  CONTACT_PHONE: runtimeContact.phone,
+  CONTACT_ADDRESS: runtimeContact.address,
 } as const;
 
 // =========================================
-// ASSETS & IMAGES
+// ASSETS & IMAGES (desde runtime)
 // =========================================
+const runtimeBranding = getRuntimeBranding();
 export const ASSETS = {
   // Logos
-  LOGO_PATH: import.meta.env.VITE_CDN_LOGO || import.meta.env.VITE_LOGO_PATH || '/diap-logo.png',
-  FAVICON_PATH: import.meta.env.VITE_FAVICON_PATH || '/favicon.ico',
-  HEADER_LOGO_PATH: import.meta.env.VITE_CDN_LOGO || import.meta.env.VITE_HEADER_LOGO_PATH || '/diap-logo.png',
-  FOOTER_LOGO_PATH: import.meta.env.VITE_CDN_LOGO || import.meta.env.VITE_FOOTER_LOGO_PATH || '/diap-logo.png',
+  LOGO_PATH: runtimeBranding.logo,
+  FAVICON_PATH: runtimeBranding.favicon,
+  HEADER_LOGO_PATH: runtimeBranding.logo,
+  FOOTER_LOGO_PATH: runtimeBranding.logo,
+  LOGO_DARK_PATH: runtimeBranding.logoDark,
   
-  // Hero Slider Images
+  // Hero Slider Images (mantener compatibilidad con código existente)
   HERO_SLIDES: [
     {
       image: import.meta.env.VITE_CDN_HERO_SLIDE_1 || import.meta.env.VITE_HERO_SLIDE_1 || '/images/heroes/slide-1.jpg',
@@ -110,13 +128,14 @@ export const ASSETS = {
 } as const;
 
 // =========================================
-// SOCIAL MEDIA & LINKS
+// SOCIAL MEDIA & LINKS (desde runtime)
 // =========================================
+const runtimeSocial = getSocialConfig();
 export const SOCIAL_LINKS = {
-  FACEBOOK: import.meta.env.VITE_FACEBOOK_URL || '',
-  INSTAGRAM: import.meta.env.VITE_INSTAGRAM_URL || '',
-  TWITTER: import.meta.env.VITE_TWITTER_URL || '',
-  LINKEDIN: import.meta.env.VITE_LINKEDIN_URL || '',
+  FACEBOOK: runtimeSocial.facebook,
+  INSTAGRAM: runtimeSocial.instagram,
+  TWITTER: runtimeSocial.twitter,
+  LINKEDIN: runtimeSocial.linkedin,
 } as const;
 
 // Función helper para verificar si un link está configurado
@@ -136,19 +155,20 @@ export const APP_CONFIG = {
 } as const;
 
 // =========================================
-// FEATURE FLAGS
+// FEATURE FLAGS (desde runtime)
 // =========================================
+const runtimeFeatures = getFeaturesConfig();
 export const FEATURES = {
   // Feature flags
-  NOTIFICATIONS: import.meta.env.VITE_FEATURE_NOTIFICATIONS === 'true',
-  ANALYTICS: import.meta.env.VITE_FEATURE_ANALYTICS === 'true',
-  REAL_PAYMENTS: import.meta.env.VITE_FEATURE_REAL_PAYMENTS === 'true',
+  NOTIFICATIONS: runtimeFeatures.notifications,
+  ANALYTICS: runtimeFeatures.analytics,
+  REAL_PAYMENTS: runtimeFeatures.realPayments,
   
-  // DIAP B2B Specific Features
-  HIDE_PRICES_FOR_GUESTS: import.meta.env.VITE_HIDE_PRICES_FOR_GUESTS === 'true',
-  LOGIN_TO_VIEW_PRICES_MESSAGE: import.meta.env.VITE_LOGIN_TO_VIEW_PRICES_MESSAGE || 'Inicia sesión para ver precios',
-  LOGIN_FOR_PRICES_CTA: import.meta.env.VITE_LOGIN_FOR_PRICES_CTA || 'Iniciar Sesión',
-  REQUIRE_AUTH_FOR_CART: import.meta.env.VITE_REQUIRE_AUTH_FOR_CART === 'true',
+  // DIAP B2B Specific Features (desde runtime app config)
+  HIDE_PRICES_FOR_GUESTS: runtimeApp.hidePricesForGuests,
+  LOGIN_TO_VIEW_PRICES_MESSAGE: runtimeApp.loginMessage,
+  LOGIN_FOR_PRICES_CTA: runtimeApp.loginCta,
+  REQUIRE_AUTH_FOR_CART: runtimeApp.requireAuthForCart,
   
   // Shipping and benefits features
   SHIPPING_BENEFITS: [
@@ -171,19 +191,18 @@ export const FEATURES = {
 } as const;
 
 // =========================================
-// COLORS & THEMING
+// COLORS & THEMING (desde runtime)
 // =========================================
+const runtimeTheme = getThemeConfig();
 export const THEME = {
-  PRIMARY_COLOR: import.meta.env.VITE_PRIMARY_COLOR || '#2563eb',
-  SECONDARY_COLOR: import.meta.env.VITE_SECONDARY_COLOR || '#7c3aed',
-  ACCENT_COLOR: import.meta.env.VITE_ACCENT_COLOR || '#059669',
+  PRIMARY_COLOR: runtimeTheme.colorPrimary,
+  SECONDARY_COLOR: runtimeTheme.colorSecondary,
+  ACCENT_COLOR: runtimeTheme.colorAccent,
   
-  // Función helper para aplicar colores CSS
+  // Función helper para aplicar colores CSS (ahora manejado por theme.ts)
   applyCSSVariables: () => {
-    const root = document.documentElement;
-    root.style.setProperty('--color-primary', THEME.PRIMARY_COLOR);
-    root.style.setProperty('--color-secondary', THEME.SECONDARY_COLOR);
-    root.style.setProperty('--color-accent', THEME.ACCENT_COLOR);
+    // Las variables CSS ahora se manejan en src/config/theme.ts
+    // Esta función se mantiene por compatibilidad
   },
 } as const;
 

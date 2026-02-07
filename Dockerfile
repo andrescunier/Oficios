@@ -1,4 +1,5 @@
 # Dockerfile para DIAP B2B E-commerce Platform
+# Imagen multi-tenant con configuración runtime
 FROM node:20-alpine AS builder
 
 # Build arguments para configuración por ambiente
@@ -38,8 +39,15 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 # Copiar configuración personalizada de Nginx
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
+# Copiar template de configuración y entrypoint
+COPY config.js.template /app/config.js.template
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+
+# Hacer ejecutable el entrypoint
+RUN chmod +x /docker-entrypoint.sh
+
 # Exponer puerto 80
 EXPOSE 80
 
-# Comando por defecto
-CMD ["nginx", "-g", "daemon off;"]
+# Usar entrypoint personalizado para generar config.js
+ENTRYPOINT ["/docker-entrypoint.sh"]

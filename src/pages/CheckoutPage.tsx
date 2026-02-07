@@ -2,11 +2,12 @@
  * Página de checkout/finalización de compra
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CreditCard, MapPin, User, Mail, Phone, Lock } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { orderService } from '@/services/orderService';
+import { getPaymentMethodsConfig } from '@/config/runtime';
 
 interface ShippingInfo {
   firstName: string;
@@ -25,7 +26,7 @@ interface PaymentInfo {
   expiryDate: string;
   cvv: string;
   cardName: string;
-  paymentMethod: 'credit' | 'debit' | 'mercadopago' | 'transferencia';
+  paymentMethod: 'credit' | 'debit' | 'mercadopago' | 'transferencia' | 'efectivo';
 }
 
 // Función para obtener datos del usuario desde múltiples fuentes
@@ -45,6 +46,18 @@ const getUserData = () => {
 export const CheckoutPage: React.FC = () => {
   const { cart, clearCart, addNotification, auth } = useStore();
   const navigate = useNavigate();
+  
+  // Obtener configuración de métodos de pago
+  const paymentMethodsConfig = useMemo(() => getPaymentMethodsConfig(), []);
+  
+  // Determinar el método de pago por defecto (el primero habilitado)
+  const defaultPaymentMethod = useMemo(() => {
+    if (paymentMethodsConfig.transferencia) return 'transferencia';
+    if (paymentMethodsConfig.efectivo) return 'efectivo';
+    if (paymentMethodsConfig.mercadopago) return 'mercadopago';
+    if (paymentMethodsConfig.tarjeta) return 'tarjeta';
+    return 'transferencia'; // fallback
+  }, [paymentMethodsConfig]);
   
   const [currentStep, setCurrentStep] = useState<'shipping' | 'payment' | 'review'>('shipping');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -73,7 +86,7 @@ export const CheckoutPage: React.FC = () => {
     expiryDate: '',
     cvv: '',
     cardName: '',
-    paymentMethod: 'transferencia'
+    paymentMethod: defaultPaymentMethod as any
   });
 
   const formatPrice = (price: number, currency?: string) => {
@@ -213,21 +226,23 @@ export const CheckoutPage: React.FC = () => {
           message: `Tu orden ${result.orderNumber} ha sido creada. Te contactaremos pronto con novedades de tu pedido.`,
         });
 
+        // Guardar el total antes de limpiar el carrito
+        const totalAmount = cart.total_amount;
+        
         // Limpiar carrito
         clearCart();
         
-        // Redirigir a página de éxito
-        setTimeout(() => {
-          navigate('/pedido-exitoso', { 
-            state: { 
-              orderSuccess: true, 
-              orderNumber: result.orderNumber,
-              paymentNumber: result.paymentNumber,
-              customerEmail: shippingInfo.email,
-              totalAmount: cart.total_amount
-            } 
-          });
-        }, 1500);
+        // Redirigir a página de éxito inmediatamente
+        navigate('/pedido-exitoso', { 
+          replace: true,
+          state: { 
+            orderSuccess: true, 
+            orderNumber: result.orderNumber,
+            paymentNumber: result.paymentNumber,
+            customerEmail: shippingInfo.email,
+            totalAmount: totalAmount
+          } 
+        });
         
       } else {
         // Error en el procesamiento
@@ -527,27 +542,65 @@ export const CheckoutPage: React.FC = () => {
                 <form onSubmit={handlePaymentSubmit} className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Método de Pago</label>
-                    <div className="w-full">
-                      <div className="flex items-center p-4 border-2 border-blue-500 bg-blue-50 rounded-lg">
+                    <div className="space-y-3">
+                      {/* Transferencia Bancaria */}
+                      {paymentMethodsConfig.transferencia && (
+                      <div 
+                        className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-colors ${
+                          paymentInfo.paymentMethod === 'transferencia' 
+                            ? 'border-blue-500 bg-blue-50' 
+                            : 'border-gray-200 hover:border-blue-300'
+                        }`}
+                        onClick={() => setPaymentInfo({...paymentInfo, paymentMethod: 'transferencia'})}
+                      >
                         <input
                           type="radio"
                           name="paymentMethod"
                           value="transferencia"
-                          checked={true}
-                          readOnly
+                          checked={paymentInfo.paymentMethod === 'transferencia'}
+                          onChange={() => setPaymentInfo({...paymentInfo, paymentMethod: 'transferencia'})}
                           className="mr-3 text-blue-600"
                         />
                         <div className="flex-1">
                           <span className="font-medium text-blue-800">Transferencia Bancaria</span>
-                          <p className="text-sm text-blue-600 mt-1">
+                          <p className="text-sm text-gray-600 mt-1">
                             💳 Método de pago seguro y directo
                           </p>
                         </div>
                       </div>
+                      )}
+                      
+                      {/* Efectivo */}
+                      {paymentMethodsConfig.efectivo && (
+                      <div 
+                        className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-colors ${
+                          paymentInfo.paymentMethod === 'efectivo' 
+                            ? 'border-green-500 bg-green-50' 
+                            : 'border-gray-200 hover:border-green-300'
+                        }`}
+                        onClick={() => setPaymentInfo({...paymentInfo, paymentMethod: 'efectivo'})}
+                      >
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="efectivo"
+                          checked={paymentInfo.paymentMethod === 'efectivo'}
+                          onChange={() => setPaymentInfo({...paymentInfo, paymentMethod: 'efectivo'})}
+                          className="mr-3 text-green-600"
+                        />
+                        <div className="flex-1">
+                          <span className="font-medium text-green-800">Efectivo</span>
+                          <p className="text-sm text-gray-600 mt-1">
+                            💵 Pago en efectivo al momento de la entrega o retiro
+                          </p>
+                        </div>
+                      </div>
+                      )}
                     </div>
                   </div>
                   
                   {/* Información de transferencia */}
+                  {paymentInfo.paymentMethod === 'transferencia' && (
                   <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                     <h3 className="font-medium text-gray-800 mb-3">📋 Datos para la Transferencia</h3>
                     <div className="space-y-2 text-sm">
@@ -576,6 +629,24 @@ export const CheckoutPage: React.FC = () => {
                       </p>
                     </div>
                   </div>
+                  )}
+                  
+                  {/* Información de efectivo */}
+                  {paymentInfo.paymentMethod === 'efectivo' && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h3 className="font-medium text-gray-800 mb-3">💵 Pago en Efectivo</h3>
+                    <div className="space-y-2 text-sm text-gray-600">
+                      <p>• El pago se realizará al momento de recibir tu pedido</p>
+                      <p>• Asegurate de tener el monto exacto disponible</p>
+                      <p>• Nuestro equipo coordinará la entrega contigo</p>
+                    </div>
+                    <div className="mt-3 p-3 bg-green-100 border border-green-300 rounded">
+                      <p className="text-sm text-green-800">
+                        <strong>✅ Nota:</strong> Recibirás una confirmación por email con los detalles de tu pedido y coordinación de entrega.
+                      </p>
+                    </div>
+                  </div>
+                  )}
                   
                   <div className="flex space-x-4">
                     <button
@@ -615,10 +686,16 @@ export const CheckoutPage: React.FC = () => {
                 <div className="mb-6 p-4 bg-gray-50 rounded-lg">
                   <h3 className="font-medium mb-2">Método de Pago</h3>
                   <div className="flex items-center">
-                    <span className="text-blue-600 font-medium">💳 Transferencia Bancaria</span>
+                    {paymentInfo.paymentMethod === 'transferencia' ? (
+                      <span className="text-blue-600 font-medium">💳 Transferencia Bancaria</span>
+                    ) : (
+                      <span className="text-green-600 font-medium">💵 Efectivo</span>
+                    )}
                   </div>
                   <p className="text-sm text-gray-600 mt-1">
-                    Se te proporcionarán los datos bancarios para realizar la transferencia.
+                    {paymentInfo.paymentMethod === 'transferencia' 
+                      ? 'Se te proporcionarán los datos bancarios para realizar la transferencia.'
+                      : 'El pago se realizará en efectivo al momento de la entrega o retiro.'}
                   </p>
                 </div>
                 

@@ -9,6 +9,7 @@ import type { Product } from '@/types/api';
 import { Loader2, Filter, X, ChevronDown, ChevronUp, SlidersHorizontal, Plus, Minus, Heart } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { PriceDisplay } from '@/hooks/usePriceVisibility';
+import { getFiltersConfig } from '@/config/runtime';
 
 // Tipos para filtros
 interface FilterOption {
@@ -28,6 +29,10 @@ export const CategoryPage: React.FC = () => {
   const navigate = useNavigate();
   const { auth, addToCart, addToFavorites, removeFromFavorites, isFavorite, addNotification } = useStore();
   const isAuthenticated = auth.isAuthenticated;
+  
+  // Obtener configuración de filtros
+  const filtersConfig = getFiltersConfig();
+  const showFilters = filtersConfig.enabled;
   
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,11 +60,15 @@ export const CategoryPage: React.FC = () => {
 
   const categoryName = categoryNames[category || ''] || 'Productos';
 
-  // Configuración de filtros según categoría (solo capacidad y velocidad)
+  // Configuración de filtros según categoría (solo si están habilitados)
   const filterConfig = useMemo(() => {
+    // Si los filtros están deshabilitados, retornar objeto vacío
+    if (!showFilters) return {};
+    
     if (category === 'ssd-sata') {
-      return {
-        capacidad: {
+      const config: any = {};
+      if (filtersConfig.capacidad) {
+        config.capacidad = {
           label: 'Capacidad',
           options: [
             { value: '120', label: '120 GB' },
@@ -71,11 +80,13 @@ export const CategoryPage: React.FC = () => {
             { value: '1tb', label: '1 TB' },
             { value: '2tb', label: '2 TB' },
           ]
-        }
-      };
+        };
+      }
+      return config;
     } else if (category === 'memoria-ram' || category === 'memoria') {
-      return {
-        capacidad: {
+      const config: any = {};
+      if (filtersConfig.capacidad) {
+        config.capacidad = {
           label: 'Capacidad',
           options: [
             { value: '4gb', label: '4 GB' },
@@ -84,8 +95,10 @@ export const CategoryPage: React.FC = () => {
             { value: '32gb', label: '32 GB' },
             { value: '64gb', label: '64 GB' },
           ]
-        },
-        velocidad: {
+        };
+      }
+      if (filtersConfig.velocidad) {
+        config.velocidad = {
           label: 'Velocidad',
           options: [
             { value: '2400', label: '2400 MHz' },
@@ -97,11 +110,12 @@ export const CategoryPage: React.FC = () => {
             { value: '5600', label: '5600 MHz' },
             { value: '6000', label: '6000 MHz' },
           ]
-        }
-      };
+        };
+      }
+      return config;
     }
     return {};
-  }, [category]);
+  }, [category, showFilters, filtersConfig]);
 
   // Función para obtener imagen del producto
   const getProductImage = (product: Product): string => {
@@ -442,6 +456,7 @@ export const CategoryPage: React.FC = () => {
           <div className="flex flex-col lg:flex-row gap-8">
             
             {/* Sidebar Filters - Desktop */}
+            {showFilters && (
             <aside className="hidden lg:block w-64 flex-shrink-0">
               <div className="bg-white rounded-lg shadow-sm p-4 sticky top-4">
                 <div className="flex items-center justify-between mb-4">
@@ -480,21 +495,26 @@ export const CategoryPage: React.FC = () => {
                 ))}
               </div>
             </aside>
+            )}
 
             {/* Mobile Filter Button */}
             <div className="lg:hidden flex items-center justify-between mb-4">
-              <button
-                onClick={() => setShowMobileFilters(true)}
-                className="flex items-center px-4 py-2 bg-white rounded-lg shadow-sm border"
-              >
-                <SlidersHorizontal className="w-5 h-5 mr-2" />
-                Filtros
-                {activeFilterCount > 0 && (
-                  <span className="ml-2 bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full">
-                    {activeFilterCount}
-                  </span>
-                )}
-              </button>
+              {showFilters ? (
+                <button
+                  onClick={() => setShowMobileFilters(true)}
+                  className="flex items-center px-4 py-2 bg-white rounded-lg shadow-sm border"
+                >
+                  <SlidersHorizontal className="w-5 h-5 mr-2" />
+                  Filtros
+                  {activeFilterCount > 0 && (
+                    <span className="ml-2 bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </button>
+              ) : (
+                <div /> 
+              )}
               
               <select
                 value={sortBy}
@@ -513,7 +533,7 @@ export const CategoryPage: React.FC = () => {
             </div>
 
             {/* Mobile Filters Modal */}
-            {showMobileFilters && (
+            {showFilters && showMobileFilters && (
               <div className="fixed inset-0 z-50 lg:hidden">
                 <div className="absolute inset-0 bg-black/50" onClick={() => setShowMobileFilters(false)} />
                 <div className="absolute right-0 top-0 h-full w-80 max-w-full bg-white shadow-xl overflow-y-auto">

@@ -237,40 +237,9 @@ export const ProductsPageApiReal: React.FC = () => {
             <h1 className="text-4xl md:text-5xl font-bold mb-4">
               Catálogo de Productos
             </h1>
-            <p className="text-xl opacity-90 mb-6">
+            <p className="text-xl opacity-90">
               SSDs, Memoria RAM y componentes de última tecnología
             </p>
-            
-            {/* Search Bar */}
-            <div className="max-w-md mx-auto relative">
-              <input
-                type="text"
-                placeholder="Buscar productos..."
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  // Actualizar URL sin recargar página
-                  if (e.target.value) {
-                    setSearchParams({ buscar: e.target.value });
-                  } else {
-                    setSearchParams({});
-                  }
-                }}
-                className="w-full pl-10 pr-4 py-3 rounded-lg text-gray-900 placeholder-gray-500"
-              />
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              {searchTerm && (
-                <button
-                  onClick={() => {
-                    setSearchTerm('');
-                    setSearchParams({});
-                  }}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
           </div>
         </div>
       </section>

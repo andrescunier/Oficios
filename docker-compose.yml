@@ -1,28 +1,81 @@
 version: '3.8'
 
 services:
-  iamerican-ecommerce:
+  diap-ecommerce:
     build: .
-    container_name: iamerican-app
+    container_name: diap-app
     ports:
       - "80:80"
       - "443:443"
     restart: unless-stopped
     environment:
-      - NODE_ENV=production
+      # API Configuration
+      - API_URL=${API_URL:-https://api.cumar.com.ar}
+      - ACCOUNT_ID=${ACCOUNT_ID:-bed2df35-717f-4900-a4b1-7c3a7fb59b7c}
+      - ACCOUNT_SLUG=${ACCOUNT_SLUG:-diap}
+      
+      # App Configuration
+      - APP_NAME=${APP_NAME:-DIAP}
+      - COMPANY_NAME=${COMPANY_NAME:-DIAP}
+      - APP_SLOGAN=${APP_SLOGAN:-Tecnología profesional para empresas}
+      - APP_DESCRIPTION=${APP_DESCRIPTION:-DIAP - Distribuidora de productos tecnológicos}
+      - APP_URL=${APP_URL:-https://diap.com}
+      
+      # Contact Configuration
+      - CONTACT_EMAIL=${CONTACT_EMAIL:-info@diapstore.com}
+      - CONTACT_PHONE=${CONTACT_PHONE:-+54 11 2631-0884}
+      - CONTACT_ADDRESS=${CONTACT_ADDRESS:-Palomar, Provincia de Buenos Aires}
+      
+      # B2B Features
+      - HIDE_PRICES_FOR_GUESTS=${HIDE_PRICES_FOR_GUESTS:-true}
+      - REQUIRE_AUTH_FOR_CART=${REQUIRE_AUTH_FOR_CART:-true}
+      - LOGIN_TO_VIEW_PRICES_MESSAGE=${LOGIN_TO_VIEW_PRICES_MESSAGE:-Inicia sesión para ver precios}
+      - LOGIN_FOR_PRICES_CTA=${LOGIN_FOR_PRICES_CTA:-Iniciar Sesión}
+      
+      # Branding
+      - LOGO_URL=${LOGO_URL:-/diap-logo.png}
+      - LOGO_DARK_URL=${LOGO_DARK_URL:-}
+      - FAVICON_URL=${FAVICON_URL:-/favicon.ico}
+      - BANNER_URL=${BANNER_URL:-}
+      - OG_IMAGE_URL=${OG_IMAGE_URL:-/diap-logo.png}
+      
+      # Theme Colors
+      - COLOR_PRIMARY=${COLOR_PRIMARY:-#2563eb}
+      - COLOR_PRIMARY_HOVER=${COLOR_PRIMARY_HOVER:-#1d4ed8}
+      - COLOR_PRIMARY_FOREGROUND=${COLOR_PRIMARY_FOREGROUND:-#ffffff}
+      - COLOR_SECONDARY=${COLOR_SECONDARY:-#f1f5f9}
+      - COLOR_SECONDARY_FOREGROUND=${COLOR_SECONDARY_FOREGROUND:-#0f172a}
+      - COLOR_BACKGROUND=${COLOR_BACKGROUND:-#ffffff}
+      - COLOR_FOREGROUND=${COLOR_FOREGROUND:-#0f172a}
+      - COLOR_MUTED=${COLOR_MUTED:-#f1f5f9}
+      - COLOR_MUTED_FOREGROUND=${COLOR_MUTED_FOREGROUND:-#64748b}
+      - COLOR_BORDER=${COLOR_BORDER:-#e2e8f0}
+      - COLOR_SUCCESS=${COLOR_SUCCESS:-#22c55e}
+      - COLOR_WARNING=${COLOR_WARNING:-#f59e0b}
+      - COLOR_ERROR=${COLOR_ERROR:-#ef4444}
+      
+      # Typography (optional)
+      - FONT_FAMILY=${FONT_FAMILY:-}
+      - FONT_URL=${FONT_URL:-}
+      
+      # Social Links
+      - FACEBOOK_URL=${FACEBOOK_URL:-}
+      - INSTAGRAM_URL=${INSTAGRAM_URL:-}
+      - TWITTER_URL=${TWITTER_URL:-}
+      - LINKEDIN_URL=${LINKEDIN_URL:-}
+      
+      # Features
+      - FEATURE_NOTIFICATIONS=${FEATURE_NOTIFICATIONS:-false}
+      - FEATURE_ANALYTICS=${FEATURE_ANALYTICS:-false}
+      - FEATURE_REAL_PAYMENTS=${FEATURE_REAL_PAYMENTS:-false}
+      
+      # Debug
+      - DEBUG=${DEBUG:-false}
     volumes:
       - ./logs:/var/log/nginx
     networks:
-      - iamerican-network
+      - diap-network
 
 networks:
-  iamerican-network:
+  diap-network:
     driver: bridge
-
-# Para desarrollo local (opcional)
-  # iamerican-dev:
-  #   build: .
-  #   container_name: iamerican-dev
-  #   ports:
-  #     - "3000:80"
-  #   restart: unless-stopped

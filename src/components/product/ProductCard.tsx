@@ -22,6 +22,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { ProductImage } from '@/components/ui/OptimizedImage';
 import { useStore } from '@/store/useStore';
 import type { Product } from '@/types/api';
 import { PriceDisplay, usePriceVisibility } from '@/hooks/usePriceVisibility';
@@ -161,13 +162,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     <Card className={cardClasses[variant]}>
       <CardContent className="p-0">
         <Link to={`/productos/${product.id}`} onClick={handleProductClick}>
-          {/* Image container */}
+          {/* Image container with optimized loading */}
           <div className="relative aspect-square overflow-hidden bg-gray-100">
-            {/* Product image */}
-            <img
-              src={product.image_url || '/placeholder-product.jpg'}
+            {/* Product image optimized */}
+            <ProductImage
+              src={product.image_url || ''}
               alt={product.name}
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              variant="card"
+              className="transition-transform duration-300 group-hover:scale-105"
               loading="lazy"
             />
 

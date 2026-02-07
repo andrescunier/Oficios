@@ -1,15 +1,23 @@
 /**
  * Configuración de API para DIAP Store
  * Integración con Simple Gestión API v1.1.1
+ * Usa configuración runtime cuando está disponible
  */
 
 import { getAPIHeaders } from './branding';
+import { getApiConfig } from './runtime';
 
-// Base URL desde variable de entorno
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.cumar.com.ar';
+// Obtener configuración de API desde runtime config
+const apiConfig = getApiConfig();
+
+// Base URL desde runtime config con fallback a variable de entorno
+export const API_BASE_URL = apiConfig.url;
 
 // Account ID para multi-tenant (DIAP Store)
-export const ACCOUNT_ID = import.meta.env.VITE_ACCOUNT_ID || 'bed2df35-717f-4900-a4b1-7c3a7fb59b7c';
+export const ACCOUNT_ID = apiConfig.accountId;
+
+// Account Slug
+export const ACCOUNT_SLUG = apiConfig.accountSlug;
 
 // Configuración de headers por defecto
 export const DEFAULT_HEADERS = getAPIHeaders();

@@ -99,6 +99,10 @@ interface ImportMetaEnv {
   readonly VITE_SECONDARY_COLOR: string
   readonly VITE_ACCENT_COLOR: string
   
+  // Debug / Logging (solo desarrollo)
+  readonly VITE_DEBUG: string
+  readonly VITE_DEBUG_LEVEL: string
+  
   // Shipping & Benefits Features
   readonly VITE_FEATURE_FREE_SHIPPING_TITLE: string
   readonly VITE_FEATURE_FREE_SHIPPING_DESC: string

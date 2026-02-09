@@ -176,5 +176,6 @@ export const QUERY_CONFIG = {
 export const IS_DEVELOPMENT = import.meta.env.DEV;
 export const IS_PRODUCTION = import.meta.env.PROD;
 
-// Logging
-export const enableApiLogging = IS_DEVELOPMENT;
+// Logging (obsoleto - ahora se usa src/lib/logger.ts con VITE_DEBUG)
+// Se mantiene por si algún componente externo lo importa
+export const enableApiLogging = false;

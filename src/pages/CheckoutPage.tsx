@@ -35,8 +35,7 @@ const getUserData = () => {
   // Intentar obtener de registration_data (datos del registro)
   const registrationData = localStorage.getItem('registration_data');
   if (registrationData) {
-    try {\n      return JSON.parse(registrationData);\n    } catch (e) {\n      log.checkout.error('Error parsing registration data:', e);", "oldString": "    try {\n      return JSON.parse(registrationData);\n    } catch (e) {\n      console.error('Error parsing registration data:', e);"}
-<parameter name="newString">    try {
+    try {
       return JSON.parse(registrationData);
     } catch (e) {
       log.checkout.error('Error parsing registration data:', e);

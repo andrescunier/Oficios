@@ -1,18 +1,23 @@
 /**
  * Sistema de logging centralizado para DIAP
  * 
- * Se puede controlar desde la consola del navegador:
+ * SEGURIDAD: En producción el logging está completamente deshabilitado.
+ * window.DIAP NO se expone en producción.
  * 
- *   window.DIAP.enableAll()         — Activa todos los módulos
- *   window.DIAP.disableAll()        — Desactiva todos los módulos
- *   window.DIAP.enable('auth')      — Activa un módulo específico
- *   window.DIAP.disable('http')     — Desactiva un módulo específico
- *   window.DIAP.toggle('checkout')  — Alterna un módulo
- *   window.DIAP.status()            — Muestra estado de todos los módulos
- *   window.DIAP.setLevel('warn')    — Cambia nivel mínimo (debug|info|warn|error)
+ * DESARROLLO:
+ *   Configurar con variable de entorno en .env:
+ *     VITE_DEBUG=*                 — Todos los módulos
+ *     VITE_DEBUG=auth,checkout     — Solo auth y checkout
+ *     VITE_DEBUG=                  — Ninguno (default)
+ *     VITE_DEBUG_LEVEL=warn        — Nivel mínimo (debug|info|warn|error)
  * 
- * La configuración persiste en localStorage (clave: 'diap-debug')
+ *   O desde consola del navegador (solo en dev):
+ *     window.DIAP.enableAll() / .disableAll()
+ *     window.DIAP.enable('auth') / .disable('http')
+ *     window.DIAP.status()
  */
+
+const IS_DEV = import.meta.env.DEV;
 
 // Módulos de logging disponibles
 export type LogModule = 
@@ -36,15 +41,15 @@ const LOG_LEVELS: Record<LogLevel, number> = {
 };
 
 const MODULE_COLORS: Record<LogModule, string> = {
-  auth:     '#22c55e', // green
-  http:     '#3b82f6', // blue
-  cart:     '#f59e0b', // amber
-  checkout: '#ef4444', // red
-  store:    '#8b5cf6', // violet
-  products: '#06b6d4', // cyan
-  orders:   '#ec4899', // pink
-  router:   '#f97316', // orange
-  config:   '#6b7280', // gray
+  auth:     '#22c55e',
+  http:     '#3b82f6',
+  cart:     '#f59e0b',
+  checkout: '#ef4444',
+  store:    '#8b5cf6',
+  products: '#06b6d4',
+  orders:   '#ec4899',
+  router:   '#f97316',
+  config:   '#6b7280',
 };
 
 const MODULE_ICONS: Record<LogModule, string> = {
@@ -59,57 +64,51 @@ const MODULE_ICONS: Record<LogModule, string> = {
   config:   '⚙️',
 };
 
-const STORAGE_KEY = 'diap-debug';
+const ALL_MODULES: LogModule[] = ['auth', 'http', 'cart', 'checkout', 'store', 'products', 'orders', 'router', 'config'];
+
+// ======== Configuración ========
 
 interface DebugConfig {
   modules: Record<LogModule, boolean>;
   level: LogLevel;
 }
 
-const ALL_MODULES: LogModule[] = ['auth', 'http', 'cart', 'checkout', 'store', 'products', 'orders', 'router', 'config'];
-
-function getDefaultConfig(): DebugConfig {
+function getDefaultModules(): Record<LogModule, boolean> {
   return {
-    modules: {
-      auth: false,
-      http: false,
-      cart: false,
-      checkout: false,
-      store: false,
-      products: false,
-      orders: false,
-      router: false,
-      config: false,
-    },
-    level: 'debug',
+    auth: false, http: false, cart: false, checkout: false,
+    store: false, products: false, orders: false, router: false, config: false,
   };
 }
 
-function loadConfig(): DebugConfig {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      // Merge con defaults para nuevos módulos
-      const defaults = getDefaultConfig();
-      return {
-        level: parsed.level || defaults.level,
-        modules: { ...defaults.modules, ...parsed.modules },
-      };
-    }
-  } catch { /* ignore */ }
-  return getDefaultConfig();
+/** Lee VITE_DEBUG y VITE_DEBUG_LEVEL para configurar qué módulos se activan */
+function loadConfigFromEnv(): DebugConfig {
+  const debugEnv = (import.meta.env.VITE_DEBUG || '').trim();
+  const levelEnv = (import.meta.env.VITE_DEBUG_LEVEL || 'debug').trim() as LogLevel;
+
+  const modules = getDefaultModules();
+
+  if (debugEnv === '*') {
+    ALL_MODULES.forEach(m => { modules[m] = true; });
+  } else if (debugEnv) {
+    debugEnv.split(',').map(s => s.trim()).forEach(m => {
+      if (ALL_MODULES.includes(m as LogModule)) {
+        modules[m as LogModule] = true;
+      }
+    });
+  }
+
+  return {
+    modules,
+    level: LOG_LEVELS.hasOwnProperty(levelEnv) ? levelEnv : 'debug',
+  };
 }
 
-function saveConfig(config: DebugConfig) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
-  } catch { /* ignore */ }
-}
+let currentConfig: DebugConfig = IS_DEV ? loadConfigFromEnv() : { modules: getDefaultModules(), level: 'error' };
 
-let currentConfig = loadConfig();
+// ======== Core ========
 
 function isEnabled(module: LogModule, level: LogLevel): boolean {
+  if (!IS_DEV) return false; // Producción: NUNCA loguear
   if (!currentConfig.modules[module]) return false;
   return LOG_LEVELS[level] >= LOG_LEVELS[currentConfig.level];
 }
@@ -123,10 +122,21 @@ function formatPrefix(module: LogModule): string[] {
   ];
 }
 
+// ======== Noop logger para producción (tree-shakeable) ========
+const noop = () => {};
+const noopLogger = {
+  debug: noop, info: noop, warn: noop, error: noop,
+  group: noop, table: noop, time: noop, timeEnd: noop,
+  get enabled() { return false; },
+};
+
 /**
- * Crea un logger para un módulo específico
+ * Crea un logger para un módulo específico.
+ * En producción retorna un noop (sin costo de runtime).
  */
 export function createLogger(module: LogModule) {
+  if (!IS_DEV) return noopLogger;
+
   return {
     debug: (...args: any[]) => {
       if (isEnabled(module, 'debug')) {
@@ -152,7 +162,6 @@ export function createLogger(module: LogModule) {
         console.error(prefix, style, ...args);
       }
     },
-    /** Log a group of related info (collapsed by default) */
     group: (label: string, fn: () => void) => {
       if (isEnabled(module, 'debug')) {
         const [prefix, style] = formatPrefix(module);
@@ -161,7 +170,6 @@ export function createLogger(module: LogModule) {
         console.groupEnd();
       }
     },
-    /** Log object as table */
     table: (data: any, label?: string) => {
       if (isEnabled(module, 'debug')) {
         const [prefix, style] = formatPrefix(module);
@@ -169,7 +177,6 @@ export function createLogger(module: LogModule) {
         console.table(data);
       }
     },
-    /** Time an operation */
     time: (label: string) => {
       if (isEnabled(module, 'debug')) {
         console.time(`${MODULE_ICONS[module]} [${module.toUpperCase()}] ${label}`);
@@ -180,111 +187,73 @@ export function createLogger(module: LogModule) {
         console.timeEnd(`${MODULE_ICONS[module]} [${module.toUpperCase()}] ${label}`);
       }
     },
-    /** Check if this module's logging is enabled */
     get enabled() {
       return currentConfig.modules[module];
     },
   };
 }
 
-// ======== Control API (expuesta en window.DIAP) ========
+// ======== Control API (SOLO en desarrollo) ========
 
-const controlAPI = {
-  enable(module: LogModule) {
-    if (!ALL_MODULES.includes(module)) {
-      console.error(`Módulo inválido: "${module}". Disponibles: ${ALL_MODULES.join(', ')}`);
-      return;
-    }
-    currentConfig.modules[module] = true;
-    saveConfig(currentConfig);
-    console.log(`✅ Logging habilitado para: ${MODULE_ICONS[module]} ${module}`);
-  },
+if (IS_DEV && typeof window !== 'undefined') {
+  (window as any).DIAP = {
+    enable(module: LogModule) {
+      if (!ALL_MODULES.includes(module)) {
+        console.error(`Módulo inválido: "${module}". Disponibles: ${ALL_MODULES.join(', ')}`);
+        return;
+      }
+      currentConfig.modules[module] = true;
+      console.log(`✅ Logging habilitado: ${MODULE_ICONS[module]} ${module}`);
+    },
 
-  disable(module: LogModule) {
-    if (!ALL_MODULES.includes(module)) {
-      console.error(`Módulo inválido: "${module}". Disponibles: ${ALL_MODULES.join(', ')}`);
-      return;
-    }
-    currentConfig.modules[module] = false;
-    saveConfig(currentConfig);
-    console.log(`❌ Logging deshabilitado para: ${MODULE_ICONS[module]} ${module}`);
-  },
+    disable(module: LogModule) {
+      if (!ALL_MODULES.includes(module)) {
+        console.error(`Módulo inválido: "${module}". Disponibles: ${ALL_MODULES.join(', ')}`);
+        return;
+      }
+      currentConfig.modules[module] = false;
+      console.log(`❌ Logging deshabilitado: ${MODULE_ICONS[module]} ${module}`);
+    },
 
-  toggle(module: LogModule) {
-    if (currentConfig.modules[module]) {
-      this.disable(module);
-    } else {
-      this.enable(module);
-    }
-  },
+    toggle(module: LogModule) {
+      currentConfig.modules[module] ? this.disable(module) : this.enable(module);
+    },
 
-  enableAll() {
-    ALL_MODULES.forEach(m => { currentConfig.modules[m] = true; });
-    saveConfig(currentConfig);
-    console.log('✅ Todos los módulos de logging habilitados');
-    this.status();
-  },
+    enableAll() {
+      ALL_MODULES.forEach(m => { currentConfig.modules[m] = true; });
+      console.log('✅ Todos los módulos habilitados');
+      this.status();
+    },
 
-  disableAll() {
-    ALL_MODULES.forEach(m => { currentConfig.modules[m] = false; });
-    saveConfig(currentConfig);
-    console.log('❌ Todos los módulos de logging deshabilitados');
-  },
+    disableAll() {
+      ALL_MODULES.forEach(m => { currentConfig.modules[m] = false; });
+      console.log('❌ Todos los módulos deshabilitados');
+    },
 
-  setLevel(level: LogLevel) {
-    if (!LOG_LEVELS.hasOwnProperty(level)) {
-      console.error(`Nivel inválido: "${level}". Disponibles: debug, info, warn, error`);
-      return;
-    }
-    currentConfig.level = level;
-    saveConfig(currentConfig);
-    console.log(`📊 Nivel de logging: ${level}`);
-  },
+    setLevel(level: LogLevel) {
+      if (!LOG_LEVELS.hasOwnProperty(level)) {
+        console.error(`Nivel inválido: "${level}". Disponibles: debug, info, warn, error`);
+        return;
+      }
+      currentConfig.level = level;
+      console.log(`📊 Nivel de logging: ${level}`);
+    },
 
-  status() {
-    console.log('\n📊 DIAP Debug Status:');
-    console.log(`   Nivel mínimo: ${currentConfig.level}`);
-    console.log('   Módulos:');
-    ALL_MODULES.forEach(m => {
-      const icon = currentConfig.modules[m] ? '🟢' : '🔴';
-      console.log(`   ${icon} ${MODULE_ICONS[m]} ${m}`);
-    });
-    console.log('\n   Comandos: window.DIAP.enable("modulo") | .disable("modulo") | .toggle("modulo")');
-    console.log('             window.DIAP.enableAll() | .disableAll() | .setLevel("debug"|"info"|"warn"|"error")');
-    console.log('');
-  },
-
-  help() {
-    console.log(`
-╔══════════════════════════════════════════════════════╗
-║            DIAP Debug Logger - Ayuda                 ║
-╠══════════════════════════════════════════════════════╣
-║                                                      ║
-║  window.DIAP.enableAll()        Activar todo         ║
-║  window.DIAP.disableAll()       Desactivar todo      ║
-║  window.DIAP.enable('auth')     Activar módulo       ║
-║  window.DIAP.disable('http')    Desactivar módulo    ║
-║  window.DIAP.toggle('checkout') Alternar módulo      ║
-║  window.DIAP.status()           Ver estado           ║
-║  window.DIAP.setLevel('warn')   Nivel mínimo         ║
-║                                                      ║
-║  Módulos: auth, http, cart, checkout, store,         ║
-║           products, orders, router, config           ║
-║                                                      ║
-║  Niveles: debug < info < warn < error                ║
-║                                                      ║
-║  La config persiste en localStorage (diap-debug)     ║
-╚══════════════════════════════════════════════════════╝
-    `);
-  },
-};
-
-// Exponer en window
-if (typeof window !== 'undefined') {
-  (window as any).DIAP = controlAPI;
+    status() {
+      console.log('\n📊 DIAP Debug Status:');
+      console.log(`   Nivel: ${currentConfig.level}`);
+      ALL_MODULES.forEach(m => {
+        const icon = currentConfig.modules[m] ? '🟢' : '🔴';
+        console.log(`   ${icon} ${MODULE_ICONS[m]} ${m}`);
+      });
+      console.log('\n   Env: VITE_DEBUG=' + (import.meta.env.VITE_DEBUG || '(no definida)'));
+      console.log('');
+    },
+  };
 }
 
-// Loggers pre-creados para cada módulo
+// ======== Loggers pre-creados ========
+
 export const log = {
   auth: createLogger('auth'),
   http: createLogger('http'),

@@ -223,7 +223,7 @@ export const Footer: React.FC = () => {
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <div className="text-sm text-muted-foreground">
-              © 2025 {BRANDING.COMPANY_NAME}. Todos los derechos reservados. | v{import.meta.env.VITE_APP_VERSION || '1.0.0'}
+              © {new Date().getFullYear()} {BRANDING.COMPANY_NAME}. Todos los derechos reservados. | v{__APP_VERSION__}
             </div>
             
             <div className="flex items-center space-x-4">

@@ -1114,6 +1114,108 @@ Contenido:
 
 ---
 
+## Sesión: 8 de Febrero 2026
+
+### Participantes
+- Usuario: andis
+- Asistente: GitHub Copilot (Claude Opus 4.6)
+
+### Contexto
+- Estado del proyecto: Frontend ecommerce funcional, pero con múltiples servicios llamando a APIs que no existen en el backend
+- Objetivo de la sesión: Auditar y corregir todos los servicios frontend para que solo consuman APIs reales documentadas en `documentacion.md`
+
+### Problema Detectado
+El frontend tenía código que llamaba a endpoints **inventados** — escritos de forma especulativa durante el desarrollo inicial pero que nunca existieron en la API real. Esto generaba errores 404 silenciosos y el mecanismo de "circuit breaker" ocultaba los fallos.
+
+### Auditoría Completa de Servicios
+
+Se auditaron todos los archivos de servicios contra la documentación oficial de la API (`documentacion.md`, 137 endpoints documentados):
+
+| Servicio | Resultado |
+|----------|-----------|
+| `authService.ts` | ⚠️ Tenía `refreshToken()` con endpoint `/api/auth/refresh` inexistente |
+| `productService.ts` | ✅ Todos los endpoints correctos |
+| `orderService.ts` | ✅ Todos los endpoints correctos (state machine completa) |
+| `cartService.ts` | ❌ 100% del servicio llamaba a APIs inexistentes |
+| `httpClient.ts` | ✅ Sin problemas |
+| `config/api.ts` | ⚠️ PEOPLE/PERSON tenían paths sin `account_id` |
+
+### Endpoints Inventados Eliminados
+
+| Endpoint | Archivo | Motivo |
+|----------|---------|--------|
+| `POST /api/accounts/{id}/cart/sync` | cartService.ts | No existe en API |
+| `GET /api/accounts/{id}/cart` | cartService.ts | No existe en API |
+| `POST /api/accounts/{id}/cart/verify` | cartService.ts | No existe en API |
+| `POST /api/accounts/{id}/quotes` | cartService.ts | No existe en API |
+| `POST /api/accounts/{id}/cart/save` | cartService.ts | No existe en API |
+| `GET /api/accounts/{id}/cart/saved` | cartService.ts | No existe en API |
+| `DELETE /api/accounts/{id}/cart/saved/{cartId}` | cartService.ts | No existe en API |
+| `POST /api/auth/refresh` | authService.ts | No existe en API |
+
+### Cambios Realizados
+
+#### 1. `src/services/cartService.ts` — Reescrito completo
+- Eliminadas todas las funciones que llamaban a APIs inexistentes: `syncCart()`, `getServerCart()`, `verifyCartItems()`, `createQuote()`, `saveCartForLater()`, `getSavedCarts()`, `deleteSavedCart()`
+- Eliminadas interfaces `CartSyncRequest`, `CartSyncResponse`, `QuoteRequest`, `QuoteResponse`
+- Eliminado sistema de circuit breaker (ya no es necesario)
+- El carrito ahora es 100% local (Zustand + localStorage)
+
+#### 2. `src/store/useStore.ts` — Limpieza de funciones de carrito
+- Eliminada importación de `cartService`
+- Eliminadas funciones: `syncCartWithServer()`, `verifyCartItems()`, `saveCartForLater()`, `loadServerCart()`
+- Eliminada llamada automática a `syncCartWithServer()` al agregar productos
+- Eliminada llamada a `loadServerCart()` post-login
+- Eliminadas las 4 funciones de la interfaz `AppStore`
+
+#### 3. `src/pages/CartPage.tsx` — Limpieza UI
+- Eliminado `useEffect` de verificación automática de stock al montar (usaba API inexistente)
+- Eliminada verificación pre-checkout con `verifyCartItems()` (API inexistente)
+- Eliminado botón "Guardar para después" (usaba `saveCartForLater()` con API inexistente)
+- Eliminado import de `useEffect` (ya no se usa)
+
+#### 4. `src/services/authService.ts` — Eliminar refreshToken
+- Eliminado método `refreshToken()` que llamaba a `POST /api/auth/refresh` (no existe)
+- Reemplazado con comentario explicativo: los tokens expiran por TTL
+
+#### 5. `src/config/api.ts` — Corregir paths de People
+- `PEOPLE`: cambiado de `/api/people` a `/api/accounts/${accountId}/people`
+- `PERSON`: cambiado de `/api/people/${personId}` a `/api/accounts/${accountId}/people/${personId}`
+- `PERSON_DOCUMENTS`: cambiado de `/api/people/${personId}/documents` a `/api/accounts/${accountId}/people/${personId}/documents`
+
+#### 6. `vite.config.js` — Inyección de versión
+- Importar `package.json` para leer la versión
+- Agregar `define: { __APP_VERSION__: JSON.stringify(pkg.version) }` para inyectar en build
+
+#### 7. `src/components/layout/Footer.tsx` — Versión en footer
+- Cambiar `import.meta.env.VITE_APP_VERSION || '1.0.0'` por `__APP_VERSION__` (inyectado desde package.json)
+- Cambiar `© 2025` fijo a `© {new Date().getFullYear()}` (dinámico)
+
+#### 8. `src/env.d.ts` — Declaración de tipo
+- Agregar `declare const __APP_VERSION__: string` para TypeScript
+
+### Decisiones Tomadas
+- **Criterio estricto**: si un endpoint no está en `documentacion.md`, no se usa
+- **Carrito 100% local**: no hay API de carrito — el carrito se maneja con Zustand + persistencia en localStorage
+- **La validación de stock real** ocurre al crear la orden via `POST /sales-orders/validate-stock` (que sí existe)
+- **Sin refresh token**: cuando el JWT expira, el usuario debe volver a loguearse
+
+### Archivos Afectados
+- `src/services/cartService.ts` — reescrito completo
+- `src/store/useStore.ts` — limpieza de funciones de carrito
+- `src/pages/CartPage.tsx` — eliminar UI de features inexistentes
+- `src/services/authService.ts` — eliminar refreshToken
+- `src/config/api.ts` — corregir paths de People
+- `vite.config.js` — inyección de versión desde package.json
+- `src/components/layout/Footer.tsx` — versión dinámica en footer
+- `src/env.d.ts` — declaración de tipo __APP_VERSION__
+
+### Commits
+1. `fedd01a` — fix: eliminar endpoints inventados y ajustar servicios a API real
+2. (pendiente) — feat: versión dinámica en footer desde package.json
+
+---
+
 ## Plantilla para Futuras Sesiones
 
 ```markdown

@@ -373,12 +373,6 @@ export const CategoryPage: React.FC = () => {
 
     const quantity = getQuantity(product.id.toString());
     addToCart(product, quantity);
-    
-    addNotification({
-      type: 'success',
-      title: 'Producto agregado',
-      message: `${product.name} agregado al carrito`,
-    });
   };
 
   const handleToggleFavorite = (product: Product) => {

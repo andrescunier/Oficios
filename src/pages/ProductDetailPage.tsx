@@ -83,11 +83,6 @@ export const ProductDetailPage: React.FC = () => {
     }
 
     addToCart(product, quantity);
-    addNotification({
-      type: 'success',
-      title: 'Producto agregado',
-      message: `${product.name} agregado al carrito`,
-    });
   };
 
   const handleToggleFavorite = () => {

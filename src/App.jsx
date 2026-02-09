@@ -16,6 +16,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { WhatsAppButton } from '@/components/ui/WhatsAppButton';
+import { NotificationToast } from '@/components/ui/NotificationToast';
 import { Home } from '@/pages/Home';
 import { CategoryPage } from '@/pages/CategoryPage';
 import { ProductsPageApiReal as ProductsPage } from '@/pages/ProductsPageApiReal';
@@ -109,6 +110,9 @@ function App() {
           
           {/* Botón flotante de WhatsApp */}
           <WhatsAppButton />
+          
+          {/* Notificaciones toast */}
+          <NotificationToast />
         </div>
       </Router>
     </QueryClientProvider>

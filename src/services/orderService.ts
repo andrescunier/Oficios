@@ -367,6 +367,18 @@ interface CheckoutData {
   notes?: string;
 }
 
+/**
+ * Desenvuelve la respuesta de la API si viene en formato { success, data: {...} }
+ * La API envuelve todas las respuestas en SuccessResponse, pero httpClient ya extrae Axios .data,
+ * quedando { success, message, data: { ...campos_reales } }. Este helper extrae .data.
+ */
+function unwrapApiResponse<T>(response: any): T {
+  if (response && typeof response === 'object' && 'success' in response && 'data' in response && response.data) {
+    return response.data as T;
+  }
+  return response as T;
+}
+
 class OrderService {
   private getHeaders() {
     return {
@@ -645,14 +657,15 @@ class OrderService {
    */
   async getOrder(orderId: string): Promise<SalesOrder> {
     try {
-      const response = await httpClient.get<SalesOrder>(
+      const response = await httpClient.get<any>(
         API_ENDPOINTS.SALES_ORDER(ACCOUNT_ID, orderId),
         {
           headers: this.getHeaders(),
         }
       );
 
-      return response;
+      // La API devuelve { success, data: { id, order_number, ... } }
+      return unwrapApiResponse<SalesOrder>(response);
     } catch (error) {
       throw error;
     }
@@ -741,7 +754,7 @@ class OrderService {
    */
   async createSalesOrder(orderData: CreateSalesOrderRequest): Promise<CreateSalesOrderResponse> {
     try {
-      const response = await httpClient.post<CreateSalesOrderResponse>(
+      const response = await httpClient.post<any>(
         API_ENDPOINTS.SALES_ORDERS(ACCOUNT_ID),
         orderData,
         {
@@ -749,7 +762,10 @@ class OrderService {
         }
       );
 
-      return response;
+      // La API devuelve { success, data: { id, order_number, ... } }
+      const order = unwrapApiResponse<CreateSalesOrderResponse>(response);
+      log.orders.debug('createSalesOrder unwrapped:', { id: order.id, order_number: order.order_number });
+      return order;
     } catch (error) {
       throw error;
     }
@@ -760,7 +776,7 @@ class OrderService {
    */
   async createPayment(paymentData: CreatePaymentRequest): Promise<CreatePaymentResponse> {
     try {
-      const response = await httpClient.post<CreatePaymentResponse>(
+      const response = await httpClient.post<any>(
         API_ENDPOINTS.PAYMENTS(ACCOUNT_ID),
         paymentData,
         {
@@ -768,7 +784,10 @@ class OrderService {
         }
       );
 
-      return response;
+      // La API devuelve { success, data: { id, payment_number, ... } }
+      const payment = unwrapApiResponse<CreatePaymentResponse>(response);
+      log.orders.debug('createPayment unwrapped:', { id: payment.id, payment_number: payment.payment_number });
+      return payment;
     } catch (error) {
       throw error;
     }
@@ -780,12 +799,12 @@ class OrderService {
    */
   async applyPayment(paymentId: string, application: ApplyPaymentRequest): Promise<ApplyPaymentResponse> {
     try {
-      const response = await httpClient.post<ApplyPaymentResponse>(
+      const response = await httpClient.post<any>(
         API_ENDPOINTS.PAYMENT_APPLICATIONS(ACCOUNT_ID, paymentId),
         application,
         { headers: this.getHeaders() }
       );
-      return response;
+      return unwrapApiResponse<ApplyPaymentResponse>(response);
     } catch (error) {
       log.orders.error('Error aplicando pago:', error);
       throw error;
@@ -798,12 +817,12 @@ class OrderService {
    */
   async generateInvoice(orderId: string, invoiceData: GenerateInvoiceRequest): Promise<GenerateInvoiceResponse> {
     try {
-      const response = await httpClient.post<GenerateInvoiceResponse>(
+      const response = await httpClient.post<any>(
         API_ENDPOINTS.GENERATE_INVOICE(ACCOUNT_ID, orderId),
         invoiceData,
         { headers: this.getHeaders() }
       );
-      return response;
+      return unwrapApiResponse<GenerateInvoiceResponse>(response);
     } catch (error) {
       log.orders.error('Error generando factura:', error);
       throw error;
@@ -850,7 +869,7 @@ class OrderService {
    */
   async createBusinessPartner(data: CreateBusinessPartnerRequest): Promise<BusinessPartnerResponse> {
     try {
-      const response = await httpClient.post<{ success: boolean; data: BusinessPartnerResponse }>(
+      const response = await httpClient.post<any>(
         API_ENDPOINTS.BUSINESS_PARTNERS(ACCOUNT_ID),
         data,
         {
@@ -858,11 +877,8 @@ class OrderService {
         }
       );
 
-      // La API puede devolver { success, data } o directamente el objeto
-      if (response.data) {
-        return response.data;
-      }
-      return response as unknown as BusinessPartnerResponse;
+      // La API devuelve { success, data: { id, name, ... } }
+      return unwrapApiResponse<BusinessPartnerResponse>(response);
     } catch (error) {
       log.orders.error('Error creating business partner:', error);
       throw error;

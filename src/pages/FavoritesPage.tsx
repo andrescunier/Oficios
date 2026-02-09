@@ -106,11 +106,6 @@ export const FavoritesPage: React.FC = () => {
 
   const handleAddToCart = (product: Product) => {
     addToCart(product, 1);
-    addNotification({
-      type: 'success',
-      title: 'Agregado al carrito',
-      message: `${product.name} fue agregado a tu carrito`,
-    });
   };
 
   const handleAddAllToCart = () => {

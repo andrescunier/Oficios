@@ -44,7 +44,7 @@ const registerSchema = z.object({
   phone: z.string().min(1, 'El teléfono es requerido'),
   title: z.string().min(1, 'El cargo es requerido'),
   tax_id: z.string().min(1, 'El CUIT/RUT es requerido'),
-  currency: z.string().min(1, 'La moneda es requerida').default('USD'),
+  currency: z.string().min(1, 'La moneda es requerida').default('ARS'),
   industry: z.string().min(1, 'La industria es requerida'),
   username: z.string().min(3, 'El nombre de usuario debe tener al menos 3 caracteres'),
   acceptTerms: z.boolean().refine((val) => val === true, {
@@ -76,7 +76,7 @@ export const Register: React.FC = () => {
     resolver: zodResolver(registerSchema),
     defaultValues: {
       acceptTerms: false,
-      currency: 'USD',
+      currency: 'ARS',
       first_name: '',
       last_name: '',
       email: '',

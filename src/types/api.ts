@@ -97,7 +97,7 @@ export interface SalesOrder extends BaseEntity {
   order_number: string;
   customer_id: string;
   currency: string;
-  status: 'draft' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  status: 'draft' | 'pending_payment' | 'payment_review' | 'confirmed' | 'preparing' | 'ready_to_ship' | 'shipped' | 'in_transit' | 'out_for_delivery' | 'delivered' | 'completed' | 'cancelled' | 'return_requested' | 'return_in_transit' | 'returned' | 'refunded';
   items: SalesOrderItem[];
   subtotal?: number;
   tax_amount?: number;

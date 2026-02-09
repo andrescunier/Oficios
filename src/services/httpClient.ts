@@ -80,8 +80,13 @@ class HttpClient {
         }
 
         // Si es error 401, limpiar token y redirigir a login
+        // PERO no hacerlo durante el proceso de login/getMe para evitar limpiar la sesión recién creada
         if (error.response?.status === 401) {
-          this.handleUnauthorized();
+          const url = error.config?.url || '';
+          const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/me') || url.includes('/auth/token');
+          if (!isAuthEndpoint) {
+            this.handleUnauthorized();
+          }
         }
 
         // Transformar errores de la API

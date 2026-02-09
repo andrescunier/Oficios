@@ -37,20 +37,12 @@ export const CartPage: React.FC = () => {
           title: 'Autenticación requerida',
           message: 'Debes iniciar sesión para realizar el checkout',
         });
-        navigate('/login');
+        navigate('/login', { state: { from: '/checkout' } });
         return;
       }
 
-      addNotification({
-        type: 'info',
-        title: 'Checkout',
-        message: 'Redirigiendo al proceso de pago...',
-      });
-      
-      // Redirigir a la página de checkout
-      setTimeout(() => {
-        navigate('/checkout');
-      }, 1000);
+      // Redirigir a la página de checkout directamente
+      navigate('/checkout');
       
     } catch (error) {
       addNotification({
@@ -67,7 +59,7 @@ export const CartPage: React.FC = () => {
     if (typeof price !== 'number' || isNaN(price)) {
       return 'Precio no disponible';
     }
-    const currencyCode = currency || 'USD';
+    const currencyCode = currency || 'ARS';
     
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',

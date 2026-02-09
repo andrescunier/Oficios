@@ -246,6 +246,12 @@ export const getAPIHeaders = () => ({
  * Valida que todas las variables de entorno críticas estén configuradas
  */
 export const validateEnvironment = () => {
+  // En producción, la configuración puede venir de window.__APP_CONFIG__ (runtime config)
+  const runtimeConfig = (window as any).__APP_CONFIG__;
+  if (runtimeConfig?.API_BASE_URL && runtimeConfig?.ACCOUNT_ID) {
+    return true;
+  }
+
   const required = [
     'VITE_API_BASE_URL',
     'VITE_ACCOUNT_ID',

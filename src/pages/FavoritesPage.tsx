@@ -27,6 +27,12 @@ export const FavoritesPage: React.FC = () => {
   const [favoriteProducts, setFavoriteProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  useEffect(() => {
+    if (auth.isAuthenticated) {
+      loadFavoriteProducts();
+    }
+  }, [favorites, auth.isAuthenticated]);
+
   // Redirigir si no está autenticado
   if (!auth.isAuthenticated) {
     return (
@@ -46,10 +52,6 @@ export const FavoritesPage: React.FC = () => {
       </div>
     );
   }
-
-  useEffect(() => {
-    loadFavoriteProducts();
-  }, [favorites]);
 
   const loadFavoriteProducts = async () => {
     setIsLoading(true);
@@ -83,7 +85,7 @@ export const FavoritesPage: React.FC = () => {
     if (typeof price !== 'number' || isNaN(price)) {
       return 'Precio no disponible';
     }
-    const currencyCode = currency || 'USD';
+    const currencyCode = currency || 'ARS';
     
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',

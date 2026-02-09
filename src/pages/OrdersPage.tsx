@@ -33,6 +33,12 @@ export const OrdersPage: React.FC = () => {
   const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
   const [cancelReason, setCancelReason] = useState<string>('');
 
+  useEffect(() => {
+    if (auth.isAuthenticated) {
+      loadOrders();
+    }
+  }, [auth.isAuthenticated]);
+
   // Redirigir si no está autenticado
   if (!auth.isAuthenticated) {
     return (
@@ -52,10 +58,6 @@ export const OrdersPage: React.FC = () => {
       </div>
     );
   }
-
-  useEffect(() => {
-    loadOrders();
-  }, []);
 
   const loadOrders = async () => {
     setIsLoading(true);
@@ -118,7 +120,7 @@ export const OrdersPage: React.FC = () => {
     if (typeof price !== 'number' || isNaN(price)) {
       return 'Precio no disponible';
     }
-    const currencyCode = currency || 'USD';
+    const currencyCode = currency || 'ARS';
     
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',

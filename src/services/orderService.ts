@@ -104,7 +104,7 @@ interface CreatePaymentRequest {
   partner_id?: string;
   currency: string;
   amount: number;
-  method: 'cash' | 'transfer' | 'check' | 'card' | 'other';
+  method: 'cash' | 'transfer' | 'credit_card' | 'debit_card' | 'check' | 'card' | 'mercadopago' | 'stripe' | 'other';
   reference?: string;
   received_at?: string;
   status: 'pending' | 'received' | 'rejected';
@@ -382,13 +382,15 @@ class OrderService {
     try {
       const response = await httpClient.post<ValidateStockResponse>(
         API_ENDPOINTS.VALIDATE_STOCK(ACCOUNT_ID),
-        items.map(item => ({
-          product_id: item.product_id,
-          description: '',
-          quantity: item.quantity,
-          unit_price: 0,
-          tax_rate: 0
-        })),
+        {
+          items: items.map(item => ({
+            product_id: item.product_id,
+            description: '',
+            quantity: item.quantity,
+            unit_price: 0,
+            tax_rate: 0
+          }))
+        },
         { headers: this.getHeaders() }
       );
       
@@ -796,7 +798,7 @@ class OrderService {
   async generateInvoice(orderId: string, invoiceData: GenerateInvoiceRequest): Promise<GenerateInvoiceResponse> {
     try {
       const response = await httpClient.post<GenerateInvoiceResponse>(
-        API_ENDPOINTS.ORDER_INVOICE(ACCOUNT_ID, orderId),
+        API_ENDPOINTS.GENERATE_INVOICE(ACCOUNT_ID, orderId),
         invoiceData,
         { headers: this.getHeaders() }
       );
@@ -828,12 +830,12 @@ class OrderService {
    */
   mapPaymentMethod(frontendMethod: string): CreatePaymentRequest['method'] {
     const methodMap: Record<string, CreatePaymentRequest['method']> = {
-      'credit': 'card',
-      'debit': 'card',
-      'mercadopago': 'other',
+      'credit': 'credit_card',
+      'debit': 'debit_card',
+      'mercadopago': 'mercadopago',
       'transferencia': 'transfer',
       'efectivo': 'cash',
-      'tarjeta': 'card',
+      'tarjeta': 'credit_card',
       'transfer': 'transfer',
       'wire_transfer': 'transfer',
     };
@@ -882,11 +884,28 @@ class OrderService {
     try {
       const { shippingInfo, items, currency, totalAmount, paymentMethod, notes } = checkoutData;
       
-      // 1. Obtener business_partner_id (guardado en localStorage después de /auth/me)
-      const customerId = businessPartnerId || localStorage.getItem('business_partner_id');
+      // 1. Obtener customer_id: puede ser business_partner_id o user_id
+      // La API acepta ambos según la doc: "customer_id puede ser un User.id o un BusinessPartner.id"
+      let customerId = businessPartnerId || localStorage.getItem('business_partner_id');
       
       if (!customerId) {
-        console.error('❌ No se encontró business_partner_id - el usuario debe estar logueado');
+        // Fallback: usar el user_id del usuario autenticado
+        try {
+          const persistedState = localStorage.getItem('diapstore-store');
+          if (persistedState) {
+            const state = JSON.parse(persistedState);
+            customerId = state?.state?.auth?.user?.id || null;
+            if (customerId) {
+              console.log('⚠️ Usando user.id como customer_id (fallback):', customerId);
+            }
+          }
+        } catch (e) {
+          console.error('Error obteniendo user.id del store:', e);
+        }
+      }
+      
+      if (!customerId) {
+        console.error('❌ No se encontró customer_id - el usuario debe estar logueado');
         return {
           salesOrder: null,
           payment: null,
@@ -894,7 +913,7 @@ class OrderService {
           message: 'Debes iniciar sesión para realizar una compra. Si ya iniciaste sesión, intenta cerrar sesión y volver a entrar.',
           error: {
             step: 'authentication',
-            details: 'No se encontró business_partner_id'
+            details: 'No se encontró business_partner_id ni user_id'
           }
         };
       }

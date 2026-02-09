@@ -66,7 +66,7 @@ export const usePriceVisibility = () => {
 export const PriceDisplay = ({ 
   price, 
   originalPrice, 
-  currency = 'USD',
+  currency = 'ARS',
   className = '',
   showLoginButton = true,
   onLoginClick

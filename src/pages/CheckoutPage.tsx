@@ -93,7 +93,7 @@ export const CheckoutPage: React.FC = () => {
     if (typeof price !== 'number' || isNaN(price)) {
       return 'Precio no disponible';
     }
-    const currencyCode = currency || 'USD';
+    const currencyCode = currency || 'ARS';
     
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',
@@ -179,6 +179,9 @@ export const CheckoutPage: React.FC = () => {
   };
 
   const handleFinalizeOrder = async () => {
+    console.log('🛒 Iniciando checkout...');
+    console.log('Business Partner ID:', businessPartnerId);
+    console.log('Auth:', auth.isAuthenticated, auth.user?.username);
     setIsProcessing(true);
     
     try {
@@ -206,16 +209,19 @@ export const CheckoutPage: React.FC = () => {
           description: item.product.name,
           quantity: item.quantity,
           unit_price: item.product.unit_price,
-          tax_rate: item.product.tax_rate || 10.5 // IVA 10.5%
+          tax_rate: item.product.tax_rate && item.product.tax_rate > 1 ? item.product.tax_rate / 100 : (item.product.tax_rate || 0.21) // IVA en formato decimal (0.21 = 21%)
         })),
-        currency: "USD",
+        currency: cart.currency || "ARS",
         totalAmount: cart.total_amount,
         paymentMethod: paymentInfo.paymentMethod,
         notes: `Pedido web - ${shippingInfo.firstName} ${shippingInfo.lastName}`
       };
 
       // Pasar el business_partner_id del usuario logueado
+      console.log('📦 CheckoutData:', JSON.stringify(checkoutData, null, 2));
       const result = await orderService.processCheckout(checkoutData, businessPartnerId || undefined);
+      
+      console.log('📋 Resultado checkout:', JSON.stringify(result, null, 2));
       
       // Verificar que todas las operaciones fueron exitosas
       if (result.success && result.salesOrder && result.payment) {
@@ -731,6 +737,7 @@ export const CheckoutPage: React.FC = () => {
                     Volver
                   </button>
                   <button
+                    type="button"
                     onClick={handleFinalizeOrder}
                     disabled={isProcessing}
                     className="flex-1 bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"

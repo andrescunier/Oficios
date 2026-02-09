@@ -160,7 +160,7 @@ export class AuthService {
         company_name: data.companyName || `${data.firstName} ${data.lastName}`,
         tax_id: data.taxId,
         industry: data.industry,
-        currency: data.currency || 'USD',
+        currency: data.currency || 'ARS',
         username: data.username || data.email.split('@')[0],
         role: data.role || 'customer',
         person_metadata: {
@@ -192,6 +192,13 @@ export class AuthService {
         company_name: data.companyName
       };
       localStorage.setItem('registration_data', JSON.stringify(registrationData));
+
+      // Guardar el partner_id (business_partner_id) del registro
+      // Este es el customer_id que necesitamos para crear órdenes
+      if (response.data?.partner_id) {
+        localStorage.setItem('business_partner_id', response.data.partner_id);
+        console.log('✅ Business Partner ID guardado del registro:', response.data.partner_id);
+      }
 
       // Luego de un registro exitoso, iniciamos sesión automáticamente
       return await this.login({
@@ -252,11 +259,15 @@ export class AuthService {
       });
 
       if (response.success && response.data) {
-        // Guardar el business_partner_id para usar en órdenes
-        const bpId = response.data.billing?.business_partner_id;
+        // Intentar obtener business_partner_id de distintas ubicaciones posibles en la respuesta
+        const bpId = response.data.billing?.business_partner_id 
+          || (response.data as any).business_partner_id
+          || (response.data as any).partner_id;
         if (bpId) {
           localStorage.setItem('business_partner_id', bpId);
-          console.log('✅ Business Partner ID guardado:', bpId);
+          console.log('✅ Business Partner ID guardado desde /auth/me:', bpId);
+        } else {
+          console.warn('⚠️ /auth/me no devolvió business_partner_id. Se usará user.id como fallback para customer_id.');
         }
         return response;
       }

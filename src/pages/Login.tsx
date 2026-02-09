@@ -40,7 +40,8 @@ export const Login: React.FC = () => {
   const { login, addNotification, logout } = useStore();
 
   // Obtener la URL de redirección después del login
-  const from = (location.state as any)?.from?.pathname || '/';
+  const locationState = location.state as any;
+  const from = locationState?.from?.pathname || locationState?.from || '/';
 
   // Función para limpiar sesión corrupta
   const handleClearSession = () => {

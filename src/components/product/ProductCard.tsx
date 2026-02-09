@@ -127,7 +127,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     }
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',
-      currency: product.currency || 'USD',
+      currency: product.currency || 'ARS',
       minimumFractionDigits: 0,
     }).format(price);
   };

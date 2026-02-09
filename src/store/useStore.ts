@@ -99,7 +99,7 @@ const initialCartState: CartState = {
   subtotal: 0,
   tax_amount: 0,
   total_amount: 0,
-  currency: 'USD',
+  currency: 'ARS',
 };
 
 const initialUIState: UIState = {
@@ -111,7 +111,7 @@ const initialUIState: UIState = {
 };
 
 // Helper para calcular totales del carrito
-const calculateTotals = (items: CartItem[], currency: string = 'USD'): CartState => {
+const calculateTotals = (items: CartItem[], currency: string = 'ARS'): CartState => {
   const subtotal = items.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0);
   const tax_amount = subtotal * 0.105; // 10.5% IVA
   const total_amount = subtotal + tax_amount;
@@ -181,10 +181,17 @@ export const useStore = create<AppStore>()(
         // Después del login, obtener el perfil completo con business_partner_id
         authService.getMe().then((meResponse) => {
           if (meResponse?.success && meResponse.data) {
-            const bpId = meResponse.data.billing?.business_partner_id;
+            // Intentar obtener business_partner_id de múltiples ubicaciones
+            const bpId = meResponse.data.billing?.business_partner_id
+              || (meResponse.data as any).business_partner_id
+              || (meResponse.data as any).partner_id;
             if (bpId) {
               localStorage.setItem('business_partner_id', bpId);
               console.log('✅ Business Partner ID obtenido de /auth/me:', bpId);
+            } else if (!localStorage.getItem('business_partner_id')) {
+              // Si no hay BP id en ningún lado, guardamos el user.id como fallback
+              // La API acepta User.id o BusinessPartner.id como customer_id
+              console.warn('⚠️ /auth/me no devolvió business_partner_id, usando user.id como fallback');
             }
             
             // Actualizar datos del usuario con la información de person

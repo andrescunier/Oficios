@@ -398,6 +398,7 @@ export const getRuntimeConfig = (): RuntimeConfig => {
     features: getFeaturesConfig(),
     filters: getFiltersConfig(),
     paymentMethods: getPaymentMethodsConfig(),
+    images: getImagesConfig(),
   };
 };
 

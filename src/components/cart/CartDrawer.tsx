@@ -33,16 +33,15 @@ interface CartDrawerProps {
 export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
   const { 
     cart, 
-    updateCartItemQuantity, 
+    updateCartQuantity, 
     removeFromCart, 
     clearCart,
-    getCartTotal,
-    getCartItemsCount,
-    addNotification 
+    addNotification,
+    auth,
   } = useStore();
 
-  const itemsCount = getCartItemsCount();
-  const total = getCartTotal();
+  const itemsCount = cart.items.reduce((sum, item) => sum + item.quantity, 0);
+  const total = cart.total_amount;
   const freeShippingThreshold = 50000;
   const isEligibleForFreeShipping = total >= freeShippingThreshold;
   const amountForFreeShipping = freeShippingThreshold - total;
@@ -51,7 +50,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
     if (typeof price !== 'number' || isNaN(price)) {
       return 'Precio no disponible';
     }
-    const currencyCode = currency || 'USD';
+    const currencyCode = currency || 'ARS';
     
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',
@@ -69,7 +68,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
         message: 'El producto fue eliminado del carrito',
       });
     } else {
-      updateCartItemQuantity(productId, newQuantity);
+      updateCartQuantity(productId, newQuantity);
     }
   };
 
@@ -128,7 +127,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
 
           {/* Cart items */}
           <div className="flex-1 overflow-y-auto mt-4">
-            {cart.length === 0 ? (
+            {cart.items.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center">
                 <ShoppingCart className="h-16 w-16 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-medium mb-2">Tu carrito está vacío</h3>
@@ -144,7 +143,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
               </div>
             ) : (
               <div className="space-y-4">
-                {cart.map((item) => (
+                {cart.items.map((item) => (
                   <div key={item.product.id} className="flex space-x-3 p-3 border rounded-lg">
                     <div className="flex-shrink-0">
                       <img
@@ -209,7 +208,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
           </div>
 
           {/* Cart footer */}
-          {cart.length > 0 && (
+          {cart.items.length > 0 && (
             <div className="border-t pt-4 mt-4">
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
@@ -232,9 +231,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Link to="/checkout" className="w-full">
+                  <Link to={auth.isAuthenticated ? "/checkout" : "/login"} state={!auth.isAuthenticated ? { from: '/checkout' } : undefined} className="w-full">
                     <Button className="w-full" size="lg">
-                      Proceder al Pago
+                      {auth.isAuthenticated ? 'Proceder al Pago' : 'Iniciar Sesión para Comprar'}
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </Link>

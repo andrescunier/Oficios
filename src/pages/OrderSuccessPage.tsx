@@ -129,13 +129,13 @@ export default function OrderSuccessPage() {
         {/* Botones de acción */}
         <div className="flex flex-col sm:flex-row gap-4">
           <Button asChild className="flex-1" size="lg">
-            <Link to="/orders">
+            <Link to="/pedidos">
               <FileText className="w-5 h-5 mr-2" />
               Ver Mis Pedidos
             </Link>
           </Button>
           <Button asChild variant="outline" className="flex-1" size="lg">
-            <Link to="/products">
+            <Link to="/productos">
               <ShoppingBag className="w-5 h-5 mr-2" />
               Seguir Comprando
               <ArrowRight className="w-5 h-5 ml-2" />

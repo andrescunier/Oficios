@@ -131,7 +131,7 @@ export const ProductsPageApiReal: React.FC = () => {
     }
   };
 
-  const formatPrice = (price: number, currency: string = 'USD') => {
+  const formatPrice = (price: number, currency: string = 'ARS') => {
     if (typeof price !== 'number' || isNaN(price)) {
       return 'Precio no disponible';
     }

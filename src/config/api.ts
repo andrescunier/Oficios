@@ -46,10 +46,10 @@ export const API_ENDPOINTS = {
   // Cuentas
   ACCOUNTS: '/api/accounts',
   
-  // Personas
-  PEOPLE: '/api/people',
-  PERSON: (personId: string) => `/api/people/${personId}`,
-  PERSON_DOCUMENTS: (personId: string) => `/api/people/${personId}/documents`,
+  // Personas (requieren account_id según API v1.2.1)
+  PEOPLE: (accountId: string) => `/api/accounts/${accountId}/people`,
+  PERSON: (accountId: string, personId: string) => `/api/accounts/${accountId}/people/${personId}`,
+  PERSON_DOCUMENTS: (accountId: string, personId: string) => `/api/accounts/${accountId}/people/${personId}/documents`,
   
   // Usuarios (dentro de una cuenta)
   USERS: (accountId: string) => `/api/accounts/${accountId}/users`,
@@ -74,18 +74,37 @@ export const API_ENDPOINTS = {
     `/api/accounts/${accountId}/sales-orders/${orderId}`,
   SALES_ORDER_ITEMS: (accountId: string, orderId: string) => 
     `/api/accounts/${accountId}/sales-orders/${orderId}/items`,
-  CONFIRM_ORDER: (accountId: string, orderId: string) => 
-    `/api/accounts/${accountId}/sales-orders/${orderId}/confirm`,
-  CANCEL_ORDER: (accountId: string, orderId: string) => 
-    `/api/accounts/${accountId}/sales-orders/${orderId}/cancel`,
-  COMPLETE_ORDER: (accountId: string, orderId: string) => 
-    `/api/accounts/${accountId}/sales-orders/${orderId}/complete`,
   VALIDATE_STOCK: (accountId: string) => 
     `/api/accounts/${accountId}/sales-orders/validate-stock`,
   ORDER_INVOICE: (accountId: string, orderId: string) => 
     `/api/accounts/${accountId}/sales-orders/${orderId}/invoice`,
   GENERATE_INVOICE: (accountId: string, orderId: string) => 
     `/api/accounts/${accountId}/sales-orders/${orderId}/generate-invoice`,
+  
+  // State Machine endpoints (Order State Machine v2)
+  SUBMIT_ORDER: (accountId: string, orderId: string) => 
+    `/api/accounts/${accountId}/sales-orders/${orderId}/submit`,
+  CONFIRM_PAYMENT: (accountId: string, orderId: string) => 
+    `/api/accounts/${accountId}/sales-orders/${orderId}/confirm-payment`,
+  SHIP_ORDER: (accountId: string, orderId: string) => 
+    `/api/accounts/${accountId}/sales-orders/${orderId}/ship`,
+  DELIVER_ORDER: (accountId: string, orderId: string) => 
+    `/api/accounts/${accountId}/sales-orders/${orderId}/deliver`,
+  COMPLETE_ORDER: (accountId: string, orderId: string) => 
+    `/api/accounts/${accountId}/sales-orders/${orderId}/complete`,
+  CANCEL_ORDER: (accountId: string, orderId: string) => 
+    `/api/accounts/${accountId}/sales-orders/${orderId}/cancel-v2`,
+  RETURN_ORDER: (accountId: string, orderId: string) => 
+    `/api/accounts/${accountId}/sales-orders/${orderId}/return`,
+  TRANSITION_ORDER: (accountId: string, orderId: string) => 
+    `/api/accounts/${accountId}/sales-orders/${orderId}/transition`,
+  STATUS_HISTORY: (accountId: string, orderId: string) => 
+    `/api/accounts/${accountId}/sales-orders/${orderId}/status-history`,
+  VALID_TRANSITIONS: (accountId: string, orderId: string) => 
+    `/api/accounts/${accountId}/sales-orders/${orderId}/valid-transitions`,
+  // Legacy confirm (deprecated - use CONFIRM_PAYMENT)
+  CONFIRM_ORDER: (accountId: string, orderId: string) => 
+    `/api/accounts/${accountId}/sales-orders/${orderId}/confirm-payment`,
   
   // Entregas
   DELIVERIES: (accountId: string) => `/api/accounts/${accountId}/deliveries`,

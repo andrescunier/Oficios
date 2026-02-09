@@ -183,12 +183,12 @@ export const CheckoutPage: React.FC = () => {
     
     try {
       // Preparar datos del checkout con la nueva estructura
-      // El servicio se encarga de:
-      // 1. Verificar si existe business_partner_id
-      // 2. Si no existe, crear el BusinessPartner
-      // 3. Validar disponibilidad de stock
-      // 4. Crear la orden con el ID del BusinessPartner
-      // 5. Crear el pago
+      // El servicio se encarga de (Order State Machine v2):
+      // 1. Verificar business_partner_id
+      // 2. Crear la orden (draft)
+      // 3. Submit: draft → pending_payment (reserva stock)
+      // 4. Crear el pago
+      // 5. Confirm Payment: pending_payment → confirmed (deduce stock)
       const checkoutData = {
         shippingInfo: {
           firstName: shippingInfo.firstName,

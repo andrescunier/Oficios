@@ -22,6 +22,7 @@ import { useStore } from '@/store/useStore';
 import { productService } from '@/services/productService';
 import type { Product } from '@/types/api';
 import { ASSETS, BRANDING } from '@/config/branding';
+import { getImagesConfig } from '@/config/runtime';
 
 export const Home: React.FC = () => {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
@@ -109,21 +110,9 @@ export const Home: React.FC = () => {
     }
   ];
 
-  // Categories
-  const categories = [
-    {
-      name: "SSD SATA",
-      image: "https://dcdn-us.mitiendanube.com/stores/001/498/293/products/f058c1e20b671761b713f47be922719-a2fcf586850d775dac17482988864670-480-0.webp",
-      link: "/categoria/ssd-sata",
-      description: "SATA III para máximo rendimiento"
-    },
-    {
-      name: "Memoria RAM",
-      image: "https://dcdn-us.mitiendanube.com/stores/001/498/293/products/2-78f8d07cb6d82d11a217234745342405-480-0.webp",
-      link: "/categoria/memoria-ram",
-      description: "Módulos de memoria de alta velocidad"
-    }
-  ];
+  // Categories (desde runtime config)
+  const runtimeImages = getImagesConfig();
+  const categories = runtimeImages.categories;
 
   useEffect(() => {
     loadHomeData();
@@ -317,7 +306,7 @@ export const Home: React.FC = () => {
                         alt={category.name}
                         className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
                         onError={(e) => {
-                          e.currentTarget.src = '/images/categories/componentes.jpg';
+                          e.currentTarget.src = runtimeImages.productFallbacks['default'] || '/images/categories/componentes.jpg';
                         }}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />

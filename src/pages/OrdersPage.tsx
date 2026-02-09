@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { orderService } from '@/services/orderService';
-import type { SalesOrder } from '@/services/orderService';
+import type { SalesOrder, OrderStatus } from '@/services/orderService';
 
 export const OrdersPage: React.FC = () => {
   const { auth, addNotification } = useStore();
@@ -87,47 +87,31 @@ export const OrdersPage: React.FC = () => {
   };
 
   const getStatusInfo = (status: SalesOrder['status']) => {
-    // Mapear el estado de la API al estado del frontend
-    const frontendStatus = orderService.mapOrderStatus(status);
-    
-    switch (frontendStatus) {
-      case 'pending':
-        return {
-          label: 'Pendiente',
-          color: 'text-yellow-600 bg-yellow-100',
-          icon: Clock
-        };
-      case 'processing':
-        return {
-          label: 'Procesando',
-          color: 'text-blue-600 bg-blue-100',
-          icon: Package
-        };
-      case 'shipped':
-        return {
-          label: 'Enviado',
-          color: 'text-purple-600 bg-purple-100',
-          icon: Truck
-        };
-      case 'delivered':
-        return {
-          label: 'Entregado',
-          color: 'text-green-600 bg-green-100',
-          icon: CheckCircle
-        };
-      case 'cancelled':
-        return {
-          label: 'Cancelado',
-          color: 'text-red-600 bg-red-100',
-          icon: XCircle
-        };
-      default:
-        return {
-          label: 'Desconocido',
-          color: 'text-gray-600 bg-gray-100',
-          icon: Package
-        };
-    }
+    // Mapa detallado de estados según Order State Machine v2
+    const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
+      'draft':              { label: 'Borrador',             color: 'text-gray-600 bg-gray-100',    icon: Clock },
+      'pending_payment':    { label: 'Pago pendiente',       color: 'text-yellow-600 bg-yellow-100', icon: Clock },
+      'payment_review':     { label: 'Revisión de pago',     color: 'text-orange-600 bg-orange-100', icon: Clock },
+      'confirmed':          { label: 'Confirmado',           color: 'text-blue-600 bg-blue-100',    icon: CheckCircle },
+      'preparing':          { label: 'En preparación',       color: 'text-indigo-600 bg-indigo-100', icon: Package },
+      'ready_to_ship':      { label: 'Listo para enviar',    color: 'text-purple-600 bg-purple-100', icon: Package },
+      'shipped':            { label: 'Enviado',              color: 'text-cyan-600 bg-cyan-100',    icon: Truck },
+      'in_transit':         { label: 'En tránsito',          color: 'text-cyan-600 bg-cyan-100',    icon: Truck },
+      'out_for_delivery':   { label: 'En reparto',           color: 'text-teal-600 bg-teal-100',    icon: Truck },
+      'delivered':          { label: 'Entregado',            color: 'text-green-600 bg-green-100',  icon: CheckCircle },
+      'completed':          { label: 'Completado',           color: 'text-green-600 bg-green-100',  icon: CheckCircle },
+      'cancelled':          { label: 'Cancelado',            color: 'text-red-600 bg-red-100',      icon: XCircle },
+      'return_requested':   { label: 'Devolución solicitada', color: 'text-amber-600 bg-amber-100',  icon: Package },
+      'return_in_transit':  { label: 'Dev. en tránsito',     color: 'text-amber-600 bg-amber-100',  icon: Truck },
+      'returned':           { label: 'Devuelto',             color: 'text-orange-600 bg-orange-100', icon: Package },
+      'refunded':           { label: 'Reembolsado',          color: 'text-red-600 bg-red-100',      icon: XCircle },
+    };
+
+    return statusConfig[status] || {
+      label: orderService.getStatusLabel(status),
+      color: 'text-gray-600 bg-gray-100',
+      icon: Package
+    };
   };
 
   const formatPrice = (price: number, currency?: string) => {
@@ -153,10 +137,9 @@ export const OrdersPage: React.FC = () => {
     });
   };
 
-  // Verificar si una orden se puede cancelar
-  // NOTA: Funcionalidad deshabilitada - endpoint de cancelación no disponible en la API
-  const canCancelOrder = (_status: string): boolean => {
-    return false; // Cancelación no soportada por la API actual
+  // Verificar si una orden se puede cancelar (según State Machine v2)
+  const canCancelOrder = (status: string): boolean => {
+    return orderService.canCancelOrder(status);
   };
 
   // Cancelar una orden
@@ -257,6 +240,7 @@ export const OrdersPage: React.FC = () => {
                   <option value="shipped">Enviado</option>
                   <option value="delivered">Entregado</option>
                   <option value="cancelled">Cancelado</option>
+                  <option value="returned">Devolución</option>
                 </select>
                 <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
               </div>

@@ -9,7 +9,7 @@ import type { Product } from '@/types/api';
 import { Loader2, Filter, X, ChevronDown, ChevronUp, SlidersHorizontal, Plus, Minus, Heart } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { PriceDisplay } from '@/hooks/usePriceVisibility';
-import { getFiltersConfig } from '@/config/runtime';
+import { getFiltersConfig, getImagesConfig } from '@/config/runtime';
 
 // Tipos para filtros
 interface FilterOption {
@@ -64,22 +64,46 @@ export const CategoryPage: React.FC = () => {
   const filterConfig = useMemo(() => {
     // Si los filtros están deshabilitados, retornar objeto vacío
     if (!showFilters) return {};
+
+    // Opciones por defecto si no vienen del runtime config
+    const defaultCapacidadSSD: FilterOption[] = [
+      { value: '120', label: '120 GB' },
+      { value: '240', label: '240 GB' },
+      { value: '256', label: '256 GB' },
+      { value: '480', label: '480 GB' },
+      { value: '500', label: '500 GB' },
+      { value: '512', label: '512 GB' },
+      { value: '1tb', label: '1 TB' },
+      { value: '2tb', label: '2 TB' },
+    ];
+    const defaultCapacidadRAM: FilterOption[] = [
+      { value: '4gb', label: '4 GB' },
+      { value: '8gb', label: '8 GB' },
+      { value: '16gb', label: '16 GB' },
+      { value: '32gb', label: '32 GB' },
+      { value: '64gb', label: '64 GB' },
+    ];
+    const defaultVelocidad: FilterOption[] = [
+      { value: '2400', label: '2400 MHz' },
+      { value: '2666', label: '2666 MHz' },
+      { value: '3200', label: '3200 MHz' },
+      { value: '3600', label: '3600 MHz' },
+      { value: '4800', label: '4800 MHz' },
+      { value: '5200', label: '5200 MHz' },
+      { value: '5600', label: '5600 MHz' },
+      { value: '6000', label: '6000 MHz' },
+    ];
+
+    // Usar opciones del runtime config si están disponibles
+    const runtimeCapacidadOpts = filtersConfig.capacidadOptions?.length ? filtersConfig.capacidadOptions : undefined;
+    const runtimeVelocidadOpts = filtersConfig.velocidadOptions?.length ? filtersConfig.velocidadOptions : undefined;
     
     if (category === 'ssd-sata') {
       const config: any = {};
       if (filtersConfig.capacidad) {
         config.capacidad = {
           label: 'Capacidad',
-          options: [
-            { value: '120', label: '120 GB' },
-            { value: '240', label: '240 GB' },
-            { value: '256', label: '256 GB' },
-            { value: '480', label: '480 GB' },
-            { value: '500', label: '500 GB' },
-            { value: '512', label: '512 GB' },
-            { value: '1tb', label: '1 TB' },
-            { value: '2tb', label: '2 TB' },
-          ]
+          options: runtimeCapacidadOpts || defaultCapacidadSSD
         };
       }
       return config;
@@ -88,28 +112,13 @@ export const CategoryPage: React.FC = () => {
       if (filtersConfig.capacidad) {
         config.capacidad = {
           label: 'Capacidad',
-          options: [
-            { value: '4gb', label: '4 GB' },
-            { value: '8gb', label: '8 GB' },
-            { value: '16gb', label: '16 GB' },
-            { value: '32gb', label: '32 GB' },
-            { value: '64gb', label: '64 GB' },
-          ]
+          options: runtimeCapacidadOpts || defaultCapacidadRAM
         };
       }
       if (filtersConfig.velocidad) {
         config.velocidad = {
           label: 'Velocidad',
-          options: [
-            { value: '2400', label: '2400 MHz' },
-            { value: '2666', label: '2666 MHz' },
-            { value: '3200', label: '3200 MHz' },
-            { value: '3600', label: '3600 MHz' },
-            { value: '4800', label: '4800 MHz' },
-            { value: '5200', label: '5200 MHz' },
-            { value: '5600', label: '5600 MHz' },
-            { value: '6000', label: '6000 MHz' },
-          ]
+          options: runtimeVelocidadOpts || defaultVelocidad
         };
       }
       return config;
@@ -121,22 +130,24 @@ export const CategoryPage: React.FC = () => {
   const getProductImage = (product: Product): string => {
     if (product.image_url) return product.image_url;
     
+    const fallbacks = getImagesConfig().productFallbacks;
+    const defaultImg = fallbacks['default'] || '/images/categories/componentes.jpg';
     const name = product.name?.toLowerCase() || '';
     
     if (name.includes('ssd') && (name.includes('m.2') || name.includes('nvme'))) {
-      return '/images/categories/ssd-m2.jpg';
+      return fallbacks['ssd-m2'] || fallbacks['ssd-nvme'] || defaultImg;
     }
     if (name.includes('ssd')) {
-      return '/images/categories/ssd-sata.jpg';
+      return fallbacks['ssd-sata'] || fallbacks['ssd'] || defaultImg;
     }
     if (name.includes('ddr5')) {
-      return '/images/categories/ddr5.jpg';
+      return fallbacks['ddr5'] || defaultImg;
     }
     if (name.includes('ddr4') || name.includes('ram') || name.includes('memoria')) {
-      return '/images/categories/ddr4.jpg';
+      return fallbacks['ddr4'] || fallbacks['memoria'] || fallbacks['ram'] || defaultImg;
     }
     
-    return '/images/categories/componentes.jpg';
+    return defaultImg;
   };
 
   // Cargar productos cuando cambia la categoría

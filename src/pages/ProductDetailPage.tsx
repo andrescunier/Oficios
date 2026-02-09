@@ -262,15 +262,17 @@ export const ProductDetailPage: React.FC = () => {
               )}
             </div>
 
-            {/* Stock */}
-            <div className="flex items-center space-x-4">
-              <div className={`flex items-center space-x-2 ${isOutOfStock ? 'text-red-600' : 'text-green-600'}`}>
-                <div className={`w-3 h-3 rounded-full ${isOutOfStock ? 'bg-red-500' : 'bg-green-500'}`}></div>
-                <span className="font-medium">
-                  {isOutOfStock ? 'Sin stock' : `${product.stock_quantity} unidades disponibles`}
-                </span>
+            {/* Stock - solo para usuarios autenticados */}
+            {isAuthenticated && (
+              <div className="flex items-center space-x-4">
+                <div className={`flex items-center space-x-2 ${isOutOfStock ? 'text-red-600' : 'text-green-600'}`}>
+                  <div className={`w-3 h-3 rounded-full ${isOutOfStock ? 'bg-red-500' : 'bg-green-500'}`}></div>
+                  <span className="font-medium">
+                    {isOutOfStock ? 'Sin stock' : `${product.stock_quantity} unidades disponibles`}
+                  </span>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Descripción */}
             {product.description && (
@@ -280,8 +282,8 @@ export const ProductDetailPage: React.FC = () => {
               </div>
             )}
 
-            {/* Selector de cantidad y botones */}
-            {!isOutOfStock && (
+            {/* Selector de cantidad y botones - solo para usuarios autenticados */}
+            {isAuthenticated && !isOutOfStock && (
               <div className="space-y-4">
                 <div className="flex items-center space-x-4">
                   <span className="font-medium">Cantidad:</span>

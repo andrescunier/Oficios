@@ -5,6 +5,54 @@
  */
 
 // Tipo para la configuración runtime
+export interface HeroSlideConfig {
+  image: string;
+  title: string;
+  subtitle: string;
+  cta: string;
+  link: string;
+}
+
+export interface CategoryConfig {
+  name: string;
+  image: string;
+  link: string;
+  description: string;
+}
+
+export interface ImagesConfig {
+  heroSlides: HeroSlideConfig[];
+  categories: CategoryConfig[];
+  placeholders: {
+    product: string;
+    category: string;
+    user: string;
+  };
+  backgrounds: {
+    hero: string;
+    features: string;
+    testimonials: string;
+  };
+  banners: {
+    main: string;
+    secondary: string;
+    seasonal: string;
+    sale: string;
+  };
+  /** Mapa de keyword → URL de imagen para fallback de productos sin image_url */
+  productFallbacks: Record<string, string>;
+}
+
+export interface FilterConfig {
+  enabled: boolean;
+  capacidad: boolean;
+  velocidad: boolean;
+  /** Opciones personalizadas de capacidad */
+  capacidadOptions?: Array<{ value: string; label: string }>;
+  /** Opciones personalizadas de velocidad */
+  velocidadOptions?: Array<{ value: string; label: string }>;
+}
+
 export interface RuntimeConfig {
   api: {
     url: string;
@@ -68,17 +116,14 @@ export interface RuntimeConfig {
     analytics: boolean;
     realPayments: boolean;
   };
-  filters: {
-    enabled: boolean;
-    capacidad: boolean;
-    velocidad: boolean;
-  };
+  filters: FilterConfig;
   paymentMethods: {
     transferencia: boolean;
     efectivo: boolean;
     mercadopago: boolean;
     tarjeta: boolean;
   };
+  images: ImagesConfig;
 }
 
 // Extender Window para TypeScript
@@ -233,12 +278,96 @@ export const getFeaturesConfig = () => {
 /**
  * Configuración de filtros de productos
  */
-export const getFiltersConfig = () => {
+export const getFiltersConfig = (): FilterConfig => {
   const rc = window.__APP_CONFIG__;
   return {
     enabled: getBoolValue(rc?.filters?.enabled, 'VITE_FILTERS_ENABLED', false),
     capacidad: getBoolValue(rc?.filters?.capacidad, 'VITE_FILTER_CAPACIDAD', false),
     velocidad: getBoolValue(rc?.filters?.velocidad, 'VITE_FILTER_VELOCIDAD', false),
+    capacidadOptions: rc?.filters?.capacidadOptions || undefined,
+    velocidadOptions: rc?.filters?.velocidadOptions || undefined,
+  };
+};
+
+/**
+ * Configuración de imágenes (hero slides, categorías, placeholders, banners, backgrounds, fallbacks de productos)
+ */
+export const getImagesConfig = (): ImagesConfig => {
+  const rc = window.__APP_CONFIG__;
+
+  const defaultHeroSlides: HeroSlideConfig[] = [
+    {
+      image: '/images/heroes/slide-1.jpg',
+      title: 'Tecnología Profesional para Empresas',
+      subtitle: 'Soluciones B2B en componentes de alta gama',
+      cta: 'Ver Catálogo',
+      link: '/productos'
+    },
+    {
+      image: '/images/heroes/slide-2.jpg',
+      title: 'SSDs de Alto Rendimiento',
+      subtitle: 'Almacenamiento profesional para tu negocio',
+      cta: 'Explorar SSDs',
+      link: '/productos'
+    },
+    {
+      image: '/images/heroes/slide-3.jpg',
+      title: 'Memorias RAM DDR4 & DDR5',
+      subtitle: 'Maximiza el rendimiento de tus equipos',
+      cta: 'Ver Memorias',
+      link: '/productos'
+    }
+  ];
+
+  const defaultCategories: CategoryConfig[] = [
+    {
+      name: 'SSD SATA',
+      image: '/images/categories/ssd-sata.jpg',
+      link: '/categoria/ssd-sata',
+      description: 'SATA III para máximo rendimiento'
+    },
+    {
+      name: 'Memoria RAM',
+      image: '/images/categories/ddr4.jpg',
+      link: '/categoria/memoria-ram',
+      description: 'Módulos de memoria de alta velocidad'
+    }
+  ];
+
+  const defaultProductFallbacks: Record<string, string> = {
+    'ssd-m2': '/images/categories/ssd-m2.jpg',
+    'ssd-nvme': '/images/categories/ssd-m2.jpg',
+    'ssd-sata': '/images/categories/ssd-sata.jpg',
+    'ssd': '/images/categories/ssd-m2.jpg',
+    'ddr5': '/images/categories/ddr5.jpg',
+    'ddr4': '/images/categories/ddr4.jpg',
+    'memoria': '/images/categories/ddr4.jpg',
+    'ram': '/images/categories/ddr4.jpg',
+    'gaming': '/images/categories/gaming.jpg',
+    'componentes': '/images/categories/componentes.jpg',
+    'default': '/images/categories/componentes.jpg'
+  };
+
+  return {
+    heroSlides: rc?.images?.heroSlides?.length ? rc.images.heroSlides : defaultHeroSlides,
+    categories: rc?.images?.categories?.length ? rc.images.categories : defaultCategories,
+    placeholders: {
+      product: rc?.images?.placeholders?.product || '/images/placeholders/product-placeholder.jpg',
+      category: rc?.images?.placeholders?.category || '/images/placeholders/category-placeholder.jpg',
+      user: rc?.images?.placeholders?.user || '/images/placeholders/user-placeholder.jpg',
+    },
+    backgrounds: {
+      hero: rc?.images?.backgrounds?.hero || '/images/backgrounds/hero-bg.jpg',
+      features: rc?.images?.backgrounds?.features || '/images/backgrounds/features-bg.jpg',
+      testimonials: rc?.images?.backgrounds?.testimonials || '/images/backgrounds/testimonials-bg.jpg',
+    },
+    banners: {
+      main: rc?.images?.banners?.main || '/images/banners/main-banner.jpg',
+      secondary: rc?.images?.banners?.secondary || '/images/banners/secondary-banner.jpg',
+      seasonal: rc?.images?.banners?.seasonal || '/images/banners/seasonal-banner.jpg',
+      sale: rc?.images?.banners?.sale || '/images/banners/sale-banner.jpg',
+    },
+    productFallbacks: rc?.images?.productFallbacks || defaultProductFallbacks,
   };
 };
 

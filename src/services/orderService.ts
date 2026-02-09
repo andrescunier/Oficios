@@ -13,11 +13,31 @@ interface SalesOrderItem {
   tax_rate: number;
 }
 
+// Estado completo de la máquina de estados (Order State Machine v2)
+export type OrderStatus =
+  | 'draft'
+  | 'pending_payment'
+  | 'payment_review'
+  | 'confirmed'
+  | 'preparing'
+  | 'ready_to_ship'
+  | 'shipped'
+  | 'in_transit'
+  | 'out_for_delivery'
+  | 'delivered'
+  | 'completed'
+  | 'cancelled'
+  | 'return_requested'
+  | 'return_in_transit'
+  | 'returned'
+  | 'refunded';
+
+export type ReturnCondition = 'sellable' | 'damaged' | 'defective';
+
 interface CreateSalesOrderRequest {
   order_number: string;
   customer_id: string;
   currency: string;
-  status: 'draft' | 'pending' | 'confirmed' | 'completed' | 'cancelled';
   items: SalesOrderItem[];
   notes?: string;
   metadata?: {
@@ -43,7 +63,7 @@ interface SalesOrder {
   order_number: string;
   customer_id: string;
   currency: string;
-  status: 'draft' | 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  status: OrderStatus;
   total_amount: number;
   items: SalesOrderItem[];
   notes?: string;
@@ -51,6 +71,8 @@ interface SalesOrder {
     channel?: string;
     shipping_info?: any;
     payment_method?: string;
+    tracking_number?: string;
+    carrier?: string;
     [key: string]: any;
   };
   created_at: string;
@@ -194,15 +216,134 @@ interface ValidateStockResponse {
   };
 }
 
-// Interface para cancelar orden
+// Interface para cancelar orden (State Machine v2 - cancel-v2)
 interface CancelOrderRequest {
-  reason?: string;
+  reason: string;
+  event_id?: string;
+  restore_stock?: boolean;
 }
 
 interface CancelOrderResponse {
   success: boolean;
   message?: string;
-  data?: SalesOrder;
+  data?: {
+    order_id: string;
+    from_status: OrderStatus;
+    to_status: OrderStatus;
+    stock_operations?: number;
+    event_id?: string;
+  };
+}
+
+// Interfaces para State Machine v2
+interface OrderSubmitRequest {
+  validate_stock?: boolean;
+  reservation_ttl_hours?: number;
+  event_id?: string;
+  notes?: string;
+}
+
+interface OrderSubmitResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    order_id: string;
+    from_status: OrderStatus;
+    to_status: OrderStatus;
+    reservations_created?: number;
+    event_id?: string;
+  };
+}
+
+interface OrderConfirmPaymentRequest {
+  payment_reference?: string;
+  event_id?: string;
+  notes?: string;
+}
+
+interface OrderConfirmPaymentResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    order_id: string;
+    from_status: OrderStatus;
+    to_status: OrderStatus;
+    items_deducted?: number;
+    event_id?: string;
+  };
+}
+
+interface StateTransitionResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    order_id: string;
+    from_status: OrderStatus;
+    to_status: OrderStatus;
+    event_id?: string;
+  };
+}
+
+interface ValidTransitionsResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    order_id: string;
+    current_status: OrderStatus;
+    valid_transitions: OrderStatus[];
+    can_cancel: boolean;
+    can_return: boolean;
+  };
+}
+
+interface StatusHistoryEntry {
+  id: string;
+  from_status: OrderStatus | null;
+  to_status: OrderStatus;
+  reason: string | null;
+  event_id: string | null;
+  user_id: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+}
+
+interface StatusHistoryResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    order_id: string;
+    current_status: OrderStatus;
+    history: StatusHistoryEntry[];
+  };
+}
+
+interface ReturnItemRequest {
+  order_item_id: string;
+  quantity: number;
+  condition: ReturnCondition;
+  reason?: string;
+}
+
+interface OrderReturnRequest {
+  items: ReturnItemRequest[];
+  refund_amount?: number;
+  event_id?: string;
+}
+
+interface OrderReturnResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    order_id: string;
+    items: Array<{
+      order_item_id: string;
+      success: boolean;
+      restocked: boolean;
+      quantity: number;
+      condition: ReturnCondition;
+      error?: string;
+    }>;
+  };
 }
 
 // Datos del checkout para crear orden
@@ -275,20 +416,21 @@ class OrderService {
   }
 
   /**
-   * Cancela una orden de venta
-   * POST /accounts/{account_id}/sales-orders/{order_id}/cancel?reason=...&restore_stock=true
+   * Cancela una orden de venta (State Machine v2)
+   * POST /accounts/{account_id}/sales-orders/{order_id}/cancel-v2
+   * Solo disponible para estados pre-envío: draft, pending_payment, confirmed, preparing, ready_to_ship
    */
   async cancelOrder(orderId: string, reason?: string, restoreStock: boolean = true): Promise<CancelOrderResponse> {
     try {
-      const queryParams = new URLSearchParams();
-      if (reason) queryParams.append('reason', reason);
-      queryParams.append('restore_stock', restoreStock.toString());
-      
-      const url = `${API_ENDPOINTS.CANCEL_ORDER(ACCOUNT_ID, orderId)}?${queryParams.toString()}`;
+      const eventId = `cancel-${orderId}-${Date.now()}`;
       
       const response = await httpClient.post<CancelOrderResponse>(
-        url,
-        {},
+        API_ENDPOINTS.CANCEL_ORDER(ACCOUNT_ID, orderId),
+        {
+          reason: reason || 'Cancelado por el cliente',
+          event_id: eventId,
+          restore_stock: restoreStock
+        },
         { headers: this.getHeaders() }
       );
       
@@ -302,27 +444,163 @@ class OrderService {
           message: 'La cancelación de órdenes no está disponible. Contacte a soporte.'
         };
       }
+      // Si la orden no se puede cancelar (ya fue enviada)
+      if (error.response?.status === 400) {
+        return {
+          success: false,
+          message: error.response?.data?.error?.message || 'Esta orden no se puede cancelar en su estado actual.'
+        };
+      }
       throw error;
     }
   }
 
   /**
-   * Confirma una orden de venta (deduce stock si deduct_stock=true)
-   * POST /accounts/{account_id}/sales-orders/{order_id}/confirm?deduct_stock=true
+   * Enviar pedido: Draft → Pending Payment (reserva stock)
+   * POST /accounts/{account_id}/sales-orders/{order_id}/submit
    */
-  async confirmOrder(orderId: string, deductStock: boolean = true): Promise<{ success: boolean; data?: SalesOrder }> {
+  async submitOrder(orderId: string, options?: { validateStock?: boolean; reservationTtlHours?: number }): Promise<OrderSubmitResponse> {
     try {
-      const url = `${API_ENDPOINTS.CONFIRM_ORDER(ACCOUNT_ID, orderId)}?deduct_stock=${deductStock}`;
+      const eventId = `submit-${orderId}-${Date.now()}`;
       
-      const response = await httpClient.post<{ success: boolean; data?: SalesOrder }>(
-        url,
-        {},
+      const response = await httpClient.post<OrderSubmitResponse>(
+        API_ENDPOINTS.SUBMIT_ORDER(ACCOUNT_ID, orderId),
+        {
+          validate_stock: options?.validateStock ?? true,
+          reservation_ttl_hours: options?.reservationTtlHours ?? 48,
+          event_id: eventId
+        },
         { headers: this.getHeaders() }
       );
 
       return response;
     } catch (error) {
+      console.error('Error enviando orden:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Confirmar pago: Pending Payment → Confirmed (deduce stock)
+   * POST /accounts/{account_id}/sales-orders/{order_id}/confirm-payment
+   */
+  async confirmPayment(orderId: string, paymentReference?: string, notes?: string): Promise<OrderConfirmPaymentResponse> {
+    try {
+      const eventId = `confirm-${orderId}-${Date.now()}`;
+      
+      const response = await httpClient.post<OrderConfirmPaymentResponse>(
+        API_ENDPOINTS.CONFIRM_PAYMENT(ACCOUNT_ID, orderId),
+        {
+          payment_reference: paymentReference,
+          event_id: eventId,
+          notes: notes
+        },
+        { headers: this.getHeaders() }
+      );
+
+      return response;
+    } catch (error) {
+      console.error('Error confirmando pago:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Confirma una orden de venta (legacy - redirige a confirm-payment)
+   * @deprecated Usar confirmPayment() en su lugar
+   */
+  async confirmOrder(orderId: string, _deductStock: boolean = true): Promise<{ success: boolean; data?: SalesOrder }> {
+    try {
+      const result = await this.confirmPayment(orderId);
+      return {
+        success: result.success,
+        data: result.data as unknown as SalesOrder
+      };
+    } catch (error) {
       console.error('Error confirmando orden:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Transición genérica entre estados
+   * POST /accounts/{account_id}/sales-orders/{order_id}/transition?to_status=X
+   */
+  async transitionOrder(orderId: string, toStatus: OrderStatus, reason?: string): Promise<StateTransitionResponse> {
+    try {
+      const eventId = `transition-${toStatus}-${orderId}-${Date.now()}`;
+      
+      const response = await httpClient.post<StateTransitionResponse>(
+        `${API_ENDPOINTS.TRANSITION_ORDER(ACCOUNT_ID, orderId)}?to_status=${toStatus}`,
+        {
+          reason: reason,
+          event_id: eventId
+        },
+        { headers: this.getHeaders() }
+      );
+
+      return response;
+    } catch (error) {
+      console.error('Error en transición de orden:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Obtener transiciones válidas desde el estado actual
+   * GET /accounts/{account_id}/sales-orders/{order_id}/valid-transitions
+   */
+  async getValidTransitions(orderId: string): Promise<ValidTransitionsResponse> {
+    try {
+      const response = await httpClient.get<ValidTransitionsResponse>(
+        API_ENDPOINTS.VALID_TRANSITIONS(ACCOUNT_ID, orderId),
+        { headers: this.getHeaders() }
+      );
+      return response;
+    } catch (error) {
+      console.error('Error obteniendo transiciones válidas:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Obtener historial de cambios de estado
+   * GET /accounts/{account_id}/sales-orders/{order_id}/status-history
+   */
+  async getStatusHistory(orderId: string): Promise<StatusHistoryResponse> {
+    try {
+      const response = await httpClient.get<StatusHistoryResponse>(
+        API_ENDPOINTS.STATUS_HISTORY(ACCOUNT_ID, orderId),
+        { headers: this.getHeaders() }
+      );
+      return response;
+    } catch (error) {
+      console.error('Error obteniendo historial de estados:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Procesar devolución
+   * POST /accounts/{account_id}/sales-orders/{order_id}/return
+   * Solo desde delivered o completed
+   */
+  async returnOrder(orderId: string, data: OrderReturnRequest): Promise<OrderReturnResponse> {
+    try {
+      const eventId = `return-${orderId}-${Date.now()}`;
+      
+      const response = await httpClient.post<OrderReturnResponse>(
+        API_ENDPOINTS.RETURN_ORDER(ACCOUNT_ID, orderId),
+        {
+          ...data,
+          event_id: data.event_id || eventId
+        },
+        { headers: this.getHeaders() }
+      );
+
+      return response;
+    } catch (error) {
+      console.error('Error procesando devolución:', error);
       throw error;
     }
   }
@@ -390,19 +668,69 @@ class OrderService {
   }
 
   /**
-   * Convierte el estado de la API al formato del frontend
+   * Convierte el estado de la API al formato simplificado del frontend
    */
-  mapOrderStatus(apiStatus: string): 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled' {
-    const statusMap: Record<string, 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'> = {
+  mapOrderStatus(apiStatus: string): 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'returned' {
+    const statusMap: Record<string, 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'returned'> = {
       'draft': 'pending',
-      'pending': 'pending',
+      'pending_payment': 'pending',
+      'payment_review': 'pending',
       'confirmed': 'processing',
+      'preparing': 'processing',
+      'ready_to_ship': 'processing',
+      'shipped': 'shipped',
+      'in_transit': 'shipped',
+      'out_for_delivery': 'shipped',
+      'delivered': 'delivered',
       'completed': 'delivered',
       'cancelled': 'cancelled',
-      'shipped': 'shipped', // Si la API soporta este estado
+      'return_requested': 'returned',
+      'return_in_transit': 'returned',
+      'returned': 'returned',
+      'refunded': 'returned',
     };
     
     return statusMap[apiStatus] || 'pending';
+  }
+
+  /**
+   * Obtiene la etiqueta en español para un estado de la API
+   */
+  getStatusLabel(apiStatus: string): string {
+    const labels: Record<string, string> = {
+      'draft': 'Borrador',
+      'pending_payment': 'Pago pendiente',
+      'payment_review': 'Revisión de pago',
+      'confirmed': 'Confirmado',
+      'preparing': 'En preparación',
+      'ready_to_ship': 'Listo para enviar',
+      'shipped': 'Enviado',
+      'in_transit': 'En tránsito',
+      'out_for_delivery': 'En reparto',
+      'delivered': 'Entregado',
+      'completed': 'Completado',
+      'cancelled': 'Cancelado',
+      'return_requested': 'Devolución solicitada',
+      'return_in_transit': 'Devolución en tránsito',
+      'returned': 'Devuelto',
+      'refunded': 'Reembolsado',
+    };
+    return labels[apiStatus] || apiStatus;
+  }
+
+  /**
+   * Verifica si una orden puede ser cancelada según su estado
+   */
+  canCancelOrder(status: string): boolean {
+    const cancellableStatuses = ['draft', 'pending_payment', 'payment_review', 'confirmed', 'preparing', 'ready_to_ship'];
+    return cancellableStatuses.includes(status);
+  }
+
+  /**
+   * Verifica si una orden puede solicitar devolución
+   */
+  canReturnOrder(status: string): boolean {
+    return ['delivered', 'completed'].includes(status);
   }
 
   /**
@@ -500,14 +828,14 @@ class OrderService {
    */
   mapPaymentMethod(frontendMethod: string): CreatePaymentRequest['method'] {
     const methodMap: Record<string, CreatePaymentRequest['method']> = {
-      'credit': 'credit_card',
-      'debit': 'debit_card',
+      'credit': 'card',
+      'debit': 'card',
       'mercadopago': 'other',
-      'transferencia': 'bank_transfer',
+      'transferencia': 'transfer',
       'efectivo': 'cash',
-      'tarjeta': 'credit_card',
-      'transfer': 'bank_transfer',
-      'wire_transfer': 'bank_transfer',
+      'tarjeta': 'card',
+      'transfer': 'transfer',
+      'wire_transfer': 'transfer',
     };
     
     return methodMap[frontendMethod] || 'other';
@@ -539,18 +867,17 @@ class OrderService {
   }
 
   /**
-   * Procesa una compra completa: Verificar BP existente + Validar Stock + Orden + Pago
-   * Flujo correcto:
+   * Procesa una compra completa siguiendo el Order State Machine v2:
    * 1. Obtener business_partner_id del perfil (/auth/me)
-   * 2. Validar disponibilidad de stock
-   * 3. Crear la orden de venta
+   * 2. Crear la orden de venta (status: draft)
+   * 3. Submit: draft → pending_payment (reserva stock)
    * 4. Crear el pago
-   * 
-   * NOTA: El business_partner_id viene de /auth/me después del login
+   * 5. Confirm Payment: pending_payment → confirmed (deduce stock)
    */
   async processCheckout(checkoutData: CheckoutData, businessPartnerId?: string) {
     let salesOrder: CreateSalesOrderResponse | null = null;
     let payment: CreatePaymentResponse | null = null;
+    let submitted = false;
     
     try {
       const { shippingInfo, items, currency, totalAmount, paymentMethod, notes } = checkoutData;
@@ -561,7 +888,6 @@ class OrderService {
       if (!customerId) {
         console.error('❌ No se encontró business_partner_id - el usuario debe estar logueado');
         return {
-          businessPartner: null,
           salesOrder: null,
           payment: null,
           success: false,
@@ -575,43 +901,14 @@ class OrderService {
       
       console.log('✅ Business Partner ID:', customerId);
       
-      // 2. Validar disponibilidad de stock
-      console.log('📝 Paso 1: Validando stock...');
-      const stockValidation = await this.validateStock(
-        items.map(item => ({
-          product_id: item.product_id,
-          quantity: item.quantity
-        }))
-      );
-      
-      if (!stockValidation.success || !stockValidation.data?.valid) {
-        const invalidItems = stockValidation.data?.items?.filter(i => !i.valid) || [];
-        const itemNames = invalidItems.map(i => `${i.product_id} (solicitado: ${i.requested}, disponible: ${i.available})`).join(', ');
-        
-        return {
-          businessPartner,
-          salesOrder: null,
-          payment: null,
-          success: false,
-          message: `Stock insuficiente para: ${itemNames}`,
-          error: {
-            step: 'stock_validation',
-            details: stockValidation.data?.items,
-          }
-        };
-      }
-      
-      console.log('✅ Stock validado correctamente');
-      
-      // 3. Crear orden de venta usando el business_partner_id
+      // 2. Crear orden de venta (siempre se crea en draft)
       const orderNumber = this.generateOrderNumber();
-      console.log('📝 Paso 2: Creando orden de venta...');
+      console.log('📝 Paso 1: Creando orden de venta (draft)...');
       
       salesOrder = await this.createSalesOrder({
         order_number: orderNumber,
-        customer_id: customerId, // ← business_partner_id de /auth/me
+        customer_id: customerId,
         currency: currency,
-        status: 'pending',
         items: items,
         notes: notes || `Entrega a: ${shippingInfo.address}, ${shippingInfo.city}, ${shippingInfo.state} ${shippingInfo.zipCode}. Tel: ${shippingInfo.phone}`,
         metadata: {
@@ -621,7 +918,32 @@ class OrderService {
         }
       });
       
-      console.log('✅ Orden creada:', salesOrder.order_number);
+      console.log('✅ Orden creada (draft):', salesOrder.order_number);
+      
+      // 3. Submit: draft → pending_payment (reserva stock)
+      console.log('📝 Paso 2: Enviando pedido (submit → pending_payment)...');
+      
+      const submitResult = await this.submitOrder(salesOrder.id, {
+        validateStock: true,
+        reservationTtlHours: 48
+      });
+      
+      if (!submitResult.success) {
+        return {
+          salesOrder,
+          payment: null,
+          success: false,
+          message: submitResult.message || 'Error al enviar el pedido. Puede haber stock insuficiente.',
+          error: {
+            step: 'submit',
+            details: submitResult.data,
+            orderNumber: salesOrder.order_number,
+          }
+        };
+      }
+      
+      submitted = true;
+      console.log('✅ Pedido enviado - stock reservado');
       
       // 4. Crear pago asociado
       const paymentNumber = this.generatePaymentNumber(orderNumber);
@@ -630,7 +952,7 @@ class OrderService {
       payment = await this.createPayment({
         payment_number: paymentNumber,
         source_type: 'customer',
-        partner_id: customerId, // ← business_partner_id de /auth/me
+        partner_id: customerId,
         currency: currency,
         amount: totalAmount,
         method: this.mapPaymentMethod(paymentMethod),
@@ -646,10 +968,25 @@ class OrderService {
       });
       
       console.log('✅ Pago creado:', payment.payment_number);
+      
+      // 5. Confirm Payment: pending_payment → confirmed (deduce stock)
+      console.log('📝 Paso 4: Confirmando pago (confirm-payment → confirmed)...');
+      
+      const confirmResult = await this.confirmPayment(
+        salesOrder.id,
+        payment.payment_number,
+        `Pago ${paymentMethod} - ${payment.payment_number}`
+      );
+      
+      if (!confirmResult.success) {
+        console.warn('⚠️ Pago creado pero confirmación falló:', confirmResult.message);
+        // La orden queda en pending_payment, no es un error fatal
+      } else {
+        console.log('✅ Pago confirmado - stock deducido');
+      }
 
       return {
-        businessPartner: null,
-        customerId: customerId, // business_partner_id usado
+        customerId: customerId,
         salesOrder,
         payment,
         success: true,
@@ -664,7 +1001,6 @@ class OrderService {
       // Error al crear orden
       if (!salesOrder) {
         return {
-          businessPartner: null,
           salesOrder: null,
           payment: null,
           success: false,
@@ -676,30 +1012,28 @@ class OrderService {
         };
       }
       
-      // Error al crear la orden (pero BP ya existe)
-      if (businessPartner && !salesOrder) {
+      // Error al submit (orden creada pero no enviada)
+      if (salesOrder && !submitted) {
         return {
-          businessPartner,
-          salesOrder: null,
-          payment: null,
-          success: false,
-          message: 'Error al crear la orden de venta',
-          error: {
-            step: 'order',
-            details: error.response?.data || error.message,
-            businessPartnerId: businessPartner.id,
-          }
-        };
-      }
-      
-      // Error al crear el pago (pero orden ya existe)
-      if (salesOrder && !payment) {
-        return {
-          businessPartner,
           salesOrder,
           payment: null,
           success: false,
-          message: 'La orden fue creada pero el pago falló',
+          message: 'La orden fue creada pero no se pudo enviar. Puede haber stock insuficiente.',
+          error: {
+            step: 'submit',
+            details: error.response?.data || error.message,
+            orderNumber: salesOrder.order_number,
+          }
+        };
+      }
+      
+      // Error al crear el pago (pero orden ya enviada)
+      if (salesOrder && !payment) {
+        return {
+          salesOrder,
+          payment: null,
+          success: false,
+          message: 'La orden fue creada pero el pago falló. Te contactaremos para resolverlo.',
           error: {
             step: 'payment',
             details: error.response?.data || error.message,
@@ -730,5 +1064,18 @@ export type {
   ValidateStockRequest,
   ValidateStockResponse,
   CancelOrderRequest,
-  CancelOrderResponse
+  CancelOrderResponse,
+  OrderSubmitRequest,
+  OrderSubmitResponse,
+  OrderConfirmPaymentRequest,
+  OrderConfirmPaymentResponse,
+  StateTransitionResponse,
+  ValidTransitionsResponse,
+  StatusHistoryEntry,
+  StatusHistoryResponse,
+  ReturnItemRequest,
+  OrderReturnRequest,
+  OrderReturnResponse,
+  ReturnCondition,
+  OrderStatus,
 };

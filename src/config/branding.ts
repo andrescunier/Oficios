@@ -11,7 +11,8 @@ import {
   getBrandingConfig as getRuntimeBranding,
   getThemeConfig,
   getSocialConfig,
-  getFeaturesConfig 
+  getFeaturesConfig,
+  getImagesConfig
 } from './runtime';
 
 // =========================================
@@ -55,6 +56,7 @@ export const BRANDING = {
 // ASSETS & IMAGES (desde runtime)
 // =========================================
 const runtimeBranding = getRuntimeBranding();
+const runtimeImages = getImagesConfig();
 export const ASSETS = {
   // Logos
   LOGO_PATH: runtimeBranding.logo,
@@ -63,61 +65,39 @@ export const ASSETS = {
   FOOTER_LOGO_PATH: runtimeBranding.logo,
   LOGO_DARK_PATH: runtimeBranding.logoDark,
   
-  // Hero Slider Images (mantener compatibilidad con código existente)
-  HERO_SLIDES: [
-    {
-      image: import.meta.env.VITE_CDN_HERO_SLIDE_1 || import.meta.env.VITE_HERO_SLIDE_1 || '/images/heroes/slide-1.jpg',
-      title: import.meta.env.VITE_HERO_SLIDE_1_TITLE || 'Tecnología Profesional para Empresas',
-      subtitle: import.meta.env.VITE_HERO_SLIDE_1_SUBTITLE || 'Soluciones B2B en componentes de alta gama',
-      cta: import.meta.env.VITE_HERO_SLIDE_1_CTA || 'Ver Catálogo',
-      link: '/productos'
-    },
-    {
-      image: import.meta.env.VITE_CDN_HERO_SLIDE_2 || import.meta.env.VITE_HERO_SLIDE_2 || '/images/heroes/slide-2.jpg',
-      title: import.meta.env.VITE_HERO_SLIDE_2_TITLE || 'SSDs de Alto Rendimiento',
-      subtitle: import.meta.env.VITE_HERO_SLIDE_2_SUBTITLE || 'Almacenamiento profesional para tu negocio',
-      cta: import.meta.env.VITE_HERO_SLIDE_2_CTA || 'Explorar SSDs',
-      link: '/productos'
-    },
-    {
-      image: import.meta.env.VITE_CDN_HERO_SLIDE_3 || import.meta.env.VITE_HERO_SLIDE_3 || '/images/heroes/slide-3.jpg',
-      title: import.meta.env.VITE_HERO_SLIDE_3_TITLE || 'Memorias RAM DDR4 & DDR5',
-      subtitle: import.meta.env.VITE_HERO_SLIDE_3_SUBTITLE || 'Maximiza el rendimiento de tus equipos',
-      cta: import.meta.env.VITE_HERO_SLIDE_3_CTA || 'Ver Memorias',
-      link: '/productos'
-    }
-  ],
+  // Hero Slider Images (desde runtime config)
+  HERO_SLIDES: runtimeImages.heroSlides,
   
-  // Category Images
+  // Category Images (desde runtime config)
   CATEGORIES: {
-    COMPONENTES: import.meta.env.VITE_CATEGORY_COMPONENTES_IMG || '/images/categories/componentes.jpg',
-    GAMING: import.meta.env.VITE_CATEGORY_GAMING_IMG || '/images/categories/gaming.jpg',
-    DDR4: import.meta.env.VITE_CATEGORY_DDR4_IMG || '/images/categories/ddr4.jpg',
-    DDR5: import.meta.env.VITE_CATEGORY_DDR5_IMG || '/images/categories/ddr5.jpg',
-    SSD_M2: import.meta.env.VITE_CATEGORY_SSD_M2_IMG || '/images/categories/ssd-m2.jpg',
-    SSD_SATA: import.meta.env.VITE_CATEGORY_SSD_SATA_IMG || '/images/categories/ssd-sata.jpg'
+    COMPONENTES: runtimeImages.productFallbacks['componentes'] || '/images/categories/componentes.jpg',
+    GAMING: runtimeImages.productFallbacks['gaming'] || '/images/categories/gaming.jpg',
+    DDR4: runtimeImages.productFallbacks['ddr4'] || '/images/categories/ddr4.jpg',
+    DDR5: runtimeImages.productFallbacks['ddr5'] || '/images/categories/ddr5.jpg',
+    SSD_M2: runtimeImages.productFallbacks['ssd-m2'] || '/images/categories/ssd-m2.jpg',
+    SSD_SATA: runtimeImages.productFallbacks['ssd-sata'] || '/images/categories/ssd-sata.jpg'
   },
   
-  // Banner & Promotional Images
+  // Banner & Promotional Images (desde runtime config)
   BANNERS: {
-    MAIN: import.meta.env.VITE_BANNER_MAIN || '/images/banners/main-banner.jpg',
-    SECONDARY: import.meta.env.VITE_BANNER_SECONDARY || '/images/banners/secondary-banner.jpg',
-    SEASONAL: import.meta.env.VITE_BANNER_SEASONAL || '/images/banners/seasonal-banner.jpg',
-    SALE: import.meta.env.VITE_BANNER_SALE || '/images/banners/sale-banner.jpg'
+    MAIN: runtimeImages.banners.main,
+    SECONDARY: runtimeImages.banners.secondary,
+    SEASONAL: runtimeImages.banners.seasonal,
+    SALE: runtimeImages.banners.sale
   },
   
-  // Background Images
+  // Background Images (desde runtime config)
   BACKGROUNDS: {
-    HERO: import.meta.env.VITE_BG_HERO || '/images/backgrounds/hero-bg.jpg',
-    FEATURES: import.meta.env.VITE_BG_FEATURES || '/images/backgrounds/features-bg.jpg',
-    TESTIMONIALS: import.meta.env.VITE_BG_TESTIMONIALS || '/images/backgrounds/testimonials-bg.jpg'
+    HERO: runtimeImages.backgrounds.hero,
+    FEATURES: runtimeImages.backgrounds.features,
+    TESTIMONIALS: runtimeImages.backgrounds.testimonials
   },
   
-  // Placeholder Images
+  // Placeholder Images (desde runtime config)
   PLACEHOLDERS: {
-    PRODUCT: import.meta.env.VITE_PLACEHOLDER_PRODUCT || '/images/placeholders/product-placeholder.jpg',
-    CATEGORY: import.meta.env.VITE_PLACEHOLDER_CATEGORY || '/images/placeholders/category-placeholder.jpg',
-    USER: import.meta.env.VITE_PLACEHOLDER_USER || '/images/placeholders/user-placeholder.jpg'
+    PRODUCT: runtimeImages.placeholders.product,
+    CATEGORY: runtimeImages.placeholders.category,
+    USER: runtimeImages.placeholders.user
   },
   
   // Función helper para obtener URLs completas

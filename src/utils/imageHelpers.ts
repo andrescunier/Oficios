@@ -2,6 +2,8 @@
  * Utilidades para manejo optimizado de imágenes de productos
  */
 
+import { getImagesConfig } from '@/config/runtime';
+
 // Tamaños estándar para imágenes de productos
 export const IMAGE_SIZES = {
   thumbnail: { width: 300, height: 300 },
@@ -21,7 +23,7 @@ export function getOptimizedImageUrl(
   size: ImageSize = 'card',
   format: 'webp' | 'jpg' = 'webp'
 ): string {
-  if (!baseUrl) return '/placeholder-product.jpg';
+  if (!baseUrl) return getImagesConfig().placeholders.product;
   
   const { width, height } = IMAGE_SIZES[size];
   

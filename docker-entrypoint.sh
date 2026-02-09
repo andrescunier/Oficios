@@ -83,6 +83,19 @@ generate_config() {
   FEATURE_ANALYTICS=$(get_value "FEATURE_ANALYTICS" "false")
   FEATURE_REAL_PAYMENTS=$(get_value "FEATURE_REAL_PAYMENTS" "false")
 
+  FILTERS_ENABLED=$(get_value "FILTERS_ENABLED" "false")
+  FILTER_CAPACIDAD=$(get_value "FILTER_CAPACIDAD" "false")
+  FILTER_VELOCIDAD=$(get_value "FILTER_VELOCIDAD" "false")
+
+  PAYMENT_TRANSFERENCIA=$(get_value "PAYMENT_TRANSFERENCIA" "true")
+  PAYMENT_EFECTIVO=$(get_value "PAYMENT_EFECTIVO" "true")
+  PAYMENT_MERCADOPAGO=$(get_value "PAYMENT_MERCADOPAGO" "false")
+  PAYMENT_TARJETA=$(get_value "PAYMENT_TARJETA" "false")
+
+  # Images - JSON strings (se pasan como env vars con JSON completo)
+  # Si se proveen, se incluyen directamente; si no, se usan los defaults del frontend
+  IMAGES_CONFIG=$(get_value "IMAGES_CONFIG" "")
+
   # Generar config.js
   cat > "$CONFIG_OUTPUT" << EOF
 /**
@@ -151,6 +164,18 @@ window.__APP_CONFIG__ = {
     notifications: ${FEATURE_NOTIFICATIONS},
     analytics: ${FEATURE_ANALYTICS},
     realPayments: ${FEATURE_REAL_PAYMENTS}
+  },
+  filters: {
+    enabled: ${FILTERS_ENABLED},
+    capacidad: ${FILTER_CAPACIDAD},
+    velocidad: ${FILTER_VELOCIDAD}
+  },$(if [ -n "${IMAGES_CONFIG}" ]; then echo "
+  images: ${IMAGES_CONFIG},"; fi)
+  paymentMethods: {
+    transferencia: ${PAYMENT_TRANSFERENCIA},
+    efectivo: ${PAYMENT_EFECTIVO},
+    mercadopago: ${PAYMENT_MERCADOPAGO},
+    tarjeta: ${PAYMENT_TARJETA}
   }
 };
 EOF

@@ -10,6 +10,7 @@ import { useStore } from '@/store/useStore';
 import type { Product } from '@/types/api';
 import { PriceDisplay } from '@/hooks/usePriceVisibility';
 import { FEATURES } from '@/config/branding';
+import { getImagesConfig } from '@/config/runtime';
 
 export const ProductsPageApiReal: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -40,47 +41,34 @@ export const ProductsPageApiReal: React.FC = () => {
     if (product.image_url && product.image_url.trim() !== '') {
       return product.image_url;
     }
+    const fallbacks = getImagesConfig().productFallbacks;
+    const defaultImg = fallbacks['default'] || '/images/categories/componentes.jpg';
     const name = product.name.toLowerCase();
     const category = product.category?.toLowerCase() || '';
     // Asignar imágenes basadas en palabras clave
     if (name.includes('ssd') && (name.includes('m.2') || name.includes('nvme') || name.includes('pcie'))) {
-      return '/images/categories/ssd-m2.jpg';
+      return fallbacks['ssd-m2'] || fallbacks['ssd-nvme'] || defaultImg;
     }
     if (name.includes('ssd') && (name.includes('sata') || name.includes('2.5'))) {
-      return '/images/categories/ssd-sata.jpg';
+      return fallbacks['ssd-sata'] || defaultImg;
     }
     if (name.includes('ssd')) {
-      return '/images/categories/ssd-m2.jpg'; // Default para SSDs
+      return fallbacks['ssd'] || fallbacks['ssd-m2'] || defaultImg;
     }
     if (name.includes('ddr5') || (name.includes('memoria') && name.includes('ddr5'))) {
-      return '/images/categories/ddr5.jpg';
+      return fallbacks['ddr5'] || defaultImg;
     }
     if (name.includes('ddr4') || (name.includes('memoria') && name.includes('ddr4'))) {
-      return '/images/categories/ddr4.jpg';
+      return fallbacks['ddr4'] || defaultImg;
     }
     if (name.includes('memoria') || name.includes('ram')) {
-      return '/images/categories/ddr4.jpg'; // Default para memorias
+      return fallbacks['memoria'] || fallbacks['ram'] || defaultImg;
     }
     if (name.includes('gaming') || name.includes('gamer')) {
-      return '/images/categories/gaming.jpg';
+      return fallbacks['gaming'] || defaultImg;
     }
     // Asignar por categoría si no se encontró por nombre
-    switch (category) {
-      case 'ssd':
-      case 'storage':
-        return '/images/categories/ssd-m2.jpg';
-      case 'memoria':
-      case 'memory':
-      case 'ram':
-        return '/images/categories/ddr4.jpg';
-      case 'gaming':
-        return '/images/categories/gaming.jpg';
-      case 'componentes':
-      case 'components':
-        return '/images/categories/componentes.jpg';
-      default:
-        return '/images/categories/componentes.jpg';
-    }
+    return fallbacks[category] || defaultImg;
   };
 
   const loadProducts = async () => {
@@ -352,8 +340,9 @@ export const ProductsPageApiReal: React.FC = () => {
                     />
                   </div>
                   
+                  {/* Stock y SKU - solo stock visible para autenticados */}
                   <div className="flex items-center justify-between mb-2">
-                    {product.stock_quantity !== undefined && (
+                    {isAuthenticated && product.stock_quantity !== undefined && (
                       <span className={`text-sm ${product.stock_quantity > 0 ? 'text-green-600' : 'text-red-600'}`}>
                         {product.stock_quantity > 0 ? `Stock: ${product.stock_quantity}` : 'Sin stock'}
                       </span>
@@ -371,44 +360,46 @@ export const ProductsPageApiReal: React.FC = () => {
                     )}
                   </div>
 
-                  {/* Controles de acción */}
-                  <div className="space-y-3">
-                    {/* Selector de cantidad */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700">Cantidad:</span>
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => updateQuantity(product.id.toString(), getQuantity(product.id.toString()) - 1)}
-                          className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-300 text-gray-600 hover:bg-gray-100 transition-colors"
-                          disabled={getQuantity(product.id.toString()) <= 1}
-                        >
-                          <Minus className="w-4 h-4" />
-                        </button>
-                        <span className="w-8 text-center font-medium">
-                          {getQuantity(product.id.toString())}
-                        </span>
-                        <button
-                          onClick={() => updateQuantity(product.id.toString(), getQuantity(product.id.toString()) + 1)}
-                          className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-300 text-gray-600 hover:bg-gray-100 transition-colors"
-                          disabled={(product.stock_quantity || 0) <= getQuantity(product.id.toString())}
-                        >
-                          <Plus className="w-4 h-4" />
-                        </button>
+                  {/* Controles de acción - solo para usuarios autenticados */}
+                  {isAuthenticated && (
+                    <div className="space-y-3">
+                      {/* Selector de cantidad */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-700">Cantidad:</span>
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => updateQuantity(product.id.toString(), getQuantity(product.id.toString()) - 1)}
+                            className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-300 text-gray-600 hover:bg-gray-100 transition-colors"
+                            disabled={getQuantity(product.id.toString()) <= 1}
+                          >
+                            <Minus className="w-4 h-4" />
+                          </button>
+                          <span className="w-8 text-center font-medium">
+                            {getQuantity(product.id.toString())}
+                          </span>
+                          <button
+                            onClick={() => updateQuantity(product.id.toString(), getQuantity(product.id.toString()) + 1)}
+                            className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-300 text-gray-600 hover:bg-gray-100 transition-colors"
+                            disabled={(product.stock_quantity || 0) <= getQuantity(product.id.toString())}
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
-                    </div>
 
-                    {/* Botón agregar al carrito */}
-                    <button 
-                      onClick={() => handleAddToCart(product)}
-                      disabled={!product.stock_quantity || product.stock_quantity <= 0}
-                      className="w-full py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-                    >
-                      {product.stock_quantity && product.stock_quantity > 0 
-                        ? 'Agregar al Carrito' 
-                        : 'Sin Stock'
-                      }
-                    </button>
-                  </div>
+                      {/* Botón agregar al carrito */}
+                      <button 
+                        onClick={() => handleAddToCart(product)}
+                        disabled={!product.stock_quantity || product.stock_quantity <= 0}
+                        className="w-full py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                      >
+                        {product.stock_quantity && product.stock_quantity > 0 
+                          ? 'Agregar al Carrito' 
+                          : 'Sin Stock'
+                        }
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}

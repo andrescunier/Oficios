@@ -12,7 +12,7 @@ import type {
   BusinessPartner,
   Account 
 } from '@/types/api';
-import { cartService } from '@/services/cartService';
+// cartService eliminado — no existe API de carrito en el backend (ver documentacion.md)
 import { httpClient } from '@/services/httpClient';
 import { authService } from '@/services/authService';
 
@@ -63,10 +63,7 @@ interface AppStore {
   updateCartQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
   calculateCartTotals: () => void;
-  syncCartWithServer: () => Promise<void>;
-  verifyCartItems: () => Promise<void>;
-  saveCartForLater: () => Promise<void>;
-  loadServerCart: () => Promise<void>;
+
   
   // UI state
   ui: UIState;
@@ -209,10 +206,7 @@ export const useStore = create<AppStore>()(
           }
         }).catch(console.error);
         
-        // Cargar carrito del servidor después del login
-        setTimeout(() => {
-          get().loadServerCart();
-        }, 1000);
+
       },
       
       logout: () => {
@@ -305,13 +299,7 @@ export const useStore = create<AppStore>()(
           return { cart: newCart };
         });
 
-        // Sincronizar con servidor si está autenticado
-        const state = get();
-        if (state.auth.isAuthenticated) {
-          setTimeout(() => {
-            get().syncCartWithServer();
-          }, 500);
-        }
+
       },
       
       removeFromCart: (productId) => set((state) => {
@@ -366,158 +354,7 @@ export const useStore = create<AppStore>()(
         return { cart: newCart };
       }),
 
-      // Sincronización con servidor
-      syncCartWithServer: async () => {
-        const state = get();
-        if (!state.auth.isAuthenticated || state.cart.items.length === 0) {
-          return;
-        }
 
-        try {
-          const result = await cartService.syncCart(state.cart.items, state.cart.currency);
-          
-          // Si el servicio retorna null, significa que la feature no está disponible
-          // No mostrar ninguna notificación en ese caso
-          if (result === null) {
-            return;
-          }
-          
-          // Solo mostrar notificación si realmente se sincronizó
-          if (result.success) {
-            get().addNotification({
-              type: 'success',
-              title: 'Carrito sincronizado',
-              message: 'Carrito guardado en el servidor',
-              duration: 3000,
-            });
-          }
-        } catch (error: any) {
-          // No mostrar error si es un 404 (feature no disponible)
-          if (error?.response?.status === 404) {
-            return;
-          }
-          get().addNotification({
-            type: 'error',
-            title: 'Error de sincronización',
-            message: error.message || 'No se pudo sincronizar el carrito',
-            duration: 5000,
-          });
-        }
-      },
-
-      verifyCartItems: async () => {
-        const state = get();
-        if (state.cart.items.length === 0) {
-          return;
-        }
-
-        try {
-          get().setLoading(true);
-          const result = await cartService.verifyCartItems(state.cart.items);
-          
-          // Si no hay warnings y es válido, la feature probablemente no está disponible
-          // o todo está ok - no hacer nada
-          if (result.valid && result.warnings.length === 0) {
-            return;
-          }
-          
-          if (!result.valid) {
-            // Actualizar carrito con items válidos
-            const newCart = calculateTotals(result.updated_items, state.cart.currency);
-            set({ cart: newCart });
-
-            // Mostrar advertencias
-            result.warnings.forEach(warning => {
-              get().addNotification({
-                type: 'warning',
-                title: 'Cambios en el carrito',
-                message: warning,
-                duration: 5000,
-              });
-            });
-          }
-        } catch (error: any) {
-          // No mostrar error si es un 404 (feature no disponible)
-          if (error?.response?.status === 404) {
-            return;
-          }
-          get().addNotification({
-            type: 'error',
-            title: 'Error de verificación',
-            message: error.message || 'No se pudo verificar el carrito',
-            duration: 5000,
-          });
-        } finally {
-          get().setLoading(false);
-        }
-      },
-
-      saveCartForLater: async () => {
-        const state = get();
-        if (!state.auth.isAuthenticated || state.cart.items.length === 0) {
-          get().addNotification({
-            type: 'warning',
-            title: 'Carrito vacío',
-            message: 'No hay productos para guardar',
-            duration: 3000,
-          });
-          return;
-        }
-
-        try {
-          await cartService.saveCartForLater(state.cart.items, state.cart.currency);
-          
-          // Limpiar carrito local después de guardar
-          set({ cart: initialCartState });
-          
-          get().addNotification({
-            type: 'success',
-            title: 'Carrito guardado',
-            message: 'Carrito guardado para más tarde',
-            duration: 3000,
-          });
-        } catch (error: any) {
-          get().addNotification({
-            type: 'error',
-            title: 'Error al guardar',
-            message: error.message || 'No se pudo guardar el carrito',
-            duration: 5000,
-          });
-        }
-      },
-
-      loadServerCart: async () => {
-        const state = get();
-        if (!state.auth.isAuthenticated) {
-          return;
-        }
-
-        try {
-          const serverCart = await cartService.getServerCart();
-          
-          if (serverCart && serverCart.success) {
-            const cartData = serverCart.data;
-            set({
-              cart: {
-                items: cartData.items,
-                subtotal: cartData.subtotal,
-                tax_amount: cartData.tax_amount,
-                total_amount: cartData.total_amount,
-                currency: cartData.currency,
-              }
-            });
-
-            get().addNotification({
-              type: 'info',
-              title: 'Carrito recuperado',
-              message: 'Carrito cargado desde el servidor',
-              duration: 3000,
-            });
-          }
-        } catch (error: any) {
-          // Error silencioso - no mostrar notificación si no hay carrito en servidor
-        }
-      },
       
       // UI state
       ui: initialUIState,

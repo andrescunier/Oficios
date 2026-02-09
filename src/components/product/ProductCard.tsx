@@ -28,6 +28,7 @@ import type { Product } from '@/types/api';
 import { PriceDisplay, usePriceVisibility } from '@/hooks/usePriceVisibility';
 import { useNavigate } from 'react-router-dom';
 import { FEATURES } from '@/config/branding';
+import { getImagesConfig } from '@/config/runtime';
 
 interface ProductCardProps {
   product: Product;
@@ -234,7 +235,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="aspect-square">
                         <img
-                          src={product.image_url || '/placeholder-product.jpg'}
+                          src={product.image_url || getImagesConfig().placeholders.product}
                           alt={product.name}
                           className="w-full h-full object-cover rounded-lg"
                         />
@@ -261,40 +262,44 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                           {product.description}
                         </p>
 
-                        <div className="flex items-center space-x-2">
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={(e: React.MouseEvent) => {
-                              e.stopPropagation();
-                              setQuantity(Math.max(1, quantity - 1));
-                            }}
-                            disabled={quantity <= 1}
-                          >
-                            <Minus className="w-4 h-4" />
-                          </Button>
-                          <span className="w-12 text-center font-medium">{quantity}</span>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={(e: React.MouseEvent) => {
-                              e.stopPropagation();
-                              setQuantity(quantity + 1);
-                            }}
-                            disabled={quantity >= (product.stock_quantity || 0)}
-                          >
-                            <Plus className="w-4 h-4" />
-                          </Button>
-                        </div>
+                        {isAuthenticated && (
+                          <>
+                            <div className="flex items-center space-x-2">
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={(e: React.MouseEvent) => {
+                                  e.stopPropagation();
+                                  setQuantity(Math.max(1, quantity - 1));
+                                }}
+                                disabled={quantity <= 1}
+                              >
+                                <Minus className="w-4 h-4" />
+                              </Button>
+                              <span className="w-12 text-center font-medium">{quantity}</span>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={(e: React.MouseEvent) => {
+                                  e.stopPropagation();
+                                  setQuantity(quantity + 1);
+                                }}
+                                disabled={quantity >= (product.stock_quantity || 0)}
+                              >
+                                <Plus className="w-4 h-4" />
+                              </Button>
+                            </div>
 
-                        <Button 
-                          className="w-full" 
-                          onClick={handleAddToCart}
-                          disabled={isOutOfStock}
-                        >
-                          <ShoppingCart className="w-4 h-4 mr-2" />
-                          {isOutOfStock ? 'Sin Stock' : 'Agregar al Carrito'}
-                        </Button>
+                            <Button 
+                              className="w-full" 
+                              onClick={handleAddToCart}
+                              disabled={isOutOfStock}
+                            >
+                              <ShoppingCart className="w-4 h-4 mr-2" />
+                              {isOutOfStock ? 'Sin Stock' : 'Agregar al Carrito'}
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </div>
                   </DialogContent>
@@ -302,18 +307,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               )}
             </div>
 
-            {/* Quick add to cart overlay */}
-            <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <Button 
-                size="sm" 
-                className="w-full" 
-                onClick={handleAddToCart}
-                disabled={isOutOfStock}
-              >
-                <ShoppingCart className="w-4 h-4 mr-2" />
-                {isOutOfStock ? 'Sin Stock' : 'Agregar'}
-              </Button>
-            </div>
+            {/* Quick add to cart overlay - solo para usuarios autenticados */}
+            {isAuthenticated && (
+              <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <Button 
+                  size="sm" 
+                  className="w-full" 
+                  onClick={handleAddToCart}
+                  disabled={isOutOfStock}
+                >
+                  <ShoppingCart className="w-4 h-4 mr-2" />
+                  {isOutOfStock ? 'Sin Stock' : 'Agregar'}
+                </Button>
+              </div>
+            )}
           </div>
         </Link>
 
@@ -344,8 +351,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             showLoginButton={true}
           />
 
-          {/* Stock info */}
-          {!isOutOfStock && (product.stock_quantity || 0) <= 5 && (
+          {/* Stock info - solo para usuarios autenticados */}
+          {isAuthenticated && !isOutOfStock && (product.stock_quantity || 0) <= 5 && (
             <p className="text-xs text-orange-600 mb-2">
               ¡Solo quedan {product.stock_quantity} unidades!
             </p>

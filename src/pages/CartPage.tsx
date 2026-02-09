@@ -2,7 +2,7 @@
  * Página del carrito de compras
  */
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Minus, Plus, Trash2, ShoppingCart, ArrowLeft } from 'lucide-react';
 import { useStore } from '@/store/useStore';
@@ -15,18 +15,10 @@ export const CartPage: React.FC = () => {
     clearCart, 
     addNotification,
     auth,
-    verifyCartItems,
-    saveCartForLater
   } = useStore();
   const navigate = useNavigate();
 
-  // Verificar automáticamente stock y precios al cargar la página
-  useEffect(() => {
-    if (cart.items.length > 0) {
-      console.log('🔄 Verificando automáticamente stock y precios del carrito...');
-      verifyCartItems();
-    }
-  }, []); // Solo se ejecuta al montar el componente
+
 
   const handleQuantityChange = (productId: string, newQuantity: number) => {
     if (newQuantity <= 0) {
@@ -49,9 +41,6 @@ export const CartPage: React.FC = () => {
         return;
       }
 
-      // Verificar disponibilidad y precios
-      await verifyCartItems();
-
       addNotification({
         type: 'info',
         title: 'Checkout',
@@ -72,19 +61,7 @@ export const CartPage: React.FC = () => {
     }
   };
 
-  const handleSaveForLater = async () => {
-    try {
-      await saveCartForLater();
-      
-      // Redirigir a productos después de guardar
-      setTimeout(() => {
-        navigate('/productos');
-      }, 2000);
-      
-    } catch (error) {
-      // Error ya manejado en el store
-    }
-  };
+
 
   const formatPrice = (price: number, currency?: string) => {
     if (typeof price !== 'number' || isNaN(price)) {
@@ -281,13 +258,7 @@ export const CartPage: React.FC = () => {
                 Proceder al Checkout
               </button>
               
-              <button 
-                type="button"
-                onClick={handleSaveForLater}
-                className="w-full bg-gray-100 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
-              >
-                Guardar para después
-              </button>
+
 
               {/* Security Features */}
               <div className="mt-6 pt-6 border-t">

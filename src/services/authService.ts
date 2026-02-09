@@ -302,27 +302,8 @@ export class AuthService {
     }
   }
 
-  /**
-   * Refrescar token si es necesario
-   */
-  async refreshToken(refreshToken: string): Promise<{ token: string; user: User } | null> {
-    try {
-      const response = await httpClient.post<LoginResponse>('/api/auth/refresh', {
-        refresh_token: refreshToken
-      });
-
-      if (!response.success) {
-        return null;
-      }
-
-      return {
-        token: response.data.access_token,
-        user: response.data.user
-      };
-    } catch (error) {
-      return null;
-    }
-  }
+  // NOTA: No existe endpoint /api/auth/refresh en la API (ver documentacion.md)
+  // Los tokens expiran por TTL y el usuario debe volver a loguearse
 
   private normalizeLoginResponse(
     response: any,

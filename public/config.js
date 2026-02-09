@@ -68,7 +68,77 @@ window.__APP_CONFIG__ = {
   filters: {
     enabled: false,
     capacidad: false,
-    velocidad: false
+    velocidad: false,
+    capacidadOptions: [],
+    velocidadOptions: []
+  },
+  images: {
+    heroSlides: [
+      {
+        image: "/images/heroes/slide-1.jpg",
+        title: "Tecnología Profesional para Empresas",
+        subtitle: "Soluciones B2B en componentes de alta gama",
+        cta: "Ver Catálogo",
+        link: "/productos"
+      },
+      {
+        image: "/images/heroes/slide-2.jpg",
+        title: "SSDs de Alto Rendimiento",
+        subtitle: "Almacenamiento profesional para tu negocio",
+        cta: "Explorar SSDs",
+        link: "/productos"
+      },
+      {
+        image: "/images/heroes/slide-3.jpg",
+        title: "Memorias RAM DDR4 & DDR5",
+        subtitle: "Maximiza el rendimiento de tus equipos",
+        cta: "Ver Memorias",
+        link: "/productos"
+      }
+    ],
+    categories: [
+      {
+        name: "SSD SATA",
+        image: "/images/categories/ssd-sata.jpg",
+        link: "/categoria/ssd-sata",
+        description: "SATA III para máximo rendimiento"
+      },
+      {
+        name: "Memoria RAM",
+        image: "/images/categories/ddr4.jpg",
+        link: "/categoria/memoria-ram",
+        description: "Módulos de memoria de alta velocidad"
+      }
+    ],
+    placeholders: {
+      product: "/images/placeholders/product-placeholder.jpg",
+      category: "/images/placeholders/category-placeholder.jpg",
+      user: "/images/placeholders/user-placeholder.jpg"
+    },
+    backgrounds: {
+      hero: "/images/backgrounds/hero-bg.jpg",
+      features: "/images/backgrounds/features-bg.jpg",
+      testimonials: "/images/backgrounds/testimonials-bg.jpg"
+    },
+    banners: {
+      main: "/images/banners/main-banner.jpg",
+      secondary: "/images/banners/secondary-banner.jpg",
+      seasonal: "/images/banners/seasonal-banner.jpg",
+      sale: "/images/banners/sale-banner.jpg"
+    },
+    productFallbacks: {
+      "ssd-m2": "/images/categories/ssd-m2.jpg",
+      "ssd-nvme": "/images/categories/ssd-m2.jpg",
+      "ssd-sata": "/images/categories/ssd-sata.jpg",
+      "ssd": "/images/categories/ssd-m2.jpg",
+      "ddr5": "/images/categories/ddr5.jpg",
+      "ddr4": "/images/categories/ddr4.jpg",
+      "memoria": "/images/categories/ddr4.jpg",
+      "ram": "/images/categories/ddr4.jpg",
+      "gaming": "/images/categories/gaming.jpg",
+      "componentes": "/images/categories/componentes.jpg",
+      "default": "/images/categories/componentes.jpg"
+    }
   },
   paymentMethods: {
     transferencia: true,

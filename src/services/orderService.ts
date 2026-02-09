@@ -4,6 +4,7 @@
 
 import { httpClient } from './httpClient';
 import { API_ENDPOINTS, ACCOUNT_ID, DEFAULT_HEADERS } from '@/config/api';
+import log from '@/lib/logger';
 
 interface SalesOrderItem {
   product_id: string;
@@ -398,7 +399,7 @@ class OrderService {
     } catch (error: any) {
       // Si el endpoint no existe (404), retornar success para no bloquear
       if (error.code === 'E3001' || error.response?.status === 404) {
-        console.log('⚠️ Validación de stock omitida - endpoint no disponible');
+        log.orders.info('Validación de stock omitida - endpoint no disponible');
         return {
           success: true,
           message: 'Validación de stock omitida',
@@ -440,7 +441,7 @@ class OrderService {
     } catch (error: any) {
       // Si el endpoint no existe (404)
       if (error.code === 'E3001' || error.response?.status === 404) {
-        console.log('⚠️ Cancelación de orden no disponible - endpoint no existe');
+        log.orders.info('Cancelación de orden no disponible - endpoint no existe');
         return {
           success: false,
           message: 'La cancelación de órdenes no está disponible. Contacte a soporte.'
@@ -477,7 +478,7 @@ class OrderService {
 
       return response;
     } catch (error) {
-      console.error('Error enviando orden:', error);
+      log.orders.error('Error enviando orden:', error);
       throw error;
     }
   }
@@ -502,7 +503,7 @@ class OrderService {
 
       return response;
     } catch (error) {
-      console.error('Error confirmando pago:', error);
+      log.orders.error('Error confirmando pago:', error);
       throw error;
     }
   }
@@ -519,7 +520,7 @@ class OrderService {
         data: result.data as unknown as SalesOrder
       };
     } catch (error) {
-      console.error('Error confirmando orden:', error);
+      log.orders.error('Error confirmando orden:', error);
       throw error;
     }
   }
@@ -543,7 +544,7 @@ class OrderService {
 
       return response;
     } catch (error) {
-      console.error('Error en transición de orden:', error);
+      log.orders.error('Error en transición de orden:', error);
       throw error;
     }
   }
@@ -560,7 +561,7 @@ class OrderService {
       );
       return response;
     } catch (error) {
-      console.error('Error obteniendo transiciones válidas:', error);
+      log.orders.error('Error obteniendo transiciones válidas:', error);
       throw error;
     }
   }
@@ -577,7 +578,7 @@ class OrderService {
       );
       return response;
     } catch (error) {
-      console.error('Error obteniendo historial de estados:', error);
+      log.orders.error('Error obteniendo historial de estados:', error);
       throw error;
     }
   }
@@ -602,7 +603,7 @@ class OrderService {
 
       return response;
     } catch (error) {
-      console.error('Error procesando devolución:', error);
+      log.orders.error('Error procesando devolución:', error);
       throw error;
     }
   }
@@ -786,7 +787,7 @@ class OrderService {
       );
       return response;
     } catch (error) {
-      console.error('Error aplicando pago:', error);
+      log.orders.error('Error aplicando pago:', error);
       throw error;
     }
   }
@@ -804,7 +805,7 @@ class OrderService {
       );
       return response;
     } catch (error) {
-      console.error('Error generando factura:', error);
+      log.orders.error('Error generando factura:', error);
       throw error;
     }
   }
@@ -863,7 +864,7 @@ class OrderService {
       }
       return response as unknown as BusinessPartnerResponse;
     } catch (error) {
-      console.error('Error creating business partner:', error);
+      log.orders.error('Error creating business partner:', error);
       throw error;
     }
   }
@@ -896,16 +897,16 @@ class OrderService {
             const state = JSON.parse(persistedState);
             customerId = state?.state?.auth?.user?.id || null;
             if (customerId) {
-              console.log('⚠️ Usando user.id como customer_id (fallback):', customerId);
+              log.checkout.warn('Usando user.id como customer_id (fallback):', customerId);
             }
           }
         } catch (e) {
-          console.error('Error obteniendo user.id del store:', e);
+          log.checkout.error('Error obteniendo user.id del store:', e);
         }
       }
       
       if (!customerId) {
-        console.error('❌ No se encontró customer_id - el usuario debe estar logueado');
+        log.checkout.error('No se encontró customer_id - el usuario debe estar logueado');
         return {
           salesOrder: null,
           payment: null,
@@ -918,11 +919,11 @@ class OrderService {
         };
       }
       
-      console.log('✅ Business Partner ID:', customerId);
+      log.checkout.info('Business Partner ID:', customerId);
       
       // 2. Crear orden de venta (siempre se crea en draft)
       const orderNumber = this.generateOrderNumber();
-      console.log('📝 Paso 1: Creando orden de venta (draft)...');
+      log.checkout.info('Paso 1: Creando orden de venta (draft)...');
       
       salesOrder = await this.createSalesOrder({
         order_number: orderNumber,
@@ -937,10 +938,10 @@ class OrderService {
         }
       });
       
-      console.log('✅ Orden creada (draft):', salesOrder.order_number);
+      log.checkout.info('Orden creada (draft):', salesOrder.order_number);
       
       // 3. Submit: draft → pending_payment (reserva stock)
-      console.log('📝 Paso 2: Enviando pedido (submit → pending_payment)...');
+      log.checkout.info('Paso 2: Enviando pedido (submit → pending_payment)...');
       
       const submitResult = await this.submitOrder(salesOrder.id, {
         validateStock: true,
@@ -962,11 +963,11 @@ class OrderService {
       }
       
       submitted = true;
-      console.log('✅ Pedido enviado - stock reservado');
+      log.checkout.info('Pedido enviado - stock reservado');
       
       // 4. Crear pago asociado
       const paymentNumber = this.generatePaymentNumber(orderNumber);
-      console.log('📝 Paso 3: Creando pago...');
+      log.checkout.info('Paso 3: Creando pago...');
       
       payment = await this.createPayment({
         payment_number: paymentNumber,
@@ -986,10 +987,10 @@ class OrderService {
         }
       });
       
-      console.log('✅ Pago creado:', payment.payment_number);
+      log.checkout.info('Pago creado:', payment.payment_number);
       
       // 5. Confirm Payment: pending_payment → confirmed (deduce stock)
-      console.log('📝 Paso 4: Confirmando pago (confirm-payment → confirmed)...');
+      log.checkout.info('Paso 4: Confirmando pago (confirm-payment → confirmed)...');
       
       const confirmResult = await this.confirmPayment(
         salesOrder.id,
@@ -998,10 +999,10 @@ class OrderService {
       );
       
       if (!confirmResult.success) {
-        console.warn('⚠️ Pago creado pero confirmación falló:', confirmResult.message);
+        log.checkout.warn('Pago creado pero confirmación falló:', confirmResult.message);
         // La orden queda en pending_payment, no es un error fatal
       } else {
-        console.log('✅ Pago confirmado - stock deducido');
+        log.checkout.info('Pago confirmado - stock deducido');
       }
 
       return {
@@ -1015,7 +1016,7 @@ class OrderService {
       };
       
     } catch (error: any) {
-      console.error('❌ Error en checkout:', error);
+      log.checkout.error('Error en checkout:', error);
       
       // Error al crear orden
       if (!salesOrder) {

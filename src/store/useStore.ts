@@ -15,6 +15,7 @@ import type {
 // cartService eliminado — no existe API de carrito en el backend (ver documentacion.md)
 import { httpClient } from '@/services/httpClient';
 import { authService } from '@/services/authService';
+import log from '@/lib/logger';
 
 // Tipos del store
 interface AuthState {
@@ -146,7 +147,7 @@ const saveUserFavorites = (userId: string, favorites: string[]) => {
   try {
     localStorage.setItem(getUserFavoritesKey(userId), JSON.stringify(favorites));
   } catch (e) {
-    console.error('Error saving favorites:', e);
+    log.store.error('Error saving favorites:', e);
   }
 };
 
@@ -187,11 +188,9 @@ export const useStore = create<AppStore>()(
               || (meResponse.data as any).partner_id;
             if (bpId) {
               localStorage.setItem('business_partner_id', bpId);
-              console.log('✅ Business Partner ID obtenido de /auth/me:', bpId);
+              log.auth.info('Business Partner ID obtenido de /auth/me:', bpId);
             } else if (!localStorage.getItem('business_partner_id')) {
-              // Si no hay BP id en ningún lado, guardamos el user.id como fallback
-              // La API acepta User.id o BusinessPartner.id como customer_id
-              console.warn('⚠️ /auth/me no devolvió business_partner_id, usando user.id como fallback');
+              log.auth.warn('/auth/me no devolvió business_partner_id, usando user.id como fallback');
             }
             
             // Actualizar datos del usuario con la información de person
@@ -211,7 +210,7 @@ export const useStore = create<AppStore>()(
               }));
             }
           }
-        }).catch(console.error);
+        }).catch((err) => log.auth.error('Error en getMe post-login:', err));
         
 
       },
@@ -472,13 +471,13 @@ export const useStore = create<AppStore>()(
       onRehydrateStorage: () => {
         return (state, error) => {
           if (error) {
-            console.error('❌ Error al hidratar store:', error);
+            log.store.error('Error al hidratar store:', error);
             localStorage.removeItem('diapstore-store');
             return;
           }
 
           if (!state) {
-            console.log('ℹ️ No hay estado para hidratar');
+            log.store.info('No hay estado para hidratar');
             return;
           }
 
@@ -490,8 +489,8 @@ export const useStore = create<AppStore>()(
             (state.auth?.token && state.auth.token.length < 10);
 
           if (hasInconsistentState) {
-            console.error('🔴 Estado inconsistente detectado durante hidratación!');
-            console.log({
+            log.store.error('Estado inconsistente detectado durante hidratación!');
+            log.store.debug('Estado inconsistente:', {
               isAuthenticated: state.auth?.isAuthenticated,
               hasToken: !!state.auth?.token,
               tokenLength: state.auth?.token?.length,
@@ -512,10 +511,10 @@ export const useStore = create<AppStore>()(
 
           // Solo configurar token si todo está OK
           if (state.auth?.token && state.auth?.isAuthenticated && state.auth?.user) {
-            console.log('✅ Configurando token desde hidratación');
+            log.store.info('Configurando token desde hidratación');
             httpClient.setAuthToken(state.auth.token);
           } else {
-            console.log('ℹ️ No hay sesión válida para hidratar');
+            log.store.info('No hay sesión válida para hidratar');
             httpClient.removeAuthToken();
           }
         };
@@ -554,8 +553,8 @@ export const initializeAuth = () => {
     (!store.auth.isAuthenticated && store.auth.token);
   
   if (hasInconsistentState) {
-    console.error('🔴 ESTADO INCONSISTENTE DETECTADO - Limpiando todo...');
-    console.log({
+    log.store.error('ESTADO INCONSISTENTE DETECTADO - Limpiando todo...');
+    log.store.debug('Estado:', {
       isAuthenticated: store.auth.isAuthenticated,
       hasToken: !!store.auth.token,
       hasUser: !!store.auth.user,
@@ -569,7 +568,7 @@ export const initializeAuth = () => {
     
     // Forzar recarga para reiniciar React
     if (typeof window !== 'undefined') {
-      console.log('🔄 Recargando página para limpiar estado...');
+      log.store.info('Recargando página para limpiar estado...');
       window.location.href = '/login?session=corrupted';
     }
     return;
@@ -580,7 +579,7 @@ export const initializeAuth = () => {
     // Validar que el token no esté vacío o corrupto
     if (store.auth.token.length < 10 || !store.auth.user) {
       // Token inválido - limpiar todo
-      console.warn('⚠️ Token inválido detectado, limpiando sesión...');
+      log.store.warn('Token inválido detectado, limpiando sesión...');
       store.logout();
       localStorage.clear();
       sessionStorage.clear();
@@ -590,13 +589,13 @@ export const initializeAuth = () => {
     
     // Configurar token en httpClient
     httpClient.setAuthToken(store.auth.token);
-    console.log('✅ Sesión restaurada correctamente', {
+    log.store.info('Sesión restaurada correctamente', {
       user: store.auth.user?.email,
       tokenLength: store.auth.token.length,
     });
   } else {
     // No hay sesión - asegurarse que esté limpio
     httpClient.removeAuthToken();
-    console.log('ℹ️ No hay sesión activa');
+    log.store.info('No hay sesión activa');
   }
 };

@@ -6,6 +6,7 @@ function ScrollToTop() {
   const { pathname } = useLocation();
   
   useEffect(() => {
+    log.router.debug('Navegación:', pathname);
     window.scrollTo(0, 0);
   }, [pathname]);
   
@@ -39,6 +40,7 @@ import RegistrationSuccess from '@/pages/RegistrationSuccess';
 import OrderSuccessPage from '@/pages/OrderSuccessPage';
 import { QUERY_CONFIG } from '@/config/api';
 import { useStore } from '@/store/useStore';
+import log from '@/lib/logger';
 import './App.css';
 
 // Crear cliente de React Query
@@ -51,7 +53,7 @@ function App() {
   useEffect(() => {
     // Si dice que está autenticado pero no hay user o token válido, limpiar
     if (auth.isAuthenticated && (!auth.user || !auth.token || auth.token.length < 10)) {
-      console.warn('⚠️ Sesión corrupta detectada, limpiando...');
+      log.store.warn('Sesión corrupta detectada, limpiando...');
       logout();
       localStorage.removeItem('diapstore-store');
       sessionStorage.clear();

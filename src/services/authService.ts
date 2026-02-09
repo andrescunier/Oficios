@@ -5,6 +5,7 @@
 import type { User, Account } from '@/types/api';
 import { httpClient } from './httpClient';
 import { API_ENDPOINTS, ACCOUNT_ID } from '@/config/api';
+import log from '@/lib/logger';
 
 export interface LoginCredentials {
   email: string;
@@ -105,6 +106,7 @@ export class AuthService {
   async login(
     credentials: LoginCredentials
   ): Promise<{ user: User; token: string; account: Account | null }> {
+    log.auth.info('Intentando login para:', credentials.email);
     try {
       const response = await httpClient.post<LoginResponse>(API_ENDPOINTS.AUTH.LOGIN, {
         email: credentials.email,
@@ -116,6 +118,7 @@ export class AuthService {
 
       // Configurar token en el cliente HTTP automáticamente
       httpClient.setAuthToken(token);
+      log.auth.info('Login exitoso:', user.email, '| Token:', token.substring(0, 20) + '...');
 
       // Guardar información adicional si es necesaria
       if (account) {
@@ -129,6 +132,7 @@ export class AuthService {
       };
 
     } catch (error: any) {
+      log.auth.error('Login fallido:', error.message || error);
       // Si es un error de la API con estructura conocida
       if (error.response?.data?.message) {
         throw new Error(error.response.data.message);
@@ -149,6 +153,7 @@ export class AuthService {
   async register(
     data: RegisterData
   ): Promise<{ user: User; token: string; account: Account | null }> {
+    log.auth.info('Registrando usuario:', data.email);
     try {
       const payload = {
         first_name: data.firstName,
@@ -197,7 +202,7 @@ export class AuthService {
       // Este es el customer_id que necesitamos para crear órdenes
       if (response.data?.partner_id) {
         localStorage.setItem('business_partner_id', response.data.partner_id);
-        console.log('✅ Business Partner ID guardado del registro:', response.data.partner_id);
+        log.auth.info('Business Partner ID guardado del registro:', response.data.partner_id);
       }
 
       // Luego de un registro exitoso, iniciamos sesión automáticamente
@@ -207,6 +212,7 @@ export class AuthService {
       });
 
     } catch (error: any) {
+      log.auth.error('Registro fallido:', error.message || error);
       // Si es un error de la API con estructura conocida
       if (error.response?.data?.message) {
         throw new Error(error.response.data.message);
@@ -225,6 +231,7 @@ export class AuthService {
    * Cerrar sesión
    */
   async logout(userId?: string): Promise<void> {
+    log.auth.info('Cerrando sesión', userId ? `para usuario: ${userId}` : '');
     try {
       // Llamar al endpoint de logout si existe
       await httpClient.post(API_ENDPOINTS.AUTH.LOGOUT, {
@@ -265,15 +272,15 @@ export class AuthService {
           || (response.data as any).partner_id;
         if (bpId) {
           localStorage.setItem('business_partner_id', bpId);
-          console.log('✅ Business Partner ID guardado desde /auth/me:', bpId);
+          log.auth.info('Business Partner ID guardado desde /auth/me:', bpId);
         } else {
-          console.warn('⚠️ /auth/me no devolvió business_partner_id. Se usará user.id como fallback para customer_id.');
+          log.auth.warn('/auth/me no devolvió business_partner_id. Se usará user.id como fallback.');
         }
         return response;
       }
       return null;
     } catch (error) {
-      console.error('Error obteniendo perfil:', error);
+      log.auth.error('Error obteniendo perfil:', error);
       return null;
     }
   }

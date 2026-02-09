@@ -8,6 +8,7 @@ import { ArrowLeft, CreditCard, MapPin, User, Mail, Phone, Lock } from 'lucide-r
 import { useStore } from '@/store/useStore';
 import { orderService } from '@/services/orderService';
 import { getPaymentMethodsConfig } from '@/config/runtime';
+import log from '@/lib/logger';
 
 interface ShippingInfo {
   firstName: string;
@@ -34,10 +35,11 @@ const getUserData = () => {
   // Intentar obtener de registration_data (datos del registro)
   const registrationData = localStorage.getItem('registration_data');
   if (registrationData) {
-    try {
+    try {\n      return JSON.parse(registrationData);\n    } catch (e) {\n      log.checkout.error('Error parsing registration data:', e);", "oldString": "    try {\n      return JSON.parse(registrationData);\n    } catch (e) {\n      console.error('Error parsing registration data:', e);"}
+<parameter name="newString">    try {
       return JSON.parse(registrationData);
     } catch (e) {
-      console.error('Error parsing registration data:', e);
+      log.checkout.error('Error parsing registration data:', e);
     }
   }
   return null;
@@ -179,9 +181,10 @@ export const CheckoutPage: React.FC = () => {
   };
 
   const handleFinalizeOrder = async () => {
-    console.log('🛒 Iniciando checkout...');
-    console.log('Business Partner ID:', businessPartnerId);
-    console.log('Auth:', auth.isAuthenticated, auth.user?.username);
+    log.checkout.info('Iniciando checkout...');
+    log.checkout.debug('Business Partner ID:', businessPartnerId);
+    log.checkout.debug('Auth:', { isAuthenticated: auth.isAuthenticated, user: auth.user?.username });
+    log.checkout.debug('Cart:', { items: cart.items.length, total: cart.total_amount, currency: cart.currency });
     setIsProcessing(true);
     
     try {
@@ -218,10 +221,10 @@ export const CheckoutPage: React.FC = () => {
       };
 
       // Pasar el business_partner_id del usuario logueado
-      console.log('📦 CheckoutData:', JSON.stringify(checkoutData, null, 2));
+      log.checkout.group('CheckoutData', () => console.log(JSON.stringify(checkoutData, null, 2)));
       const result = await orderService.processCheckout(checkoutData, businessPartnerId || undefined);
       
-      console.log('📋 Resultado checkout:', JSON.stringify(result, null, 2));
+      log.checkout.group('Resultado checkout', () => console.log(JSON.stringify(result, null, 2)));
       
       // Verificar que todas las operaciones fueron exitosas
       if (result.success && result.salesOrder && result.payment) {

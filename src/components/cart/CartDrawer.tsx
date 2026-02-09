@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
 import { useStore } from '@/store/useStore';
+import log from '@/lib/logger';
 
 interface CartDrawerProps {
   children: React.ReactNode;
@@ -42,6 +43,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
 
   const itemsCount = cart.items.reduce((sum, item) => sum + item.quantity, 0);
   const total = cart.total_amount;
+  log.cart.debug('CartDrawer render:', { itemsCount, total, currency: cart.currency });
   const freeShippingThreshold = 50000;
   const isEligibleForFreeShipping = total >= freeShippingThreshold;
   const amountForFreeShipping = freeShippingThreshold - total;

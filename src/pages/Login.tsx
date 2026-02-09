@@ -15,6 +15,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useStore } from '@/store/useStore';
 import { authService } from '@/services/authService';
+import log from '@/lib/logger';
 
 // Schema de validación
 const loginSchema = z.object({
@@ -42,6 +43,7 @@ export const Login: React.FC = () => {
   // Obtener la URL de redirección después del login
   const locationState = location.state as any;
   const from = locationState?.from?.pathname || locationState?.from || '/';
+  log.auth.debug('Login page - redirect destino:', from);
 
   // Función para limpiar sesión corrupta
   const handleClearSession = () => {
@@ -57,7 +59,7 @@ export const Login: React.FC = () => {
       // Recargar la página para asegurar estado limpio
       window.location.reload();
     } catch (error) {
-      console.error('Error al limpiar sesión:', error);
+      log.auth.error('Error al limpiar sesión:', error);
     }
   };
 
@@ -73,6 +75,7 @@ export const Login: React.FC = () => {
     try {
       setIsLoading(true);
       setError(null);
+      log.auth.info('Enviando login para:', data.email);
 
       const { user, token, account } = await authService.login(data);
       
@@ -87,6 +90,7 @@ export const Login: React.FC = () => {
       });
 
       // Redirigir a la página anterior o al inicio
+      log.auth.info('Login exitoso, redirigiendo a:', from);
       navigate(from, { replace: true });
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error al iniciar sesión';

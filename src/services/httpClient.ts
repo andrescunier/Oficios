@@ -3,8 +3,9 @@
  */
 
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
-import { API_BASE_URL, API_TIMEOUT, enableApiLogging, ACCOUNT_ID } from '@/config/api';
+import { API_BASE_URL, API_TIMEOUT, ACCOUNT_ID } from '@/config/api';
 import type { ApiError } from '@/types/api';
+import log from '@/lib/logger';
 
 class HttpClient {
   private client: AxiosInstance;
@@ -39,21 +40,17 @@ class HttpClient {
           config.headers['Authorization'] = `Bearer ${authToken}`;
         }
 
-        if (enableApiLogging) {
-          console.log('🚀 Request:', {
-            method: config.method?.toUpperCase(),
-            url: config.url,
-            headers: config.headers,
-            data: config.data
-          });
-        }
+        log.http.debug('Request →', config.method?.toUpperCase(), config.url);
+        log.http.group(`${config.method?.toUpperCase()} ${config.url}`, () => {
+          console.log('Headers:', config.headers);
+          if (config.data) console.log('Body:', config.data);
+          if (config.params) console.log('Params:', config.params);
+        });
 
         return config;
       },
       (error) => {
-        if (enableApiLogging) {
-          console.error('❌ Request Error:', error);
-        }
+        log.http.error('Request Error:', error);
         return Promise.reject(error);
       }
     );
@@ -61,23 +58,18 @@ class HttpClient {
     // Response interceptor
     this.client.interceptors.response.use(
       (response: AxiosResponse) => {
-        if (enableApiLogging) {
-          console.log('✅ Response:', {
-            status: response.status,
-            url: response.config.url,
-            data: response.data
-          });
-        }
+        log.http.debug('Response ←', response.status, response.config.url);
+        log.http.group(`${response.status} ${response.config.url}`, () => {
+          console.log('Data:', response.data);
+        });
         return response;
       },
       (error) => {
-        if (enableApiLogging) {
-          console.error('❌ Response Error:', {
-            status: error.response?.status,
-            url: error.config?.url,
-            message: error.response?.data?.message || error.message
-          });
-        }
+        log.http.error('Response Error:', {
+          status: error.response?.status,
+          url: error.config?.url,
+          message: error.response?.data?.message || error.message
+        });
 
         // Si es error 401, limpiar token y redirigir a login
         // PERO no hacerlo durante el proceso de login/getMe para evitar limpiar la sesión recién creada
@@ -161,7 +153,7 @@ class HttpClient {
       }
       return null;
     } catch (error) {
-      console.warn('Error al obtener token del storage:', error);
+      log.http.warn('Error al obtener token del storage:', error);
       return null;
     }
   }
@@ -187,7 +179,7 @@ class HttpClient {
         }
       }
     } catch (error) {
-      console.error('Error al manejar token expirado:', error);
+      log.http.error('Error al manejar token expirado:', error);
     }
   }
 

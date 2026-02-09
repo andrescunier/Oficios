@@ -10,6 +10,7 @@ import type {
   PaginatedResponse,
   ApiResponse 
 } from '@/types/api';
+import log from '@/lib/logger';
 
 export class ProductService {
   /**
@@ -31,6 +32,7 @@ export class ProductService {
     sort_by?: 'name' | 'price' | 'stock' | 'created';
     sort_order?: 'asc' | 'desc';
   }): Promise<PaginatedResponse<Product>> {
+    log.products.debug('getProducts', params);
     const url = API_ENDPOINTS.PRODUCTS(ACCOUNT_ID);
     const response: any = await httpClient.get(url, { params });
 
@@ -65,6 +67,7 @@ export class ProductService {
    * Obtener un producto por ID
    */
   async getProduct(productId: string): Promise<Product> {
+    log.products.debug('getProduct', productId);
     const url = API_ENDPOINTS.PRODUCT(ACCOUNT_ID, productId);
     const response: any = await httpClient.get(url);
     

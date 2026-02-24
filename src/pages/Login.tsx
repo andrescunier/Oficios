@@ -39,6 +39,15 @@ export const Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login, addNotification, logout } = useStore();
+    const [sessionExpired, setSessionExpired] = useState(false);
+
+    // Detectar parámetro de sesión expirada
+    React.useEffect(() => {
+      const params = new URLSearchParams(location.search);
+      if (params.get('session') === 'invalid' || params.get('session') === 'expired') {
+        setSessionExpired(true);
+      }
+    }, [location.search]);
 
   // Obtener la URL de redirección después del login
   const locationState = location.state as any;
@@ -116,6 +125,13 @@ export const Login: React.FC = () => {
         </CardHeader>
         
         <CardContent>
+            {sessionExpired && (
+              <Alert variant="warning" className="mb-6">
+                <AlertDescription>
+                  Tu sesión ha expirado. Por favor, inicia sesión nuevamente.
+                </AlertDescription>
+              </Alert>
+            )}
           {error && (
             <Alert variant="destructive" className="mb-6">
               <AlertDescription>{error}</AlertDescription>

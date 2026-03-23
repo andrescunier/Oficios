@@ -88,7 +88,7 @@ jobs:
     - name: Update QA image tag
       run: |
         SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
-        sed -i "s|image: ghcr.io/andrescunier/diap-ecommerce.*:sha-.*|image: ghcr.io/andrescunier/diap-ecommerce-qa:sha-${SHORT_SHA}|g" k8s/cumar-qa/cumar-ecommerce-deployment.yaml
+        sed -i "s|image: ghcr.io/andrescunier/diap-ecommerce.*:sha-.*|image: ghcr.io/andrescunier/diap-ecommerce-qa:sha-${SHORT_SHA}|g" k8s/cumar-qa/cumar-ecommerce-deployment.yaml || true
         
     - name: Commit and push
       run: |

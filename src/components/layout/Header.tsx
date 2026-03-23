@@ -64,10 +64,17 @@ export const Header: React.FC = () => {
       logout();
       localStorage.clear();
       sessionStorage.clear();
-      
-      // Redirigir a login después de un breve delay
+
+      // Marcar redirección para que la app procese la navegación
+      try {
+        localStorage.setItem('diap-redirect', '/login?session=invalid');
+      } catch (e) {
+        console.error('Error setting diap-redirect flag:', e);
+      }
+
+      // Recargar para asegurar que todos los módulos se reinician y la app procese la flag
       setTimeout(() => {
-        window.location.href = '/login?session=invalid';
+        window.location.reload();
       }, 100);
     }
   }, [hasInconsistentState, isAuthenticated, auth.token, user, logout]);

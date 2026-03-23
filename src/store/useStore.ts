@@ -502,9 +502,13 @@ export const useStore = create<AppStore>()(
             sessionStorage.clear();
             httpClient.removeAuthToken();
             
-            // Forzar recarga
-            if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
-              window.location.href = '/login?session=corrupted_hydration';
+            // Señalar redirección para que la app procese la navegación después de montar
+            try {
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('diap-redirect', '/login?session=corrupted_hydration');
+              }
+            } catch (e) {
+              log.store.error('Error setting diap-redirect flag:', e);
             }
             return;
           }
@@ -566,10 +570,14 @@ export const initializeAuth = () => {
     sessionStorage.clear();
     httpClient.removeAuthToken();
     
-    // Forzar recarga para reiniciar React
-    if (typeof window !== 'undefined') {
-      log.store.info('Recargando página para limpiar estado...');
-      window.location.href = '/login?session=corrupted';
+    // Señalar redirección para que la app procese la navegación después de montar
+    try {
+      if (typeof window !== 'undefined') {
+        log.store.info('Se marca redirección por estado corrupto...');
+        localStorage.setItem('diap-redirect', '/login?session=corrupted');
+      }
+    } catch (e) {
+      log.store.error('Error setting diap-redirect flag:', e);
     }
     return;
   }

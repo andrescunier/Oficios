@@ -4,15 +4,30 @@ import './index.css'
 import App from './App.jsx'
 import { initializeAuth } from './store/useStore'
 import { initializeTheme } from './config/theme'
+import ErrorBoundary from '@/components/ErrorBoundary'
 
 // Inicializar tema runtime (colores, favicon, metadata)
-initializeTheme();
+try {
+  initializeTheme();
+} catch (e) {
+  // Evitar que errores en la inicialización del theme impidan render
+  // (se loguea en consola para diagnosticar en development)
+  // eslint-disable-next-line no-console
+  console.error('Error initializing theme:', e);
+}
 
-// Inicializar autenticación al cargar la aplicación
-initializeAuth();
+// Inicializar autenticación al cargar la aplicación (con protección)
+try {
+  initializeAuth();
+} catch (e) {
+  // eslint-disable-next-line no-console
+  console.error('Error initializing auth:', e);
+}
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <App />
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   </StrictMode>,
 )

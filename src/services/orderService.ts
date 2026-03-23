@@ -634,15 +634,41 @@ class OrderService {
       );
 
       // Si la respuesta es un array directo (sin paginación)
+      const normalizeOrder = (o: any) => {
+        try {
+          const items = Array.isArray(o.items) ? o.items.map((it: any) => ({
+            ...it,
+            unit_price: typeof it.unit_price === 'number' ? it.unit_price : (it.unit_price ? Number(it.unit_price) : null),
+            quantity: typeof it.quantity === 'number' ? it.quantity : (it.quantity ? Number(it.quantity) : 0),
+          })) : [];
+
+          return {
+            ...o,
+            total_amount: typeof o.total_amount === 'number' ? o.total_amount : (o.total_amount ? Number(o.total_amount) : null),
+            items,
+          };
+        } catch (e) {
+          return o;
+        }
+      };
+
       if (Array.isArray(response)) {
         return {
-          data: response,
+          data: response.map(normalizeOrder),
           pagination: {
             page: 1,
             per_page: response.length,
             total: response.length,
             total_pages: 1,
           }
+        };
+      }
+
+      // Si viene paginado, normalizar cada orden dentro de response.data
+      if (response && response.data && Array.isArray(response.data)) {
+        return {
+          ...response,
+          data: response.data.map(normalizeOrder),
         };
       }
 
@@ -665,7 +691,19 @@ class OrderService {
       );
 
       // La API devuelve { success, data: { id, order_number, ... } }
-      return unwrapApiResponse<SalesOrder>(response);
+      const raw = unwrapApiResponse<any>(response);
+      // Normalizar campos numéricos
+      const items = Array.isArray(raw.items) ? raw.items.map((it: any) => ({
+        ...it,
+        unit_price: typeof it.unit_price === 'number' ? it.unit_price : (it.unit_price ? Number(it.unit_price) : null),
+        quantity: typeof it.quantity === 'number' ? it.quantity : (it.quantity ? Number(it.quantity) : 0),
+      })) : [];
+
+      return {
+        ...raw,
+        total_amount: typeof raw.total_amount === 'number' ? raw.total_amount : (raw.total_amount ? Number(raw.total_amount) : null),
+        items,
+      } as SalesOrder;
     } catch (error) {
       throw error;
     }

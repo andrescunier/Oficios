@@ -50,6 +50,21 @@ const queryClient = new QueryClient(QUERY_CONFIG);
 function App() {
   const { auth, logout } = useStore();
 
+  // Procesar redirección marcada por la lógica fuera de React (p.ej. durante hidratación)
+  React.useEffect(() => {
+    try {
+      const redirect = localStorage.getItem('diap-redirect');
+      if (redirect) {
+        localStorage.removeItem('diap-redirect');
+        // Usar replace para no dejar historial sucio
+        window.location.replace(redirect);
+      }
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('Error processing diap-redirect:', e);
+    }
+  }, []);
+
   // Validar sesión al cargar la aplicación
   useEffect(() => {
     // Si dice que está autenticado pero no hay user o token válido, limpiar

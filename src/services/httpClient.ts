@@ -170,13 +170,13 @@ class HttpClient {
       // Limpiar sessionStorage también
       sessionStorage.clear();
       
-      // Redirigir a login (solo si estamos en el navegador)
-      if (typeof window !== 'undefined' && window.location) {
-        // Verificar si ya estamos en login para evitar bucles
-        if (!window.location.pathname.includes('/login')) {
-          // Forzar recarga completa para limpiar el estado de React
-          window.location.href = '/login?session=expired';
+      // Señalar redirección a login usando una flag en localStorage
+      try {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('diap-redirect', '/login?session=expired');
         }
+      } catch (e) {
+        log.http.error('Error setting diap-redirect flag:', e);
       }
     } catch (error) {
       log.http.error('Error al manejar token expirado:', error);

@@ -3,6 +3,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { getBusinessConfig } from '@/config/runtime';
 import { Link } from 'react-router-dom';
 import { 
   Heart, 
@@ -85,9 +86,10 @@ export const FavoritesPage: React.FC = () => {
     if (typeof price !== 'number' || isNaN(price)) {
       return 'Precio no disponible';
     }
-    const currencyCode = currency || 'ARS';
+    const business = getBusinessConfig();
+    const currencyCode = currency || business.defaultCurrency;
     
-    return new Intl.NumberFormat('es-AR', {
+    return new Intl.NumberFormat(business.locale, {
       style: 'currency',
       currency: currencyCode,
       minimumFractionDigits: 2,

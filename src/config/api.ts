@@ -1,5 +1,5 @@
 /**
- * Configuración de API para DIAP Store
+ * Configuración de API
  * Integración con Simple Gestión API v1.1.1
  * Usa configuración runtime cuando está disponible
  */
@@ -13,7 +13,7 @@ const apiConfig = getApiConfig();
 // Base URL desde runtime config con fallback a variable de entorno
 export const API_BASE_URL = apiConfig.url;
 
-// Account ID para multi-tenant (DIAP Store)
+// Account ID para multi-tenant
 export const ACCOUNT_ID = apiConfig.accountId;
 
 // Account Slug

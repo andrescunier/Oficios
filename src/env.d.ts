@@ -88,7 +88,7 @@ interface ImportMetaEnv {
   readonly VITE_ENABLE_ANALYTICS: string
   readonly VITE_ENABLE_REAL_PAYMENTS: string
   
-  // DIAP B2B Specific Features
+  // B2B Specific Features
   readonly VITE_HIDE_PRICES_FOR_GUESTS: string
   readonly VITE_LOGIN_TO_VIEW_PRICES_MESSAGE: string
   readonly VITE_LOGIN_FOR_PRICES_CTA: string

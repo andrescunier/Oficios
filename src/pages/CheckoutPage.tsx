@@ -8,7 +8,7 @@ import { ArrowLeft, CreditCard, MapPin, User, Mail, Phone, Lock } from 'lucide-r
 import { useStore } from '@/store/useStore';
 import { orderService } from '@/services/orderService';
 import { getPaymentMethodsConfig } from '@/config/runtime';
-import { PAYMENT_INFO, LEGAL } from '@/config/branding';
+import { PAYMENT_INFO, LEGAL, BUSINESS } from '@/config/branding';
 import log from '@/lib/logger';
 
 interface ShippingInfo {
@@ -80,7 +80,7 @@ export const CheckoutPage: React.FC = () => {
     city: savedUserData?.city || '',
     state: savedUserData?.state || '',
     zipCode: savedUserData?.zipCode || '',
-    country: 'Argentina'
+    country: BUSINESS.DEFAULT_COUNTRY
   });
 
   const [paymentInfo, setPaymentInfo] = useState<PaymentInfo>({
@@ -95,9 +95,9 @@ export const CheckoutPage: React.FC = () => {
     if (typeof price !== 'number' || isNaN(price)) {
       return 'Precio no disponible';
     }
-    const currencyCode = currency || 'ARS';
+    const currencyCode = currency || BUSINESS.DEFAULT_CURRENCY;
     
-    return new Intl.NumberFormat('es-AR', {
+    return new Intl.NumberFormat(BUSINESS.LOCALE, {
       style: 'currency',
       currency: currencyCode,
       minimumFractionDigits: 2,
@@ -212,9 +212,9 @@ export const CheckoutPage: React.FC = () => {
           description: item.product.name,
           quantity: item.quantity,
           unit_price: item.product.unit_price,
-          tax_rate: item.product.tax_rate && item.product.tax_rate > 1 ? item.product.tax_rate / 100 : (item.product.tax_rate || 0.21) // IVA en formato decimal (0.21 = 21%)
+          tax_rate: item.product.tax_rate && item.product.tax_rate > 1 ? item.product.tax_rate / 100 : (item.product.tax_rate || BUSINESS.DEFAULT_TAX_RATE) // IVA en formato decimal
         })),
-        currency: cart.currency || "ARS",
+        currency: cart.currency || BUSINESS.DEFAULT_CURRENCY,
         totalAmount: cart.total_amount,
         paymentMethod: paymentInfo.paymentMethod,
         notes: `Pedido web - ${shippingInfo.firstName} ${shippingInfo.lastName}`

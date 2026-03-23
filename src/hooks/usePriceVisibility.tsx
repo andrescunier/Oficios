@@ -1,10 +1,10 @@
 /**
  * Hook para controlar la visibilidad de precios según autenticación
- * Específico para DIAP - B2B Platform
+ * B2B Platform - Configurable via runtime config
  */
 
 import React, { useMemo } from 'react';
-import { FEATURES } from '@/config/branding';
+import { FEATURES, BUSINESS } from '@/config/branding';
 import { useStore } from '@/store/useStore';
 
 // Hook para autenticación - conectado al store real
@@ -66,7 +66,7 @@ export const usePriceVisibility = () => {
 export const PriceDisplay = ({ 
   price, 
   originalPrice, 
-  currency = 'ARS',
+  currency = BUSINESS.DEFAULT_CURRENCY,
   className = '',
   showLoginButton = true,
   onLoginClick
@@ -118,14 +118,14 @@ export const PriceDisplay = ({
     );
   }
 
-  const formattedPrice = new Intl.NumberFormat('es-AR', {
+  const formattedPrice = new Intl.NumberFormat(BUSINESS.LOCALE, {
     style: 'currency',
     currency: currency,
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(price);
 
-  const formattedOriginalPrice = originalPrice ? new Intl.NumberFormat('es-AR', {
+  const formattedOriginalPrice = originalPrice ? new Intl.NumberFormat(BUSINESS.LOCALE, {
     style: 'currency',
     currency: currency,
     minimumFractionDigits: 2,

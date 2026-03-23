@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
 import { useStore } from '@/store/useStore';
+import { getBusinessConfig } from '@/config/runtime';
 import log from '@/lib/logger';
 
 interface CartDrawerProps {
@@ -44,7 +45,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
   const itemsCount = cart.items.reduce((sum, item) => sum + item.quantity, 0);
   const total = cart.total_amount;
   log.cart.debug('CartDrawer render:', { itemsCount, total, currency: cart.currency });
-  const freeShippingThreshold = 50000;
+  const businessCfg = getBusinessConfig();
+  const freeShippingThreshold = businessCfg.freeShippingThreshold;
   const isEligibleForFreeShipping = total >= freeShippingThreshold;
   const amountForFreeShipping = freeShippingThreshold - total;
 
@@ -52,9 +54,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
     if (typeof price !== 'number' || isNaN(price)) {
       return 'Precio no disponible';
     }
-    const currencyCode = currency || 'ARS';
+    const currencyCode = currency || businessCfg.defaultCurrency;
     
-    return new Intl.NumberFormat('es-AR', {
+    return new Intl.NumberFormat(businessCfg.locale, {
       style: 'currency',
       currency: currencyCode,
       minimumFractionDigits: 2,

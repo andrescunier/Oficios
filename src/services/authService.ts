@@ -1,10 +1,11 @@
 /**
- * Servicio de autenticación para DIAP - Integración con API real
+ * Servicio de autenticación - Integración con API real
  */
 
 import type { User, Account } from '@/types/api';
 import { httpClient } from './httpClient';
 import { API_ENDPOINTS, ACCOUNT_ID } from '@/config/api';
+import { getBusinessConfig } from '@/config/runtime';
 import log from '@/lib/logger';
 
 export interface LoginCredentials {
@@ -165,7 +166,7 @@ export class AuthService {
         company_name: data.companyName || `${data.firstName} ${data.lastName}`,
         tax_id: data.taxId,
         industry: data.industry,
-        currency: data.currency || 'ARS',
+        currency: data.currency || getBusinessConfig().defaultCurrency,
         username: data.username || data.email.split('@')[0],
         role: data.role || 'customer',
         person_metadata: {

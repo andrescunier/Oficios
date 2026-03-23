@@ -10,6 +10,7 @@ import {
   getContactConfig, 
   getLegalConfig,
   getPaymentConfig,
+  getBusinessConfig,
   getBrandingConfig as getRuntimeBranding,
   getThemeConfig,
   getSocialConfig,
@@ -155,6 +156,26 @@ export const PAYMENT_INFO = {
 } as const;
 
 // =========================================
+// BUSINESS CONFIG (desde runtime)
+// =========================================
+const runtimeBusiness = getBusinessConfig();
+export const BUSINESS = {
+  DEFAULT_TAX_RATE: runtimeBusiness.defaultTaxRate,
+  MAX_QUANTITY_PER_PRODUCT: runtimeBusiness.maxQuantityPerProduct,
+  DEFAULT_CURRENCY: runtimeBusiness.defaultCurrency,
+  DEFAULT_COUNTRY: runtimeBusiness.defaultCountry,
+  BUSINESS_HOURS: runtimeBusiness.businessHours,
+  RETURN_POLICY_DAYS: runtimeBusiness.returnPolicyDays,
+  REFUND_PROCESSING_TIME: runtimeBusiness.refundProcessingTime,
+  PRODUCTS_PER_PAGE: runtimeBusiness.productsPerPage,
+  FEATURED_PRODUCTS_COUNT: runtimeBusiness.featuredProductsCount,
+  HERO_SLIDER_INTERVAL: runtimeBusiness.heroSliderInterval,
+  INVOICE_NOTE: runtimeBusiness.invoiceNote,
+  FREE_SHIPPING_THRESHOLD: runtimeBusiness.freeShippingThreshold,
+  LOCALE: runtimeBusiness.locale,
+} as const;
+
+// =========================================
 // APP CONFIGURATION
 // =========================================
 export const APP_CONFIG = {
@@ -175,7 +196,7 @@ export const FEATURES = {
   ANALYTICS: runtimeFeatures.analytics,
   REAL_PAYMENTS: runtimeFeatures.realPayments,
   
-  // DIAP B2B Specific Features (desde runtime app config)
+  // B2B Specific Features (desde runtime app config)
   HIDE_PRICES_FOR_GUESTS: runtimeApp.hidePricesForGuests,
   LOGIN_TO_VIEW_PRICES_MESSAGE: runtimeApp.loginMessage,
   LOGIN_FOR_PRICES_CTA: runtimeApp.loginCta,

@@ -6,6 +6,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Minus, Plus, Trash2, ShoppingCart, ArrowLeft } from 'lucide-react';
 import { useStore } from '@/store/useStore';
+import { getBusinessConfig } from '@/config/runtime';
 
 export const CartPage: React.FC = () => {
     const { 
@@ -59,9 +60,9 @@ export const CartPage: React.FC = () => {
     if (typeof price !== 'number' || isNaN(price)) {
       return 'Precio no disponible';
     }
-    const currencyCode = currency || 'ARS';
+    const currencyCode = currency || getBusinessConfig().defaultCurrency;
     
-    return new Intl.NumberFormat('es-AR', {
+    return new Intl.NumberFormat(getBusinessConfig().locale, {
       style: 'currency',
       currency: currencyCode,
       minimumFractionDigits: 2,

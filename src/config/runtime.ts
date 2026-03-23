@@ -87,6 +87,31 @@ export interface RuntimeConfig {
     address: string;
     jurisdiction: string;
   };
+  /** Reglas de negocio configurables por tenant */
+  business: {
+    /** Tasa de IVA por defecto (decimal, ej: 0.21 = 21%) */
+    defaultTaxRate: number;
+    /** Cantidad máxima de unidades por producto en el carrito */
+    maxQuantityPerProduct: number;
+    /** Moneda por defecto (código ISO, ej: "ARS") */
+    defaultCurrency: string;
+    /** País por defecto */
+    defaultCountry: string;
+    /** Horario de atención */
+    businessHours: string;
+    /** Plazo de devolución en texto */
+    returnPolicyDays: string;
+    /** Plazo de reembolso en texto */
+    refundProcessingTime: string;
+    /** Productos por página en listados */
+    productsPerPage: number;
+    /** Cantidad de productos destacados en Home */
+    featuredProductsCount: number;
+    /** Intervalo de autoplay del hero slider (ms) */
+    heroSliderInterval: number;
+    /** Nota o texto corto de facturación */
+    invoiceNote: string;
+  };
   branding: {
     logo: string;
     logoDark: string;
@@ -184,6 +209,20 @@ function getBoolValue(runtimeValue: boolean | undefined, viteKey: string, defaul
 }
 
 /**
+ * Obtiene valor numérico con fallback
+ */
+function getNumberValue(runtimeValue: number | undefined, viteKey: string, defaultValue: number): number {
+  if (runtimeValue !== undefined && !isNaN(runtimeValue)) {
+    return runtimeValue;
+  }
+  const viteValue = import.meta.env[viteKey];
+  if (viteValue !== undefined && !isNaN(Number(viteValue))) {
+    return Number(viteValue);
+  }
+  return defaultValue;
+}
+
+/**
  * Configuración de API
  */
 export const getApiConfig = () => {
@@ -252,6 +291,28 @@ export const getPaymentConfig = () => {
     cbu: getEnvValue(rc?.payment?.cbu, 'VITE_PAYMENT_CBU', ''),
     alias: getEnvValue(rc?.payment?.alias, 'VITE_PAYMENT_ALIAS', ''),
     whatsappVerification: getEnvValue(rc?.payment?.whatsappVerification, 'VITE_PAYMENT_WA_VERIFICATION', ''),
+  };
+};
+
+/**
+ * Configuración de reglas de negocio
+ */
+export const getBusinessConfig = () => {
+  const rc = window.__APP_CONFIG__;
+  return {
+    defaultTaxRate: getNumberValue(rc?.business?.defaultTaxRate, 'VITE_DEFAULT_TAX_RATE', 0.21),
+    maxQuantityPerProduct: getNumberValue(rc?.business?.maxQuantityPerProduct, 'VITE_MAX_QUANTITY_PER_PRODUCT', 5),
+    defaultCurrency: getEnvValue(rc?.business?.defaultCurrency, 'VITE_DEFAULT_CURRENCY', 'ARS'),
+    defaultCountry: getEnvValue(rc?.business?.defaultCountry, 'VITE_DEFAULT_COUNTRY', 'Argentina'),
+    businessHours: getEnvValue(rc?.business?.businessHours, 'VITE_BUSINESS_HOURS', 'Lunes a Viernes: 9:00 - 18:00hs'),
+    returnPolicyDays: getEnvValue(rc?.business?.returnPolicyDays, 'VITE_RETURN_POLICY_DAYS', '10 días corridos'),
+    refundProcessingTime: getEnvValue(rc?.business?.refundProcessingTime, 'VITE_REFUND_PROCESSING_TIME', '5 a 10 días hábiles'),
+    productsPerPage: getNumberValue(rc?.business?.productsPerPage, 'VITE_PRODUCTS_PER_PAGE', 50),
+    featuredProductsCount: getNumberValue(rc?.business?.featuredProductsCount, 'VITE_FEATURED_PRODUCTS_COUNT', 8),
+    heroSliderInterval: getNumberValue(rc?.business?.heroSliderInterval, 'VITE_HERO_SLIDER_INTERVAL', 5000),
+    invoiceNote: getEnvValue(rc?.business?.invoiceNote, 'VITE_INVOICE_NOTE', 'Se emite factura tipo A o B según la condición fiscal del comprador.'),
+    freeShippingThreshold: getNumberValue(rc?.business?.freeShippingThreshold, 'VITE_FREE_SHIPPING_THRESHOLD', 50000),
+    locale: getEnvValue(rc?.business?.locale, 'VITE_LOCALE', 'es-AR'),
   };
 };
 
@@ -465,6 +526,7 @@ export const getRuntimeConfig = (): RuntimeConfig => {
     app: getAppConfig(),
     contact: getContactConfig(),
     legal: getLegalConfig(),
+    business: getBusinessConfig(),
     branding: getBrandingConfig(),
     theme: getThemeConfig(),
     social: getSocialConfig(),

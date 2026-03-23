@@ -2,14 +2,14 @@
 set -e
 
 # =============================================================================
-# Docker Entrypoint para DIAP Ecommerce
+# Docker Entrypoint para Ecommerce App
 # Genera config.js runtime desde variables de entorno
 # =============================================================================
 
 CONFIG_TEMPLATE="/app/config.js.template"
 CONFIG_OUTPUT="/usr/share/nginx/html/config.js"
 
-echo "🚀 DIAP Ecommerce - Starting container..."
+echo "🚀 Ecommerce App - Starting container..."
 
 # =============================================================================
 # Función para obtener valor con default
@@ -32,25 +32,46 @@ generate_config() {
   ACCOUNT_ID=$(get_value "ACCOUNT_ID" "bed2df35-717f-4900-a4b1-7c3a7fb59b7c")
   ACCOUNT_SLUG=$(get_value "ACCOUNT_SLUG" "diap")
   
-  APP_NAME=$(get_value "APP_NAME" "DIAP")
-  COMPANY_NAME=$(get_value "COMPANY_NAME" "DIAP")
-  APP_SLOGAN=$(get_value "APP_SLOGAN" "Tecnología profesional para empresas")
-  APP_DESCRIPTION=$(get_value "APP_DESCRIPTION" "DIAP - Distribuidora de productos tecnológicos de primera calidad")
-  APP_URL=$(get_value "APP_URL" "https://diap.com")
+  APP_NAME=$(get_value "APP_NAME" "Mi Tienda")
+  COMPANY_NAME=$(get_value "COMPANY_NAME" "Mi Empresa")
+  APP_SLOGAN=$(get_value "APP_SLOGAN" "Tu tienda online")
+  APP_DESCRIPTION=$(get_value "APP_DESCRIPTION" "Tienda online de productos")
+  APP_URL=$(get_value "APP_URL" "")
   HIDE_PRICES_FOR_GUESTS=$(get_value "HIDE_PRICES_FOR_GUESTS" "true")
   REQUIRE_AUTH_FOR_CART=$(get_value "REQUIRE_AUTH_FOR_CART" "true")
   LOGIN_TO_VIEW_PRICES_MESSAGE=$(get_value "LOGIN_TO_VIEW_PRICES_MESSAGE" "Inicia sesión para ver precios")
   LOGIN_FOR_PRICES_CTA=$(get_value "LOGIN_FOR_PRICES_CTA" "Iniciar Sesión")
   
-  CONTACT_EMAIL=$(get_value "CONTACT_EMAIL" "info@diapstore.com")
-  CONTACT_PHONE=$(get_value "CONTACT_PHONE" "+54 11 2631-0884")
-  CONTACT_ADDRESS=$(get_value "CONTACT_ADDRESS" "Palomar, Provincia de Buenos Aires")
+  CONTACT_EMAIL=$(get_value "CONTACT_EMAIL" "info@tienda.com")
+  CONTACT_PHONE=$(get_value "CONTACT_PHONE" "")
+  CONTACT_ADDRESS=$(get_value "CONTACT_ADDRESS" "")
+  CONTACT_SALES_EMAIL=$(get_value "CONTACT_SALES_EMAIL" "ventas@tienda.com")
+  CONTACT_WHATSAPP=$(get_value "CONTACT_WHATSAPP" "")
   
-  LOGO_URL=$(get_value "LOGO_URL" "/diap-logo.png")
+  LEGAL_COMPANY_NAME=$(get_value "LEGAL_COMPANY_NAME" "")
+  LEGAL_CUIT=$(get_value "LEGAL_CUIT" "")
+  LEGAL_ADDRESS=$(get_value "LEGAL_ADDRESS" "")
+  LEGAL_JURISDICTION=$(get_value "LEGAL_JURISDICTION" "")
+  
+  DEFAULT_TAX_RATE=$(get_value "DEFAULT_TAX_RATE" "0.21")
+  MAX_QUANTITY_PER_PRODUCT=$(get_value "MAX_QUANTITY_PER_PRODUCT" "5")
+  DEFAULT_CURRENCY=$(get_value "DEFAULT_CURRENCY" "ARS")
+  DEFAULT_COUNTRY=$(get_value "DEFAULT_COUNTRY" "Argentina")
+  BUSINESS_HOURS=$(get_value "BUSINESS_HOURS" "Lunes a Viernes: 9:00 - 18:00hs")
+  RETURN_POLICY_DAYS=$(get_value "RETURN_POLICY_DAYS" "10 días corridos")
+  REFUND_PROCESSING_TIME=$(get_value "REFUND_PROCESSING_TIME" "5 a 10 días hábiles")
+  PRODUCTS_PER_PAGE=$(get_value "PRODUCTS_PER_PAGE" "50")
+  FEATURED_PRODUCTS_COUNT=$(get_value "FEATURED_PRODUCTS_COUNT" "8")
+  HERO_SLIDER_INTERVAL=$(get_value "HERO_SLIDER_INTERVAL" "5000")
+  INVOICE_NOTE=$(get_value "INVOICE_NOTE" "Se emite factura tipo A o B según la condición fiscal del comprador.")
+  FREE_SHIPPING_THRESHOLD=$(get_value "FREE_SHIPPING_THRESHOLD" "50000")
+  LOCALE=$(get_value "LOCALE" "es-AR")
+
+  LOGO_URL=$(get_value "LOGO_URL" "/logo.png")
   LOGO_DARK_URL=$(get_value "LOGO_DARK_URL" "")
   FAVICON_URL=$(get_value "FAVICON_URL" "/favicon.ico")
   BANNER_URL=$(get_value "BANNER_URL" "")
-  OG_IMAGE_URL=$(get_value "OG_IMAGE_URL" "/diap-logo.png")
+  OG_IMAGE_URL=$(get_value "OG_IMAGE_URL" "/logo.png")
   
   COLOR_PRIMARY=$(get_value "COLOR_PRIMARY" "#2563eb")
   COLOR_PRIMARY_HOVER=$(get_value "COLOR_PRIMARY_HOVER" "#1d4ed8")
@@ -92,6 +113,12 @@ generate_config() {
   PAYMENT_MERCADOPAGO=$(get_value "PAYMENT_MERCADOPAGO" "false")
   PAYMENT_TARJETA=$(get_value "PAYMENT_TARJETA" "false")
 
+  PAYMENT_BANK_NAME=$(get_value "PAYMENT_BANK_NAME" "")
+  PAYMENT_ACCOUNT_HOLDER=$(get_value "PAYMENT_ACCOUNT_HOLDER" "")
+  PAYMENT_CBU=$(get_value "PAYMENT_CBU" "")
+  PAYMENT_ALIAS=$(get_value "PAYMENT_ALIAS" "")
+  PAYMENT_WA_VERIFICATION=$(get_value "PAYMENT_WA_VERIFICATION" "")
+
   # Images - JSON strings (se pasan como env vars con JSON completo)
   # Si se proveen, se incluyen directamente; si no, se usan los defaults del frontend
   IMAGES_CONFIG=$(get_value "IMAGES_CONFIG" "")
@@ -121,8 +148,31 @@ window.__APP_CONFIG__ = {
   },
   contact: {
     email: "${CONTACT_EMAIL}",
+    salesEmail: "${CONTACT_SALES_EMAIL}",
     phone: "${CONTACT_PHONE}",
+    whatsapp: "${CONTACT_WHATSAPP}",
     address: "${CONTACT_ADDRESS}"
+  },
+  legal: {
+    companyName: "${LEGAL_COMPANY_NAME}",
+    cuit: "${LEGAL_CUIT}",
+    address: "${LEGAL_ADDRESS}",
+    jurisdiction: "${LEGAL_JURISDICTION}"
+  },
+  business: {
+    defaultTaxRate: ${DEFAULT_TAX_RATE},
+    maxQuantityPerProduct: ${MAX_QUANTITY_PER_PRODUCT},
+    defaultCurrency: "${DEFAULT_CURRENCY}",
+    defaultCountry: "${DEFAULT_COUNTRY}",
+    businessHours: "${BUSINESS_HOURS}",
+    returnPolicyDays: "${RETURN_POLICY_DAYS}",
+    refundProcessingTime: "${REFUND_PROCESSING_TIME}",
+    productsPerPage: ${PRODUCTS_PER_PAGE},
+    featuredProductsCount: ${FEATURED_PRODUCTS_COUNT},
+    heroSliderInterval: ${HERO_SLIDER_INTERVAL},
+    invoiceNote: "${INVOICE_NOTE}",
+    freeShippingThreshold: ${FREE_SHIPPING_THRESHOLD},
+    locale: "${LOCALE}"
   },
   branding: {
     logo: "${LOGO_URL}",
@@ -176,6 +226,13 @@ window.__APP_CONFIG__ = {
     efectivo: ${PAYMENT_EFECTIVO},
     mercadopago: ${PAYMENT_MERCADOPAGO},
     tarjeta: ${PAYMENT_TARJETA}
+  },
+  payment: {
+    bankName: "${PAYMENT_BANK_NAME}",
+    accountHolder: "${PAYMENT_ACCOUNT_HOLDER}",
+    cbu: "${PAYMENT_CBU}",
+    alias: "${PAYMENT_ALIAS}",
+    whatsappVerification: "${PAYMENT_WA_VERIFICATION}"
   }
 };
 EOF

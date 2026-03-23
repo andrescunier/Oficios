@@ -32,6 +32,21 @@ window.__APP_CONFIG__ = {
     address: "Mitre 4146, Mar del Plata Sur, Mar del Plata, Buenos Aires, Argentina",
     jurisdiction: "Mar del Plata, Buenos Aires, Argentina"
   },
+  business: {
+    defaultTaxRate: 0.21,
+    maxQuantityPerProduct: 5,
+    defaultCurrency: "ARS",
+    defaultCountry: "Argentina",
+    businessHours: "Lunes a Viernes: 9:00 - 18:00hs | Sábados: 9:00 - 13:00hs",
+    returnPolicyDays: "10 días corridos",
+    refundProcessingTime: "5 a 10 días hábiles",
+    productsPerPage: 50,
+    featuredProductsCount: 8,
+    heroSliderInterval: 5000,
+    invoiceNote: "Se emite factura tipo A o B según la condición fiscal del comprador.",
+    freeShippingThreshold: 50000,
+    locale: "es-AR"
+  },
   branding: {
     logo: "/diap-logo.png",
     logoDark: "",

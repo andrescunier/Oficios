@@ -16,6 +16,7 @@ import type {
 import { httpClient } from '@/services/httpClient';
 import { authService } from '@/services/authService';
 import log from '@/lib/logger';
+import { getBusinessConfig } from '@/config/runtime';
 
 // Tipos del store
 interface AuthState {
@@ -100,7 +101,7 @@ const initialCartState: CartState = {
   subtotal: 0,
   tax_amount: 0,
   total_amount: 0,
-  currency: 'ARS',
+  currency: getBusinessConfig().defaultCurrency,
 };
 
 const initialUIState: UIState = {
@@ -112,9 +113,10 @@ const initialUIState: UIState = {
 };
 
 // Helper para calcular totales del carrito
-const calculateTotals = (items: CartItem[], currency: string = 'ARS'): CartState => {
+const calculateTotals = (items: CartItem[], currency: string = getBusinessConfig().defaultCurrency): CartState => {
+  const businessCfg = getBusinessConfig();
   const subtotal = items.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0);
-  const tax_amount = subtotal * 0.105; // 10.5% IVA
+  const tax_amount = subtotal * businessCfg.defaultTaxRate;
   const total_amount = subtotal + tax_amount;
   
   return {
@@ -126,8 +128,8 @@ const calculateTotals = (items: CartItem[], currency: string = 'ARS'): CartState
   };
 };
 
-// Límite máximo de unidades por producto
-const MAX_QUANTITY_PER_PRODUCT = 5;
+// Límite máximo de unidades por producto (desde config)
+const MAX_QUANTITY_PER_PRODUCT = getBusinessConfig().maxQuantityPerProduct;
 
 // Funciones helper para favoritos por usuario
 const FAVORITES_STORAGE_KEY = 'diapstore-user-favorites';

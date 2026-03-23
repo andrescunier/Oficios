@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { authService } from '@/services/authService';
+import { getBusinessConfig } from '@/config/runtime';
 
 export const ProfilePage: React.FC = () => {
   const { auth, logout, addNotification } = useStore();
@@ -96,7 +97,7 @@ export const ProfilePage: React.FC = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
+    return new Date(dateString).toLocaleDateString(getBusinessConfig().locale, {
       year: 'numeric',
       month: 'long',
       day: 'numeric'

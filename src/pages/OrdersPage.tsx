@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { orderService } from '@/services/orderService';
+import { getBusinessConfig } from '@/config/runtime';
 import type { SalesOrder, OrderStatus } from '@/services/orderService';
 
 export const OrdersPage: React.FC = () => {
@@ -70,7 +71,7 @@ export const OrdersPage: React.FC = () => {
       }
 
       const response = await orderService.getUserOrders(businessPartnerId, {
-        per_page: 50 // Cargar hasta 50 pedidos
+        per_page: getBusinessConfig().productsPerPage
       });
       
       setOrders(response.data);
@@ -120,9 +121,10 @@ export const OrdersPage: React.FC = () => {
     if (typeof price !== 'number' || isNaN(price)) {
       return 'Precio no disponible';
     }
-    const currencyCode = currency || 'ARS';
+    const business = getBusinessConfig();
+    const currencyCode = currency || business.defaultCurrency;
     
-    return new Intl.NumberFormat('es-AR', {
+    return new Intl.NumberFormat(business.locale, {
       style: 'currency',
       currency: currencyCode,
       minimumFractionDigits: 2,
@@ -130,7 +132,8 @@ export const OrdersPage: React.FC = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
+    const business = getBusinessConfig();
+    return new Date(dateString).toLocaleDateString(business.locale, {
       year: 'numeric',
       month: 'long',
       day: 'numeric',

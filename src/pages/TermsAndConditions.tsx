@@ -5,11 +5,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, FileText } from 'lucide-react';
-import { getLegalConfig, getAppConfig } from '@/config/runtime';
+import { getLegalConfig, getAppConfig, getBusinessConfig } from '@/config/runtime';
 
 export const TermsAndConditions: React.FC = () => {
   const legal = getLegalConfig();
   const app = getAppConfig();
+  const business = getBusinessConfig();
 
   return (
     <div className="min-h-screen bg-background">
@@ -87,8 +88,7 @@ export const TermsAndConditions: React.FC = () => {
           <section className="mb-8">
             <h2 className="text-2xl font-bold mb-4 text-primary">6. Facturación</h2>
             <p className="text-muted-foreground leading-relaxed">
-              {legal.companyName} emite factura tipo A o B según la condición fiscal del comprador. La factura se 
-              genera automáticamente al confirmar el pedido.
+              {business.invoiceNote}
             </p>
           </section>
 

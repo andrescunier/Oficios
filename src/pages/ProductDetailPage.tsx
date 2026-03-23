@@ -21,6 +21,7 @@ import { useStore } from '@/store/useStore';
 import type { Product } from '@/types/api';
 import { PriceDisplay } from '@/hooks/usePriceVisibility';
 import { handleImgError } from '@/utils/imageHelpers';
+import { getBusinessConfig } from '@/config/runtime';
 
 export const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -122,9 +123,10 @@ export const ProductDetailPage: React.FC = () => {
     if (typeof price !== 'number' || isNaN(price)) {
       return 'Precio no disponible';
     }
-    return new Intl.NumberFormat('es-AR', {
+    const business = getBusinessConfig();
+    return new Intl.NumberFormat(business.locale, {
       style: 'currency',
-      currency: product?.currency || 'ARS',
+      currency: product?.currency || business.defaultCurrency,
       minimumFractionDigits: 0,
     }).format(price);
   };
@@ -172,7 +174,7 @@ export const ProductDetailPage: React.FC = () => {
 
   const isProductFavorite = isFavorite(product.id);
   const isOutOfStock = (product.stock_quantity || 0) <= 0;
-  const maxQuantity = Math.min(product.stock_quantity || 0, 10);
+  const maxQuantity = Math.min(product.stock_quantity || 0, getBusinessConfig().maxQuantityPerProduct);
 
   return (
     <div className="min-h-screen bg-gray-50">

@@ -8,6 +8,7 @@ import { Search, Plus, Minus, Heart } from 'lucide-react';
 import { productService } from '@/services/productService';
 import { useStore } from '@/store/useStore';
 import type { Product } from '@/types/api';
+import { getBusinessConfig } from '@/config/runtime';
 import { PriceDisplay } from '@/hooks/usePriceVisibility';
 import { FEATURES } from '@/config/branding';
 import { getImagesConfig } from '@/config/runtime';
@@ -80,7 +81,7 @@ export const ProductsPageApiReal: React.FC = () => {
       // Llamar a la API real
       const response = await productService.getProducts({
         page: 1,
-        per_page: 50, // Cargar más productos
+        per_page: getBusinessConfig().productsPerPage, // Cargar más productos
         is_active: true
       });
       
@@ -132,11 +133,11 @@ export const ProductsPageApiReal: React.FC = () => {
     }
   };
 
-  const formatPrice = (price: number, currency: string = 'ARS') => {
+  const formatPrice = (price: number, currency: string = getBusinessConfig().defaultCurrency) => {
     if (typeof price !== 'number' || isNaN(price)) {
       return 'Precio no disponible';
     }
-    return new Intl.NumberFormat('es-AR', {
+    return new Intl.NumberFormat(getBusinessConfig().locale, {
       style: 'currency',
       currency: currency,
       minimumFractionDigits: 0,

@@ -5,9 +5,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, RefreshCw, MessageCircle, AlertCircle, CheckCircle2, XCircle } from 'lucide-react';
-import { getContactConfig } from '@/config/runtime';
+import { getContactConfig, getBusinessConfig } from '@/config/runtime';
 
 const contact = getContactConfig();
+const business = getBusinessConfig();
 const WHATSAPP_LINK = contact.whatsapp ? `https://wa.me/${contact.whatsapp}` : '';
 
 export const ReturnsPage: React.FC = () => {
@@ -75,7 +76,7 @@ export const ReturnsPage: React.FC = () => {
                 <div>
                   <h3 className="font-semibold text-lg mb-2">Plazo de Devolución</h3>
                   <p className="text-muted-foreground">
-                    Tienes <strong>10 días corridos</strong> desde la recepción del producto para 
+                    Tienes <strong>{business.returnPolicyDays}</strong> desde la recepción del producto para 
                     solicitar un cambio o devolución, según la Ley de Defensa del Consumidor (Ley 24.240).
                   </p>
                 </div>
@@ -99,7 +100,7 @@ export const ReturnsPage: React.FC = () => {
                   <h3 className="font-semibold text-lg mb-2">Reembolso</h3>
                   <p className="text-muted-foreground">
                     Una vez recibido y verificado el producto, procesaremos el reembolso en un 
-                    plazo de 5 a 10 días hábiles. El reembolso se realizará por el mismo medio 
+                    plazo de {business.refundProcessingTime}. El reembolso se realizará por el mismo medio 
                     de pago utilizado en la compra.
                   </p>
                 </div>

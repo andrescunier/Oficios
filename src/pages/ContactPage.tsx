@@ -5,7 +5,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { MessageCircle, Mail, Phone, MapPin, Clock, ArrowLeft, HelpCircle } from 'lucide-react';
-import { CONTACT, BRANDING } from '@/config/branding';
+import { CONTACT, BRANDING, BUSINESS } from '@/config/branding';
 
 const WHATSAPP_NUMBER = CONTACT.WHATSAPP;
 const WHATSAPP_LINK = CONTACT.WHATSAPP_LINK;
@@ -212,10 +212,7 @@ export const ContactPage: React.FC = () => {
                 <div>
                   <p className="font-semibold">Horario de Atención</p>
                   <p className="text-muted-foreground">
-                    Lunes a Viernes: 9:00 - 18:00hs
-                  </p>
-                  <p className="text-muted-foreground text-sm">
-                    Sábados: 9:00 - 13:00hs
+                    {BUSINESS.BUSINESS_HOURS}
                   </p>
                 </div>
               </div>

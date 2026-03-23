@@ -28,7 +28,7 @@ import type { Product } from '@/types/api';
 import { PriceDisplay, usePriceVisibility } from '@/hooks/usePriceVisibility';
 import { useNavigate } from 'react-router-dom';
 import { FEATURES } from '@/config/branding';
-import { getImagesConfig } from '@/config/runtime';
+import { getImagesConfig, getBusinessConfig } from '@/config/runtime';
 
 interface ProductCardProps {
   product: Product;
@@ -125,9 +125,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     if (typeof price !== 'number' || isNaN(price)) {
       return 'Precio no disponible';
     }
-    return new Intl.NumberFormat('es-AR', {
+    const business = getBusinessConfig();
+    return new Intl.NumberFormat(business.locale, {
       style: 'currency',
-      currency: product.currency || 'ARS',
+      currency: product.currency || business.defaultCurrency,
       minimumFractionDigits: 0,
     }).format(price);
   };

@@ -2,6 +2,8 @@
  * Utilidades para manejar URLs de CDN
  */
 
+import { getBrandingConfig } from '@/config/runtime';
+
 /**
  * Construye una URL de CDN completa
  * @param path - Ruta relativa de la imagen
@@ -51,7 +53,7 @@ export const getLogoUrl = (): string => {
     return cdnLogo;
   }
   
-  return getCDNUrl('/diap-logo.png');
+  return getCDNUrl(getBrandingConfig().logo);
 };
 
 /**

@@ -1,8 +1,8 @@
 /**
- * Sistema de logging centralizado para DIAP
+ * Sistema de logging centralizado
  * 
  * SEGURIDAD: En producción el logging está completamente deshabilitado.
- * window.DIAP NO se expone en producción.
+ * window.__APP_DEBUG__ NO se expone en producción.
  * 
  * DESARROLLO:
  *   Configurar con variable de entorno en .env:
@@ -12,9 +12,9 @@
  *     VITE_DEBUG_LEVEL=warn        — Nivel mínimo (debug|info|warn|error)
  * 
  *   O desde consola del navegador (solo en dev):
- *     window.DIAP.enableAll() / .disableAll()
- *     window.DIAP.enable('auth') / .disable('http')
- *     window.DIAP.status()
+ *     window.__APP_DEBUG__.enableAll() / .disableAll()
+ *     window.__APP_DEBUG__.enable('auth') / .disable('http')
+ *     window.__APP_DEBUG__.status()
  */
 
 const IS_DEV = import.meta.env.DEV;
@@ -196,7 +196,7 @@ export function createLogger(module: LogModule) {
 // ======== Control API (SOLO en desarrollo) ========
 
 if (IS_DEV && typeof window !== 'undefined') {
-  (window as any).DIAP = {
+  (window as any).__APP_DEBUG__ = {
     enable(module: LogModule) {
       if (!ALL_MODULES.includes(module)) {
         console.error(`Módulo inválido: "${module}". Disponibles: ${ALL_MODULES.join(', ')}`);
@@ -240,7 +240,7 @@ if (IS_DEV && typeof window !== 'undefined') {
     },
 
     status() {
-      console.log('\n📊 DIAP Debug Status:');
+      console.log('\n📊 App Debug Status:');
       console.log(`   Nivel: ${currentConfig.level}`);
       ALL_MODULES.forEach(m => {
         const icon = currentConfig.modules[m] ? '🟢' : '🔴';

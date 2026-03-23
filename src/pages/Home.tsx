@@ -1,5 +1,5 @@
 /**
- * Página principal del ecommerce DIAP Store
+ * Página principal del ecommerce
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
@@ -21,7 +21,7 @@ import { ProductCard } from '@/components/product/ProductCard';
 import { useStore } from '@/store/useStore';
 import { productService } from '@/services/productService';
 import type { Product } from '@/types/api';
-import { ASSETS, BRANDING } from '@/config/branding';
+import { ASSETS, BRANDING, BUSINESS } from '@/config/branding';
 import { getImagesConfig } from '@/config/runtime';
 import { handleImgError } from '@/utils/imageHelpers';
 
@@ -125,7 +125,7 @@ export const Home: React.FC = () => {
 
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
-    }, 5000);
+    }, BUSINESS.HERO_SLIDER_INTERVAL);
 
     return () => clearInterval(interval);
   }, [heroSlides]);
@@ -151,14 +151,14 @@ export const Home: React.FC = () => {
 
       // Cargar productos nuevos (simulado con los más recientes)
       const newProductsResponse = await productService.getProducts({
-        per_page: 8,
+        per_page: BUSINESS.FEATURED_PRODUCTS_COUNT,
         is_active: true
       });
       setNewProducts(normalizeProducts(newProductsResponse));
 
       // Cargar productos en oferta (simulado con productos que tienen descuento)
       const onSaleResponse = await productService.getProducts({
-        per_page: 8,
+        per_page: BUSINESS.FEATURED_PRODUCTS_COUNT,
         is_active: true
       });
       const normalizedOnSale = normalizeProducts(onSaleResponse);

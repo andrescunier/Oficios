@@ -1,5 +1,5 @@
 /**
- * Servicio de carrito para DIAP - Solo lógica local
+ * Servicio de carrito - Solo lógica local
  * 
  * NOTA: No existe un endpoint de carrito en la API (documentacion.md).
  * El carrito se maneja completamente en el cliente (Zustand + localStorage).

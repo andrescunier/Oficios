@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { CheckCircle, Package, CreditCard, Mail, ArrowRight, ShoppingBag, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { getBusinessConfig } from '@/config/runtime';
 import { Separator } from '@/components/ui/separator';
 
 interface OrderSuccessState {
@@ -31,9 +32,10 @@ export default function OrderSuccessPage() {
   }
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('es-AR', {
+    const business = getBusinessConfig();
+    return new Intl.NumberFormat(business.locale, {
       style: 'currency',
-      currency: 'ARS',
+      currency: business.defaultCurrency,
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(price);

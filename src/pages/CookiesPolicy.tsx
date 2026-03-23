@@ -5,8 +5,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Cookie } from 'lucide-react';
+import { getLegalConfig, getContactConfig } from '@/config/runtime';
 
 export const CookiesPolicy: React.FC = () => {
+  const legal = getLegalConfig();
+  const contact = getContactConfig();
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -33,7 +37,7 @@ export const CookiesPolicy: React.FC = () => {
         <div className="max-w-4xl mx-auto bg-card rounded-lg shadow-lg p-8">
           
           <p className="text-muted-foreground leading-relaxed mb-8">
-            DIAP INGENIERÍA S.A. utiliza cookies y tecnologías similares para mejorar la experiencia 
+            {legal.companyName} utiliza cookies y tecnologías similares para mejorar la experiencia 
             de navegación, analizar el tráfico del sitio y personalizar el contenido. Esta política 
             explica qué son las cookies, cómo las utilizamos y cómo puedes gestionarlas.
           </p>
@@ -199,8 +203,8 @@ export const CookiesPolicy: React.FC = () => {
             <p className="text-center text-muted-foreground">
               Si tienes alguna pregunta sobre nuestra Política de Cookies, por favor contáctenos a 
               través de{' '}
-              <a href="mailto:ventas@diapstore.com" className="text-primary hover:underline">
-                ventas@diapstore.com
+              <a href={`mailto:${contact.salesEmail || contact.email}`} className="text-primary hover:underline">
+                {contact.salesEmail || contact.email}
               </a>
             </p>
             <div className="text-center mt-6">

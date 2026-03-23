@@ -5,8 +5,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, FileText } from 'lucide-react';
+import { getLegalConfig, getAppConfig } from '@/config/runtime';
 
 export const TermsAndConditions: React.FC = () => {
+  const legal = getLegalConfig();
+  const app = getAppConfig();
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -38,17 +42,17 @@ export const TermsAndConditions: React.FC = () => {
           <section className="mb-8">
             <h2 className="text-2xl font-bold mb-4 text-primary">1. Información del proveedor</h2>
             <p className="text-muted-foreground leading-relaxed">
-              Este sitio web es operado por <strong>DIAP INGENIERÍA S.A.</strong>, CUIT N.º <strong>30-71036886-0</strong>, 
-              con domicilio en Mitre 4146, Mar del Plata Sur, Mar del Plata, Buenos Aires, Argentina. 
-              Nos especializamos en la comercialización mayorista de unidades de estado sólido (SSD) y memorias RAM.
+              Este sitio web es operado por <strong>{legal.companyName}</strong>{legal.cuit ? <>, CUIT N.º <strong>{legal.cuit}</strong></> : ''}, 
+              {legal.address ? <>con domicilio en {legal.address}. </> : ''}
+              Nos especializamos en la comercialización mayorista de productos tecnológicos.
             </p>
           </section>
 
           <section className="mb-8">
             <h2 className="text-2xl font-bold mb-4 text-primary">2. Ámbito de aplicación</h2>
             <p className="text-muted-foreground leading-relaxed">
-              Las presentes condiciones regulan las operaciones de compraventa realizadas entre DIAP INGENIERÍA S.A. 
-              y empresas, profesionales o revendedores debidamente registrados en AFIP. No se realizan ventas a 
+              Las presentes condiciones regulan las operaciones de compraventa realizadas entre {legal.companyName} 
+              y empresas, profesionales o revendedores debidamente registrados. No se realizan ventas a 
               consumidores finales.
             </p>
           </section>
@@ -57,7 +61,7 @@ export const TermsAndConditions: React.FC = () => {
             <h2 className="text-2xl font-bold mb-4 text-primary">3. Registro y validación</h2>
             <p className="text-muted-foreground leading-relaxed">
               Para realizar compras, el cliente debe registrarse con datos válidos: razón social, CUIT, condición 
-              frente al IVA, domicilio fiscal y contacto comercial. DIAP INGENIERÍA S.A. se reserva el derecho de 
+              frente al IVA, domicilio fiscal y contacto comercial. {legal.companyName} se reserva el derecho de 
               validar la información antes de aceptar cualquier pedido.
             </p>
           </section>
@@ -83,7 +87,7 @@ export const TermsAndConditions: React.FC = () => {
           <section className="mb-8">
             <h2 className="text-2xl font-bold mb-4 text-primary">6. Facturación</h2>
             <p className="text-muted-foreground leading-relaxed">
-              DIAP INGENIERÍA S.A. emite factura tipo A o B según la condición fiscal del comprador. La factura se 
+              {legal.companyName} emite factura tipo A o B según la condición fiscal del comprador. La factura se 
               genera automáticamente al confirmar el pedido.
             </p>
           </section>
@@ -119,7 +123,7 @@ export const TermsAndConditions: React.FC = () => {
           <section className="mb-8">
             <h2 className="text-2xl font-bold mb-4 text-primary">10. Responsabilidad</h2>
             <p className="text-muted-foreground leading-relaxed">
-              DIAP INGENIERÍA S.A. no se responsabiliza por pérdidas indirectas, lucro cesante, o daños derivados del 
+              {legal.companyName} no se responsabiliza por pérdidas indirectas, lucro cesante, o daños derivados del 
               uso de los productos. Nuestra responsabilidad se limita al valor del producto adquirido.
             </p>
           </section>

@@ -5,9 +5,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { MessageCircle, Mail, Phone, MapPin, Clock, ArrowLeft, HelpCircle } from 'lucide-react';
+import { CONTACT, BRANDING } from '@/config/branding';
 
-const WHATSAPP_NUMBER = '5491126310884';
-const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER}`;
+const WHATSAPP_NUMBER = CONTACT.WHATSAPP;
+const WHATSAPP_LINK = CONTACT.WHATSAPP_LINK;
 
 export const ContactPage: React.FC = () => {
   const handleWhatsAppClick = (message: string) => {
@@ -59,7 +60,7 @@ export const ContactPage: React.FC = () => {
               <span>Chatear por WhatsApp</span>
             </button>
             <p className="mt-4 text-sm opacity-75">
-              +54 9 11 2631-0884
+              {CONTACT.PHONE}
             </p>
           </div>
         </div>
@@ -180,8 +181,8 @@ export const ContactPage: React.FC = () => {
                 <Mail className="h-6 w-6 text-primary mt-1" />
                 <div>
                   <p className="font-semibold">Email</p>
-                  <a href="mailto:ventas@diapstore.com" className="text-muted-foreground hover:text-primary">
-                    ventas@diapstore.com
+                  <a href={`mailto:${CONTACT.SALES_EMAIL}`} className="text-muted-foreground hover:text-primary">
+                    {CONTACT.SALES_EMAIL}
                   </a>
                 </div>
               </div>
@@ -191,7 +192,7 @@ export const ContactPage: React.FC = () => {
                 <div>
                   <p className="font-semibold">Teléfono / WhatsApp</p>
                   <a href={WHATSAPP_LINK} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary">
-                    +54 9 11 2631-0884
+                    {CONTACT.PHONE}
                   </a>
                 </div>
               </div>
@@ -201,7 +202,7 @@ export const ContactPage: React.FC = () => {
                 <div>
                   <p className="font-semibold">Dirección</p>
                   <p className="text-muted-foreground">
-                    Av. Corrientes 1234, CABA, Argentina
+                    {CONTACT.ADDRESS}
                   </p>
                 </div>
               </div>

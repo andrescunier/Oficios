@@ -1,5 +1,5 @@
 /**
- * Footer profesional para DIAP Store Ecommerce
+ * Footer profesional para Ecommerce
  */
 
 import React from 'react';
@@ -18,7 +18,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { BRANDING, ASSETS, SOCIAL_LINKS, FEATURES } from '@/config/branding';
+import { BRANDING, ASSETS, SOCIAL_LINKS, FEATURES, CONTACT } from '@/config/branding';
 import { getCategoriesConfig } from '@/config/runtime';
 
 export const Footer: React.FC = () => {
@@ -64,14 +64,14 @@ export const Footer: React.FC = () => {
         { label: 'Política de Privacidad', href: '/privacidad', external: false },
         { label: 'Política de Cookies', href: '/cookies', external: false },
         { label: 'Aviso Legal', href: '/aviso-legal', external: false },
-        { label: 'Arrepentimiento', href: 'https://wa.me/5491126310884?text=' + encodeURIComponent('Me arrepiento de mi compra y deseo ejercer mi derecho de arrepentimiento.'), external: true },
+        { label: 'Arrepentimiento', href: CONTACT.WHATSAPP_LINK ? CONTACT.WHATSAPP_LINK + '?text=' + encodeURIComponent('Me arrepiento de mi compra y deseo ejercer mi derecho de arrepentimiento.') : '/contacto', external: !!CONTACT.WHATSAPP_LINK },
       ]
     }
   };
 
   const socialLinks = [
-    { icon: Linkedin, href: 'https://www.linkedin.com/company/aimerican/about/', label: 'LinkedIn' },
-    { icon: Instagram, href: 'https://www.instagram.com/aimerican_arg', label: 'Instagram' },
+    ...(SOCIAL_LINKS.LINKEDIN ? [{ icon: Linkedin, href: SOCIAL_LINKS.LINKEDIN, label: 'LinkedIn' }] : []),
+    ...(SOCIAL_LINKS.INSTAGRAM ? [{ icon: Instagram, href: SOCIAL_LINKS.INSTAGRAM, label: 'Instagram' }] : []),
   ];
 
   return (

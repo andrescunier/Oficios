@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, ShoppingBag, Home } from 'lucide-react';
+import { BRANDING } from '@/config/branding';
 
 export const RegistrationSuccess = () => {
   const navigate = useNavigate();
@@ -14,7 +15,7 @@ export const RegistrationSuccess = () => {
             <CheckCircle2 className="h-16 w-16 text-green-500" />
           </div>
           <CardTitle className="text-2xl font-bold text-green-700">
-            ¡Bienvenido a DIAP Store!
+            ¡Bienvenido a {BRANDING.APP_NAME}!
           </CardTitle>
           <CardDescription className="text-gray-600">
             Tu cuenta ha sido creada y ya estás conectado

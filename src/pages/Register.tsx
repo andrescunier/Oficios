@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { BRANDING, ASSETS } from '@/config/branding';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useStore } from '@/store/useStore';
 import { authService } from '@/services/authService';
@@ -159,8 +160,8 @@ export const Register: React.FC = () => {
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
             <img 
-              src="/diap-logo.png" 
-              alt="DIAP Store" 
+              src={ASSETS.LOGO_PATH} 
+              alt={BRANDING.APP_NAME} 
               className="h-12 w-auto"
               onError={(e) => {
                 // Fallback si no existe la imagen
@@ -170,7 +171,7 @@ export const Register: React.FC = () => {
           </div>
           <CardTitle className="text-2xl">Crear Cuenta B2B</CardTitle>
           <CardDescription>
-            Únete a DIAP y accede a precios especiales para empresas
+            Únete a {BRANDING.APP_NAME} y accede a precios especiales para empresas
           </CardDescription>
         </CardHeader>
         

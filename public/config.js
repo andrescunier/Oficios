@@ -21,8 +21,16 @@ window.__APP_CONFIG__ = {
   },
   contact: {
     email: "info@diapstore.com",
+    salesEmail: "ventas@diapstore.com",
     phone: "+54 11 2631-0884",
+    whatsapp: "5491126310884",
     address: "Palomar, Provincia de Buenos Aires"
+  },
+  legal: {
+    companyName: "DIAP INGENIERÍA S.A.",
+    cuit: "30-71036886-0",
+    address: "Mitre 4146, Mar del Plata Sur, Mar del Plata, Buenos Aires, Argentina",
+    jurisdiction: "Mar del Plata, Buenos Aires, Argentina"
   },
   branding: {
     logo: "/diap-logo.png",
@@ -149,5 +157,12 @@ window.__APP_CONFIG__ = {
     efectivo: true,
     mercadopago: false,
     tarjeta: false
+  },
+  payment: {
+    bankName: "Banco Galicia",
+    accountHolder: "DIAP INGENIERÍA S.A.",
+    cbu: "0070999930004567891234",
+    alias: "DIAPSTORE.PAGOS",
+    whatsappVerification: "+54 9 11 1234-5678"
   }
 };

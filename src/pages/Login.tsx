@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { BRANDING, CONTACT } from '@/config/branding';
 import { useStore } from '@/store/useStore';
 import { authService } from '@/services/authService';
 import log from '@/lib/logger';
@@ -120,7 +121,7 @@ export const Login: React.FC = () => {
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Iniciar Sesión</CardTitle>
           <CardDescription>
-            Ingresa a tu cuenta de DIAP Store
+            Ingresa a tu cuenta de {BRANDING.APP_NAME}
           </CardDescription>
         </CardHeader>
         
@@ -184,7 +185,7 @@ export const Login: React.FC = () => {
 
             <div className="flex items-center justify-between">
               <a
-                href="https://wa.me/5491126310884?text=Hola%2C%20necesito%20recuperar%20mi%20contrase%C3%B1a"
+                href={`${CONTACT.WHATSAPP_LINK}?text=${encodeURIComponent('Hola, necesito recuperar mi contraseña')}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm text-primary hover:underline"

@@ -5,9 +5,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Shield, MessageCircle, FileCheck, AlertTriangle, Clock } from 'lucide-react';
+import { getContactConfig } from '@/config/runtime';
+import { LEGAL } from '@/config/branding';
 
-const WHATSAPP_NUMBER = '5491126310884';
-const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER}`;
+const contact = getContactConfig();
+const WHATSAPP_LINK = contact.whatsapp ? `https://wa.me/${contact.whatsapp}` : '';
 
 export const WarrantyPage: React.FC = () => {
   const handleWhatsAppWarranty = () => {
@@ -114,7 +116,7 @@ export const WarrantyPage: React.FC = () => {
 
             <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
               <p className="text-sm text-green-800">
-                <strong>✓ Garantía Total:</strong> En DIAP nos hacemos cargo de gestionar tu 
+                <strong>✓ Garantía Total:</strong> En {LEGAL.COMPANY_NAME} nos hacemos cargo de gestionar tu 
                 garantía directamente con el fabricante. No necesitas contactar al proveedor 
                 original, nosotros lo hacemos por ti.
               </p>
@@ -136,7 +138,7 @@ export const WarrantyPage: React.FC = () => {
                 <div>
                   <h3 className="font-semibold text-lg mb-2">Contacta por WhatsApp</h3>
                   <p className="text-muted-foreground">
-                    Envía un mensaje a nuestro WhatsApp (+54 9 11 2631-0884) con:
+                    Envía un mensaje a nuestro WhatsApp ({getContactConfig().phone}) con:
                   </p>
                   <ul className="list-disc list-inside text-muted-foreground mt-2 ml-4 space-y-1">
                     <li>Número de pedido o factura</li>

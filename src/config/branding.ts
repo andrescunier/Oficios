@@ -8,6 +8,8 @@ import {
   getApiConfig, 
   getAppConfig, 
   getContactConfig, 
+  getLegalConfig,
+  getPaymentConfig,
   getBrandingConfig as getRuntimeBranding,
   getThemeConfig,
   getSocialConfig,
@@ -115,6 +117,42 @@ export const SOCIAL_LINKS = {
 export const isSocialLinkConfigured = (platform: keyof typeof SOCIAL_LINKS): boolean => {
   return Boolean(SOCIAL_LINKS[platform]);
 };
+
+// =========================================
+// CONTACT CONFIG (desde runtime)
+// =========================================
+const runtimeContact2 = getContactConfig();
+export const CONTACT = {
+  EMAIL: runtimeContact2.email,
+  SALES_EMAIL: runtimeContact2.salesEmail,
+  PHONE: runtimeContact2.phone,
+  WHATSAPP: runtimeContact2.whatsapp,
+  ADDRESS: runtimeContact2.address,
+  WHATSAPP_LINK: runtimeContact2.whatsapp ? `https://wa.me/${runtimeContact2.whatsapp}` : '',
+} as const;
+
+// =========================================
+// LEGAL CONFIG (desde runtime)
+// =========================================
+const runtimeLegal = getLegalConfig();
+export const LEGAL = {
+  COMPANY_NAME: runtimeLegal.companyName,
+  CUIT: runtimeLegal.cuit,
+  ADDRESS: runtimeLegal.address,
+  JURISDICTION: runtimeLegal.jurisdiction,
+} as const;
+
+// =========================================
+// PAYMENT CONFIG (desde runtime)
+// =========================================
+const runtimePayment = getPaymentConfig();
+export const PAYMENT_INFO = {
+  BANK_NAME: runtimePayment.bankName,
+  ACCOUNT_HOLDER: runtimePayment.accountHolder,
+  CBU: runtimePayment.cbu,
+  ALIAS: runtimePayment.alias,
+  WA_VERIFICATION: runtimePayment.whatsappVerification,
+} as const;
 
 // =========================================
 // APP CONFIGURATION

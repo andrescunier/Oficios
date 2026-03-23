@@ -5,8 +5,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Shield } from 'lucide-react';
+import { getLegalConfig, getContactConfig } from '@/config/runtime';
 
 export const PrivacyPolicy: React.FC = () => {
+  const legal = getLegalConfig();
+  const contact = getContactConfig();
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -33,7 +37,7 @@ export const PrivacyPolicy: React.FC = () => {
         <div className="max-w-4xl mx-auto bg-card rounded-lg shadow-lg p-8">
           
           <p className="text-muted-foreground leading-relaxed mb-8">
-            DIAP INGENIERÍA S.A. se compromete a proteger la privacidad de sus clientes y usuarios. 
+            {legal.companyName} se compromete a proteger la privacidad de sus clientes y usuarios. 
             Esta política describe cómo recopilamos, usamos y protegemos la información personal en 
             nuestro sitio web.
           </p>
@@ -79,8 +83,8 @@ export const PrivacyPolicy: React.FC = () => {
             <p className="text-muted-foreground leading-relaxed">
               El titular de los datos puede acceder, rectificar o solicitar la eliminación de su 
               información enviando un correo a{' '}
-              <a href="mailto:ventas@diapstore.com" className="text-primary hover:underline">
-                ventas@diapstore.com
+              <a href={`mailto:${contact.salesEmail || contact.email}`} className="text-primary hover:underline">
+                {contact.salesEmail || contact.email}
               </a>
               .
             </p>

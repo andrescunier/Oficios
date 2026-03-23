@@ -4,11 +4,11 @@
 
 import React from 'react';
 import { RotateCcw } from 'lucide-react';
+import { CONTACT } from '@/config/branding';
 
 export const ArrepentimientoButton: React.FC = () => {
-  const phoneNumber = '5491126310884';
   const message = encodeURIComponent('Me arrepiento de mi compra y deseo ejercer mi derecho de arrepentimiento.');
-  const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
+  const whatsappUrl = `${CONTACT.WHATSAPP_LINK}?text=${message}`;
 
   return (
     <a

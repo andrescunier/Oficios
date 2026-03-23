@@ -76,8 +76,16 @@ export interface RuntimeConfig {
   };
   contact: {
     email: string;
+    salesEmail: string;
     phone: string;
+    whatsapp: string;
     address: string;
+  };
+  legal: {
+    companyName: string;
+    cuit: string;
+    address: string;
+    jurisdiction: string;
   };
   branding: {
     logo: string;
@@ -126,6 +134,13 @@ export interface RuntimeConfig {
     efectivo: boolean;
     mercadopago: boolean;
     tarjeta: boolean;
+  };
+  payment: {
+    bankName: string;
+    accountHolder: string;
+    cbu: string;
+    alias: string;
+    whatsappVerification: string;
   };
   images: ImagesConfig;
 }
@@ -186,11 +201,11 @@ export const getApiConfig = () => {
 export const getAppConfig = () => {
   const rc = window.__APP_CONFIG__;
   return {
-    name: getEnvValue(rc?.app?.name, 'VITE_APP_NAME', 'DIAP'),
-    companyName: getEnvValue(rc?.app?.companyName, 'VITE_COMPANY_NAME', 'DIAP'),
-    slogan: getEnvValue(rc?.app?.slogan, 'VITE_APP_SLOGAN', 'Tecnología profesional para empresas'),
-    description: getEnvValue(rc?.app?.description, 'VITE_APP_DESCRIPTION', 'DIAP - Distribuidora de productos tecnológicos de primera calidad'),
-    url: getEnvValue(rc?.app?.url, 'VITE_APP_URL', 'https://diap.com'),
+    name: getEnvValue(rc?.app?.name, 'VITE_APP_NAME', 'Mi Tienda'),
+    companyName: getEnvValue(rc?.app?.companyName, 'VITE_COMPANY_NAME', 'Mi Empresa'),
+    slogan: getEnvValue(rc?.app?.slogan, 'VITE_APP_SLOGAN', 'Tu tienda online'),
+    description: getEnvValue(rc?.app?.description, 'VITE_APP_DESCRIPTION', 'Tienda online de productos'),
+    url: getEnvValue(rc?.app?.url, 'VITE_APP_URL', ''),
     hidePricesForGuests: getBoolValue(rc?.app?.hidePricesForGuests, 'VITE_HIDE_PRICES_FOR_GUESTS', true),
     requireAuthForCart: getBoolValue(rc?.app?.requireAuthForCart, 'VITE_REQUIRE_AUTH_FOR_CART', true),
     loginMessage: getEnvValue(rc?.app?.loginMessage, 'VITE_LOGIN_TO_VIEW_PRICES_MESSAGE', 'Inicia sesión para ver precios'),
@@ -204,9 +219,39 @@ export const getAppConfig = () => {
 export const getContactConfig = () => {
   const rc = window.__APP_CONFIG__;
   return {
-    email: getEnvValue(rc?.contact?.email, 'VITE_CONTACT_EMAIL', 'info@diapstore.com'),
-    phone: getEnvValue(rc?.contact?.phone, 'VITE_CONTACT_PHONE', '+54 11 2631-0884'),
-    address: getEnvValue(rc?.contact?.address, 'VITE_CONTACT_ADDRESS', 'Palomar, Provincia de Buenos Aires'),
+    email: getEnvValue(rc?.contact?.email, 'VITE_CONTACT_EMAIL', 'info@tienda.com'),
+    salesEmail: getEnvValue(rc?.contact?.salesEmail, 'VITE_CONTACT_SALES_EMAIL', 'ventas@tienda.com'),
+    phone: getEnvValue(rc?.contact?.phone, 'VITE_CONTACT_PHONE', ''),
+    whatsapp: getEnvValue(rc?.contact?.whatsapp, 'VITE_CONTACT_WHATSAPP', ''),
+    address: getEnvValue(rc?.contact?.address, 'VITE_CONTACT_ADDRESS', ''),
+  };
+};
+
+/**
+ * Configuración de datos legales de la empresa
+ */
+export const getLegalConfig = () => {
+  const rc = window.__APP_CONFIG__;
+  const app = getAppConfig();
+  return {
+    companyName: getEnvValue(rc?.legal?.companyName, 'VITE_LEGAL_COMPANY_NAME', app.companyName),
+    cuit: getEnvValue(rc?.legal?.cuit, 'VITE_LEGAL_CUIT', ''),
+    address: getEnvValue(rc?.legal?.address, 'VITE_LEGAL_ADDRESS', ''),
+    jurisdiction: getEnvValue(rc?.legal?.jurisdiction, 'VITE_LEGAL_JURISDICTION', ''),
+  };
+};
+
+/**
+ * Configuración de datos de pago (transferencia bancaria)
+ */
+export const getPaymentConfig = () => {
+  const rc = window.__APP_CONFIG__;
+  return {
+    bankName: getEnvValue(rc?.payment?.bankName, 'VITE_PAYMENT_BANK_NAME', ''),
+    accountHolder: getEnvValue(rc?.payment?.accountHolder, 'VITE_PAYMENT_ACCOUNT_HOLDER', ''),
+    cbu: getEnvValue(rc?.payment?.cbu, 'VITE_PAYMENT_CBU', ''),
+    alias: getEnvValue(rc?.payment?.alias, 'VITE_PAYMENT_ALIAS', ''),
+    whatsappVerification: getEnvValue(rc?.payment?.whatsappVerification, 'VITE_PAYMENT_WA_VERIFICATION', ''),
   };
 };
 
@@ -216,11 +261,11 @@ export const getContactConfig = () => {
 export const getBrandingConfig = () => {
   const rc = window.__APP_CONFIG__;
   return {
-    logo: getEnvValue(rc?.branding?.logo, 'VITE_LOGO_PATH', '/diap-logo.png'),
+    logo: getEnvValue(rc?.branding?.logo, 'VITE_LOGO_PATH', '/logo.png'),
     logoDark: getEnvValue(rc?.branding?.logoDark, 'VITE_LOGO_DARK_PATH', ''),
     favicon: getEnvValue(rc?.branding?.favicon, 'VITE_FAVICON_PATH', '/favicon.ico'),
     banner: getEnvValue(rc?.branding?.banner, 'VITE_BANNER_URL', ''),
-    ogImage: getEnvValue(rc?.branding?.ogImage, 'VITE_OG_IMAGE_URL', '/diap-logo.png'),
+    ogImage: getEnvValue(rc?.branding?.ogImage, 'VITE_OG_IMAGE_URL', '/logo.png'),
   };
 };
 
@@ -419,12 +464,14 @@ export const getRuntimeConfig = (): RuntimeConfig => {
     api: getApiConfig(),
     app: getAppConfig(),
     contact: getContactConfig(),
+    legal: getLegalConfig(),
     branding: getBrandingConfig(),
     theme: getThemeConfig(),
     social: getSocialConfig(),
     features: getFeaturesConfig(),
     filters: getFiltersConfig(),
     paymentMethods: getPaymentMethodsConfig(),
+    payment: getPaymentConfig(),
     images: getImagesConfig(),
   };
 };

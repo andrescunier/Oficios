@@ -5,9 +5,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, RefreshCw, MessageCircle, AlertCircle, CheckCircle2, XCircle } from 'lucide-react';
+import { getContactConfig } from '@/config/runtime';
 
-const WHATSAPP_NUMBER = '5491126310884';
-const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER}`;
+const contact = getContactConfig();
+const WHATSAPP_LINK = contact.whatsapp ? `https://wa.me/${contact.whatsapp}` : '';
 
 export const ReturnsPage: React.FC = () => {
   const handleWhatsAppReturn = () => {
@@ -133,7 +134,7 @@ export const ReturnsPage: React.FC = () => {
                 <div>
                   <h3 className="font-semibold text-lg mb-2">Contacta por WhatsApp</h3>
                   <p className="text-muted-foreground">
-                    Envía un mensaje a nuestro WhatsApp (+54 9 11 2631-0884) indicando:
+                    Envía un mensaje a nuestro WhatsApp ({getContactConfig().phone}) indicando:
                   </p>
                   <ul className="list-disc list-inside text-muted-foreground mt-2 ml-4 space-y-1">
                     <li>Número de pedido</li>

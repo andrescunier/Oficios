@@ -5,8 +5,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Scale } from 'lucide-react';
+import { getLegalConfig } from '@/config/runtime';
 
 export const LegalNotice: React.FC = () => {
+  const legal = getLegalConfig();
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -34,14 +37,14 @@ export const LegalNotice: React.FC = () => {
           
           <p className="text-muted-foreground leading-relaxed mb-8">
             El contenido de este sitio web, incluyendo textos, imágenes, logos, marcas y descripciones 
-            de productos, es propiedad de DIAP INGENIERÍA S.A. o de sus respectivos titulares. Está 
+            de productos, es propiedad de {legal.companyName} o de sus respectivos titulares. Está 
             prohibida su reproducción total o parcial sin autorización previa.
           </p>
 
           <section className="mb-8">
             <h2 className="text-2xl font-bold mb-4 text-primary">1. Responsabilidad del contenido</h2>
             <p className="text-muted-foreground leading-relaxed">
-              DIAP INGENIERÍA S.A. no garantiza que la información publicada sea exacta, completa o 
+              {legal.companyName} no garantiza que la información publicada sea exacta, completa o 
               actualizada en todo momento. Nos reservamos el derecho de modificar precios, productos o 
               condiciones sin previo aviso.
             </p>
@@ -50,7 +53,7 @@ export const LegalNotice: React.FC = () => {
           <section className="mb-8">
             <h2 className="text-2xl font-bold mb-4 text-primary">2. Enlaces externos</h2>
             <p className="text-muted-foreground leading-relaxed">
-              Este sitio puede contener enlaces a sitios de terceros. DIAP INGENIERÍA S.A. no se 
+              Este sitio puede contener enlaces a sitios de terceros. {legal.companyName} no se 
               responsabiliza por el contenido ni por las políticas de privacidad de dichos sitios.
             </p>
           </section>

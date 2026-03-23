@@ -5,9 +5,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Package, MessageCircle, Clock, CheckCircle } from 'lucide-react';
+import { getContactConfig } from '@/config/runtime';
 
-const WHATSAPP_NUMBER = '5491126310884';
-const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER}`;
+const contact = getContactConfig();
+const WHATSAPP_LINK = contact.whatsapp ? `https://wa.me/${contact.whatsapp}` : '';
 
 export const OrderTracking: React.FC = () => {
   const handleWhatsAppTracking = () => {
@@ -89,7 +90,7 @@ export const OrderTracking: React.FC = () => {
                 <div>
                   <h3 className="font-semibold text-lg mb-2">Contacta por WhatsApp</h3>
                   <p className="text-muted-foreground">
-                    Envía un mensaje a nuestro WhatsApp oficial (+54 9 11 2631-0884) con tu 
+                    Envía un mensaje a nuestro WhatsApp oficial ({getContactConfig().phone}) con tu 
                     número de pedido. Nuestro equipo te responderá de inmediato.
                   </p>
                 </div>

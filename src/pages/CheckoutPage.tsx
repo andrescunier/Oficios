@@ -8,6 +8,7 @@ import { ArrowLeft, CreditCard, MapPin, User, Mail, Phone, Lock } from 'lucide-r
 import { useStore } from '@/store/useStore';
 import { orderService } from '@/services/orderService';
 import { getPaymentMethodsConfig } from '@/config/runtime';
+import { PAYMENT_INFO, LEGAL } from '@/config/branding';
 import log from '@/lib/logger';
 
 interface ShippingInfo {
@@ -615,25 +616,25 @@ export const CheckoutPage: React.FC = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <span className="font-medium text-gray-700">Banco:</span>
-                          <p className="text-gray-600">Banco Galicia</p>
+                          <p className="text-gray-600">{PAYMENT_INFO.BANK_NAME}</p>
                         </div>
                         <div>
                           <span className="font-medium text-gray-700">Titular:</span>
-                          <p className="text-gray-600">DIAP INGENIERÍA S.A.</p>
+                          <p className="text-gray-600">{PAYMENT_INFO.ACCOUNT_HOLDER}</p>
                         </div>
                         <div>
                           <span className="font-medium text-gray-700">CBU:</span>
-                          <p className="text-gray-600 font-mono">0070999930004567891234</p>
+                          <p className="text-gray-600 font-mono">{PAYMENT_INFO.CBU}</p>
                         </div>
                         <div>
                           <span className="font-medium text-gray-700">Alias:</span>
-                          <p className="text-gray-600">DIAPSTORE.PAGOS</p>
+                          <p className="text-gray-600">{PAYMENT_INFO.ALIAS}</p>
                         </div>
                       </div>
                     </div>
                     <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded">
                       <p className="text-sm text-yellow-800">
-                        <strong>📝 Importante:</strong> Una vez realizada la transferencia, envía el comprobante por WhatsApp al +54 9 11 1234-5678 con tu número de orden para acelerar la confirmación.
+                        <strong>📝 Importante:</strong> Una vez realizada la transferencia, envía el comprobante por WhatsApp al {PAYMENT_INFO.WA_VERIFICATION} con tu número de orden para acelerar la confirmación.
                       </p>
                     </div>
                   </div>

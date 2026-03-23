@@ -20,6 +20,7 @@ import { productService } from '@/services/productService';
 import { useStore } from '@/store/useStore';
 import type { Product } from '@/types/api';
 import { PriceDisplay } from '@/hooks/usePriceVisibility';
+import { handleImgError } from '@/utils/imageHelpers';
 
 export const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -202,9 +203,7 @@ export const ProductDetailPage: React.FC = () => {
                 src={product.image_url || '/placeholder-product.jpg'}
                 alt={product.name}
                 className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.currentTarget.src = '/placeholder-product.jpg';
-                }}
+                onError={(e) => handleImgError(e, '/placeholder-product.jpg')}
               />
             </div>
           </div>

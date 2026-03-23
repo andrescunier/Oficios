@@ -115,3 +115,34 @@ export function setupLazyLoading(selector: string = 'img[data-src]') {
     });
   }
 }
+
+const PLACEHOLDER_SVG = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect width='100%25' height='100%25' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='16' fill='%239ca3af'%3EImagen no disponible%3C/text%3E%3C/svg%3E`;
+
+/**
+ * Handler para onError de <img> con máximo 3 reintentos.
+ * Usa data-retry-count en el elemento para trackear intentos.
+ * Después de 3 fallos muestra un SVG placeholder inline (nunca 404).
+ */
+export function handleImgError(
+  e: React.SyntheticEvent<HTMLImageElement, Event>,
+  fallbackSrc?: string
+) {
+  const img = e.currentTarget;
+  const retries = parseInt(img.dataset.retryCount || '0', 10);
+
+  if (retries >= 3) {
+    // Máximo de reintentos alcanzado — mostrar placeholder SVG inline
+    img.src = PLACEHOLDER_SVG;
+    img.dataset.retryCount = '999'; // evitar más llamadas
+    return;
+  }
+
+  img.dataset.retryCount = String(retries + 1);
+
+  if (fallbackSrc && img.src !== fallbackSrc) {
+    img.src = fallbackSrc;
+  } else {
+    img.src = PLACEHOLDER_SVG;
+    img.dataset.retryCount = '999';
+  }
+}

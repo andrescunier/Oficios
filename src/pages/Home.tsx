@@ -23,6 +23,7 @@ import { productService } from '@/services/productService';
 import type { Product } from '@/types/api';
 import { ASSETS, BRANDING } from '@/config/branding';
 import { getImagesConfig } from '@/config/runtime';
+import { handleImgError } from '@/utils/imageHelpers';
 
 export const Home: React.FC = () => {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
@@ -305,9 +306,7 @@ export const Home: React.FC = () => {
                         src={category.image} 
                         alt={category.name}
                         className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
-                        onError={(e) => {
-                          e.currentTarget.src = runtimeImages.productFallbacks['default'] || '/images/categories/componentes.jpg';
-                        }}
+                        onError={(e) => handleImgError(e, runtimeImages.productFallbacks['default'] || '/images/categories/componentes.jpg')}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                       <div className="absolute bottom-0 left-0 right-0 p-6 text-white">

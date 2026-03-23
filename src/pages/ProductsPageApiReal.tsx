@@ -11,6 +11,7 @@ import type { Product } from '@/types/api';
 import { PriceDisplay } from '@/hooks/usePriceVisibility';
 import { FEATURES } from '@/config/branding';
 import { getImagesConfig } from '@/config/runtime';
+import { handleImgError } from '@/utils/imageHelpers';
 
 export const ProductsPageApiReal: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -300,9 +301,7 @@ export const ProductsPageApiReal: React.FC = () => {
                       src={product.image_url} 
                       alt={product.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      onError={(e) => {
-                        e.currentTarget.src = '/placeholder-product.jpg';
-                      }}
+                      onError={(e) => handleImgError(e, '/placeholder-product.jpg')}
                     />
                   </div>
                 </Link>

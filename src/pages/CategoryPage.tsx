@@ -10,6 +10,7 @@ import { Loader2, Filter, X, ChevronDown, ChevronUp, SlidersHorizontal, Plus, Mi
 import { useStore } from '@/store/useStore';
 import { PriceDisplay } from '@/hooks/usePriceVisibility';
 import { getFiltersConfig, getImagesConfig, getCategoryBySlug, getCategoriesConfig } from '@/config/runtime';
+import { handleImgError } from '@/utils/imageHelpers';
 
 // Tipos para filtros
 interface FilterOption {
@@ -685,9 +686,7 @@ export const CategoryPage: React.FC = () => {
                             src={product.image_url} 
                             alt={product.name}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            onError={(e) => {
-                              e.currentTarget.src = '/placeholder-product.jpg';
-                            }}
+                            onError={(e) => handleImgError(e, '/placeholder-product.jpg')}
                           />
                         </div>
                       </Link>

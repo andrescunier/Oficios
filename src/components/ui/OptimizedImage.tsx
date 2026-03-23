@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getOptimizedImageUrl, getImageSrcSet, getImageSizes, getPlaceholder, type ImageSize } from '@/utils/imageHelpers';
+import { getOptimizedImageUrl, getImageSrcSet, getImageSizes, getPlaceholder, handleImgError, type ImageSize } from '@/utils/imageHelpers';
 
 interface OptimizedImageProps {
   src: string;
@@ -34,9 +34,20 @@ export function OptimizedImage({
     }
   }, [src, size, imageError]);
 
+  const [retryCount, setRetryCount] = useState(0);
+
   const handleError = () => {
-    setImageError(true);
-    setImageSrc(fallback);
+    if (retryCount >= 3) {
+      setImageError(true);
+      setImageSrc(`data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect width='100%25' height='100%25' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='16' fill='%239ca3af'%3EImagen no disponible%3C/text%3E%3C/svg%3E`);
+      onError?.();
+      return;
+    }
+    setRetryCount(c => c + 1);
+    if (!imageError) {
+      setImageError(true);
+      setImageSrc(fallback);
+    }
     onError?.();
   };
 

@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ASSETS } from '@/config/branding';
 import { getCategoriesConfig } from '@/config/runtime';
+import { handleImgError } from '@/utils/imageHelpers';
 
 interface Category {
   id: string;
@@ -54,11 +55,7 @@ export const CategoryGrid: React.FC = () => {
                     src={category.image}
                     alt={category.name}
                     className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
-                    onError={(e) => {
-                      // Fallback to placeholder if image fails to load
-                      const target = e.target as HTMLImageElement;
-                      target.src = ASSETS.PLACEHOLDERS.CATEGORY;
-                    }}
+                    onError={(e) => handleImgError(e, ASSETS.PLACEHOLDERS.CATEGORY)}
                   />
                   
                   {/* Overlay */}

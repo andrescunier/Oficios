@@ -9,7 +9,7 @@ import type { Product } from '@/types/api';
 import { Loader2, Filter, X, ChevronDown, ChevronUp, SlidersHorizontal, Plus, Minus, Heart } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { PriceDisplay } from '@/hooks/usePriceVisibility';
-import { getFiltersConfig, getImagesConfig } from '@/config/runtime';
+import { getFiltersConfig, getImagesConfig, getCategoryBySlug, getCategoriesConfig } from '@/config/runtime';
 
 // Tipos para filtros
 interface FilterOption {
@@ -51,22 +51,18 @@ export const CategoryPage: React.FC = () => {
   // Ordenamiento
   const [sortBy, setSortBy] = useState<string>('nombre-asc');
   
-  const categoryNames: { [key: string]: string } = {
-    'ssd-sata': 'SSD SATA',
-    'memoria-ram': 'Memoria RAM',
-    'ssds': 'SSDs',
-    'memoria': 'Memoria RAM'
-  };
+  // Obtener configuración de la categoría actual desde runtime config
+  const categoryConfig = getCategoryBySlug(category || '');
+  const categoryName = categoryConfig?.name || category || 'Productos';
 
-  const categoryName = categoryNames[category || ''] || 'Productos';
-
-  // Configuración de filtros según categoría (solo si están habilitados)
+  // Configuración de filtros (solo si están habilitados en runtime config)
   const filterConfig = useMemo(() => {
-    // Si los filtros están deshabilitados, retornar objeto vacío
     if (!showFilters) return {};
 
-    // Opciones por defecto si no vienen del runtime config
-    const defaultCapacidadSSD: FilterOption[] = [
+    const runtimeCapacidadOpts = filtersConfig.capacidadOptions?.length ? filtersConfig.capacidadOptions : undefined;
+    const runtimeVelocidadOpts = filtersConfig.velocidadOptions?.length ? filtersConfig.velocidadOptions : undefined;
+
+    const defaultCapacidadOpts: FilterOption[] = [
       { value: '120', label: '120 GB' },
       { value: '240', label: '240 GB' },
       { value: '256', label: '256 GB' },
@@ -75,15 +71,14 @@ export const CategoryPage: React.FC = () => {
       { value: '512', label: '512 GB' },
       { value: '1tb', label: '1 TB' },
       { value: '2tb', label: '2 TB' },
-    ];
-    const defaultCapacidadRAM: FilterOption[] = [
       { value: '4gb', label: '4 GB' },
       { value: '8gb', label: '8 GB' },
       { value: '16gb', label: '16 GB' },
       { value: '32gb', label: '32 GB' },
       { value: '64gb', label: '64 GB' },
     ];
-    const defaultVelocidad: FilterOption[] = [
+
+    const defaultVelocidadOpts: FilterOption[] = [
       { value: '2400', label: '2400 MHz' },
       { value: '2666', label: '2666 MHz' },
       { value: '3200', label: '3200 MHz' },
@@ -94,36 +89,20 @@ export const CategoryPage: React.FC = () => {
       { value: '6000', label: '6000 MHz' },
     ];
 
-    // Usar opciones del runtime config si están disponibles
-    const runtimeCapacidadOpts = filtersConfig.capacidadOptions?.length ? filtersConfig.capacidadOptions : undefined;
-    const runtimeVelocidadOpts = filtersConfig.velocidadOptions?.length ? filtersConfig.velocidadOptions : undefined;
-    
-    if (category === 'ssd-sata') {
-      const config: any = {};
-      if (filtersConfig.capacidad) {
-        config.capacidad = {
-          label: 'Capacidad',
-          options: runtimeCapacidadOpts || defaultCapacidadSSD
-        };
-      }
-      return config;
-    } else if (category === 'memoria-ram' || category === 'memoria') {
-      const config: any = {};
-      if (filtersConfig.capacidad) {
-        config.capacidad = {
-          label: 'Capacidad',
-          options: runtimeCapacidadOpts || defaultCapacidadRAM
-        };
-      }
-      if (filtersConfig.velocidad) {
-        config.velocidad = {
-          label: 'Velocidad',
-          options: runtimeVelocidadOpts || defaultVelocidad
-        };
-      }
-      return config;
+    const config: any = {};
+    if (filtersConfig.capacidad) {
+      config.capacidad = {
+        label: 'Capacidad',
+        options: runtimeCapacidadOpts || defaultCapacidadOpts,
+      };
     }
-    return {};
+    if (filtersConfig.velocidad) {
+      config.velocidad = {
+        label: 'Velocidad',
+        options: runtimeVelocidadOpts || defaultVelocidadOpts,
+      };
+    }
+    return config;
   }, [category, showFilters, filtersConfig]);
 
   // Función para obtener imagen del producto
@@ -179,42 +158,17 @@ export const CategoryPage: React.FC = () => {
       console.log('Total products from API:', filtered.length);
       console.log('Category filter:', category);
       
-      if (category === 'ssd-sata') {
-        // Filtrar SSDs - buscar en nombre, descripción y metadata.category
+      // Filtrado genérico basado en searchTerms del config de la categoría
+      if (categoryConfig?.searchTerms && categoryConfig.searchTerms.length > 0) {
+        const terms = categoryConfig.searchTerms.map(t => t.toLowerCase());
         filtered = filtered.filter(p => {
           const name = p.name?.toLowerCase() || '';
           const desc = p.description?.toLowerCase() || '';
-          // Buscar en metadata.category si existe
           const metaCat = (p.metadata as any)?.category?.toLowerCase() || '';
-          
-          const isSSD = name.includes('ssd') || 
-                        desc.includes('ssd') || 
-                        metaCat.includes('ssd');
-          
-          return isSSD;
+          const searchable = `${name} ${desc} ${metaCat}`;
+          return terms.some(term => searchable.includes(term));
         });
-        console.log('After SSD filter:', filtered.length);
-      } else if (category === 'memoria-ram' || category === 'memoria') {
-        // Filtrar Memoria RAM - buscar por RAM, DDR, memoria en nombre, descripción y metadata
-        filtered = filtered.filter(p => {
-          const name = p.name?.toLowerCase() || '';
-          const desc = p.description?.toLowerCase() || '';
-          // Buscar en metadata.category si existe
-          const metaCat = (p.metadata as any)?.category?.toLowerCase() || '';
-          
-          const isRAM = name.includes('ram') ||
-                        name.includes('ddr') ||
-                        desc.includes('ram') ||
-                        desc.includes('ddr') ||
-                        desc.includes('sodimm') ||
-                        desc.includes('udimm') ||
-                        metaCat.includes('memoria') ||
-                        metaCat.includes('ram') ||
-                        metaCat.includes('memory');
-          
-          return isRAM;
-        });
-        console.log('After RAM filter:', filtered.length);
+        console.log(`After ${category} filter (terms: ${terms.join(', ')}):`, filtered.length);
       }
       
       // Asignar imágenes

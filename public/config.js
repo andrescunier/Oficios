@@ -98,16 +98,20 @@ window.__APP_CONFIG__ = {
     ],
     categories: [
       {
-        name: "SSD SATA",
-        image: "/images/categories/ssd-sata.jpg",
-        link: "/categoria/ssd-sata",
-        description: "SATA III para máximo rendimiento"
+        name: \"SSD SATA\",
+        slug: \"ssd-sata\",
+        image: \"/images/categories/ssd-sata.jpg\",
+        link: \"/categoria/ssd-sata\",
+        description: \"SATA III para máximo rendimiento\",
+        searchTerms: [\"ssd\"]
       },
       {
-        name: "Memoria RAM",
-        image: "/images/categories/ddr4.jpg",
-        link: "/categoria/memoria-ram",
-        description: "Módulos de memoria de alta velocidad"
+        name: \"Memoria RAM\",
+        slug: \"memoria-ram\",
+        image: \"/images/categories/ddr4.jpg\",
+        link: \"/categoria/memoria-ram\",
+        description: \"Módulos de memoria de alta velocidad\",
+        searchTerms: [\"ram\", \"ddr\", \"sodimm\", \"udimm\", \"memoria\", \"memory\"]
       }
     ],
     placeholders: {

@@ -8,6 +8,7 @@ import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ASSETS } from '@/config/branding';
+import { getCategoriesConfig } from '@/config/runtime';
 
 interface Category {
   id: string;
@@ -19,25 +20,14 @@ interface Category {
 }
 
 export const CategoryGrid: React.FC = () => {
-  // Configurar categorías usando las imágenes de ASSETS
-  const categories: Category[] = [
-    {
-      id: 'ssd-sata',
-      name: 'SSD SATA',
-      description: 'Almacenamiento SSD tradicional',
-      image: 'https://dcdn-us.mitiendanube.com/stores/001/498/293/products/f058c1e20b671761b713f47be922719-a2fcf586850d775dac17482988864670-480-0.webp',
-      link: '/categoria/ssd-sata',
-      count: 54
-    },
-    {
-      id: 'memoria-ram',
-      name: 'Memoria RAM',
-      description: 'Memoria RAM de alta velocidad',
-      image: 'https://dcdn-us.mitiendanube.com/stores/001/498/293/products/2-78f8d07cb6d82d11a217234745342405-480-0.webp',
-      link: '/categoria/memoria-ram',
-      count: 77
-    }
-  ];
+  // Categorías dinámicas desde config
+  const categories: Category[] = getCategoriesConfig().map(c => ({
+    id: c.slug || c.link.replace(/^\/categoria\//, ''),
+    name: c.name,
+    description: c.description,
+    image: c.image,
+    link: c.link,
+  }));
 
   return (
     <section className="py-16">

@@ -68,15 +68,8 @@ export const ASSETS = {
   // Hero Slider Images (desde runtime config)
   HERO_SLIDES: runtimeImages.heroSlides,
   
-  // Category Images (desde runtime config)
-  CATEGORIES: {
-    COMPONENTES: runtimeImages.productFallbacks['componentes'] || '/images/categories/componentes.jpg',
-    GAMING: runtimeImages.productFallbacks['gaming'] || '/images/categories/gaming.jpg',
-    DDR4: runtimeImages.productFallbacks['ddr4'] || '/images/categories/ddr4.jpg',
-    DDR5: runtimeImages.productFallbacks['ddr5'] || '/images/categories/ddr5.jpg',
-    SSD_M2: runtimeImages.productFallbacks['ssd-m2'] || '/images/categories/ssd-m2.jpg',
-    SSD_SATA: runtimeImages.productFallbacks['ssd-sata'] || '/images/categories/ssd-sata.jpg'
-  },
+  // Category Images (dinámico desde runtime config productFallbacks)
+  CATEGORIES: runtimeImages.productFallbacks,
   
   // Banner & Promotional Images (desde runtime config)
   BANNERS: {

@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useStore } from '@/store/useStore';
 import { BRANDING, ASSETS } from '@/config/branding';
+import { getCategoriesConfig } from '@/config/runtime';
 
 export const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -97,10 +98,10 @@ export const Header: React.FC = () => {
     window.location.href = '/';
   };
 
-  const categories = [
-    { name: 'SSD SATA', href: '/categoria/ssd-sata' },
-    { name: 'Memoria RAM', href: '/categoria/memoria-ram' },
-  ];
+  const categories = getCategoriesConfig().map(c => ({
+    name: c.name,
+    href: c.link,
+  }));
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">

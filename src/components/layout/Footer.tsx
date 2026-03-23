@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { BRANDING, ASSETS, SOCIAL_LINKS, FEATURES } from '@/config/branding';
+import { getCategoriesConfig } from '@/config/runtime';
 
 export const Footer: React.FC = () => {
   const [phoneNumber, setPhoneNumber] = React.useState('');
@@ -50,10 +51,11 @@ export const Footer: React.FC = () => {
     },
     categories: {
       title: 'Categorías',
-      links: [
-        { label: 'SSD SATA', href: '/categoria/ssd-sata', external: false },
-        { label: 'Memoria RAM', href: '/categoria/memoria-ram', external: false },
-      ]
+      links: getCategoriesConfig().map(c => ({
+        label: c.name,
+        href: c.link,
+        external: false,
+      }))
     },
     legal: {
       title: 'Legal',

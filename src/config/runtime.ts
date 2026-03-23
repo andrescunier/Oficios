@@ -18,6 +18,10 @@ export interface CategoryConfig {
   image: string;
   link: string;
   description: string;
+  /** Slug usado en la URL (ej: 'ssd-sata'). Si no se provee, se extrae de link. */
+  slug?: string;
+  /** Keywords para buscar productos de esta categoría en nombre, descripción y metadata */
+  searchTerms?: string[];
 }
 
 export interface ImagesConfig {
@@ -322,15 +326,19 @@ export const getImagesConfig = (): ImagesConfig => {
   const defaultCategories: CategoryConfig[] = [
     {
       name: 'SSD SATA',
+      slug: 'ssd-sata',
       image: '/images/categories/ssd-sata.jpg',
       link: '/categoria/ssd-sata',
-      description: 'SATA III para máximo rendimiento'
+      description: 'SATA III para máximo rendimiento',
+      searchTerms: ['ssd']
     },
     {
       name: 'Memoria RAM',
+      slug: 'memoria-ram',
       image: '/images/categories/ddr4.jpg',
       link: '/categoria/memoria-ram',
-      description: 'Módulos de memoria de alta velocidad'
+      description: 'Módulos de memoria de alta velocidad',
+      searchTerms: ['ram', 'ddr', 'sodimm', 'udimm', 'memoria', 'memory']
     }
   ];
 
@@ -382,6 +390,25 @@ export const getPaymentMethodsConfig = () => {
     mercadopago: getBoolValue(rc?.paymentMethods?.mercadopago, 'VITE_PAYMENT_MERCADOPAGO', false),
     tarjeta: getBoolValue(rc?.paymentMethods?.tarjeta, 'VITE_PAYMENT_TARJETA', false),
   };
+};
+
+/**
+ * Helper: devuelve las categorías navegables con slug normalizado.
+ * Cada categoría incluye searchTerms para filtrado genérico de productos.
+ */
+export const getCategoriesConfig = (): CategoryConfig[] => {
+  const images = getImagesConfig();
+  return images.categories.map(cat => ({
+    ...cat,
+    slug: cat.slug || cat.link.replace(/^\/categoria\//, ''),
+  }));
+};
+
+/**
+ * Helper: busca la config de una categoría por slug.
+ */
+export const getCategoryBySlug = (slug: string): CategoryConfig | undefined => {
+  return getCategoriesConfig().find(c => (c.slug || c.link.replace(/^\/categoria\//, '')) === slug);
 };
 
 /**

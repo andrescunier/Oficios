@@ -17,6 +17,7 @@ import { BRANDING, CONTACT } from '@/config/branding';
 import { useStore } from '@/store/useStore';
 import { authService } from '@/services/authService';
 import log from '@/lib/logger';
+import { clearClientSession } from '@/lib/session';
 
 // Schema de validación
 const loginSchema = z.object({
@@ -59,15 +60,13 @@ export const Login: React.FC = () => {
   const handleClearSession = () => {
     try {
       logout();
-      localStorage.clear();
-      sessionStorage.clear();
+      clearClientSession();
       addNotification({
         type: 'success',
         title: 'Sesión limpiada',
         message: 'Todos los datos han sido eliminados correctamente',
       });
-      // Recargar la página para asegurar estado limpio
-      window.location.reload();
+      navigate('/login', { replace: true });
     } catch (error) {
       log.auth.error('Error al limpiar sesión:', error);
     }

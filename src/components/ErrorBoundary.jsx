@@ -1,4 +1,5 @@
 import React from 'react';
+import { clearClientSession } from '@/lib/session';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -15,12 +16,7 @@ class ErrorBoundary extends React.Component {
   }
 
   handleClear = () => {
-    try {
-      localStorage.clear();
-      sessionStorage.clear();
-    } catch {
-      // ignore
-    }
+    clearClientSession({ clearAllLocalStorage: true });
     window.location.reload();
   };
 

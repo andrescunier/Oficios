@@ -6,6 +6,7 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { API_BASE_URL, API_TIMEOUT, getActiveAccountId, getActiveAccountSlug } from '@/config/api';
 import type { ApiError } from '@/types/api';
 import log from '@/lib/logger';
+import { clearClientSession } from '@/lib/session';
 
 class HttpClient {
   private client: AxiosInstance;
@@ -169,23 +170,10 @@ class HttpClient {
   // Método para manejar errores de autorización (401)
   private handleUnauthorized(): void {
     try {
-      // Limpiar token del cliente HTTP
-      this.removeAuthToken();
-      
-      // Limpiar localStorage completamente
-      localStorage.removeItem('diapstore-store');
-      
-      // Limpiar sessionStorage también
-      sessionStorage.clear();
-      
-      // Señalar redirección a login usando una flag en localStorage
-      try {
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('diap-redirect', '/login?session=expired');
-        }
-      } catch (e) {
-        log.http.error('Error setting diap-redirect flag:', e);
-      }
+      clearClientSession({
+        redirect: '/login?session=expired',
+        removeAuthToken: () => this.removeAuthToken(),
+      });
     } catch (error) {
       log.http.error('Error al manejar token expirado:', error);
     }

@@ -1234,3 +1234,80 @@ Se auditaron todos los archivos de servicios contra la documentación oficial de
 ### Pendientes
 - ...
 ```
+
+---
+
+## Sesión: 2026-03-26
+
+### Contexto
+- Estado del proyecto: frontend React/Vite con Zustand persistido y manejo de sesión en varios puntos distintos.
+- Objetivo de la sesión: investigar el error en producción `Minified React error #185`, revisar de nuevo el flujo completo de sesión/hidratación y dejar bitácora de los cambios.
+
+### Diagnóstico
+- React `#185` corresponde a `Maximum update depth exceeded`.
+- El sitio en producción `https://diapstore.com/` sigue sirviendo el bundle `index-J0xYPmGM.js`, distinto del build local generado en esta sesión. El deploy online no refleja todavía este repo actualizado.
+- El bundle publicado mostraba lógica duplicada de saneamiento de sesión durante hidratación/render, con limpieza de storage y redirects/reloads desde varios lugares.
+- El punto más riesgoso era el `Header`, que detectaba estado inconsistente, hacía `logout()`, `localStorage.clear()`, `sessionStorage.clear()` y `window.location.reload()` desde un `useEffect`.
+
+### Cambios Realizados
+1. `src/lib/session.ts`
+- Creado helper central para sesión:
+  - `setPendingRedirect()`
+  - `clearClientSession()`
+- Se normalizó la limpieza de storage, redirect diferido y remoción de token.
+
+2. `src/store/useStore.ts`
+- Agregado estado `hasHydrated` para saber cuándo terminó la rehidratación persistida.
+- `onRehydrateStorage` ahora marca hidratación completa y usa `clearClientSession()` en errores o estado corrupto.
+- `initializeAuth()` también usa la utilidad central, evitando limpiezas ad hoc.
+
+3. `src/App.jsx`
+- La app ya no procesa redirects antes de hidratar.
+- El redirect por `diap-redirect` se procesa sólo cuando `hasHydrated === true`.
+- La validación de sesión inválida se mueve al flujo post-hidratación y usa `clearClientSession({ redirect: '/login?session=invalid' })`.
+
+4. `src/components/layout/Header.tsx`
+- Eliminada la autocorrección de sesión desde `useEffect`.
+- Eliminados `reload` y `localStorage.clear()` del header.
+- `handleLogout()` usa la utilidad central de sesión.
+
+5. `src/pages/Login.tsx`
+- El botón “¿Problemas con la sesión? Limpiar datos” ahora usa `clearClientSession()`.
+- Se reemplazó `window.location.reload()` por navegación controlada a `/login`.
+
+6. `src/components/ErrorBoundary.jsx`
+- El botón “Limpiar y recargar” ahora usa la utilidad central antes del reload.
+- Se mantuvo el reload sólo como escape hatch explícito del usuario, no como reacción automática del flujo de sesión.
+
+7. `src/services/httpClient.ts`
+- La respuesta `401` fuera de endpoints auth usa `clearClientSession({ redirect: '/login?session=expired' })`.
+- Se eliminó otra implementación local de limpieza parcial de storage.
+
+### Verificación
+- `pnpm build` ejecutado correctamente después de los cambios.
+- Build resultante de esta sesión: `dist/assets/index-CG2GNCp8.js`.
+- El sitio online seguía sirviendo `index-J0xYPmGM.js` al momento de la revisión.
+
+### Decisiones Tomadas
+- Toda limpieza de sesión debe pasar por una sola utilidad compartida.
+- Los redirects por estado corrupto o sesión expirada deben diferirse vía flag (`diap-redirect`) y resolverse después de la hidratación.
+- Ningún componente visual de layout debe tomar decisiones destructivas de sesión durante render/efectos normales.
+- `reload()` sólo debe quedar en acciones explícitas de recuperación manual, no en la ruta principal de manejo de auth.
+
+### Riesgos / Pendientes
+- Hace falta deployar este build para validar el fix real en producción.
+- Hace falta purgar caché/CDN para asegurarse de que `diapstore.com` deje de servir el bundle viejo.
+- `public/force-logout.html` todavía usa limpieza agresiva global; no participa del flujo principal del SPA, pero conviene revisarlo en otra sesión si se usa operativamente.
+
+### Archivos Afectados
+- `src/lib/session.ts`
+- `src/store/useStore.ts`
+- `src/App.jsx`
+- `src/components/layout/Header.tsx`
+- `src/pages/Login.tsx`
+- `src/components/ErrorBoundary.jsx`
+- `src/services/httpClient.ts`
+
+### Resultado
+- El flujo de sesión quedó consolidado y el principal disparador de loops por saneamiento reactivo de auth fue removido del árbol visual.
+- La corrección está en el repo local; producción todavía requiere deploy.

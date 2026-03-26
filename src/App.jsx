@@ -41,6 +41,7 @@ import RegistrationSuccess from '@/pages/RegistrationSuccess';
 import OrderSuccessPage from '@/pages/OrderSuccessPage';
 import { QUERY_CONFIG } from '@/config/api';
 import { useStore } from '@/store/useStore';
+import { clearClientSession } from '@/lib/session';
 import log from '@/lib/logger';
 import './App.css';
 
@@ -48,10 +49,14 @@ import './App.css';
 const queryClient = new QueryClient(QUERY_CONFIG);
 
 function App() {
-  const { auth, logout } = useStore();
+  const auth = useStore((state) => state.auth);
+  const logout = useStore((state) => state.logout);
+  const hasHydrated = useStore((state) => state.hasHydrated);
 
   // Procesar redirección marcada por la lógica fuera de React (p.ej. durante hidratación)
   React.useEffect(() => {
+    if (!hasHydrated) return;
+
     try {
       const redirect = localStorage.getItem('diap-redirect');
       if (redirect) {
@@ -62,18 +67,19 @@ function App() {
     } catch (e) {
       console.error('Error processing diap-redirect:', e);
     }
-  }, []);
+  }, [hasHydrated]);
 
-  // Validar sesión al cargar la aplicación
+  // Validar sesión cuando el store terminó de hidratar.
   useEffect(() => {
+    if (!hasHydrated) return;
+
     // Si dice que está autenticado pero no hay user o token válido, limpiar
     if (auth.isAuthenticated && (!auth.user || !auth.token || auth.token.length < 10)) {
       log.store.warn('Sesión corrupta detectada, limpiando...');
       logout();
-      localStorage.removeItem('diapstore-store');
-      sessionStorage.clear();
+      clearClientSession({ redirect: '/login?session=invalid' });
     }
-  }, [auth.isAuthenticated, auth.user, auth.token, logout]);
+  }, [auth.isAuthenticated, auth.user, auth.token, hasHydrated, logout]);
 
   return (
     <QueryClientProvider client={queryClient}>

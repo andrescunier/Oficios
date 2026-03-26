@@ -26,6 +26,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useStore } from '@/store/useStore';
+import { clearClientSession } from '@/lib/session';
 import { BRANDING, ASSETS } from '@/config/branding';
 import { getCategoriesConfig } from '@/config/runtime';
 
@@ -35,50 +36,13 @@ export const Header: React.FC = () => {
   const navigate = useNavigate();
   
   // Usar el store real para autenticación y carrito
-  const { auth, cart, favorites, logout } = useStore();
+  const auth = useStore((state) => state.auth);
+  const cart = useStore((state) => state.cart);
+  const favorites = useStore((state) => state.favorites);
+  const logout = useStore((state) => state.logout);
   const isAuthenticated = auth.isAuthenticated;
   const user = auth.user;
   const cartItemCount = cart.items.length;
-
-  // Detectar estado inconsistente
-  const hasInconsistentState = React.useMemo(() => {
-    return (
-      (isAuthenticated && !auth.token) ||
-      (isAuthenticated && !user) ||
-      (!isAuthenticated && auth.token) ||
-      (auth.token && auth.token.length < 10)
-    );
-  }, [isAuthenticated, auth.token, user]);
-
-  // Limpiar automáticamente si hay inconsistencia
-  React.useEffect(() => {
-    if (hasInconsistentState) {
-      console.error('🔴 Estado inconsistente detectado en Header!');
-      console.log({
-        isAuthenticated,
-        hasToken: !!auth.token,
-        tokenLength: auth.token?.length,
-        hasUser: !!user,
-      });
-      
-      // Forzar limpieza
-      logout();
-      localStorage.clear();
-      sessionStorage.clear();
-
-      // Marcar redirección para que la app procese la navegación
-      try {
-        localStorage.setItem('diap-redirect', '/login?session=invalid');
-      } catch (e) {
-        console.error('Error setting diap-redirect flag:', e);
-      }
-
-      // Recargar para asegurar que todos los módulos se reinician y la app procese la flag
-      setTimeout(() => {
-        window.location.reload();
-      }, 100);
-    }
-  }, [hasInconsistentState, isAuthenticated, auth.token, user, logout]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,8 +55,7 @@ export const Header: React.FC = () => {
 
   const handleLogout = () => {
     logout();
-    localStorage.clear();
-    sessionStorage.clear();
+    clearClientSession();
     setIsMenuOpen(false);
     // Redirigir a home después del logout
     window.location.href = '/';

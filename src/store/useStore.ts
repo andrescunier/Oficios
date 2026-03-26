@@ -18,6 +18,7 @@ import { httpClient } from '@/services/httpClient';
 import { authService } from '@/services/authService';
 import log from '@/lib/logger';
 import { getBusinessConfig } from '@/config/runtime';
+import { clearClientSession, setPendingRedirect } from '@/lib/session';
 
 // Tipos del store
 interface AuthState {
@@ -87,6 +88,10 @@ interface AppStore {
   // Recent products
   recentProducts: string[];
   addToRecent: (productId: string) => void;
+
+  // Persist/hydration
+  hasHydrated: boolean;
+  setHasHydrated: (value: boolean) => void;
 }
 
 // Configuración inicial
@@ -470,13 +475,16 @@ export const useStore = create<AppStore>()(
       
       // Recent products
       recentProducts: [],
-      
+
       addToRecent: (productId) => set((state) => {
         const filtered = state.recentProducts.filter(id => id !== productId);
         const newRecent = [productId, ...filtered].slice(0, 10); // Máximo 10 productos recientes
         
         return { recentProducts: newRecent };
       }),
+
+      hasHydrated: false,
+      setHasHydrated: (value) => set({ hasHydrated: value }),
     }),
     {
       name: 'diapstore-store',
@@ -492,9 +500,11 @@ export const useStore = create<AppStore>()(
       }),
       onRehydrateStorage: () => {
         return (state, error) => {
+          useStore.setState({ hasHydrated: true });
+
           if (error) {
             log.store.error('Error al hidratar store:', error);
-            localStorage.removeItem('diapstore-store');
+            clearClientSession({ removeAuthToken: () => httpClient.removeAuthToken() });
             return;
           }
 
@@ -520,18 +530,10 @@ export const useStore = create<AppStore>()(
             });
             
             // Limpiar estado corrupto
-            localStorage.removeItem('diapstore-store');
-            sessionStorage.clear();
-            httpClient.removeAuthToken();
-            
-            // Señalar redirección para que la app procese la navegación después de montar
-            try {
-              if (typeof window !== 'undefined') {
-                localStorage.setItem('diap-redirect', '/login?session=corrupted_hydration');
-              }
-            } catch (e) {
-              log.store.error('Error setting diap-redirect flag:', e);
-            }
+            clearClientSession({
+              redirect: '/login?session=corrupted_hydration',
+              removeAuthToken: () => httpClient.removeAuthToken(),
+            });
             return;
           }
 
@@ -588,19 +590,10 @@ export const initializeAuth = () => {
     
     // Forzar limpieza total
     store.logout();
-    localStorage.clear();
-    sessionStorage.clear();
-    httpClient.removeAuthToken();
-    
-    // Señalar redirección para que la app procese la navegación después de montar
-    try {
-      if (typeof window !== 'undefined') {
-        log.store.info('Se marca redirección por estado corrupto...');
-        localStorage.setItem('diap-redirect', '/login?session=corrupted');
-      }
-    } catch (e) {
-      log.store.error('Error setting diap-redirect flag:', e);
-    }
+    clearClientSession({
+      redirect: '/login?session=corrupted',
+      removeAuthToken: () => httpClient.removeAuthToken(),
+    });
     return;
   }
   
@@ -611,9 +604,10 @@ export const initializeAuth = () => {
       // Token inválido - limpiar todo
       log.store.warn('Token inválido detectado, limpiando sesión...');
       store.logout();
-      localStorage.clear();
-      sessionStorage.clear();
-      httpClient.removeAuthToken();
+      clearClientSession({
+        redirect: '/login?session=invalid_token',
+        removeAuthToken: () => httpClient.removeAuthToken(),
+      });
       return;
     }
     

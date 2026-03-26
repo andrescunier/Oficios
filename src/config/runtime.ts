@@ -62,6 +62,7 @@ export interface RuntimeConfig {
     url: string;
     accountId: string;
     accountSlug: string;
+    channel?: string;
   };
   app: {
     name: string;
@@ -231,6 +232,7 @@ export const getApiConfig = () => {
     url: getEnvValue(rc?.api?.url, 'VITE_API_BASE_URL', 'https://api.cumar.com.ar'),
     accountId: getEnvValue(rc?.api?.accountId, 'VITE_ACCOUNT_ID', 'bed2df35-717f-4900-a4b1-7c3a7fb59b7c'),
     accountSlug: getEnvValue(rc?.api?.accountSlug, 'VITE_ACCOUNT_SLUG', 'diap'),
+    channel: getEnvValue(rc?.api?.channel, 'VITE_CHANNEL', 'ecommerce'),
   };
 };
 

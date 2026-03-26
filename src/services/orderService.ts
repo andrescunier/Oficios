@@ -3,7 +3,7 @@
  */
 
 import { httpClient } from './httpClient';
-import { API_ENDPOINTS, ACCOUNT_ID, DEFAULT_HEADERS } from '@/config/api';
+import { API_ENDPOINTS, getActiveAccountId, getActiveChannel, getDefaultHeaders } from '@/config/api';
 import log from '@/lib/logger';
 
 interface SalesOrderItem {
@@ -53,6 +53,9 @@ interface CreateSalesOrderResponse {
   customer_id: string;
   currency: string;
   status: string;
+  subtotal?: number;
+  tax_total?: number;
+  total?: number;
   total_amount: number;
   items: SalesOrderItem[];
   created_at: string;
@@ -65,6 +68,8 @@ interface SalesOrder {
   customer_id: string;
   currency: string;
   status: OrderStatus;
+  subtotal?: number;
+  tax_total?: number;
   total_amount: number;
   items: SalesOrderItem[];
   notes?: string;
@@ -78,6 +83,13 @@ interface SalesOrder {
   };
   created_at: string;
   updated_at: string;
+  payments?: PaymentSummary[];
+  payment_summary?: {
+    total: number;
+    count: number;
+    last_payment_at?: string;
+  };
+  status_history?: StatusHistoryEntry[];
 }
 
 interface GetOrdersParams {
@@ -153,13 +165,31 @@ interface CreatePaymentResponse {
   id: string;
   payment_number: string;
   source_type: string;
-  partner_id: string;
+  partner_id: string | null;
   currency: string;
   amount: number;
   method: string;
   status: string;
+  reference?: string | null;
+  received_at?: string | null;
+  metadata?: Record<string, any>;
+  account_id?: string;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
+}
+
+interface PaymentSummary extends CreatePaymentResponse {
+  applications?: ApplyPaymentResponse[];
+  linked_order_ids?: string[];
+}
+
+interface GetPaymentsParams {
+  partner_id?: string;
+  status_filter?: string;
+}
+
+interface UserOrdersWithPaymentsResponse extends OrdersResponse {
+  payments: PaymentSummary[];
 }
 
 // Nuevas interfaces para BusinessPartner
@@ -361,6 +391,15 @@ interface CheckoutData {
     country: string;
   };
   items: SalesOrderItem[];
+  lineItemsMetadata?: Array<{
+    product_id: string;
+    quantity: number;
+    unit_price: number;
+    description: string;
+    variant_id?: string;
+    variant_sku?: string;
+    option_values?: Record<string, string>;
+  }>;
   currency: string;
   totalAmount: number;
   paymentMethod: string;
@@ -379,12 +418,100 @@ function unwrapApiResponse<T>(response: any): T {
   return response as T;
 }
 
+function normalizeSalesOrder(raw: any): SalesOrder {
+  const items = Array.isArray(raw?.items)
+    ? raw.items.map((item: any) => ({
+        ...item,
+        quantity: typeof item.quantity === 'number' ? item.quantity : Number(item.quantity || 0),
+        unit_price: typeof item.unit_price === 'number' ? item.unit_price : Number(item.unit_price || 0),
+        tax_rate: typeof item.tax_rate === 'number' ? item.tax_rate : Number(item.tax_rate || 0),
+      }))
+    : [];
+
+  const totalAmount = raw?.total_amount ?? raw?.total ?? 0;
+
+  return {
+    ...raw,
+    subtotal: typeof raw?.subtotal === 'number' ? raw.subtotal : Number(raw?.subtotal || 0),
+    tax_total: typeof raw?.tax_total === 'number' ? raw.tax_total : Number(raw?.tax_total || 0),
+    total_amount: typeof totalAmount === 'number' ? totalAmount : Number(totalAmount || 0),
+    items,
+    metadata: raw?.metadata && typeof raw.metadata === 'object' ? raw.metadata : {},
+    created_at: raw?.created_at || raw?.issued_at || new Date().toISOString(),
+    updated_at: raw?.updated_at || raw?.created_at || raw?.issued_at || new Date().toISOString(),
+  };
+}
+
+function normalizePayment(raw: any): PaymentSummary {
+  return {
+    ...raw,
+    partner_id: raw?.partner_id ?? null,
+    amount: typeof raw?.amount === 'number' ? raw.amount : Number(raw?.amount || 0),
+    metadata: raw?.metadata && typeof raw.metadata === 'object' ? raw.metadata : {},
+    created_at: raw?.created_at || raw?.received_at || new Date().toISOString(),
+    updated_at: raw?.updated_at || raw?.received_at || raw?.created_at || new Date().toISOString(),
+    applications: Array.isArray(raw?.applications) ? raw.applications : [],
+    linked_order_ids: Array.isArray(raw?.linked_order_ids) ? raw.linked_order_ids : [],
+  };
+}
+
+function normalizeOrderToken(value: unknown): string | null {
+  if (!value) {
+    return null;
+  }
+
+  const normalized = String(value).toUpperCase().replace(/^(SO-|RCPT-|TRX)/, '').replace(/[^A-Z0-9]/g, '');
+  return normalized || null;
+}
+
+function paymentMatchesOrder(payment: PaymentSummary, order: SalesOrder): boolean {
+  const metadata = payment.metadata || {};
+  const linkedOrderIds = new Set([
+    ...(payment.linked_order_ids || []),
+    ...((payment.applications || []).map((app) => app.sales_order_id).filter(Boolean) as string[]),
+    metadata.sales_order_id,
+    metadata.order_id,
+  ].filter(Boolean));
+
+  if (linkedOrderIds.has(order.id)) {
+    return true;
+  }
+
+  const orderNumbers = new Set([
+    payment.payment_number,
+    metadata.order_number,
+    metadata.sales_order_number,
+    payment.reference,
+  ].filter(Boolean));
+
+  for (const value of orderNumbers) {
+    if (String(value).includes(order.order_number)) {
+      return true;
+    }
+  }
+
+  const normalizedOrderNumber = normalizeOrderToken(order.order_number);
+  if (!normalizedOrderNumber) {
+    return false;
+  }
+
+  for (const value of orderNumbers) {
+    const normalizedValue = normalizeOrderToken(value);
+    if (normalizedValue && normalizedValue.includes(normalizedOrderNumber)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 class OrderService {
   private getHeaders() {
-    return {
-      ...DEFAULT_HEADERS,
-      'X-Account-ID': ACCOUNT_ID,
-    };
+    return getDefaultHeaders();
+  }
+
+  private getAccountId() {
+    return getActiveAccountId();
   }
 
   /**
@@ -394,7 +521,7 @@ class OrderService {
   async validateStock(items: ValidateStockRequest['items']): Promise<ValidateStockResponse> {
     try {
       const response = await httpClient.post<ValidateStockResponse>(
-        API_ENDPOINTS.VALIDATE_STOCK(ACCOUNT_ID),
+        API_ENDPOINTS.VALIDATE_STOCK(this.getAccountId()),
         {
           items: items.map(item => ({
             product_id: item.product_id,
@@ -440,7 +567,7 @@ class OrderService {
       const eventId = `cancel-${orderId}-${Date.now()}`;
       
       const response = await httpClient.post<CancelOrderResponse>(
-        API_ENDPOINTS.CANCEL_ORDER(ACCOUNT_ID, orderId),
+        API_ENDPOINTS.CANCEL_ORDER(this.getAccountId(), orderId),
         {
           reason: reason || 'Cancelado por el cliente',
           event_id: eventId,
@@ -479,7 +606,7 @@ class OrderService {
       const eventId = `submit-${orderId}-${Date.now()}`;
       
       const response = await httpClient.post<OrderSubmitResponse>(
-        API_ENDPOINTS.SUBMIT_ORDER(ACCOUNT_ID, orderId),
+        API_ENDPOINTS.SUBMIT_ORDER(this.getAccountId(), orderId),
         {
           validate_stock: options?.validateStock ?? true,
           reservation_ttl_hours: options?.reservationTtlHours ?? 48,
@@ -504,7 +631,7 @@ class OrderService {
       const eventId = `confirm-${orderId}-${Date.now()}`;
       
       const response = await httpClient.post<OrderConfirmPaymentResponse>(
-        API_ENDPOINTS.CONFIRM_PAYMENT(ACCOUNT_ID, orderId),
+        API_ENDPOINTS.CONFIRM_PAYMENT(this.getAccountId(), orderId),
         {
           payment_reference: paymentReference,
           event_id: eventId,
@@ -546,7 +673,7 @@ class OrderService {
       const eventId = `transition-${toStatus}-${orderId}-${Date.now()}`;
       
       const response = await httpClient.post<StateTransitionResponse>(
-        `${API_ENDPOINTS.TRANSITION_ORDER(ACCOUNT_ID, orderId)}?to_status=${toStatus}`,
+        `${API_ENDPOINTS.TRANSITION_ORDER(this.getAccountId(), orderId)}?to_status=${toStatus}`,
         {
           reason: reason,
           event_id: eventId
@@ -568,7 +695,7 @@ class OrderService {
   async getValidTransitions(orderId: string): Promise<ValidTransitionsResponse> {
     try {
       const response = await httpClient.get<ValidTransitionsResponse>(
-        API_ENDPOINTS.VALID_TRANSITIONS(ACCOUNT_ID, orderId),
+        API_ENDPOINTS.VALID_TRANSITIONS(this.getAccountId(), orderId),
         { headers: this.getHeaders() }
       );
       return response;
@@ -585,7 +712,7 @@ class OrderService {
   async getStatusHistory(orderId: string): Promise<StatusHistoryResponse> {
     try {
       const response = await httpClient.get<StatusHistoryResponse>(
-        API_ENDPOINTS.STATUS_HISTORY(ACCOUNT_ID, orderId),
+        API_ENDPOINTS.STATUS_HISTORY(this.getAccountId(), orderId),
         { headers: this.getHeaders() }
       );
       return response;
@@ -605,7 +732,7 @@ class OrderService {
       const eventId = `return-${orderId}-${Date.now()}`;
       
       const response = await httpClient.post<OrderReturnResponse>(
-        API_ENDPOINTS.RETURN_ORDER(ACCOUNT_ID, orderId),
+        API_ENDPOINTS.RETURN_ORDER(this.getAccountId(), orderId),
         {
           ...data,
           event_id: data.event_id || eventId
@@ -625,36 +752,17 @@ class OrderService {
    */
   async getOrders(params?: GetOrdersParams): Promise<OrdersResponse> {
     try {
-      const response = await httpClient.get<OrdersResponse>(
-        API_ENDPOINTS.SALES_ORDERS(ACCOUNT_ID),
+      const response = await httpClient.get<any>(
+        API_ENDPOINTS.SALES_ORDERS(this.getAccountId()),
         {
           headers: this.getHeaders(),
           params: params
         }
       );
 
-      // Si la respuesta es un array directo (sin paginación)
-      const normalizeOrder = (o: any) => {
-        try {
-          const items = Array.isArray(o.items) ? o.items.map((it: any) => ({
-            ...it,
-            unit_price: typeof it.unit_price === 'number' ? it.unit_price : (it.unit_price ? Number(it.unit_price) : null),
-            quantity: typeof it.quantity === 'number' ? it.quantity : (it.quantity ? Number(it.quantity) : 0),
-          })) : [];
-
-          return {
-            ...o,
-            total_amount: typeof o.total_amount === 'number' ? o.total_amount : (o.total_amount ? Number(o.total_amount) : null),
-            items,
-          };
-        } catch (e) {
-          return o;
-        }
-      };
-
       if (Array.isArray(response)) {
         return {
-          data: response.map(normalizeOrder),
+          data: response.map(normalizeSalesOrder),
           pagination: {
             page: 1,
             per_page: response.length,
@@ -665,14 +773,27 @@ class OrderService {
       }
 
       // Si viene paginado, normalizar cada orden dentro de response.data
-      if (response && response.data && Array.isArray(response.data)) {
+      if (response && Array.isArray(response.data)) {
         return {
-          ...response,
-          data: response.data.map(normalizeOrder),
+          data: response.data.map(normalizeSalesOrder),
+          pagination: {
+            page: response.page ?? params?.page ?? 1,
+            per_page: response.per_page ?? params?.per_page ?? response.data.length,
+            total: response.total ?? response.data.length,
+            total_pages: response.total_pages ?? 1,
+          },
         };
       }
 
-      return response;
+      return {
+        data: [],
+        pagination: {
+          page: params?.page ?? 1,
+          per_page: params?.per_page ?? 0,
+          total: 0,
+          total_pages: 0,
+        },
+      };
     } catch (error) {
       throw error;
     }
@@ -684,26 +805,14 @@ class OrderService {
   async getOrder(orderId: string): Promise<SalesOrder> {
     try {
       const response = await httpClient.get<any>(
-        API_ENDPOINTS.SALES_ORDER(ACCOUNT_ID, orderId),
+        API_ENDPOINTS.SALES_ORDER(this.getAccountId(), orderId),
         {
           headers: this.getHeaders(),
         }
       );
 
       // La API devuelve { success, data: { id, order_number, ... } }
-      const raw = unwrapApiResponse<any>(response);
-      // Normalizar campos numéricos
-      const items = Array.isArray(raw.items) ? raw.items.map((it: any) => ({
-        ...it,
-        unit_price: typeof it.unit_price === 'number' ? it.unit_price : (it.unit_price ? Number(it.unit_price) : null),
-        quantity: typeof it.quantity === 'number' ? it.quantity : (it.quantity ? Number(it.quantity) : 0),
-      })) : [];
-
-      return {
-        ...raw,
-        total_amount: typeof raw.total_amount === 'number' ? raw.total_amount : (raw.total_amount ? Number(raw.total_amount) : null),
-        items,
-      } as SalesOrder;
+      return normalizeSalesOrder(unwrapApiResponse<any>(response));
     } catch (error) {
       throw error;
     }
@@ -719,6 +828,106 @@ class OrderService {
       order_by: 'created_at',
       direction: 'desc'
     });
+  }
+
+  async getPayments(params?: GetPaymentsParams): Promise<PaymentSummary[]> {
+    try {
+      const response = await httpClient.get<any>(
+        API_ENDPOINTS.PAYMENTS(this.getAccountId()),
+        {
+          headers: this.getHeaders(),
+          params,
+        }
+      );
+
+      const items = Array.isArray(response) ? response : unwrapApiResponse<any[]>(response);
+      return Array.isArray(items) ? items.map(normalizePayment) : [];
+    } catch (error) {
+      log.orders.error('Error obteniendo pagos:', error);
+      throw error;
+    }
+  }
+
+  async getPaymentApplications(paymentId: string): Promise<ApplyPaymentResponse[]> {
+    try {
+      const response = await httpClient.get<any>(
+        API_ENDPOINTS.PAYMENT_APPLICATIONS(this.getAccountId(), paymentId),
+        { headers: this.getHeaders() }
+      );
+      const items = Array.isArray(response) ? response : unwrapApiResponse<any[]>(response);
+      return Array.isArray(items) ? items : [];
+    } catch (error) {
+      log.orders.warn('No se pudieron obtener aplicaciones de pago:', { paymentId, error });
+      return [];
+    }
+  }
+
+  async getUserPayments(customerId: string): Promise<PaymentSummary[]> {
+    const payments = await this.getPayments({ partner_id: customerId });
+    const applicationsByPayment = await Promise.all(
+      payments.map(async (payment) => ({
+        paymentId: payment.id,
+        applications: await this.getPaymentApplications(payment.id),
+      }))
+    );
+
+    return payments.map((payment) => {
+      const applications = applicationsByPayment.find((entry) => entry.paymentId === payment.id)?.applications || [];
+      return {
+        ...payment,
+        applications,
+        linked_order_ids: applications
+          .map((application) => application.sales_order_id)
+          .filter(Boolean) as string[],
+      };
+    });
+  }
+
+  async getUserOrdersWithPayments(
+    customerId: string,
+    params?: Omit<GetOrdersParams, 'customer_id'>
+  ): Promise<UserOrdersWithPaymentsResponse> {
+    const [ordersResponse, payments] = await Promise.all([
+      this.getUserOrders(customerId, params),
+      this.getUserPayments(customerId),
+    ]);
+
+    const orders = ordersResponse.data.map((order) => {
+      const orderPayments = payments.filter((payment) => paymentMatchesOrder(payment, order));
+      const lastPaymentAt = orderPayments
+        .map((payment) => payment.received_at || payment.updated_at || payment.created_at)
+        .filter(Boolean)
+        .sort()
+        .at(-1);
+
+      return {
+        ...order,
+        payments: orderPayments,
+        payment_summary: {
+          total: orderPayments.reduce((sum, payment) => sum + (payment.amount || 0), 0),
+          count: orderPayments.length,
+          last_payment_at: lastPaymentAt,
+        },
+      };
+    });
+
+    return {
+      data: orders,
+      pagination: ordersResponse.pagination,
+      payments,
+    };
+  }
+
+  async getOrderDetail(orderId: string): Promise<SalesOrder> {
+    const [order, statusHistoryResponse] = await Promise.all([
+      this.getOrder(orderId),
+      this.getStatusHistory(orderId).catch(() => null),
+    ]);
+
+    return {
+      ...order,
+      status_history: statusHistoryResponse?.data?.history || [],
+    };
   }
 
   /**
@@ -793,7 +1002,7 @@ class OrderService {
   async createSalesOrder(orderData: CreateSalesOrderRequest): Promise<CreateSalesOrderResponse> {
     try {
       const response = await httpClient.post<any>(
-        API_ENDPOINTS.SALES_ORDERS(ACCOUNT_ID),
+        API_ENDPOINTS.SALES_ORDERS(this.getAccountId()),
         orderData,
         {
           headers: this.getHeaders(),
@@ -801,7 +1010,7 @@ class OrderService {
       );
 
       // La API devuelve { success, data: { id, order_number, ... } }
-      const order = unwrapApiResponse<CreateSalesOrderResponse>(response);
+      const order = normalizeSalesOrder(unwrapApiResponse<any>(response)) as CreateSalesOrderResponse;
       log.orders.debug('createSalesOrder unwrapped:', { id: order.id, order_number: order.order_number });
       return order;
     } catch (error) {
@@ -815,7 +1024,7 @@ class OrderService {
   async createPayment(paymentData: CreatePaymentRequest): Promise<CreatePaymentResponse> {
     try {
       const response = await httpClient.post<any>(
-        API_ENDPOINTS.PAYMENTS(ACCOUNT_ID),
+        API_ENDPOINTS.PAYMENTS(this.getAccountId()),
         paymentData,
         {
           headers: this.getHeaders(),
@@ -823,7 +1032,7 @@ class OrderService {
       );
 
       // La API devuelve { success, data: { id, payment_number, ... } }
-      const payment = unwrapApiResponse<CreatePaymentResponse>(response);
+      const payment = normalizePayment(unwrapApiResponse<any>(response));
       log.orders.debug('createPayment unwrapped:', { id: payment.id, payment_number: payment.payment_number });
       return payment;
     } catch (error) {
@@ -838,7 +1047,7 @@ class OrderService {
   async applyPayment(paymentId: string, application: ApplyPaymentRequest): Promise<ApplyPaymentResponse> {
     try {
       const response = await httpClient.post<any>(
-        API_ENDPOINTS.PAYMENT_APPLICATIONS(ACCOUNT_ID, paymentId),
+        API_ENDPOINTS.PAYMENT_APPLICATIONS(this.getAccountId(), paymentId),
         application,
         { headers: this.getHeaders() }
       );
@@ -856,7 +1065,7 @@ class OrderService {
   async generateInvoice(orderId: string, invoiceData: GenerateInvoiceRequest): Promise<GenerateInvoiceResponse> {
     try {
       const response = await httpClient.post<any>(
-        API_ENDPOINTS.GENERATE_INVOICE(ACCOUNT_ID, orderId),
+        API_ENDPOINTS.GENERATE_INVOICE(this.getAccountId(), orderId),
         invoiceData,
         { headers: this.getHeaders() }
       );
@@ -908,7 +1117,7 @@ class OrderService {
   async createBusinessPartner(data: CreateBusinessPartnerRequest): Promise<BusinessPartnerResponse> {
     try {
       const response = await httpClient.post<any>(
-        API_ENDPOINTS.BUSINESS_PARTNERS(ACCOUNT_ID),
+        API_ENDPOINTS.BUSINESS_PARTNERS(this.getAccountId()),
         data,
         {
           headers: this.getHeaders(),
@@ -937,7 +1146,8 @@ class OrderService {
     let submitted = false;
     
     try {
-      const { shippingInfo, items, currency, totalAmount, paymentMethod, notes } = checkoutData;
+      const { shippingInfo, items, lineItemsMetadata, currency, totalAmount, paymentMethod, notes } = checkoutData;
+      const activeChannel = getActiveChannel();
       
       // 1. Obtener customer_id: puede ser business_partner_id o user_id
       // La API acepta ambos según la doc: "customer_id puede ser un User.id o un BusinessPartner.id"
@@ -986,9 +1196,12 @@ class OrderService {
         items: items,
         notes: notes || `Entrega a: ${shippingInfo.address}, ${shippingInfo.city}, ${shippingInfo.state} ${shippingInfo.zipCode}. Tel: ${shippingInfo.phone}`,
         metadata: {
-          channel: 'online',
+          channel: activeChannel,
           shipping_info: shippingInfo,
-          payment_method: paymentMethod
+          payment_method: paymentMethod,
+          line_items_variant_info: Array.isArray(lineItemsMetadata)
+            ? lineItemsMetadata.filter((item) => item.variant_id)
+            : []
         }
       });
       
@@ -1033,6 +1246,9 @@ class OrderService {
         reference: `TRX${orderNumber.replace('SO-', '')}`,
         status: 'received',
         metadata: {
+          channel: activeChannel,
+          sales_order_id: salesOrder.id,
+          order_number: salesOrder.order_number,
           payment_method_details: paymentMethod,
           customer_info: {
             name: `${shippingInfo.firstName} ${shippingInfo.lastName}`,
@@ -1042,6 +1258,15 @@ class OrderService {
       });
       
       log.checkout.info('Pago creado:', payment.payment_number);
+
+      try {
+        await this.applyPayment(payment.id, {
+          sales_order_id: salesOrder.id,
+          amount_applied: totalAmount,
+        });
+      } catch (applicationError) {
+        log.checkout.warn('No se pudo vincular el pago con la orden mediante applications:', applicationError);
+      }
       
       // 5. Confirm Payment: pending_payment → confirmed (deduce stock)
       log.checkout.info('Paso 4: Confirmando pago (confirm-payment → confirmed)...');
@@ -1128,6 +1353,9 @@ export type {
   CreateSalesOrderResponse, 
   CreatePaymentRequest, 
   CreatePaymentResponse,
+  PaymentSummary,
+  GetPaymentsParams,
+  UserOrdersWithPaymentsResponse,
   SalesOrderItem,
   SalesOrder,
   GetOrdersParams,

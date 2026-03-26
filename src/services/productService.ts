@@ -3,9 +3,11 @@
  */
 
 import { httpClient } from './httpClient';
-import { API_ENDPOINTS, ACCOUNT_ID } from '@/config/api';
+import { API_ENDPOINTS, getActiveAccountId, getActiveChannel } from '@/config/api';
 import type { 
   Product, 
+  ProductVariant,
+  ProductVariantOption,
   CreateProductRequest, 
   PaginatedResponse,
   ApiResponse 
@@ -27,14 +29,22 @@ export class ProductService {
     is_active?: boolean;
     is_featured?: boolean;
     in_stock?: boolean;
+    channel?: string;
+    channels?: string | string[];
     min_price?: number;
     max_price?: number;
     sort_by?: 'name' | 'price' | 'stock' | 'created';
     sort_order?: 'asc' | 'desc';
   }): Promise<PaginatedResponse<Product>> {
     log.products.debug('getProducts', params);
-    const url = API_ENDPOINTS.PRODUCTS(ACCOUNT_ID);
-    const response: any = await httpClient.get(url, { params });
+    const url = API_ENDPOINTS.PRODUCTS(getActiveAccountId());
+    const channel = params?.channel || getActiveChannel();
+    const response: any = await httpClient.get(url, {
+      params: {
+        ...params,
+        channels: params?.channels || channel,
+      }
+    });
 
     if (Array.isArray(response)) {
       return {
@@ -68,7 +78,7 @@ export class ProductService {
    */
   async getProduct(productId: string): Promise<Product> {
     log.products.debug('getProduct', productId);
-    const url = API_ENDPOINTS.PRODUCT(ACCOUNT_ID, productId);
+    const url = API_ENDPOINTS.PRODUCT(getActiveAccountId(), productId);
     const response: any = await httpClient.get(url);
     
     // La API puede devolver { success, data: {...} } o directamente el producto
@@ -89,11 +99,52 @@ export class ProductService {
     throw new Error('Producto no encontrado');
   }
 
+  async getProductVariants(productId: string, params?: { status?: string }): Promise<ProductVariant[]> {
+    const url = API_ENDPOINTS.PRODUCT_VARIANTS(getActiveAccountId(), productId);
+    const response: any = await httpClient.get(url, { params });
+    const data = response?.data ?? response;
+    return Array.isArray(data) ? data : [];
+  }
+
+  async getProductVariantOptions(productId: string): Promise<ProductVariantOption[]> {
+    const url = API_ENDPOINTS.PRODUCT_VARIANT_OPTIONS(getActiveAccountId(), productId);
+    const response: any = await httpClient.get(url);
+    const data = response?.data ?? response;
+    return Array.isArray(data) ? data : [];
+  }
+
+  async getProductWithVariants(productId: string): Promise<{
+    product: Product;
+    variants: ProductVariant[];
+    variantOptions: ProductVariantOption[];
+  }> {
+    const product = await this.getProduct(productId);
+
+    if (!product.has_variants) {
+      return {
+        product,
+        variants: [],
+        variantOptions: [],
+      };
+    }
+
+    const [variants, variantOptions] = await Promise.all([
+      this.getProductVariants(productId, { status: 'active' }).catch(() => []),
+      this.getProductVariantOptions(productId).catch(() => []),
+    ]);
+
+    return {
+      product,
+      variants,
+      variantOptions,
+    };
+  }
+
   /**
    * Crear un nuevo producto
    */
   async createProduct(productData: CreateProductRequest): Promise<Product> {
-    const url = API_ENDPOINTS.PRODUCTS(ACCOUNT_ID);
+    const url = API_ENDPOINTS.PRODUCTS(getActiveAccountId());
     const response = await httpClient.post<ApiResponse<Product>>(url, productData);
     return response.data;
   }
@@ -102,7 +153,7 @@ export class ProductService {
    * Actualizar un producto
    */
   async updateProduct(productId: string, productData: Partial<CreateProductRequest>): Promise<Product> {
-    const url = API_ENDPOINTS.PRODUCT(ACCOUNT_ID, productId);
+    const url = API_ENDPOINTS.PRODUCT(getActiveAccountId(), productId);
     const response = await httpClient.put<ApiResponse<Product>>(url, productData);
     return response.data;
   }
@@ -111,7 +162,7 @@ export class ProductService {
    * Eliminar un producto
    */
   async deleteProduct(productId: string): Promise<void> {
-    const url = API_ENDPOINTS.PRODUCT(ACCOUNT_ID, productId);
+    const url = API_ENDPOINTS.PRODUCT(getActiveAccountId(), productId);
     await httpClient.delete(url);
   }
 
@@ -174,7 +225,7 @@ export class ProductService {
     stock_unit: string;
     deficit: number;
   }>> {
-    const url = API_ENDPOINTS.PRODUCTS_LOW_STOCK(ACCOUNT_ID);
+    const url = API_ENDPOINTS.PRODUCTS_LOW_STOCK(getActiveAccountId());
     const response: any = await httpClient.get(url, { params });
     
     if (Array.isArray(response)) {
@@ -202,7 +253,7 @@ export class ProductService {
     reason: string;
     reference?: string;
   }): Promise<Product> {
-    const url = API_ENDPOINTS.PRODUCT_STOCK(ACCOUNT_ID, productId);
+    const url = API_ENDPOINTS.PRODUCT_STOCK(getActiveAccountId(), productId);
     const response = await httpClient.patch<ApiResponse<Product>>(url, data);
     return response.data;
   }

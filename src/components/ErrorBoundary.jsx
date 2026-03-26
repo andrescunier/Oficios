@@ -11,7 +11,6 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, info) {
-    // eslint-disable-next-line no-console
     console.error('Uncaught error in component tree:', error, info);
   }
 
@@ -19,7 +18,7 @@ class ErrorBoundary extends React.Component {
     try {
       localStorage.clear();
       sessionStorage.clear();
-    } catch (e) {
+    } catch {
       // ignore
     }
     window.location.reload();

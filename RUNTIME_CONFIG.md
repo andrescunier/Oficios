@@ -1,228 +1,115 @@
-# DIAP Ecommerce - Configuración Runtime Multi-Tenant
+# Configuración Runtime
 
-## Descripción
+La aplicación se puede desplegar una sola vez y parametrizarse por ambiente, tenant y canal al arrancar el contenedor.
 
-Este documento describe cómo configurar DIAP Ecommerce para diferentes clientes/ambientes sin necesidad de recompilar la aplicación.
+## Flujo
 
-## Arquitectura
+1. `docker-entrypoint.sh` lee variables de entorno.
+2. Genera `config.js` desde `config.js.template`.
+3. El navegador carga `window.__APP_CONFIG__`.
+4. El frontend usa runtime config y, si existe, la cuenta activa guardada en sesión.
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        Docker Container                          │
-├─────────────────────────────────────────────────────────────────┤
-│  ┌─────────────────┐    ┌─────────────────┐                     │
-│  │ docker-entrypoint│───▶│   config.js     │                     │
-│  │      .sh        │    │  (generated)    │                     │
-│  └─────────────────┘    └────────┬────────┘                     │
-│          ▲                       │                               │
-│          │                       ▼                               │
-│  ┌───────┴───────┐    ┌─────────────────┐    ┌───────────────┐  │
-│  │ Environment   │    │    index.html   │───▶│  React App    │  │
-│  │   Variables   │    │ <script src=    │    │ (uses config) │  │
-│  └───────────────┘    │  "/config.js">  │    └───────────────┘  │
-│                       └─────────────────┘                       │
-└─────────────────────────────────────────────────────────────────┘
-```
+## Variables runtime principales
 
-## Flujo de Configuración
+### API
 
-1. **Build time**: Se construye una sola imagen Docker con la aplicación
-2. **Runtime**: Al iniciar el container, `docker-entrypoint.sh` lee las variables de entorno
-3. **Generación**: Se genera `/usr/share/nginx/html/config.js` con la configuración
-4. **Carga**: La aplicación carga `config.js` antes del bundle de React
-5. **Uso**: Los componentes React acceden a `window.__APP_CONFIG__`
+| Variable | Default | Uso |
+|---|---|---|
+| `API_URL` | `https://api.cumar.com.ar` | Base URL del backend |
+| `ACCOUNT_ID` | `bed2df35-717f-4900-a4b1-7c3a7fb59b7c` | Cuenta por defecto |
+| `ACCOUNT_SLUG` | `diap` | Slug por defecto |
+| `API_CHANNEL` | `ecommerce` | Canal visible del catálogo y metadata de checkout |
 
-## Variables de Entorno Disponibles
+### App
 
-### API Configuration
+| Variable | Default | Uso |
+|---|---|---|
+| `APP_NAME` | `Mi Tienda` | Nombre visible |
+| `COMPANY_NAME` | `Mi Empresa` | Marca/empresa |
+| `APP_SLOGAN` | `Tu tienda online` | Slogan |
+| `APP_DESCRIPTION` | `Tienda online de productos` | SEO y metadata |
+| `APP_URL` | vacío | URL pública |
 
-| Variable | Default | Descripción |
-|----------|---------|-------------|
-| `API_URL` | `https://api.cumar.com.ar` | URL base de la API |
-| `ACCOUNT_ID` | `bed2df35-...` | UUID de la cuenta multi-tenant |
-| `ACCOUNT_SLUG` | `diap` | Slug identificador de la cuenta |
+### Reglas de negocio
 
-### App Configuration
-
-| Variable | Default | Descripción |
-|----------|---------|-------------|
-| `APP_NAME` | `DIAP` | Nombre de la aplicación |
-| `COMPANY_NAME` | `DIAP` | Nombre de la empresa |
-| `APP_SLOGAN` | `Tecnología profesional...` | Slogan/tagline |
-| `APP_DESCRIPTION` | `DIAP - Distribuidora...` | Descripción para SEO |
-| `APP_URL` | `https://diap.com` | URL del sitio |
-
-### B2B Features
-
-| Variable | Default | Descripción |
-|----------|---------|-------------|
-| `HIDE_PRICES_FOR_GUESTS` | `true` | Ocultar precios sin login |
+| Variable | Default | Uso |
+|---|---|---|
+| `HIDE_PRICES_FOR_GUESTS` | `true` | Ocultar precios a invitados |
 | `REQUIRE_AUTH_FOR_CART` | `true` | Requerir login para carrito |
-| `LOGIN_TO_VIEW_PRICES_MESSAGE` | `Inicia sesión...` | Mensaje de login |
-| `LOGIN_FOR_PRICES_CTA` | `Iniciar Sesión` | Texto del botón |
+| `DEFAULT_TAX_RATE` | `0.21` | IVA default |
+| `MAX_QUANTITY_PER_PRODUCT` | `5` | Tope por producto |
+| `DEFAULT_CURRENCY` | `ARS` | Moneda default |
+| `DEFAULT_COUNTRY` | `Argentina` | País default |
+| `PRODUCTS_PER_PAGE` | `50` | Paginación catálogo |
+| `FEATURED_PRODUCTS_COUNT` | `8` | Destacados home |
+| `LOCALE` | `es-AR` | Formato de fechas y moneda |
 
-### Branding - Images
+### Contacto, legal, branding y theme
 
-| Variable | Default | Descripción |
-|----------|---------|-------------|
-| `LOGO_URL` | `/diap-logo.png` | Logo principal |
-| `LOGO_DARK_URL` | `` | Logo para modo oscuro |
-| `FAVICON_URL` | `/favicon.ico` | Favicon |
-| `BANNER_URL` | `` | Banner principal |
-| `OG_IMAGE_URL` | `/diap-logo.png` | Imagen Open Graph |
+Se mantienen parametrizados por entorno con las variables ya definidas en `config.js.template`. Si cambiás tenant o branding, no hace falta rebuild.
 
-### Theme - Colors
+## Variables de desarrollo (`VITE_*`)
 
-| Variable | Default | Descripción |
-|----------|---------|-------------|
-| `COLOR_PRIMARY` | `#2563eb` | Color principal |
-| `COLOR_PRIMARY_HOVER` | `#1d4ed8` | Hover del primario |
-| `COLOR_PRIMARY_FOREGROUND` | `#ffffff` | Texto sobre primario |
-| `COLOR_SECONDARY` | `#f1f5f9` | Color secundario |
-| `COLOR_BACKGROUND` | `#ffffff` | Fondo principal |
-| `COLOR_FOREGROUND` | `#0f172a` | Texto principal |
-| `COLOR_MUTED` | `#f1f5f9` | Fondo muted |
-| `COLOR_MUTED_FOREGROUND` | `#64748b` | Texto muted |
-| `COLOR_BORDER` | `#e2e8f0` | Color de bordes |
-| `COLOR_SUCCESS` | `#22c55e` | Color de éxito |
-| `COLOR_WARNING` | `#f59e0b` | Color de advertencia |
-| `COLOR_ERROR` | `#ef4444` | Color de error |
+El frontend usa los mismos conceptos para desarrollo local:
 
-### Typography
+```env
+VITE_API_BASE_URL=https://api.cumar.com.ar
+VITE_ACCOUNT_ID=bed2df35-717f-4900-a4b1-7c3a7fb59b7c
+VITE_ACCOUNT_SLUG=diap
+VITE_CHANNEL=ecommerce
+```
 
-| Variable | Default | Descripción |
-|----------|---------|-------------|
-| `FONT_FAMILY` | `` | Familia de fuentes |
-| `FONT_URL` | `` | URL de Google Fonts |
+## Variables de scripts QA
 
-### Social Links
+Los scripts locales quedaron parametrizados:
 
-| Variable | Default | Descripción |
-|----------|---------|-------------|
-| `FACEBOOK_URL` | `` | URL de Facebook |
-| `INSTAGRAM_URL` | `` | URL de Instagram |
-| `TWITTER_URL` | `` | URL de Twitter |
-| `LINKEDIN_URL` | `` | URL de LinkedIn |
+```env
+API_BASE_URL=https://api.cumar.com.ar
+API_ACCOUNT_ID=bed2df35-717f-4900-a4b1-7c3a7fb59b7c
+API_ACCOUNT_SLUG=diap
+API_CHANNEL=ecommerce
+API_TEST_EMAIL=qatest@gmail.com
+API_TEST_PASSWORD=Hola12345.
+API_TEST_CURRENCY=ARS
+API_TEST_ORDER_QTY=1
+```
 
-### Features
-
-| Variable | Default | Descripción |
-|----------|---------|-------------|
-| `FEATURE_NOTIFICATIONS` | `false` | Habilitar notificaciones |
-| `FEATURE_ANALYTICS` | `false` | Habilitar analytics |
-| `FEATURE_REAL_PAYMENTS` | `false` | Habilitar pagos reales |
-
-## Uso con Docker Compose
+## Ejemplo Docker
 
 ```yaml
-version: '3.8'
-
 services:
-  cliente-acme:
+  ecommerce:
     image: diap-ecommerce:latest
-    ports:
-      - "8080:80"
     environment:
-      - API_URL=https://api.acme.com
-      - ACCOUNT_ID=uuid-de-acme
-      - APP_NAME=ACME Store
-      - COMPANY_NAME=ACME Corporation
-      - COLOR_PRIMARY=#ff6600
-      - LOGO_URL=https://acme.com/logo.png
+      API_URL: https://api.cliente.com
+      ACCOUNT_ID: uuid-del-cliente
+      ACCOUNT_SLUG: cliente
+      API_CHANNEL: ecommerce
+      APP_NAME: Cliente Store
+      COMPANY_NAME: Cliente SA
+      COLOR_PRIMARY: "#0f766e"
+      LOGO_URL: https://cdn.cliente.com/logo.png
 ```
 
-## Uso con Kubernetes
+## Ejemplo Kubernetes
 
 ```yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: diap-config
+  name: ecommerce-config
 data:
   API_URL: "https://api.cliente.com"
   ACCOUNT_ID: "uuid-del-cliente"
+  ACCOUNT_SLUG: "cliente"
+  API_CHANNEL: "ecommerce"
   APP_NAME: "Cliente Store"
-  COLOR_PRIMARY: "#ff6600"
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: diap-ecommerce
-spec:
-  template:
-    spec:
-      containers:
-      - name: diap
-        image: diap-ecommerce:latest
-        envFrom:
-        - configMapRef:
-            name: diap-config
+  COMPANY_NAME: "Cliente SA"
 ```
 
-## Desarrollo Local
+## Notas operativas
 
-Para desarrollo local, el archivo `public/config.js` contiene valores por defecto.
-Las variables de Vite (`VITE_*`) siguen funcionando como fallback.
-
-```bash
-# Desarrollo con valores por defecto
-pnpm dev
-
-# Desarrollo con variables custom
-VITE_API_BASE_URL=http://localhost:3000 pnpm dev
-```
-
-## Ejemplos de Configuración por Cliente
-
-### Cliente: Tech Store (colores azules)
-```env
-APP_NAME=Tech Store
-COMPANY_NAME=Tech Store S.A.
-COLOR_PRIMARY=#3b82f6
-COLOR_PRIMARY_HOVER=#2563eb
-LOGO_URL=https://cdn.techstore.com/logo.png
-```
-
-### Cliente: Green Market (colores verdes)
-```env
-APP_NAME=Green Market
-COMPANY_NAME=Green Market LLC
-COLOR_PRIMARY=#22c55e
-COLOR_PRIMARY_HOVER=#16a34a
-LOGO_URL=https://cdn.greenmarket.com/logo.png
-HIDE_PRICES_FOR_GUESTS=false
-```
-
-### Cliente: Premium B2B (modo oscuro)
-```env
-APP_NAME=Premium B2B
-COMPANY_NAME=Premium Corp
-COLOR_PRIMARY=#8b5cf6
-COLOR_PRIMARY_HOVER=#7c3aed
-COLOR_BACKGROUND=#1f2937
-COLOR_FOREGROUND=#f9fafb
-FONT_FAMILY=Poppins, sans-serif
-FONT_URL=https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap
-```
-
-## Troubleshooting
-
-### Los cambios no se aplican
-
-1. Verificar que el container se reinició después de cambiar variables
-2. Revisar logs del container: `docker logs <container>`
-3. Verificar que config.js se generó: `docker exec <container> cat /usr/share/nginx/html/config.js`
-
-### Colores no cambian
-
-1. Los colores usan formato HEX (#ffffff)
-2. Asegurarse de incluir el # al inicio
-3. Verificar la consola del navegador por errores
-
-### Debug mode
-
-Agregar `DEBUG=true` para ver la configuración generada en los logs:
-
-```bash
-docker run -e DEBUG=true -e API_URL=... diap-ecommerce
-```
+- Si el usuario inicia sesión en una cuenta concreta, el frontend prioriza esa cuenta activa sobre la configurada en runtime.
+- Si el canal cambia, el catálogo pasa a consultar productos con `channels=<canal>`.
+- Las órdenes nuevas guardan `metadata.channel`.
+- Los pagos nuevos guardan `metadata.channel`, `sales_order_id` y `order_number`.

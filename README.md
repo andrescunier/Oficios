@@ -1,99 +1,111 @@
-# DIAP - Plataforma E-commerce B2B
+# DIAP Ecommerce
 
-![DIAP Logo](public/diap-logo.png)
+Frontend ecommerce B2B construido con React, Vite y Zustand. El proyecto quedó preparado para operar por tenant, cuenta activa y canal visible sin depender de valores hardcodeados.
 
-## 🏢 Sobre DIAP
+## Stack
 
-**DIAP** es una distribuidora de productos tecnológicos de primera calidad que ofrece soluciones profesionales para empresas.
+- React 19 + TypeScript
+- Vite 6
+- Tailwind CSS 4
+- Zustand
+- React Router 7
+- Axios
+- Docker + Nginx
 
-### ✨ Características Principales
-
-- 🔐 **Plataforma B2B**: Precios exclusivos para clientes registrados
-- 🛒 **E-commerce Completo**: Catálogo de productos tecnológicos
-- 📱 **Responsive Design**: Optimizado para todos los dispositivos
-- ⚡ **Alto Rendimiento**: Construido con React + Vite
-- 🎨 **UI Moderna**: Interfaz profesional con Tailwind CSS y shadcn/ui
-
-## 🚀 Tecnologías
-
-- **Frontend**: React 19 + TypeScript
-- **Build Tool**: Vite 6
-- **Styling**: Tailwind CSS 4
-- **UI Components**: shadcn/ui (Radix UI)
-- **State Management**: Zustand
-- **Routing**: React Router 7
-- **Forms**: React Hook Form + Zod
-- **HTTP Client**: Axios
-- **Deployment**: Docker + Nginx
-
-## 📦 Instalación
-
-### Prerequisitos
-
-- Node.js 18+ o pnpm 10+
-- Git
-
-### Pasos de Instalación
+## Desarrollo
 
 ```bash
-# Clonar el repositorio
-git clone https://github.com/andrescunier/DIAP.git
-cd DIAP
-
-# Instalar dependencias
 pnpm install
-
-# Copiar variables de entorno
 cp .env.example .env
-
-# Iniciar servidor de desarrollo
 pnpm dev
 ```
 
-La aplicación estará disponible en: `http://localhost:5173`
+Build de producción:
 
-## 🔧 Configuración
+```bash
+pnpm build
+pnpm preview
+```
 
-### Variables de Entorno Principales
+## Configuración
+
+La app soporta dos capas de configuración:
+
+1. Variables `VITE_*` para desarrollo local.
+2. `window.__APP_CONFIG__` para runtime en Docker/Nginx generado desde `config.js.template`.
+
+Variables clave:
 
 ```env
-# Branding
+VITE_API_BASE_URL=https://api.cumar.com.ar
+VITE_ACCOUNT_ID=bed2df35-717f-4900-a4b1-7c3a7fb59b7c
+VITE_ACCOUNT_SLUG=diap
+VITE_CHANNEL=ecommerce
 VITE_APP_NAME=DIAP
 VITE_COMPANY_NAME=DIAP
-VITE_APP_SLOGAN=Tecnología profesional para empresas
-
-# API
-VITE_API_BASE_URL=https://api.cumar.com.ar
-VITE_ACCOUNT_ID=tu-account-id
-
-# Logos
-VITE_LOGO_PATH=/diap-logo.png
+VITE_HIDE_PRICES_FOR_GUESTS=true
+VITE_REQUIRE_AUTH_FOR_CART=true
 ```
 
-## 📝 Scripts Disponibles
+En runtime Docker las equivalentes son:
+
+```env
+API_URL=https://api.cumar.com.ar
+ACCOUNT_ID=bed2df35-717f-4900-a4b1-7c3a7fb59b7c
+ACCOUNT_SLUG=diap
+API_CHANNEL=ecommerce
+APP_NAME=DIAP
+COMPANY_NAME=DIAP
+```
+
+Documentación ampliada:
+
+- [RUNTIME_CONFIG.md](/home/andis/simpleEcommerce/RUNTIME_CONFIG.md)
+
+## Multi-tenant y canal
+
+- El frontend usa la cuenta activa real de sesión si existe.
+- Si no hay sesión, usa la cuenta configurada en runtime.
+- El catálogo consulta productos con `channels=<canal activo>`.
+- Checkout guarda el canal en metadata de orden y pago.
+- Mis pedidos enriquece órdenes con pagos e historial de estados.
+
+## Scripts útiles
 
 ```bash
-pnpm dev          # Iniciar servidor de desarrollo
-pnpm build        # Construir para producción
-pnpm preview      # Previsualizar build
-pnpm lint         # Ejecutar ESLint
+pnpm dev
+pnpm build
+pnpm lint
+bash ./test-api.sh
+bash ./test-all-apis.sh
 ```
 
-## 🐳 Docker Deployment
+Los scripts de prueba ya no dependen de valores fijos. Usan variables de entorno:
+
+```env
+API_BASE_URL=https://api.cumar.com.ar
+API_ACCOUNT_ID=bed2df35-717f-4900-a4b1-7c3a7fb59b7c
+API_ACCOUNT_SLUG=diap
+API_CHANNEL=ecommerce
+API_TEST_EMAIL=qatest@gmail.com
+API_TEST_PASSWORD=Hola12345.
+API_TEST_CURRENCY=ARS
+API_TEST_ORDER_QTY=1
+```
+
+Ejemplo:
 
 ```bash
-# Iniciar servicios
-docker-compose up -d
-
-# Ver logs
-docker-compose logs -f
+API_BASE_URL=https://api.cumar.com.ar \
+API_ACCOUNT_ID=bed2df35-717f-4900-a4b1-7c3a7fb59b7c \
+API_CHANNEL=ecommerce \
+API_TEST_EMAIL=usuario@test.com \
+API_TEST_PASSWORD=secreto \
+bash ./test-all-apis.sh
 ```
 
-## 📱 Contacto
+## Estado de calidad
 
-- **Email**: info@diap.com
-- **Teléfono**: +54 11 1234-5678
-
----
-
-Desarrollado con ❤️ por el equipo de DIAP
+- `pnpm build` debe pasar para validar bundle.
+- `pnpm lint` valida frontend y archivos JS del proyecto.
+- `test-all-apis.sh` cubre login, `/auth/me`, productos, órdenes, pagos y creación de orden de prueba.

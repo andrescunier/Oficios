@@ -6,7 +6,8 @@ window.__APP_CONFIG__ = {
   api: {
     url: "https://api.cumar.com.ar",
     accountId: "bed2df35-717f-4900-a4b1-7c3a7fb59b7c",
-    accountSlug: "diap"
+    accountSlug: "diap",
+    channel: "ecommerce"
   },
   app: {
     name: "DIAP",
@@ -121,20 +122,20 @@ window.__APP_CONFIG__ = {
     ],
     categories: [
       {
-        name: \"SSD SATA\",
-        slug: \"ssd-sata\",
-        image: \"/images/categories/ssd-sata.jpg\",
-        link: \"/categoria/ssd-sata\",
-        description: \"SATA III para máximo rendimiento\",
-        searchTerms: [\"ssd\"]
+        name: "SSD SATA",
+        slug: "ssd-sata",
+        image: "/images/categories/ssd-sata.jpg",
+        link: "/categoria/ssd-sata",
+        description: "SATA III para máximo rendimiento",
+        searchTerms: ["ssd"]
       },
       {
-        name: \"Memoria RAM\",
-        slug: \"memoria-ram\",
-        image: \"/images/categories/ddr4.jpg\",
-        link: \"/categoria/memoria-ram\",
-        description: \"Módulos de memoria de alta velocidad\",
-        searchTerms: [\"ram\", \"ddr\", \"sodimm\", \"udimm\", \"memoria\", \"memory\"]
+        name: "Memoria RAM",
+        slug: "memoria-ram",
+        image: "/images/categories/ddr4.jpg",
+        link: "/categoria/memoria-ram",
+        description: "Módulos de memoria de alta velocidad",
+        searchTerms: ["ram", "ddr", "sodimm", "udimm", "memoria", "memory"]
       }
     ],
     placeholders: {

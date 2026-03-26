@@ -4,7 +4,7 @@
 
 import type { User, Account } from '@/types/api';
 import { httpClient } from './httpClient';
-import { API_ENDPOINTS, ACCOUNT_ID } from '@/config/api';
+import { API_ENDPOINTS, getActiveAccountId } from '@/config/api';
 import { getBusinessConfig } from '@/config/runtime';
 import log from '@/lib/logger';
 
@@ -112,7 +112,7 @@ export class AuthService {
       const response = await httpClient.post<LoginResponse>(API_ENDPOINTS.AUTH.LOGIN, {
         email: credentials.email,
         password: credentials.password,
-        account_id: ACCOUNT_ID
+        account_id: getActiveAccountId()
       });
 
       const { token, user, account } = this.normalizeLoginResponse(response, credentials);
@@ -124,6 +124,8 @@ export class AuthService {
       // Guardar información adicional si es necesaria
       if (account) {
         localStorage.setItem('account_info', JSON.stringify(account));
+        localStorage.setItem('active_account_id', account.id);
+        httpClient.setAccountId(account.id);
       }
 
       return {
@@ -237,7 +239,7 @@ export class AuthService {
       // Llamar al endpoint de logout si existe
       await httpClient.post(API_ENDPOINTS.AUTH.LOGOUT, {
         user_id: userId,
-        account_id: ACCOUNT_ID
+        account_id: getActiveAccountId()
       });
     } catch (error) {
       // No importa si el logout falla en el servidor
@@ -251,6 +253,7 @@ export class AuthService {
       localStorage.removeItem('account_info');
       localStorage.removeItem('business_partner_info');
       localStorage.removeItem('business_partner_id');
+      localStorage.removeItem('active_account_id');
     }
   }
 
@@ -262,7 +265,7 @@ export class AuthService {
     try {
       const response = await httpClient.get<MeResponse>(API_ENDPOINTS.AUTH.ME, {
         headers: {
-          'X-Account-ID': ACCOUNT_ID,
+          'X-Account-ID': getActiveAccountId(),
         }
       });
 
@@ -343,7 +346,10 @@ export class AuthService {
       throw new Error('La API no devolvió un token válido');
     }
 
-    const account = payload.account || null;
+    const account = payload.account
+      || payload.accounts?.find((item: any) => item?.is_default)
+      || payload.accounts?.[0]
+      || null;
     const user = this.buildUser(payload.user, credentials);
 
     return { user, token, account };

@@ -7,6 +7,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import type { 
   User, 
   Product, 
+  ProductVariant,
   CartItem, 
   Cart, 
   BusinessPartner,
@@ -60,9 +61,9 @@ interface AppStore {
   
   // Cart state
   cart: CartState;
-  addToCart: (product: Product, quantity: number) => void;
-  removeFromCart: (productId: string) => void;
-  updateCartQuantity: (productId: string, quantity: number) => void;
+  addToCart: (product: Product, quantity: number, variant?: ProductVariant) => void;
+  removeFromCart: (lineId: string) => void;
+  updateCartQuantity: (lineId: string, quantity: number) => void;
   clearCart: () => void;
   calculateCartTotals: () => void;
 
@@ -131,6 +132,9 @@ const calculateTotals = (items: CartItem[], currency: string = getBusinessConfig
 // Límite máximo de unidades por producto (desde config)
 const MAX_QUANTITY_PER_PRODUCT = getBusinessConfig().maxQuantityPerProduct;
 
+const buildCartLineId = (productId: string, variantId?: string) =>
+  variantId ? `${productId}::${variantId}` : productId;
+
 // Funciones helper para favoritos por usuario
 const FAVORITES_STORAGE_KEY = 'diapstore-user-favorites';
 
@@ -167,6 +171,11 @@ export const useStore = create<AppStore>()(
       login: (user, token, account) => {
         // Configurar token en el cliente HTTP
         httpClient.setAuthToken(token);
+        if (account?.id) {
+          httpClient.setAccountId(account.id);
+          localStorage.setItem('active_account_id', account.id);
+          localStorage.setItem('account_info', JSON.stringify(account));
+        }
         
         // Cargar favoritos del usuario
         const userFavorites = loadUserFavorites(user.id);
@@ -223,6 +232,8 @@ export const useStore = create<AppStore>()(
         
         // Limpiar business_partner_id
         localStorage.removeItem('business_partner_id');
+        localStorage.removeItem('active_account_id');
+        localStorage.removeItem('account_info');
         
         set({
           auth: initialAuthState,
@@ -234,11 +245,14 @@ export const useStore = create<AppStore>()(
       // Cart state
       cart: initialCartState,
       
-      addToCart: (product, quantity) => {
+      addToCart: (product, quantity, variant) => {
         set((state) => {
-          const existingItem = state.cart.items.find(item => item.product.id === product.id);
+          const lineId = buildCartLineId(product.id, variant?.id);
+          const existingItem = state.cart.items.find(item => item.line_id === lineId);
           const currentQuantity = existingItem ? existingItem.quantity : 0;
           const newQuantity = currentQuantity + quantity;
+          const unitPrice = variant?.effective_price ?? variant?.unit_price ?? product.unit_price;
+          const displayName = variant?.name || product.name;
           
           // Verificar límite de 5 unidades por producto
           if (newQuantity > MAX_QUANTITY_PER_PRODUCT) {
@@ -263,15 +277,18 @@ export const useStore = create<AppStore>()(
             let newItems: CartItem[];
             if (existingItem) {
               newItems = state.cart.items.map(item =>
-                item.product.id === product.id
+                item.line_id === lineId
                   ? { ...item, quantity: MAX_QUANTITY_PER_PRODUCT }
                   : item
               );
             } else {
               newItems = [...state.cart.items, {
+                line_id: lineId,
                 product,
+                variant,
+                selected_options: variant?.option_values,
                 quantity: adjustedQuantity,
-                unit_price: product.unit_price,
+                unit_price: unitPrice,
               }];
             }
             
@@ -282,15 +299,18 @@ export const useStore = create<AppStore>()(
           let newItems: CartItem[];
           if (existingItem) {
             newItems = state.cart.items.map(item =>
-              item.product.id === product.id
+              item.line_id === lineId
                 ? { ...item, quantity: item.quantity + quantity }
                 : item
             );
           } else {
             newItems = [...state.cart.items, {
+              line_id: lineId,
               product,
+              variant,
+              selected_options: variant?.option_values,
               quantity,
-              unit_price: product.unit_price,
+              unit_price: unitPrice,
             }];
           }
           
@@ -300,7 +320,7 @@ export const useStore = create<AppStore>()(
           get().addNotification({
             type: 'success',
             title: 'Producto agregado',
-            message: `${product.name} agregado al carrito`,
+            message: `${displayName} agregado al carrito`,
             duration: 3000,
           });
           
@@ -310,8 +330,8 @@ export const useStore = create<AppStore>()(
 
       },
       
-      removeFromCart: (productId) => set((state) => {
-        const newItems = state.cart.items.filter(item => item.product.id !== productId);
+      removeFromCart: (lineId) => set((state) => {
+        const newItems = state.cart.items.filter(item => item.line_id !== lineId);
         const newCart = calculateTotals(newItems, state.cart.currency);
         
         get().addNotification({
@@ -324,10 +344,10 @@ export const useStore = create<AppStore>()(
         return { cart: newCart };
       }),
       
-      updateCartQuantity: (productId, quantity) => set((state) => {
+      updateCartQuantity: (lineId, quantity) => set((state) => {
         if (quantity <= 0) {
           // Si la cantidad es 0 o menos, eliminar el producto
-          const newItems = state.cart.items.filter(item => item.product.id !== productId);
+          const newItems = state.cart.items.filter(item => item.line_id !== lineId);
           const newCart = calculateTotals(newItems, state.cart.currency);
           return { cart: newCart };
         }
@@ -344,7 +364,7 @@ export const useStore = create<AppStore>()(
         }
         
         const newItems = state.cart.items.map(item =>
-          item.product.id === productId
+          item.line_id === lineId
             ? { ...item, quantity }
             : item
         );
@@ -545,7 +565,7 @@ export const useIsProductInCart = (productId: string) => useStore((state) =>
 );
 
 export const useCartItem = (productId: string) => useStore((state) =>
-  state.cart.items.find(item => item.product.id === productId)
+  state.cart.items.find(item => item.product.id === productId && !item.variant)
 );
 
 // Función para inicializar la autenticación al cargar la aplicación

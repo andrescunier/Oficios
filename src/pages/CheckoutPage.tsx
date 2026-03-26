@@ -209,10 +209,21 @@ export const CheckoutPage: React.FC = () => {
         },
         items: cart.items.map(item => ({
           product_id: item.product.id,
-          description: item.product.name,
+          description: item.variant
+            ? `${item.product.name} - ${item.variant.name} (${Object.entries(item.selected_options || {}).map(([key, value]) => `${key}: ${value}`).join(', ')})`
+            : item.product.name,
           quantity: item.quantity,
-          unit_price: item.product.unit_price,
+          unit_price: item.unit_price,
           tax_rate: item.product.tax_rate && item.product.tax_rate > 1 ? item.product.tax_rate / 100 : (item.product.tax_rate || BUSINESS.DEFAULT_TAX_RATE) // IVA en formato decimal
+        })),
+        lineItemsMetadata: cart.items.map(item => ({
+          product_id: item.product.id,
+          description: item.variant ? item.variant.name : item.product.name,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          variant_id: item.variant?.id,
+          variant_sku: item.variant?.sku,
+          option_values: item.selected_options,
         })),
         currency: cart.currency || BUSINESS.DEFAULT_CURRENCY,
         totalAmount: cart.total_amount,
@@ -713,18 +724,23 @@ export const CheckoutPage: React.FC = () => {
                   <h3 className="font-medium mb-4">Productos</h3>
                   <div className="space-y-4">
                     {cart.items.map((item) => (
-                      <div key={item.product.id} className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg">
+                      <div key={item.line_id} className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg">
                         <img
                           src={item.product.image_url || '/placeholder-product.jpg'}
                           alt={item.product.name}
                           className="w-16 h-16 object-cover rounded"
                         />
                         <div className="flex-1">
-                          <h4 className="font-medium">{item.product.name}</h4>
+                          <h4 className="font-medium">{item.variant?.name || item.product.name}</h4>
+                          {item.selected_options && Object.keys(item.selected_options).length > 0 && (
+                            <p className="text-xs text-gray-500">
+                              {Object.entries(item.selected_options).map(([key, value]) => `${key}: ${value}`).join(' • ')}
+                            </p>
+                          )}
                           <p className="text-sm text-gray-600">Cantidad: {item.quantity}</p>
                         </div>
                         <div className="text-right">
-                          <p className="font-medium">{formatPrice(item.product.unit_price * item.quantity, item.product.currency)}</p>
+                          <p className="font-medium">{formatPrice(item.unit_price * item.quantity, item.product.currency)}</p>
                         </div>
                       </div>
                     ))}
@@ -766,17 +782,22 @@ export const CheckoutPage: React.FC = () => {
               
               <div className="space-y-4 mb-6">
                 {cart.items.map((item) => (
-                  <div key={item.product.id} className="flex items-center space-x-3">
+                  <div key={item.line_id} className="flex items-center space-x-3">
                     <img
                       src={item.product.image_url || '/placeholder-product.jpg'}
                       alt={item.product.name}
                       className="w-12 h-12 object-cover rounded"
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{item.product.name}</p>
+                      <p className="text-sm font-medium truncate">{item.variant?.name || item.product.name}</p>
+                      {item.selected_options && Object.keys(item.selected_options).length > 0 && (
+                        <p className="text-xs text-gray-500 truncate">
+                          {Object.entries(item.selected_options).map(([key, value]) => `${key}: ${value}`).join(' • ')}
+                        </p>
+                      )}
                       <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
                     </div>
-                    <p className="text-sm font-medium">{formatPrice(item.product.unit_price * item.quantity, item.product.currency)}</p>
+                    <p className="text-sm font-medium">{formatPrice(item.unit_price * item.quantity, item.product.currency)}</p>
                   </div>
                 ))}
               </div>

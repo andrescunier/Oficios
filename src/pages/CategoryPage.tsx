@@ -317,6 +317,11 @@ export const CategoryPage: React.FC = () => {
       return;
     }
 
+    if (product.has_variants) {
+      navigate(`/productos/${product.id}`);
+      return;
+    }
+
     if (!product.stock_quantity || product.stock_quantity <= 0) {
       addNotification({
         type: 'error',
@@ -722,7 +727,9 @@ export const CategoryPage: React.FC = () => {
                         {/* Stock - Solo visible para autenticados */}
                         {isAuthenticated && (
                           <div className="flex items-center justify-between mb-2">
-                            {product.stock_quantity !== undefined && (
+                            {product.has_variants ? (
+                              <span className="text-sm text-blue-600">Variantes disponibles</span>
+                            ) : product.stock_quantity !== undefined && (
                               <span className={`text-sm ${product.stock_quantity > 0 ? 'text-green-600' : 'text-red-600'}`}>
                                 {product.stock_quantity > 0 ? `Stock: ${product.stock_quantity}` : 'Sin stock'}
                               </span>
@@ -740,39 +747,42 @@ export const CategoryPage: React.FC = () => {
                         {isAuthenticated && (
                           <div className="space-y-3">
                             {/* Selector de cantidad */}
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm font-medium text-gray-700">Cantidad:</span>
-                              <div className="flex items-center space-x-2">
-                                <button
-                                  onClick={() => updateQuantity(product.id.toString(), getQuantity(product.id.toString()) - 1)}
-                                  className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-300 text-gray-600 hover:bg-gray-100 transition-colors"
-                                  disabled={getQuantity(product.id.toString()) <= 1}
-                                >
-                                  <Minus className="w-4 h-4" />
-                                </button>
-                                <span className="w-8 text-center font-medium">
-                                  {getQuantity(product.id.toString())}
-                                </span>
-                                <button
-                                  onClick={() => updateQuantity(product.id.toString(), getQuantity(product.id.toString()) + 1)}
-                                  className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-300 text-gray-600 hover:bg-gray-100 transition-colors"
-                                  disabled={(product.stock_quantity || 0) <= getQuantity(product.id.toString())}
-                                >
-                                  <Plus className="w-4 h-4" />
-                                </button>
+                            {!product.has_variants && (
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium text-gray-700">Cantidad:</span>
+                                <div className="flex items-center space-x-2">
+                                  <button
+                                    onClick={() => updateQuantity(product.id.toString(), getQuantity(product.id.toString()) - 1)}
+                                    className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-300 text-gray-600 hover:bg-gray-100 transition-colors"
+                                    disabled={getQuantity(product.id.toString()) <= 1}
+                                  >
+                                    <Minus className="w-4 h-4" />
+                                  </button>
+                                  <span className="w-8 text-center font-medium">
+                                    {getQuantity(product.id.toString())}
+                                  </span>
+                                  <button
+                                    onClick={() => updateQuantity(product.id.toString(), getQuantity(product.id.toString()) + 1)}
+                                    className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-300 text-gray-600 hover:bg-gray-100 transition-colors"
+                                    disabled={(product.stock_quantity || 0) <= getQuantity(product.id.toString())}
+                                  >
+                                    <Plus className="w-4 h-4" />
+                                  </button>
+                                </div>
                               </div>
-                            </div>
+                            )}
 
                             {/* Botón agregar al carrito */}
                             <button 
                               onClick={() => handleAddToCart(product)}
-                              disabled={!product.stock_quantity || product.stock_quantity <= 0}
+                              disabled={!product.has_variants && (!product.stock_quantity || product.stock_quantity <= 0)}
                               className="w-full py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                             >
-                              {product.stock_quantity && product.stock_quantity > 0 
-                                ? 'Agregar al Carrito' 
-                                : 'Sin Stock'
-                              }
+                              {product.has_variants
+                                ? 'Elegir Color / Talle'
+                                : product.stock_quantity && product.stock_quantity > 0
+                                  ? 'Agregar al Carrito'
+                                  : 'Sin Stock'}
                             </button>
                           </div>
                         )}

@@ -31,6 +31,7 @@ generate_config() {
   API_URL=$(get_value "API_URL" "https://api.cumar.com.ar")
   ACCOUNT_ID=$(get_value "ACCOUNT_ID" "bed2df35-717f-4900-a4b1-7c3a7fb59b7c")
   ACCOUNT_SLUG=$(get_value "ACCOUNT_SLUG" "diap")
+  API_CHANNEL=$(get_value "API_CHANNEL" "ecommerce")
   
   APP_NAME=$(get_value "APP_NAME" "Mi Tienda")
   COMPANY_NAME=$(get_value "COMPANY_NAME" "Mi Empresa")
@@ -133,7 +134,8 @@ window.__APP_CONFIG__ = {
   api: {
     url: "${API_URL}",
     accountId: "${ACCOUNT_ID}",
-    accountSlug: "${ACCOUNT_SLUG}"
+    accountSlug: "${ACCOUNT_SLUG}",
+    channel: "${API_CHANNEL}"
   },
   app: {
     name: "${APP_NAME}",
@@ -240,6 +242,7 @@ EOF
   echo "✅ Configuration generated successfully"
   echo "   API URL: ${API_URL}"
   echo "   Account ID: ${ACCOUNT_ID}"
+  echo "   Channel: ${API_CHANNEL}"
   echo "   App Name: ${APP_NAME}"
   echo "   Primary Color: ${COLOR_PRIMARY}"
 }

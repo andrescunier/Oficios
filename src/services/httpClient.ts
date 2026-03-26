@@ -3,7 +3,7 @@
  */
 
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
-import { API_BASE_URL, API_TIMEOUT, ACCOUNT_ID } from '@/config/api';
+import { API_BASE_URL, API_TIMEOUT, getActiveAccountId, getActiveAccountSlug } from '@/config/api';
 import type { ApiError } from '@/types/api';
 import log from '@/lib/logger';
 
@@ -28,9 +28,17 @@ class HttpClient {
     this.client.interceptors.request.use(
       (config) => {
         // Agregar Account ID a los headers si existe
-        if (ACCOUNT_ID) {
+        const accountId = getActiveAccountId();
+        const accountSlug = getActiveAccountSlug();
+
+        if (accountId) {
           config.headers = config.headers || {};
-          config.headers['X-Account-ID'] = ACCOUNT_ID;
+          config.headers['X-Account-ID'] = accountId;
+          delete config.headers['X-Account-Slug'];
+        } else if (accountSlug) {
+          config.headers = config.headers || {};
+          config.headers['X-Account-Slug'] = accountSlug;
+          delete config.headers['X-Account-ID'];
         }
 
         // Agregar token de autenticación automáticamente si está disponible
@@ -188,7 +196,7 @@ class HttpClient {
     return {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      ...(ACCOUNT_ID && { 'X-Account-ID': ACCOUNT_ID }),
+      ...(getActiveAccountId() && { 'X-Account-ID': getActiveAccountId() }),
       ...this.client.defaults.headers.common
     };
   }
@@ -199,7 +207,7 @@ class HttpClient {
       baseURL: this.client.defaults.baseURL,
       timeout: this.client.defaults.timeout,
       headers: this.getHeaders(),
-      accountId: ACCOUNT_ID,
+      accountId: getActiveAccountId(),
     };
   }
 }

@@ -67,6 +67,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     : 0;
 
   const handleAddToCart = () => {
+    if (product.has_variants) {
+      navigate(`/productos/${product.id}`);
+      return;
+    }
+
     if (!isAuthenticated) {
       // Redirigir al login
       navigate('/login', { state: { from: location } });
@@ -293,12 +298,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
                             <Button 
                               className="w-full" 
-                              onClick={handleAddToCart}
-                              disabled={isOutOfStock}
-                            >
-                              <ShoppingCart className="w-4 h-4 mr-2" />
-                              {isOutOfStock ? 'Sin Stock' : 'Agregar al Carrito'}
-                            </Button>
+                  onClick={handleAddToCart}
+                  disabled={isOutOfStock}
+                >
+                  <ShoppingCart className="w-4 h-4 mr-2" />
+                  {product.has_variants ? 'Elegir variante' : isOutOfStock ? 'Sin Stock' : 'Agregar al Carrito'}
+                </Button>
                           </>
                         )}
                       </div>
@@ -318,7 +323,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                   disabled={isOutOfStock}
                 >
                   <ShoppingCart className="w-4 h-4 mr-2" />
-                  {isOutOfStock ? 'Sin Stock' : 'Agregar'}
+                  {product.has_variants ? 'Elegir variante' : isOutOfStock ? 'Sin Stock' : 'Agregar'}
                 </Button>
               </div>
             )}
@@ -363,6 +368,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           {product.category && (
             <p className="text-xs text-muted-foreground">
               {product.category}
+            </p>
+          )}
+
+          {product.has_variants && (
+            <p className="text-xs text-blue-600 mt-1">
+              Colores, talles u opciones disponibles
             </p>
           )}
         </div>

@@ -290,7 +290,12 @@ export const getBrandingConfig = () => ({
 export const getAPIHeaders = () => ({
   'Content-Type': 'application/json',
   'Accept': 'application/json',
-  'X-Account-ID': API_CONFIG.ACCOUNT_ID,
+  'X-Account-ID': (() => {
+    if (typeof window === 'undefined') {
+      return API_CONFIG.ACCOUNT_ID;
+    }
+    return window.localStorage.getItem('active_account_id') || API_CONFIG.ACCOUNT_ID;
+  })(),
   ...API_CONFIG.EXTRA_HEADERS,
 });
 

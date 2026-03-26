@@ -12,7 +12,6 @@ try {
 } catch (e) {
   // Evitar que errores en la inicialización del theme impidan render
   // (se loguea en consola para diagnosticar en development)
-  // eslint-disable-next-line no-console
   console.error('Error initializing theme:', e);
 }
 
@@ -20,7 +19,6 @@ try {
 try {
   initializeAuth();
 } catch (e) {
-  // eslint-disable-next-line no-console
   console.error('Error initializing auth:', e);
 }
 

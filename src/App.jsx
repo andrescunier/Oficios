@@ -60,7 +60,6 @@ function App() {
         window.location.replace(redirect);
       }
     } catch (e) {
-      // eslint-disable-next-line no-console
       console.error('Error processing diap-redirect:', e);
     }
   }, []);

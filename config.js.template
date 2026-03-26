@@ -7,7 +7,8 @@ window.__APP_CONFIG__ = {
   api: {
     url: "${API_URL:-https://api.cumar.com.ar}",
     accountId: "${ACCOUNT_ID:-bed2df35-717f-4900-a4b1-7c3a7fb59b7c}",
-    accountSlug: "${ACCOUNT_SLUG:-diap}"
+    accountSlug: "${ACCOUNT_SLUG:-diap}",
+    channel: "${API_CHANNEL:-ecommerce}"
   },
   app: {
     name: "${APP_NAME:-Mi Tienda}",

@@ -63,21 +63,21 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
     }).format(price);
   };
 
-  const handleQuantityChange = (productId: string, newQuantity: number) => {
+  const handleQuantityChange = (lineId: string, newQuantity: number) => {
     if (newQuantity <= 0) {
-      removeFromCart(productId);
+      removeFromCart(lineId);
       addNotification({
         type: 'info',
         title: 'Producto eliminado',
         message: 'El producto fue eliminado del carrito',
       });
     } else {
-      updateCartQuantity(productId, newQuantity);
+      updateCartQuantity(lineId, newQuantity);
     }
   };
 
-  const handleRemoveItem = (productId: string) => {
-    removeFromCart(productId);
+  const handleRemoveItem = (lineId: string) => {
+    removeFromCart(lineId);
     addNotification({
       type: 'info',
       title: 'Producto eliminado',
@@ -148,7 +148,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
             ) : (
               <div className="space-y-4">
                 {cart.items.map((item) => (
-                  <div key={item.product.id} className="flex space-x-3 p-3 border rounded-lg">
+                  <div key={item.line_id} className="flex space-x-3 p-3 border rounded-lg">
                     <div className="flex-shrink-0">
                       <img
                         src={item.product.image_url || '/placeholder-product.jpg'}
@@ -159,18 +159,23 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
                     
                     <div className="flex-1 min-w-0">
                       <h4 className="text-sm font-medium line-clamp-2 mb-1">
-                        {item.product.name}
+                        {item.variant?.name || item.product.name}
                       </h4>
+                      {item.selected_options && Object.keys(item.selected_options).length > 0 && (
+                        <p className="text-xs text-muted-foreground mb-1">
+                          {Object.entries(item.selected_options).map(([key, value]) => `${key}: ${value}`).join(' • ')}
+                        </p>
+                      )}
                       
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-bold">
-                          {formatPrice(item.product.unit_price)}
+                          {formatPrice(item.unit_price, item.product.currency)}
                         </span>
                         <Button
                           variant="ghost"
                           size="icon"
                           className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                          onClick={() => handleRemoveItem(item.product.id)}
+                          onClick={() => handleRemoveItem(item.line_id)}
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
@@ -181,7 +186,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
                           variant="outline"
                           size="icon"
                           className="h-6 w-6"
-                          onClick={() => handleQuantityChange(item.product.id, item.quantity - 1)}
+                          onClick={() => handleQuantityChange(item.line_id, item.quantity - 1)}
                         >
                           <Minus className="h-3 w-3" />
                         </Button>
@@ -192,8 +197,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
                           variant="outline"
                           size="icon"
                           className="h-6 w-6"
-                          onClick={() => handleQuantityChange(item.product.id, item.quantity + 1)}
-                          disabled={item.quantity >= (item.product.stock_quantity || 0)}
+                          onClick={() => handleQuantityChange(item.line_id, item.quantity + 1)}
+                          disabled={item.quantity >= (item.variant?.stock_quantity || item.product.stock_quantity || 0)}
                         >
                           <Plus className="h-3 w-3" />
                         </Button>
@@ -201,7 +206,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
                       
                       {item.quantity > 1 && (
                         <p className="text-xs text-muted-foreground mt-1">
-                          Subtotal: {formatPrice(item.product.unit_price * item.quantity)}
+                          Subtotal: {formatPrice(item.unit_price * item.quantity, item.product.currency)}
                         </p>
                       )}
                     </div>

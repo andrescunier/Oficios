@@ -21,11 +21,11 @@ export const CartPage: React.FC = () => {
 
 
 
-  const handleQuantityChange = (productId: string, newQuantity: number) => {
+  const handleQuantityChange = (lineId: string, newQuantity: number) => {
     if (newQuantity <= 0) {
-      removeFromCart(productId);
+      removeFromCart(lineId);
     } else {
-      updateCartQuantity(productId, newQuantity);
+      updateCartQuantity(lineId, newQuantity);
     }
   };
 
@@ -151,7 +151,7 @@ export const CartPage: React.FC = () => {
 
               <div className="divide-y">
                 {cart.items.map((item) => (
-                  <div key={item.product.id} className="p-6">
+                  <div key={item.line_id} className="p-6">
                     <div className="flex items-center space-x-4">
                       {/* Product Image */}
                       <div className="w-20 h-20 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden">
@@ -165,8 +165,13 @@ export const CartPage: React.FC = () => {
                       {/* Product Info */}
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-gray-900 truncate">
-                          {item.product.name}
+                          {item.variant?.name || item.product.name}
                         </h3>
+                        {item.selected_options && Object.keys(item.selected_options).length > 0 && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            {Object.entries(item.selected_options).map(([key, value]) => `${key}: ${value}`).join(' • ')}
+                          </p>
+                        )}
                         <p className="text-sm text-gray-500 mt-1">
                           {item.product.description}
                         </p>
@@ -178,7 +183,7 @@ export const CartPage: React.FC = () => {
                       {/* Quantity Controls */}
                       <div className="flex items-center space-x-2">
                         <button
-                          onClick={() => handleQuantityChange(item.product.id, item.quantity - 1)}
+                          onClick={() => handleQuantityChange(item.line_id, item.quantity - 1)}
                           className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors"
                         >
                           <Minus className="w-4 h-4" />
@@ -187,7 +192,7 @@ export const CartPage: React.FC = () => {
                           {item.quantity}
                         </span>
                         <button
-                          onClick={() => handleQuantityChange(item.product.id, item.quantity + 1)}
+                          onClick={() => handleQuantityChange(item.line_id, item.quantity + 1)}
                           disabled={item.quantity >= 5}
                           className={`w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center transition-colors ${
                             item.quantity >= 5 
@@ -205,7 +210,7 @@ export const CartPage: React.FC = () => {
 
                       {/* Remove Button */}
                       <button
-                        onClick={() => removeFromCart(item.product.id)}
+                        onClick={() => removeFromCart(item.line_id)}
                         className="text-red-600 hover:text-red-700 p-2 transition-colors"
                       >
                         <Trash2 className="w-5 h-5" />

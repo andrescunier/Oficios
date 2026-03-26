@@ -4,7 +4,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { getBusinessConfig } from '@/config/runtime';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   Heart, 
   ShoppingCart, 
@@ -22,6 +22,7 @@ import { productService } from '@/services/productService';
 import type { Product } from '@/types/api';
 
 export const FavoritesPage: React.FC = () => {
+  const navigate = useNavigate();
   const { auth, favorites, removeFromFavorites, addToCart, addNotification } = useStore();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
@@ -107,12 +108,19 @@ export const FavoritesPage: React.FC = () => {
   };
 
   const handleAddToCart = (product: Product) => {
+    if (product.has_variants) {
+      navigate(`/productos/${product.id}`);
+      return;
+    }
     addToCart(product, 1);
   };
 
   const handleAddAllToCart = () => {
     let addedCount = 0;
     filteredFavorites.forEach(product => {
+      if (product.has_variants) {
+        return;
+      }
       if (product.stock_quantity && product.stock_quantity > 0) {
         addToCart(product, 1);
         addedCount++;
@@ -276,8 +284,12 @@ export const FavoritesPage: React.FC = () => {
                               <span className="text-2xl font-bold text-blue-600">
                                 {formatPrice(product.unit_price, product.currency)}
                               </span>
-                              
-                              {product.stock_quantity !== undefined && (
+
+                              {product.has_variants ? (
+                                <span className="text-sm px-2 py-1 rounded-full bg-blue-100 text-blue-800">
+                                  Variantes disponibles
+                                </span>
+                              ) : product.stock_quantity !== undefined && (
                                 <span className={`text-sm px-2 py-1 rounded-full ${
                                   product.stock_quantity > 10 
                                     ? 'bg-green-100 text-green-800'
@@ -297,11 +309,11 @@ export const FavoritesPage: React.FC = () => {
                           <div className="flex flex-col space-y-2">
                             <button
                               onClick={() => handleAddToCart(product)}
-                              disabled={product.stock_quantity === 0}
+                              disabled={!product.has_variants && product.stock_quantity === 0}
                               className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                             >
                               <ShoppingCart className="w-4 h-4 mr-2" />
-                              {product.stock_quantity === 0 ? 'Sin Stock' : 'Agregar'}
+                              {product.has_variants ? 'Elegir variante' : product.stock_quantity === 0 ? 'Sin Stock' : 'Agregar'}
                             </button>
                             
                             <button

@@ -18,9 +18,61 @@ export const ACCOUNT_ID = apiConfig.accountId;
 
 // Account Slug
 export const ACCOUNT_SLUG = apiConfig.accountSlug;
+export const CHANNEL = apiConfig.channel;
+
+const readJsonStorage = (key: string) => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
+export const getActiveAccountId = (): string => {
+  if (typeof window === 'undefined') {
+    return ACCOUNT_ID;
+  }
+
+  const persistedStore = readJsonStorage('diapstore-store');
+  const persistedAccountId = persistedStore?.state?.auth?.account?.id;
+  const storedAccountId = window.localStorage.getItem('active_account_id');
+  const accountInfo = readJsonStorage('account_info');
+
+  return storedAccountId || persistedAccountId || accountInfo?.id || ACCOUNT_ID;
+};
+
+export const getActiveAccountSlug = (): string => {
+  if (typeof window === 'undefined') {
+    return ACCOUNT_SLUG;
+  }
+
+  const persistedStore = readJsonStorage('diapstore-store');
+  const persistedAccountSlug = persistedStore?.state?.auth?.account?.slug;
+  const accountInfo = readJsonStorage('account_info');
+
+  return accountInfo?.slug || persistedAccountSlug || ACCOUNT_SLUG;
+};
+
+export const getActiveChannel = (): string => {
+  if (typeof window === 'undefined') {
+    return CHANNEL || 'ecommerce';
+  }
+
+  return window.localStorage.getItem('active_channel') || CHANNEL || 'ecommerce';
+};
 
 // Configuración de headers por defecto
 export const DEFAULT_HEADERS = getAPIHeaders();
+
+export const getDefaultHeaders = () => ({
+  ...getAPIHeaders(),
+  'X-Account-ID': getActiveAccountId(),
+});
 
 // Endpoints de la API Simple Gestión v1.1.1
 export const API_ENDPOINTS = {
@@ -64,6 +116,12 @@ export const API_ENDPOINTS = {
   PRODUCTS: (accountId: string) => `/api/accounts/${accountId}/products`,
   PRODUCT: (accountId: string, productId: string) => 
     `/api/accounts/${accountId}/products/${productId}`,
+  PRODUCT_VARIANT_OPTIONS: (accountId: string, productId: string) =>
+    `/api/accounts/${accountId}/products/${productId}/variant-options`,
+  PRODUCT_VARIANTS: (accountId: string, productId: string) =>
+    `/api/accounts/${accountId}/products/${productId}/variants`,
+  PRODUCT_VARIANT: (accountId: string, productId: string, variantId: string) =>
+    `/api/accounts/${accountId}/products/${productId}/variants/${variantId}`,
   PRODUCTS_LOW_STOCK: (accountId: string) => `/api/accounts/${accountId}/products/low-stock`,
   PRODUCT_STOCK: (accountId: string, productId: string) => 
     `/api/accounts/${accountId}/products/${productId}/stock`,

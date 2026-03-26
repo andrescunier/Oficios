@@ -74,12 +74,57 @@ export interface Product extends BaseEntity {
   currency: string;
   tax_rate: number;
   metadata?: Record<string, any>;
+  product_type?: string;
+  has_variants?: boolean;
+  stock_unit?: string;
+  stock_min?: number;
+  stock_max?: number | null;
+  track_inventory?: boolean;
+  allow_backorders?: boolean;
+  thumbnail_url?: string | null;
+  gallery_urls?: string[];
   // Campos adicionales para ecommerce
   image_url?: string;
   category?: string;
   stock_quantity?: number;
   is_featured?: boolean;
   is_active?: boolean;
+}
+
+export interface ProductVariantOptionValue {
+  value: string;
+  label: string;
+  position: number;
+}
+
+export interface ProductVariantOption {
+  id: string;
+  product_id: string;
+  name: string;
+  position: number;
+  values: ProductVariantOptionValue[];
+}
+
+export interface ProductVariant extends BaseEntity {
+  product_id: string;
+  sku: string;
+  name: string;
+  option_values: Record<string, string>;
+  barcode?: string | null;
+  unit_price?: number | null;
+  effective_price: number;
+  cost_price?: number | null;
+  stock_quantity: number;
+  stock_min: number;
+  stock_max?: number | null;
+  track_inventory: boolean;
+  allow_backorders: boolean;
+  weight?: number | null;
+  image_url?: string | null;
+  status: string;
+  position: number;
+  metadata?: Record<string, any>;
+  version: number;
 }
 
 // Sales Order Item
@@ -257,7 +302,10 @@ export interface CreatePaymentApplicationRequest {
 
 // Ecommerce specific types
 export interface CartItem {
+  line_id: string;
   product: Product;
+  variant?: ProductVariant;
+  selected_options?: Record<string, string>;
   quantity: number;
   unit_price: number;
 }

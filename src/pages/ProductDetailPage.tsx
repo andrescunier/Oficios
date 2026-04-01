@@ -14,12 +14,14 @@ import {
   Shield,
   CreditCard,
 } from 'lucide-react';
-import { productService } from '@/services/productService';
+import { useQuery } from '@tanstack/react-query';
 import { useStore } from '@/store/useStore';
 import type { Product, ProductVariant, ProductVariantOption } from '@/types/api';
 import { PriceDisplay } from '@/hooks/usePriceVisibility';
 import { handleImgError } from '@/utils/imageHelpers';
 import { getBusinessConfig } from '@/config/runtime';
+import { productDetailQueryOptions } from '@/features/catalog/queries';
+import { recordAppEvent } from '@/lib/observability';
 
 const sortVariantOptions = (options: ProductVariantOption[]) =>
   options
@@ -39,12 +41,7 @@ const matchesSelection = (variant: ProductVariant, selection: Record<string, str
 export const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [product, setProduct] = useState<Product | null>(null);
-  const [variants, setVariants] = useState<ProductVariant[]>([]);
-  const [variantOptions, setVariantOptions] = useState<ProductVariantOption[]>([]);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
 
   const {
@@ -57,12 +54,12 @@ export const ProductDetailPage: React.FC = () => {
   } = useStore();
 
   const isAuthenticated = auth.isAuthenticated;
-
-  useEffect(() => {
-    if (id) {
-      void loadProduct(id);
-    }
-  }, [id]);
+  const productQuery = useQuery(productDetailQueryOptions(id || ''));
+  const product = productQuery.data?.product || null;
+  const variants = productQuery.data?.variants || [];
+  const variantOptions = productQuery.data?.variantOptions || [];
+  const loading = productQuery.isLoading;
+  const error = productQuery.isError ? 'No se pudo cargar el producto' : null;
 
   const buildDefaultSelection = (options: ProductVariantOption[], availableVariants: ProductVariant[]) => {
     const defaults: Record<string, string> = {};
@@ -81,27 +78,33 @@ export const ProductDetailPage: React.FC = () => {
     return defaults;
   };
 
-  const loadProduct = async (productId: string) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await productService.getProductWithVariants(productId);
-      const sortedOptions = sortVariantOptions(data.variantOptions);
-      setProduct(data.product);
-      setVariants(data.variants);
-      setVariantOptions(sortedOptions);
-      setSelectedOptions(buildDefaultSelection(sortedOptions, data.variants));
-    } catch (loadError) {
-      setError('No se pudo cargar el producto');
+  useEffect(() => {
+    if (productQuery.isError) {
       addNotification({
         type: 'error',
         title: 'Error',
         message: 'No se pudo cargar la información del producto',
       });
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [addNotification, productQuery.isError]);
+
+  useEffect(() => {
+    if (product?.id) {
+      recordAppEvent('product_view', {
+        productId: product.id,
+        source: 'product_detail',
+      });
+    }
+  }, [product?.id]);
+
+  useEffect(() => {
+    if (!productQuery.data) {
+      return;
+    }
+
+    const sortedOptions = sortVariantOptions(productQuery.data.variantOptions);
+    setSelectedOptions(buildDefaultSelection(sortedOptions, productQuery.data.variants));
+  }, [productQuery.data]);
 
   const selectedVariant = useMemo(() => {
     if (!product?.has_variants || variants.length === 0) {
@@ -161,7 +164,7 @@ export const ProductDetailPage: React.FC = () => {
   }, [getAvailableValues, product?.has_variants, selectedOptions, variantOptions]);
 
   const effectivePrice = selectedVariant?.effective_price ?? product?.unit_price ?? 0;
-  const effectiveImage = selectedVariant?.image_url || product?.image_url || '/placeholder-product.jpg';
+  const effectiveImage = selectedVariant?.image_url || product?.image_url || '/placeholder-product.svg';
   const effectiveSku = selectedVariant?.sku || product?.sku;
   const effectiveStock = selectedVariant?.stock_quantity ?? product?.stock_quantity ?? 0;
   const canBackorder = selectedVariant?.allow_backorders ?? product?.allow_backorders ?? false;
@@ -321,7 +324,7 @@ export const ProductDetailPage: React.FC = () => {
                 src={effectiveImage}
                 alt={selectedVariant?.name || product.name}
                 className="w-full h-full object-cover"
-                onError={(event) => handleImgError(event, '/placeholder-product.jpg')}
+                onError={(event) => handleImgError(event)}
               />
             </div>
           </div>

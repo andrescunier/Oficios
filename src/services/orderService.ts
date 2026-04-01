@@ -1,10 +1,12 @@
 /**
- * Servicio para manejo de órdenes de venta y pagos
+ * Servicio para manejo de órdenes de venta del storefront.
+ * El frontend informa intención y método de pago, pero no crea ni confirma pagos.
  */
 
 import { httpClient } from './httpClient';
 import { API_ENDPOINTS, getActiveAccountId, getActiveChannel, getDefaultHeaders } from '@/config/api';
 import log from '@/lib/logger';
+import { extractCustomerIdFromPersistedSession } from '@/features/auth/session';
 
 interface SalesOrderItem {
   product_id: string;
@@ -83,12 +85,6 @@ interface SalesOrder {
   };
   created_at: string;
   updated_at: string;
-  payments?: PaymentSummary[];
-  payment_summary?: {
-    total: number;
-    count: number;
-    last_payment_at?: string;
-  };
   status_history?: StatusHistoryEntry[];
 }
 
@@ -111,37 +107,6 @@ interface OrdersResponse {
   };
 }
 
-interface CreatePaymentRequest {
-  payment_number: string;
-  source_type: 'customer' | 'supplier' | 'other';
-  partner_id?: string;
-  currency: string;
-  amount: number;
-  method: 'cash' | 'transfer' | 'credit_card' | 'debit_card' | 'check' | 'card' | 'mercadopago' | 'stripe' | 'other';
-  reference?: string;
-  received_at?: string;
-  status: 'pending' | 'received' | 'rejected';
-  metadata?: {
-    [key: string]: any;
-  };
-}
-
-// Interface para aplicar pago a factura/orden
-interface ApplyPaymentRequest {
-  invoice_id?: string;
-  sales_order_id?: string;
-  amount_applied: number;
-}
-
-interface ApplyPaymentResponse {
-  id: string;
-  payment_id: string;
-  invoice_id?: string;
-  sales_order_id?: string;
-  amount_applied: number;
-  created_at: string;
-}
-
 // Interface para generar factura desde orden
 interface GenerateInvoiceRequest {
   invoice_number: string;
@@ -159,70 +124,6 @@ interface GenerateInvoiceResponse {
   status: string;
   total_amount: number;
   created_at: string;
-}
-
-interface CreatePaymentResponse {
-  id: string;
-  payment_number: string;
-  source_type: string;
-  partner_id: string | null;
-  currency: string;
-  amount: number;
-  method: string;
-  status: string;
-  reference?: string | null;
-  received_at?: string | null;
-  metadata?: Record<string, any>;
-  account_id?: string;
-  created_at: string;
-  updated_at?: string;
-}
-
-interface PaymentSummary extends CreatePaymentResponse {
-  applications?: ApplyPaymentResponse[];
-  linked_order_ids?: string[];
-}
-
-interface GetPaymentsParams {
-  partner_id?: string;
-  status_filter?: string;
-}
-
-interface UserOrdersWithPaymentsResponse extends OrdersResponse {
-  payments: PaymentSummary[];
-}
-
-// Nuevas interfaces para BusinessPartner
-interface CreateBusinessPartnerRequest {
-  name: string;
-  partner_type: 'customer' | 'supplier' | 'both';
-  email?: string;
-  phone?: string;
-  tax_id?: string;
-  currency?: string;
-  notes?: string;
-  metadata?: {
-    shipping_address?: {
-      address: string;
-      city: string;
-      state: string;
-      zip_code: string;
-      country: string;
-    };
-    [key: string]: any;
-  };
-}
-
-interface BusinessPartnerResponse {
-  id: string;
-  name: string;
-  type: string;
-  email?: string;
-  phone?: string;
-  tax_id?: string;
-  currency?: string;
-  created_at: string;
-  updated_at: string;
 }
 
 // Interface para validación de stock
@@ -282,24 +183,6 @@ interface OrderSubmitResponse {
     from_status: OrderStatus;
     to_status: OrderStatus;
     reservations_created?: number;
-    event_id?: string;
-  };
-}
-
-interface OrderConfirmPaymentRequest {
-  payment_reference?: string;
-  event_id?: string;
-  notes?: string;
-}
-
-interface OrderConfirmPaymentResponse {
-  success: boolean;
-  message?: string;
-  data?: {
-    order_id: string;
-    from_status: OrderStatus;
-    to_status: OrderStatus;
-    items_deducted?: number;
     event_id?: string;
   };
 }
@@ -406,6 +289,22 @@ interface CheckoutData {
   notes?: string;
 }
 
+interface CheckoutProcessError {
+  step: 'authentication' | 'order' | 'submit' | 'payment' | 'business_partner' | 'stock_validation' | 'unknown';
+  details?: unknown;
+  orderNumber?: string;
+}
+
+interface CheckoutProcessResult {
+  customerId?: string;
+  salesOrder: CreateSalesOrderResponse | null;
+  success: boolean;
+  message: string;
+  orderNumber?: string;
+  paymentMethod?: string;
+  error?: CheckoutProcessError;
+}
+
 /**
  * Desenvuelve la respuesta de la API si viene en formato { success, data: {...} }
  * La API envuelve todas las respuestas en SuccessResponse, pero httpClient ya extrae Axios .data,
@@ -442,69 +341,6 @@ function normalizeSalesOrder(raw: any): SalesOrder {
   };
 }
 
-function normalizePayment(raw: any): PaymentSummary {
-  return {
-    ...raw,
-    partner_id: raw?.partner_id ?? null,
-    amount: typeof raw?.amount === 'number' ? raw.amount : Number(raw?.amount || 0),
-    metadata: raw?.metadata && typeof raw.metadata === 'object' ? raw.metadata : {},
-    created_at: raw?.created_at || raw?.received_at || new Date().toISOString(),
-    updated_at: raw?.updated_at || raw?.received_at || raw?.created_at || new Date().toISOString(),
-    applications: Array.isArray(raw?.applications) ? raw.applications : [],
-    linked_order_ids: Array.isArray(raw?.linked_order_ids) ? raw.linked_order_ids : [],
-  };
-}
-
-function normalizeOrderToken(value: unknown): string | null {
-  if (!value) {
-    return null;
-  }
-
-  const normalized = String(value).toUpperCase().replace(/^(SO-|RCPT-|TRX)/, '').replace(/[^A-Z0-9]/g, '');
-  return normalized || null;
-}
-
-function paymentMatchesOrder(payment: PaymentSummary, order: SalesOrder): boolean {
-  const metadata = payment.metadata || {};
-  const linkedOrderIds = new Set([
-    ...(payment.linked_order_ids || []),
-    ...((payment.applications || []).map((app) => app.sales_order_id).filter(Boolean) as string[]),
-    metadata.sales_order_id,
-    metadata.order_id,
-  ].filter(Boolean));
-
-  if (linkedOrderIds.has(order.id)) {
-    return true;
-  }
-
-  const orderNumbers = new Set([
-    payment.payment_number,
-    metadata.order_number,
-    metadata.sales_order_number,
-    payment.reference,
-  ].filter(Boolean));
-
-  for (const value of orderNumbers) {
-    if (String(value).includes(order.order_number)) {
-      return true;
-    }
-  }
-
-  const normalizedOrderNumber = normalizeOrderToken(order.order_number);
-  if (!normalizedOrderNumber) {
-    return false;
-  }
-
-  for (const value of orderNumbers) {
-    const normalizedValue = normalizeOrderToken(value);
-    if (normalizedValue && normalizedValue.includes(normalizedOrderNumber)) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
 class OrderService {
   private getHeaders() {
     return getDefaultHeaders();
@@ -536,22 +372,9 @@ class OrderService {
       
       return response;
     } catch (error: any) {
-      // Si el endpoint no existe (404), retornar success para no bloquear
       if (error.code === 'E3001' || error.response?.status === 404) {
-        log.orders.info('Validación de stock omitida - endpoint no disponible');
-        return {
-          success: true,
-          message: 'Validación de stock omitida',
-          data: {
-            valid: true,
-            items: items.map(item => ({
-              product_id: item.product_id,
-              requested: item.quantity,
-              available: item.quantity,
-              valid: true
-            }))
-          }
-        };
+        log.orders.error('Validación de stock ausente pese a ser parte del contrato storefront', error);
+        throw new Error('El backend no expone la validación de stock requerida por el storefront.');
       }
       throw error;
     }
@@ -578,12 +401,11 @@ class OrderService {
       
       return response;
     } catch (error: any) {
-      // Si el endpoint no existe (404)
       if (error.code === 'E3001' || error.response?.status === 404) {
-        log.orders.info('Cancelación de orden no disponible - endpoint no existe');
+        log.orders.error('Cancelación de orden ausente pese a ser parte del contrato storefront', error);
         return {
           success: false,
-          message: 'La cancelación de órdenes no está disponible. Contacte a soporte.'
+          message: 'El backend no expone la cancelación de órdenes requerida por el storefront. Contactá a soporte.'
         };
       }
       // Si la orden no se puede cancelar (ya fue enviada)
@@ -618,48 +440,6 @@ class OrderService {
       return response;
     } catch (error) {
       log.orders.error('Error enviando orden:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Confirmar pago: Pending Payment → Confirmed (deduce stock)
-   * POST /accounts/{account_id}/sales-orders/{order_id}/confirm-payment
-   */
-  async confirmPayment(orderId: string, paymentReference?: string, notes?: string): Promise<OrderConfirmPaymentResponse> {
-    try {
-      const eventId = `confirm-${orderId}-${Date.now()}`;
-      
-      const response = await httpClient.post<OrderConfirmPaymentResponse>(
-        API_ENDPOINTS.CONFIRM_PAYMENT(this.getAccountId(), orderId),
-        {
-          payment_reference: paymentReference,
-          event_id: eventId,
-          notes: notes
-        },
-        { headers: this.getHeaders() }
-      );
-
-      return response;
-    } catch (error) {
-      log.orders.error('Error confirmando pago:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Confirma una orden de venta (legacy - redirige a confirm-payment)
-   * @deprecated Usar confirmPayment() en su lugar
-   */
-  async confirmOrder(orderId: string, _deductStock: boolean = true): Promise<{ success: boolean; data?: SalesOrder }> {
-    try {
-      const result = await this.confirmPayment(orderId);
-      return {
-        success: result.success,
-        data: result.data as unknown as SalesOrder
-      };
-    } catch (error) {
-      log.orders.error('Error confirmando orden:', error);
       throw error;
     }
   }
@@ -830,94 +610,6 @@ class OrderService {
     });
   }
 
-  async getPayments(params?: GetPaymentsParams): Promise<PaymentSummary[]> {
-    try {
-      const response = await httpClient.get<any>(
-        API_ENDPOINTS.PAYMENTS(this.getAccountId()),
-        {
-          headers: this.getHeaders(),
-          params,
-        }
-      );
-
-      const items = Array.isArray(response) ? response : unwrapApiResponse<any[]>(response);
-      return Array.isArray(items) ? items.map(normalizePayment) : [];
-    } catch (error) {
-      log.orders.error('Error obteniendo pagos:', error);
-      throw error;
-    }
-  }
-
-  async getPaymentApplications(paymentId: string): Promise<ApplyPaymentResponse[]> {
-    try {
-      const response = await httpClient.get<any>(
-        API_ENDPOINTS.PAYMENT_APPLICATIONS(this.getAccountId(), paymentId),
-        { headers: this.getHeaders() }
-      );
-      const items = Array.isArray(response) ? response : unwrapApiResponse<any[]>(response);
-      return Array.isArray(items) ? items : [];
-    } catch (error) {
-      log.orders.warn('No se pudieron obtener aplicaciones de pago:', { paymentId, error });
-      return [];
-    }
-  }
-
-  async getUserPayments(customerId: string): Promise<PaymentSummary[]> {
-    const payments = await this.getPayments({ partner_id: customerId });
-    const applicationsByPayment = await Promise.all(
-      payments.map(async (payment) => ({
-        paymentId: payment.id,
-        applications: await this.getPaymentApplications(payment.id),
-      }))
-    );
-
-    return payments.map((payment) => {
-      const applications = applicationsByPayment.find((entry) => entry.paymentId === payment.id)?.applications || [];
-      return {
-        ...payment,
-        applications,
-        linked_order_ids: applications
-          .map((application) => application.sales_order_id)
-          .filter(Boolean) as string[],
-      };
-    });
-  }
-
-  async getUserOrdersWithPayments(
-    customerId: string,
-    params?: Omit<GetOrdersParams, 'customer_id'>
-  ): Promise<UserOrdersWithPaymentsResponse> {
-    const [ordersResponse, payments] = await Promise.all([
-      this.getUserOrders(customerId, params),
-      this.getUserPayments(customerId),
-    ]);
-
-    const orders = ordersResponse.data.map((order) => {
-      const orderPayments = payments.filter((payment) => paymentMatchesOrder(payment, order));
-      const lastPaymentAt = orderPayments
-        .map((payment) => payment.received_at || payment.updated_at || payment.created_at)
-        .filter(Boolean)
-        .sort()
-        .at(-1);
-
-      return {
-        ...order,
-        payments: orderPayments,
-        payment_summary: {
-          total: orderPayments.reduce((sum, payment) => sum + (payment.amount || 0), 0),
-          count: orderPayments.length,
-          last_payment_at: lastPaymentAt,
-        },
-      };
-    });
-
-    return {
-      data: orders,
-      pagination: ordersResponse.pagination,
-      payments,
-    };
-  }
-
   async getOrderDetail(orderId: string): Promise<SalesOrder> {
     const [order, statusHistoryResponse] = await Promise.all([
       this.getOrder(orderId),
@@ -1019,53 +711,13 @@ class OrderService {
   }
 
   /**
-   * Crea un pago
-   */
-  async createPayment(paymentData: CreatePaymentRequest): Promise<CreatePaymentResponse> {
-    try {
-      const response = await httpClient.post<any>(
-        API_ENDPOINTS.PAYMENTS(this.getAccountId()),
-        paymentData,
-        {
-          headers: this.getHeaders(),
-        }
-      );
-
-      // La API devuelve { success, data: { id, payment_number, ... } }
-      const payment = normalizePayment(unwrapApiResponse<any>(response));
-      log.orders.debug('createPayment unwrapped:', { id: payment.id, payment_number: payment.payment_number });
-      return payment;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  /**
-   * Aplica un pago a una factura u orden
-   * POST /accounts/{account_id}/payments/{payment_id}/applications
-   */
-  async applyPayment(paymentId: string, application: ApplyPaymentRequest): Promise<ApplyPaymentResponse> {
-    try {
-      const response = await httpClient.post<any>(
-        API_ENDPOINTS.PAYMENT_APPLICATIONS(this.getAccountId(), paymentId),
-        application,
-        { headers: this.getHeaders() }
-      );
-      return unwrapApiResponse<ApplyPaymentResponse>(response);
-    } catch (error) {
-      log.orders.error('Error aplicando pago:', error);
-      throw error;
-    }
-  }
-
-  /**
    * Genera una factura desde una orden de venta
    * POST /accounts/{account_id}/sales-orders/{order_id}/invoice
    */
   async generateInvoice(orderId: string, invoiceData: GenerateInvoiceRequest): Promise<GenerateInvoiceResponse> {
     try {
       const response = await httpClient.post<any>(
-        API_ENDPOINTS.GENERATE_INVOICE(this.getAccountId(), orderId),
+        API_ENDPOINTS.ORDER_INVOICE(this.getAccountId(), orderId),
         invoiceData,
         { headers: this.getHeaders() }
       );
@@ -1086,99 +738,32 @@ class OrderService {
   }
 
   /**
-   * Genera un número de pago único
+   * Procesa una compra del storefront:
+   * 1. Obtener customer_id
+   * 2. Crear la orden de venta en draft
+   * 3. Submit: draft -> pending_payment
+   * 4. Informar método de pago y datos de entrega en metadata para validación backend
    */
-  generatePaymentNumber(orderNumber: string): string {
-    return `RCPT-${orderNumber.replace('SO-', '')}`;
-  }
-
-  /**
-   * Convierte método de pago del frontend al formato de la API
-   */
-  mapPaymentMethod(frontendMethod: string): CreatePaymentRequest['method'] {
-    const methodMap: Record<string, CreatePaymentRequest['method']> = {
-      'credit': 'credit_card',
-      'debit': 'debit_card',
-      'mercadopago': 'mercadopago',
-      'transferencia': 'transfer',
-      'efectivo': 'cash',
-      'tarjeta': 'credit_card',
-      'transfer': 'transfer',
-      'wire_transfer': 'transfer',
-    };
-    
-    return methodMap[frontendMethod] || 'other';
-  }
-
-  /**
-   * Crea un Business Partner (cliente) en el backend
-   * IMPORTANTE: Siempre crear el BP antes de la orden para obtener un ID válido
-   */
-  async createBusinessPartner(data: CreateBusinessPartnerRequest): Promise<BusinessPartnerResponse> {
-    try {
-      const response = await httpClient.post<any>(
-        API_ENDPOINTS.BUSINESS_PARTNERS(this.getAccountId()),
-        data,
-        {
-          headers: this.getHeaders(),
-        }
-      );
-
-      // La API devuelve { success, data: { id, name, ... } }
-      return unwrapApiResponse<BusinessPartnerResponse>(response);
-    } catch (error) {
-      log.orders.error('Error creating business partner:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Procesa una compra completa siguiendo el Order State Machine v2:
-   * 1. Obtener business_partner_id del perfil (/auth/me)
-   * 2. Crear la orden de venta (status: draft)
-   * 3. Submit: draft → pending_payment (reserva stock)
-   * 4. Crear el pago
-   * 5. Confirm Payment: pending_payment → confirmed (deduce stock)
-   */
-  async processCheckout(checkoutData: CheckoutData, businessPartnerId?: string) {
+  async processCheckout(checkoutData: CheckoutData, businessPartnerId?: string): Promise<CheckoutProcessResult> {
     let salesOrder: CreateSalesOrderResponse | null = null;
-    let payment: CreatePaymentResponse | null = null;
     let submitted = false;
     
     try {
       const { shippingInfo, items, lineItemsMetadata, currency, totalAmount, paymentMethod, notes } = checkoutData;
       const activeChannel = getActiveChannel();
       
-      // 1. Obtener customer_id: puede ser business_partner_id o user_id
-      // La API acepta ambos según la doc: "customer_id puede ser un User.id o un BusinessPartner.id"
-      let customerId = businessPartnerId || localStorage.getItem('business_partner_id');
-      
-      if (!customerId) {
-        // Fallback: usar el user_id del usuario autenticado
-        try {
-          const persistedState = localStorage.getItem('diapstore-store');
-          if (persistedState) {
-            const state = JSON.parse(persistedState);
-            customerId = state?.state?.auth?.user?.id || null;
-            if (customerId) {
-              log.checkout.warn('Usando user.id como customer_id (fallback):', customerId);
-            }
-          }
-        } catch (e) {
-          log.checkout.error('Error obteniendo user.id del store:', e);
-        }
-      }
+      // 1. Obtener customer_id canónico del storefront: business_partner_id
+      let customerId = businessPartnerId || extractCustomerIdFromPersistedSession();
       
       if (!customerId) {
         log.checkout.error('No se encontró customer_id - el usuario debe estar logueado');
         return {
           salesOrder: null,
-          payment: null,
           success: false,
           message: 'Debes iniciar sesión para realizar una compra. Si ya iniciaste sesión, intenta cerrar sesión y volver a entrar.',
           error: {
             step: 'authentication',
-            details: 'No se encontró business_partner_id ni user_id'
+            details: 'No se encontró business_partner_id'
           }
         };
       }
@@ -1199,6 +784,12 @@ class OrderService {
           channel: activeChannel,
           shipping_info: shippingInfo,
           payment_method: paymentMethod,
+          payment_intent: {
+            method: paymentMethod,
+            amount: totalAmount,
+            currency,
+            informed_at: new Date().toISOString(),
+          },
           line_items_variant_info: Array.isArray(lineItemsMetadata)
             ? lineItemsMetadata.filter((item) => item.variant_id)
             : []
@@ -1218,12 +809,11 @@ class OrderService {
       if (!submitResult.success) {
         return {
           salesOrder,
-          payment: null,
           success: false,
           message: submitResult.message || 'Error al enviar el pedido. Puede haber stock insuficiente.',
           error: {
             step: 'submit',
-            details: submitResult.data,
+            details: submitResult,
             orderNumber: salesOrder.order_number,
           }
         };
@@ -1232,66 +822,15 @@ class OrderService {
       submitted = true;
       log.checkout.info('Pedido enviado - stock reservado');
       
-      // 4. Crear pago asociado
-      const paymentNumber = this.generatePaymentNumber(orderNumber);
-      log.checkout.info('Paso 3: Creando pago...');
-      
-      payment = await this.createPayment({
-        payment_number: paymentNumber,
-        source_type: 'customer',
-        partner_id: customerId,
-        currency: currency,
-        amount: totalAmount,
-        method: this.mapPaymentMethod(paymentMethod),
-        reference: `TRX${orderNumber.replace('SO-', '')}`,
-        status: 'received',
-        metadata: {
-          channel: activeChannel,
-          sales_order_id: salesOrder.id,
-          order_number: salesOrder.order_number,
-          payment_method_details: paymentMethod,
-          customer_info: {
-            name: `${shippingInfo.firstName} ${shippingInfo.lastName}`,
-            email: shippingInfo.email
-          }
-        }
-      });
-      
-      log.checkout.info('Pago creado:', payment.payment_number);
-
-      try {
-        await this.applyPayment(payment.id, {
-          sales_order_id: salesOrder.id,
-          amount_applied: totalAmount,
-        });
-      } catch (applicationError) {
-        log.checkout.warn('No se pudo vincular el pago con la orden mediante applications:', applicationError);
-      }
-      
-      // 5. Confirm Payment: pending_payment → confirmed (deduce stock)
-      log.checkout.info('Paso 4: Confirmando pago (confirm-payment → confirmed)...');
-      
-      const confirmResult = await this.confirmPayment(
-        salesOrder.id,
-        payment.payment_number,
-        `Pago ${paymentMethod} - ${payment.payment_number}`
-      );
-      
-      if (!confirmResult.success) {
-        log.checkout.warn('Pago creado pero confirmación falló:', confirmResult.message);
-        // La orden queda en pending_payment, no es un error fatal
-      } else {
-        log.checkout.info('Pago confirmado - stock deducido');
-      }
+      log.checkout.info('Paso 3: Pago informado al backend. La validación y aprobación quedan del lado backend.');
 
       return {
         customerId: customerId,
         salesOrder,
-        payment,
         success: true,
-        message: 'Checkout procesado exitosamente',
+        message: 'Pedido creado y enviado. El pago queda pendiente de validación por el backend.',
         orderNumber: salesOrder.order_number,
-        paymentNumber: payment.payment_number,
+        paymentMethod,
       };
       
     } catch (error: any) {
@@ -1301,12 +840,11 @@ class OrderService {
       if (!salesOrder) {
         return {
           salesOrder: null,
-          payment: null,
           success: false,
           message: 'Error al crear la orden de venta',
           error: {
             step: 'order',
-            details: error.response?.data || error.message,
+            details: error,
           }
         };
       }
@@ -1315,34 +853,28 @@ class OrderService {
       if (salesOrder && !submitted) {
         return {
           salesOrder,
-          payment: null,
           success: false,
           message: 'La orden fue creada pero no se pudo enviar. Puede haber stock insuficiente.',
           error: {
             step: 'submit',
-            details: error.response?.data || error.message,
-            orderNumber: salesOrder.order_number,
-          }
-        };
-      }
-      
-      // Error al crear el pago (pero orden ya enviada)
-      if (salesOrder && !payment) {
-        return {
-          salesOrder,
-          payment: null,
-          success: false,
-          message: 'La orden fue creada pero el pago falló. Te contactaremos para resolverlo.',
-          error: {
-            step: 'payment',
-            details: error.response?.data || error.message,
+            details: error,
             orderNumber: salesOrder.order_number,
           }
         };
       }
       
       // Error general
-      throw error;
+      return {
+        salesOrder,
+        success: false,
+        message: 'La orden fue creada pero hubo un problema posterior al envío. No repitas la compra hasta revisar el estado.',
+        orderNumber: salesOrder.order_number,
+        error: {
+          step: 'submit',
+          details: error,
+          orderNumber: salesOrder.order_number,
+        }
+      };
     }
   }
 }
@@ -1351,26 +883,17 @@ export const orderService = new OrderService();
 export type { 
   CreateSalesOrderRequest, 
   CreateSalesOrderResponse, 
-  CreatePaymentRequest, 
-  CreatePaymentResponse,
-  PaymentSummary,
-  GetPaymentsParams,
-  UserOrdersWithPaymentsResponse,
   SalesOrderItem,
   SalesOrder,
   GetOrdersParams,
   OrdersResponse,
   CheckoutData,
-  CreateBusinessPartnerRequest,
-  BusinessPartnerResponse,
   ValidateStockRequest,
   ValidateStockResponse,
   CancelOrderRequest,
   CancelOrderResponse,
   OrderSubmitRequest,
   OrderSubmitResponse,
-  OrderConfirmPaymentRequest,
-  OrderConfirmPaymentResponse,
   StateTransitionResponse,
   ValidTransitionsResponse,
   StatusHistoryEntry,
@@ -1378,6 +901,6 @@ export type {
   ReturnItemRequest,
   OrderReturnRequest,
   OrderReturnResponse,
-  ReturnCondition,
-  OrderStatus,
+  CheckoutProcessError,
+  CheckoutProcessResult,
 };

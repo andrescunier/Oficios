@@ -4,22 +4,12 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  Linkedin,
-  Instagram,
-  Mail,
-  Phone,
-  MapPin,
-  CreditCard,
-  Truck,
-  Shield,
-  RotateCcw
-} from 'lucide-react';
+import { Instagram, Linkedin, Mail, MapPin, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
 import { BRANDING, ASSETS, SOCIAL_LINKS, FEATURES, CONTACT } from '@/config/branding';
 import { getCategoriesConfig } from '@/config/runtime';
+import { getFeatureBenefitIcon } from '@/components/ui/featureBenefitIcons';
 
 export const Footer: React.FC = () => {
   const [phoneNumber, setPhoneNumber] = React.useState('');
@@ -79,23 +69,23 @@ export const Footer: React.FC = () => {
       {/* Features section */}
       <div className="border-b">
         <div className="container mx-auto px-4 py-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            {FEATURES.SHIPPING_BENEFITS.map((feature: any, index: number) => (
-              <div key={index} className="flex items-center justify-center space-x-3">
-                <div className="flex-shrink-0">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    {feature.icon === 'Truck' && <Truck className="w-6 h-6 text-primary" />}
-                    {feature.icon === 'RotateCcw' && <RotateCcw className="w-6 h-6 text-primary" />}
-                    {feature.icon === 'Shield' && <Shield className="w-6 h-6 text-primary" />}
-                    {feature.icon === 'CreditCard' && <CreditCard className="w-6 h-6 text-primary" />}
+          <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {FEATURES.SHIPPING_BENEFITS.map((feature, index) => {
+              const Icon = getFeatureBenefitIcon(feature.icon);
+              return (
+                <div key={index} className="flex items-center justify-center space-x-3">
+                  <div className="flex-shrink-0">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                      <Icon className="h-6 w-6 text-primary" />
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold">{feature.title}</h3>
+                    <p className="text-xs text-muted-foreground">{feature.description}</p>
                   </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-sm">{feature.title}</h3>
-                  <p className="text-xs text-muted-foreground">{feature.description}</p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
@@ -106,9 +96,9 @@ export const Footer: React.FC = () => {
           {/* Company info */}
           <div className="lg:col-span-2">
             <Link to="/" className="flex items-center mb-4">
-              {ASSETS.HEADER_LOGO_PATH ? (
+              {ASSETS.FOOTER_LOGO_PATH ? (
                 <img
-                  src={ASSETS.HEADER_LOGO_PATH}
+                  src={ASSETS.FOOTER_LOGO_PATH}
                   alt={`${BRANDING.APP_NAME} Logo`}
                   className="h-10 w-auto"
                 />

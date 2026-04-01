@@ -2,11 +2,12 @@
  * Cliente HTTP configurado para la API de SIGP
  */
 
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+import axios, { AxiosHeaders, AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { API_BASE_URL, API_TIMEOUT, getActiveAccountId, getActiveAccountSlug } from '@/config/api';
+import { getApiConfig } from '@/config/runtime';
 import type { ApiError } from '@/types/api';
 import log from '@/lib/logger';
-import { clearClientSession } from '@/lib/session';
+import { clearAuthSession, getPersistedAuthToken } from '@/features/auth/session';
 
 class HttpClient {
   private client: AxiosInstance;
@@ -18,6 +19,7 @@ class HttpClient {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        ...getApiConfig().extraHeaders,
       },
     });
 
@@ -28,32 +30,36 @@ class HttpClient {
     // Request interceptor
     this.client.interceptors.request.use(
       (config) => {
+        const headers = new AxiosHeaders({
+          ...getApiConfig().extraHeaders,
+          ...config.headers,
+        });
+
         // Agregar Account ID a los headers si existe
         const accountId = getActiveAccountId();
         const accountSlug = getActiveAccountSlug();
 
         if (accountId) {
-          config.headers = config.headers || {};
-          config.headers['X-Account-ID'] = accountId;
-          delete config.headers['X-Account-Slug'];
+          headers.set('X-Account-ID', accountId);
+          headers.delete('X-Account-Slug');
         } else if (accountSlug) {
-          config.headers = config.headers || {};
-          config.headers['X-Account-Slug'] = accountSlug;
-          delete config.headers['X-Account-ID'];
+          headers.set('X-Account-Slug', accountSlug);
+          headers.delete('X-Account-ID');
         }
 
         // Agregar token de autenticación automáticamente si está disponible
         const authToken = this.getStoredToken();
-        if (authToken && !config.headers?.['Authorization']) {
-          config.headers = config.headers || {};
-          config.headers['Authorization'] = `Bearer ${authToken}`;
+        if (authToken && !headers.get('Authorization')) {
+          headers.set('Authorization', `Bearer ${authToken}`);
         }
 
+        config.headers = headers;
+
         log.http.debug('Request →', config.method?.toUpperCase(), config.url);
-        log.http.group(`${config.method?.toUpperCase()} ${config.url}`, () => {
-          console.log('Headers:', config.headers);
-          if (config.data) console.log('Body:', config.data);
-          if (config.params) console.log('Params:', config.params);
+        log.http.debug('Request meta:', {
+          headers: headers.toJSON(),
+          hasBody: Boolean(config.data),
+          hasParams: Boolean(config.params),
         });
 
         return config;
@@ -68,8 +74,9 @@ class HttpClient {
     this.client.interceptors.response.use(
       (response: AxiosResponse) => {
         log.http.debug('Response ←', response.status, response.config.url);
-        log.http.group(`${response.status} ${response.config.url}`, () => {
-          console.log('Data:', response.data);
+        log.http.debug('Response meta:', {
+          status: response.status,
+          url: response.config.url,
         });
         return response;
       },
@@ -94,6 +101,7 @@ class HttpClient {
         const apiError: ApiError = {
           message: error.response?.data?.message || error.message || 'Error desconocido',
           code: error.response?.data?.code || error.code,
+          status: error.response?.status,
           details: error.response?.data?.details || {},
         };
 
@@ -153,26 +161,16 @@ class HttpClient {
 
   // Método para obtener el token almacenado del localStorage o store
   private getStoredToken(): string | null {
-    try {
-      // Intentar obtener del localStorage donde Zustand persiste el estado
-      const persistedState = localStorage.getItem('diapstore-store');
-      if (persistedState) {
-        const state = JSON.parse(persistedState);
-        return state?.state?.auth?.token || null;
-      }
-      return null;
-    } catch (error) {
-      log.http.warn('Error al obtener token del storage:', error);
-      return null;
-    }
+    return getPersistedAuthToken();
   }
 
   // Método para manejar errores de autorización (401)
   private handleUnauthorized(): void {
     try {
-      clearClientSession({
+      clearAuthSession({
         redirect: '/login?session=expired',
         removeAuthToken: () => this.removeAuthToken(),
+        preserveCart: true,
       });
     } catch (error) {
       log.http.error('Error al manejar token expirado:', error);

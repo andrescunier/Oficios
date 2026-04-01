@@ -156,7 +156,7 @@ export const CartPage: React.FC = () => {
                       {/* Product Image */}
                       <div className="w-20 h-20 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden">
                         <img
-                          src={item.product.image_url || '/placeholder-product.jpg'}
+                          src={item.product.image_url || '/placeholder-product.svg'}
                           alt={item.product.name}
                           className="w-full h-full object-cover"
                         />

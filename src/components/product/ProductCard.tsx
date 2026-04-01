@@ -3,7 +3,7 @@
  */
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Heart, 
   ShoppingCart, 
@@ -26,9 +26,9 @@ import { ProductImage } from '@/components/ui/OptimizedImage';
 import { useStore } from '@/store/useStore';
 import type { Product } from '@/types/api';
 import { PriceDisplay, usePriceVisibility } from '@/hooks/usePriceVisibility';
-import { useNavigate } from 'react-router-dom';
 import { FEATURES } from '@/config/branding';
 import { getImagesConfig, getBusinessConfig } from '@/config/runtime';
+import { recordAppEvent } from '@/lib/observability';
 
 interface ProductCardProps {
   product: Product;
@@ -44,6 +44,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   const [quantity, setQuantity] = useState(1);
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   
   const { 
     addToCart, 
@@ -60,10 +61,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   const isProductFavorite = isFavorite(product.id);
   const isOutOfStock = (product.stock_quantity || 0) <= 0;
-  const hasDiscount = product.metadata?.original_price && 
-    product.metadata.original_price > product.unit_price;
+  const originalPrice = product.metadata?.original_price;
+  const hasDiscount = typeof originalPrice === 'number' && originalPrice > product.unit_price;
   const discountPercentage = hasDiscount 
-    ? Math.round(((product.metadata.original_price - product.unit_price) / product.metadata.original_price) * 100)
+    ? Math.round(((originalPrice - product.unit_price) / originalPrice) * 100)
     : 0;
 
   const handleAddToCart = () => {
@@ -73,8 +74,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     }
 
     if (!isAuthenticated) {
-      // Redirigir al login
-      navigate('/login', { state: { from: location } });
+      navigate('/login', {
+        state: {
+          from: {
+            pathname: location.pathname,
+            search: location.search,
+          },
+        },
+      });
       return;
     }
 
@@ -101,7 +108,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         title: 'Inicia sesión',
         message: 'Necesitas iniciar sesión para agregar productos a favoritos',
       });
-      navigate('/login', { state: { from: location } });
+      navigate('/login', {
+        state: {
+          from: {
+            pathname: location.pathname,
+            search: location.search,
+          },
+        },
+      });
       return;
     }
     
@@ -124,6 +138,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   const handleProductClick = () => {
     addToRecent(product.id);
+    recordAppEvent('product_view', {
+      productId: product.id,
+      source: 'product_card',
+    });
   };
 
   const formatPrice = (price: number) => {

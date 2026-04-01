@@ -16,8 +16,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { BRANDING, ASSETS } from '@/config/branding';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useStore } from '@/store/useStore';
-import { authService } from '@/services/authService';
 import { getBusinessConfig } from '@/config/runtime';
+import { useRegisterMutation } from '@/features/auth/mutations';
 
 // Schema de validación actualizado para el nuevo API
 const registerSchema = z.object({
@@ -46,7 +46,7 @@ const registerSchema = z.object({
   phone: z.string().min(1, 'El teléfono es requerido'),
   title: z.string().min(1, 'El cargo es requerido'),
   tax_id: z.string().min(1, 'El CUIT/RUT es requerido'),
-  currency: z.string().min(1, 'La moneda es requerida').default(getBusinessConfig().defaultCurrency),
+  currency: z.string().min(1, 'La moneda es requerida'),
   industry: z.string().min(1, 'La industria es requerida'),
   username: z.string().min(3, 'El nombre de usuario debe tener al menos 3 caracteres'),
   acceptTerms: z.boolean().refine((val) => val === true, {
@@ -67,6 +67,7 @@ export const Register: React.FC = () => {
   
   const navigate = useNavigate();
   const { login, addNotification } = useStore();
+  const registerMutation = useRegisterMutation();
 
   const {
     register,
@@ -108,7 +109,7 @@ export const Register: React.FC = () => {
       setIsLoading(true);
       setError(null);
 
-      const { user, token, account } = await authService.register({
+      const { user, token, account } = await registerMutation.mutateAsync({
         firstName: data.first_name,
         lastName: data.last_name,
         email: data.email,
@@ -390,7 +391,7 @@ export const Register: React.FC = () => {
                   <Checkbox
                     id="acceptTerms"
                     checked={field.value}
-                    onCheckedChange={(checked) => field.onChange(checked === true)}
+                    onCheckedChange={(checked: unknown) => field.onChange(checked === true)}
                   />
                 )}
               />

@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 interface OrderSuccessState {
   orderSuccess: boolean;
   orderNumber: string;
-  paymentNumber: string;
+  paymentMethod?: string;
   customerEmail: string;
   totalAmount: number;
 }
@@ -41,6 +41,23 @@ export default function OrderSuccessPage() {
     }).format(price);
   };
 
+  const getPaymentMethodLabel = (method?: string) => {
+    const methodMap: Record<string, string> = {
+      cash: 'Efectivo',
+      transfer: 'Transferencia',
+      transferencia: 'Transferencia',
+      credit_card: 'Tarjeta de credito',
+      debit_card: 'Tarjeta de debito',
+      mercadopago: 'Mercado Pago',
+      stripe: 'Stripe',
+      card: 'Tarjeta',
+      check: 'Cheque',
+      other: 'Otro',
+    };
+
+    return methodMap[method || 'other'] || method || 'Pendiente';
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-50 to-white py-12">
       <div className="container mx-auto px-4 max-w-2xl">
@@ -50,10 +67,10 @@ export default function OrderSuccessPage() {
             <CheckCircle className="w-16 h-16 text-green-600" />
           </div>
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
-            ¡Pedido Confirmado! 🎉
+            Pedido Recibido
           </h1>
           <p className="text-lg text-gray-600">
-            Gracias por tu compra. Tu pedido ha sido procesado exitosamente.
+            Gracias por tu compra. El backend va a validar el pago antes de confirmar el pedido.
           </p>
         </div>
 
@@ -73,14 +90,15 @@ export default function OrderSuccessPage() {
 
             <Separator />
 
-            {/* Número de pago */}
+            {/* Medio de pago informado */}
             <div className="flex items-center gap-4 py-4">
               <div className="flex items-center justify-center w-12 h-12 bg-purple-100 rounded-full">
                 <CreditCard className="w-6 h-6 text-purple-600" />
               </div>
               <div className="flex-1">
-                <p className="text-sm text-gray-500">Número de Pago</p>
-                <p className="text-xl font-bold text-gray-900">{state.paymentNumber}</p>
+                <p className="text-sm text-gray-500">Medio de pago informado</p>
+                <p className="text-xl font-bold text-gray-900">{getPaymentMethodLabel(state.paymentMethod)}</p>
+                <p className="text-sm text-amber-700">Estado: pendiente de validación por el backend</p>
               </div>
             </div>
 
@@ -121,8 +139,8 @@ export default function OrderSuccessPage() {
               <h3 className="text-sm font-semibold text-blue-800">¿Qué sigue?</h3>
               <ul className="mt-2 text-sm text-blue-700 space-y-1">
                 <li>• Recibirás un email con los detalles de tu pedido</li>
-                <li>• Nuestro equipo procesará tu orden en las próximas 24-48 horas</li>
-                <li>• Te contactaremos para coordinar el envío o retiro</li>
+                <li>• El backend validará el pago informado y actualizará el estado del pedido</li>
+                <li>• Cuando la orden avance de estado, la verás reflejada en Mis Pedidos</li>
               </ul>
             </div>
           </div>

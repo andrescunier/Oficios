@@ -15,9 +15,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { BRANDING, CONTACT } from '@/config/branding';
 import { useStore } from '@/store/useStore';
-import { authService } from '@/services/authService';
 import log from '@/lib/logger';
-import { clearClientSession } from '@/lib/session';
+import { clearAuthSession } from '@/features/auth/session';
+import { useLoginMutation } from '@/features/auth/mutations';
 
 // Schema de validación
 const loginSchema = z.object({
@@ -41,7 +41,8 @@ export const Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login, addNotification, logout } = useStore();
-    const [sessionExpired, setSessionExpired] = useState(false);
+  const loginMutation = useLoginMutation();
+  const [sessionExpired, setSessionExpired] = useState(false);
 
     // Detectar parámetro de sesión expirada
     React.useEffect(() => {
@@ -60,7 +61,7 @@ export const Login: React.FC = () => {
   const handleClearSession = () => {
     try {
       logout();
-      clearClientSession();
+      clearAuthSession();
       addNotification({
         type: 'success',
         title: 'Sesión limpiada',
@@ -86,7 +87,7 @@ export const Login: React.FC = () => {
       setError(null);
       log.auth.info('Enviando login para:', data.email);
 
-      const { user, token, account } = await authService.login(data);
+      const { user, token, account } = await loginMutation.mutateAsync(data);
       
       // Actualizar estado global
       login(user, token, account || undefined);

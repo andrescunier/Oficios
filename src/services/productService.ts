@@ -4,20 +4,93 @@
 
 import { httpClient } from './httpClient';
 import { API_ENDPOINTS, getActiveAccountId, getActiveChannel } from '@/config/api';
+import { hasPersistedAuthToken } from '@/features/auth/session';
 import type { 
   Product, 
   ProductVariant,
   ProductVariantOption,
-  CreateProductRequest, 
   PaginatedResponse,
-  ApiResponse 
 } from '@/types/api';
 import log from '@/lib/logger';
 
+interface ProductsListEnvelope {
+  data?: Product[];
+  pagination?: PaginatedResponse<Product>['pagination'];
+}
+
+interface ProductEnvelope {
+  success?: boolean;
+  data?: Product;
+}
+
+const normalizePaginatedProducts = (
+  response: unknown,
+  params?: { page?: number; per_page?: number },
+): PaginatedResponse<Product> => {
+  if (Array.isArray(response)) {
+    return {
+      data: response,
+      pagination: {
+        page: params?.page ?? 1,
+        per_page: params?.per_page ?? response.length,
+        total: response.length,
+        total_pages: 1,
+      },
+    };
+  }
+
+  if (response && typeof response === 'object') {
+    const envelope = response as ProductsListEnvelope;
+    if (Array.isArray(envelope.data)) {
+      return {
+        data: envelope.data,
+        pagination: envelope.pagination || {
+          page: params?.page ?? 1,
+          per_page: params?.per_page ?? envelope.data.length,
+          total: envelope.data.length,
+          total_pages: 1,
+        },
+      };
+    }
+  }
+
+  return {
+    data: [],
+    pagination: {
+      page: params?.page ?? 1,
+      per_page: params?.per_page ?? 0,
+      total: 0,
+      total_pages: 0,
+    },
+  };
+};
+
+const extractProduct = (response: unknown): Product | null => {
+  if (response && typeof response === 'object') {
+    if ('id' in response) {
+      return response as Product;
+    }
+
+    const envelope = response as ProductEnvelope;
+    if (envelope.data && typeof envelope.data === 'object') {
+      return envelope.data;
+    }
+  }
+
+  return null;
+};
+
 export class ProductService {
+  private getProductsEndpoint() {
+    const accountId = getActiveAccountId();
+    return hasPersistedAuthToken()
+      ? API_ENDPOINTS.PRODUCTS(accountId)
+      : API_ENDPOINTS.PRODUCTS_PUBLIC(accountId);
+  }
+
   /**
    * Obtener todos los productos
-   * Soporta todos los parámetros de la API v1.2.1
+   * Usa /products para sesiones autenticadas y /products/public para catálogo anónimo.
    */
   async getProducts(params?: {
     page?: number;
@@ -37,40 +110,16 @@ export class ProductService {
     sort_order?: 'asc' | 'desc';
   }): Promise<PaginatedResponse<Product>> {
     log.products.debug('getProducts', params);
-    const url = API_ENDPOINTS.PRODUCTS(getActiveAccountId());
+    const url = this.getProductsEndpoint();
     const channel = params?.channel || getActiveChannel();
-    const response: any = await httpClient.get(url, {
+    const response = await httpClient.get<unknown>(url, {
       params: {
         ...params,
         channels: params?.channels || channel,
       }
     });
 
-    if (Array.isArray(response)) {
-      return {
-        data: response,
-        pagination: {
-          page: params?.page ?? 1,
-          per_page: params?.per_page ?? response.length,
-          total: response.length,
-          total_pages: 1,
-        },
-      };
-    }
-
-    if (response?.data && Array.isArray(response.data)) {
-      return response;
-    }
-
-    return {
-      data: [],
-      pagination: {
-        page: params?.page ?? 1,
-        per_page: params?.per_page ?? 0,
-        total: 0,
-        total_pages: 0,
-      },
-    };
+    return normalizePaginatedProducts(response, params);
   }
 
   /**
@@ -79,38 +128,24 @@ export class ProductService {
   async getProduct(productId: string): Promise<Product> {
     log.products.debug('getProduct', productId);
     const url = API_ENDPOINTS.PRODUCT(getActiveAccountId(), productId);
-    const response: any = await httpClient.get(url);
-    
-    // La API puede devolver { success, data: {...} } o directamente el producto
-    if (response?.data && typeof response.data === 'object' && !Array.isArray(response.data)) {
-      return response.data;
+    const response = await httpClient.get<unknown>(url);
+    const product = extractProduct(response);
+
+    if (product) {
+      return product;
     }
-    
-    // Si la respuesta es directamente el producto
-    if (response?.id) {
-      return response;
-    }
-    
-    // Si viene en success/data wrapper
-    if (response?.success && response?.data) {
-      return response.data;
-    }
-    
+
     throw new Error('Producto no encontrado');
   }
 
   async getProductVariants(productId: string, params?: { status?: string }): Promise<ProductVariant[]> {
-    const url = API_ENDPOINTS.PRODUCT_VARIANTS(getActiveAccountId(), productId);
-    const response: any = await httpClient.get(url, { params });
-    const data = response?.data ?? response;
-    return Array.isArray(data) ? data : [];
+    log.products.warn('getProductVariants no está soportado por el contrato activo', { productId, params });
+    return [];
   }
 
   async getProductVariantOptions(productId: string): Promise<ProductVariantOption[]> {
-    const url = API_ENDPOINTS.PRODUCT_VARIANT_OPTIONS(getActiveAccountId(), productId);
-    const response: any = await httpClient.get(url);
-    const data = response?.data ?? response;
-    return Array.isArray(data) ? data : [];
+    log.products.warn('getProductVariantOptions no está soportado por el contrato activo', { productId });
+    return [];
   }
 
   async getProductWithVariants(productId: string): Promise<{
@@ -138,32 +173,6 @@ export class ProductService {
       variants,
       variantOptions,
     };
-  }
-
-  /**
-   * Crear un nuevo producto
-   */
-  async createProduct(productData: CreateProductRequest): Promise<Product> {
-    const url = API_ENDPOINTS.PRODUCTS(getActiveAccountId());
-    const response = await httpClient.post<ApiResponse<Product>>(url, productData);
-    return response.data;
-  }
-
-  /**
-   * Actualizar un producto
-   */
-  async updateProduct(productId: string, productData: Partial<CreateProductRequest>): Promise<Product> {
-    const url = API_ENDPOINTS.PRODUCT(getActiveAccountId(), productId);
-    const response = await httpClient.put<ApiResponse<Product>>(url, productData);
-    return response.data;
-  }
-
-  /**
-   * Eliminar un producto
-   */
-  async deleteProduct(productId: string): Promise<void> {
-    const url = API_ENDPOINTS.PRODUCT(getActiveAccountId(), productId);
-    await httpClient.delete(url);
   }
 
   /**
@@ -207,55 +216,6 @@ export class ProductService {
       is_active: true,
       ...params
     });
-  }
-
-  /**
-   * Obtener productos con stock bajo
-   * GET /accounts/{account_id}/products/low-stock
-   */
-  async getLowStockProducts(params?: {
-    page?: number;
-    per_page?: number;
-  }): Promise<PaginatedResponse<{
-    product_id: string;
-    sku: string;
-    name: string;
-    current_stock: number;
-    min_stock: number;
-    stock_unit: string;
-    deficit: number;
-  }>> {
-    const url = API_ENDPOINTS.PRODUCTS_LOW_STOCK(getActiveAccountId());
-    const response: any = await httpClient.get(url, { params });
-    
-    if (Array.isArray(response)) {
-      return {
-        data: response,
-        pagination: {
-          page: params?.page ?? 1,
-          per_page: params?.per_page ?? response.length,
-          total: response.length,
-          total_pages: 1,
-        },
-      };
-    }
-    
-    return response;
-  }
-
-  /**
-   * Actualizar stock de un producto
-   * PATCH /accounts/{account_id}/products/{product_id}/stock
-   */
-  async updateStock(productId: string, data: {
-    quantity: number;
-    operation: 'set' | 'add' | 'subtract';
-    reason: string;
-    reference?: string;
-  }): Promise<Product> {
-    const url = API_ENDPOINTS.PRODUCT_STOCK(getActiveAccountId(), productId);
-    const response = await httpClient.patch<ApiResponse<Product>>(url, data);
-    return response.data;
   }
 
   /**

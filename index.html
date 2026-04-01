@@ -3,72 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-    <link rel="icon" type="image/png" href="/favicon.png" />
-    <link rel="apple-touch-icon" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="" />
     <meta name="keywords" content="" />
     <meta name="author" content="" />
-    
-    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content="" />
     <meta property="og:description" content="" />
     <meta property="og:image" content="" />
-    
-    <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
     <meta property="twitter:title" content="" />
     <meta property="twitter:description" content="" />
     <meta property="twitter:image" content="" />
-    
     <title>Cargando...</title>
-    
-    <!-- Runtime Configuration - Must load before app bundle -->
-    <script src="/config.js"></script>
-    
-    <script>
-      // Actualizar meta tags dinámicamente desde runtime config
-      (function() {
-        var c = window.__APP_CONFIG__;
-        if (!c) return;
-        var name = (c.app && c.app.name) || '';
-        var slogan = (c.app && c.app.slogan) || '';
-        var desc = (c.app && c.app.description) || '';
-        var company = (c.app && c.app.companyName) || name;
-        var logo = (c.branding && c.branding.ogImage) || (c.branding && c.branding.logo) || '';
-        var title = name + (slogan ? ' - ' + slogan : '');
-
-        document.title = title;
-        function setMeta(attr, key, value) {
-          var el = document.querySelector('meta[' + attr + '="' + key + '"]');
-          if (el && value) el.setAttribute('content', value);
-        }
-        setMeta('name', 'description', desc);
-        setMeta('name', 'keywords', 'tecnología, ecommerce, productos, ' + company);
-        setMeta('name', 'author', company);
-        setMeta('property', 'og:title', title);
-        setMeta('property', 'og:description', desc);
-        setMeta('property', 'og:image', logo);
-        setMeta('property', 'twitter:title', title);
-        setMeta('property', 'twitter:description', desc);
-        setMeta('property', 'twitter:image', logo);
-      })();
-    </script>
-
-    <script>
-      // Suprimir warnings de source maps en desarrollo
-      if (typeof console !== 'undefined') {
-        const originalWarn = console.warn;
-        console.warn = function(...args) {
-          if (args[0] && typeof args[0] === 'string' && 
-              (args[0].includes('source map') || args[0].includes('Could not read'))) {
-            return;
-          }
-          originalWarn.apply(console, args);
-        };
-      }
-    </script>
   </head>
   <body>
     <div id="root"></div>

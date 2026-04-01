@@ -1,5 +1,7 @@
 import React from 'react';
-import { clearClientSession } from '@/lib/session';
+import { clearAuthSession } from '@/features/auth/session';
+import { recordRenderError } from '@/lib/observability';
+import log from '@/lib/logger';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -12,11 +14,12 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, info) {
-    console.error('Uncaught error in component tree:', error, info);
+    log.config.error('Uncaught error in component tree:', error, info);
+    recordRenderError(error, info?.componentStack);
   }
 
   handleClear = () => {
-    clearClientSession({ clearAllLocalStorage: true });
+    clearAuthSession({ clearAllLocalStorage: true });
     window.location.reload();
   };
 

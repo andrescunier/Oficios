@@ -2,22 +2,19 @@
  * Página de productos con API real e imágenes locales
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, Plus, Minus, Heart } from 'lucide-react';
-import { productService } from '@/services/productService';
+import { useQuery } from '@tanstack/react-query';
 import { useStore } from '@/store/useStore';
 import type { Product } from '@/types/api';
 import { getBusinessConfig } from '@/config/runtime';
 import { PriceDisplay } from '@/hooks/usePriceVisibility';
 import { FEATURES } from '@/config/branding';
-import { getImagesConfig } from '@/config/runtime';
 import { handleImgError } from '@/utils/imageHelpers';
+import { productsQueryOptions } from '@/features/catalog/queries';
 
 export const ProductsPageApiReal: React.FC = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const navigate = useNavigate();
@@ -33,105 +30,34 @@ export const ProductsPageApiReal: React.FC = () => {
 
   const { addToCart, addNotification, auth, addToFavorites, removeFromFavorites, isFavorite } = useStore();
   const isAuthenticated = auth.isAuthenticated;
+  const productsQuery = useQuery(productsQueryOptions({
+    page: 1,
+    per_page: getBusinessConfig().productsPerPage,
+    is_active: true,
+  }));
+  const products = productsQuery.data?.data || [];
+  const loading = productsQuery.isLoading;
+  const error = productsQuery.error ? 'No se pudieron cargar los productos' : null;
 
   useEffect(() => {
-    loadProducts();
-  }, []);
-
-  // Función para asignar imágenes basadas en el nombre o categoría del producto
-  const getProductImage = (product: Product): string => {
-    if (product.image_url && product.image_url.trim() !== '') {
-      return product.image_url;
-    }
-    const fallbacks = getImagesConfig().productFallbacks;
-    const defaultImg = fallbacks['default'] || '/images/categories/componentes.jpg';
-    const name = product.name.toLowerCase();
-    const category = product.category?.toLowerCase() || '';
-    // Asignar imágenes basadas en palabras clave
-    if (name.includes('ssd') && (name.includes('m.2') || name.includes('nvme') || name.includes('pcie'))) {
-      return fallbacks['ssd-m2'] || fallbacks['ssd-nvme'] || defaultImg;
-    }
-    if (name.includes('ssd') && (name.includes('sata') || name.includes('2.5'))) {
-      return fallbacks['ssd-sata'] || defaultImg;
-    }
-    if (name.includes('ssd')) {
-      return fallbacks['ssd'] || fallbacks['ssd-m2'] || defaultImg;
-    }
-    if (name.includes('ddr5') || (name.includes('memoria') && name.includes('ddr5'))) {
-      return fallbacks['ddr5'] || defaultImg;
-    }
-    if (name.includes('ddr4') || (name.includes('memoria') && name.includes('ddr4'))) {
-      return fallbacks['ddr4'] || defaultImg;
-    }
-    if (name.includes('memoria') || name.includes('ram')) {
-      return fallbacks['memoria'] || fallbacks['ram'] || defaultImg;
-    }
-    if (name.includes('gaming') || name.includes('gamer')) {
-      return fallbacks['gaming'] || defaultImg;
-    }
-    // Asignar por categoría si no se encontró por nombre
-    return fallbacks[category] || defaultImg;
-  };
-
-  const loadProducts = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      // Llamar a la API real
-      const response = await productService.getProducts({
-        page: 1,
-        per_page: getBusinessConfig().productsPerPage, // Cargar más productos
-        is_active: true
+    if (productsQuery.isSuccess && products.length === 0) {
+      addNotification({
+        type: 'info',
+        title: 'Información',
+        message: 'No se encontraron productos en la base de datos.',
       });
-      
-      // Normalizar la respuesta de la misma forma que en Home
-      const normalizeProducts = (response: any): Product[] => {
-        const productsData = Array.isArray(response) ? response : 
-                           (response?.data && Array.isArray(response.data) ? response.data : []);
-        
-        if (!Array.isArray(productsData)) {
-          return [];
-        }
-        
-        return productsData;
-      };
-      
-      const productArray = normalizeProducts(response);
-      
-      // Procesar productos y asignar imágenes
-      const productsWithImages = productArray.map(product => ({
-        ...product,
-        image_url: getProductImage(product)
-      }));
-      
-      setProducts(productsWithImages);
-      
-      if (productsWithImages.length === 0) {
-        addNotification({
-          type: 'info',
-          title: 'Información',
-          message: 'No se encontraron productos en la base de datos.',
-        });
-      }
-      
-    } catch (err: any) {
-      const errorMessage = err?.message || 'Error desconocido al cargar productos';
-      setError(errorMessage);
+    }
+  }, [addNotification, products.length, productsQuery.isSuccess]);
 
+  useEffect(() => {
+    if (productsQuery.isError) {
       addNotification({
         type: 'error',
         title: 'Error de conexión',
         message: 'No se pudieron cargar los productos desde el servidor. Verifica tu conexión.',
       });
-
-      // NO cargar productos fallback, dejar el array vacío
-      setProducts([]);
-      
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [addNotification, productsQuery.isError]);
 
   const formatPrice = (price: number, currency: string = getBusinessConfig().defaultCurrency) => {
     if (typeof price !== 'number' || isNaN(price)) {
@@ -144,10 +70,10 @@ export const ProductsPageApiReal: React.FC = () => {
     }).format(price);
   };
 
-  const filteredProducts = products.filter(product =>
+  const filteredProducts = useMemo(() => products.filter((product) =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  ), [products, searchTerm]);
 
   // Funciones para manejar cantidades
   const updateQuantity = (productId: string, quantity: number) => {
@@ -267,7 +193,7 @@ export const ProductsPageApiReal: React.FC = () => {
               </p>
               {error && (
                 <button 
-                  onClick={loadProducts}
+                  onClick={() => productsQuery.refetch()}
                   className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   Reintentar
@@ -307,7 +233,7 @@ export const ProductsPageApiReal: React.FC = () => {
                       src={product.image_url} 
                       alt={product.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      onError={(e) => handleImgError(e, '/placeholder-product.jpg')}
+                      onError={(e) => handleImgError(e)}
                     />
                   </div>
                 </Link>

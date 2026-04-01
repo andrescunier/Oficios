@@ -6,89 +6,49 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CreditCard, MapPin, User, Mail, Phone, Lock } from 'lucide-react';
 import { useStore } from '@/store/useStore';
-import { orderService } from '@/services/orderService';
-import { getPaymentMethodsConfig } from '@/config/runtime';
 import { PAYMENT_INFO, LEGAL, BUSINESS } from '@/config/branding';
+import { getPaymentMethodsConfig } from '@/config/runtime';
 import log from '@/lib/logger';
-
-interface ShippingInfo {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  address: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  country: string;
-}
-
-interface PaymentInfo {
-  cardNumber: string;
-  expiryDate: string;
-  cvv: string;
-  cardName: string;
-  paymentMethod: 'credit' | 'debit' | 'mercadopago' | 'transferencia' | 'efectivo';
-}
-
-// Función para obtener datos del usuario desde múltiples fuentes
-const getUserData = () => {
-  // Intentar obtener de registration_data (datos del registro)
-  const registrationData = localStorage.getItem('registration_data');
-  if (registrationData) {
-    try {
-      return JSON.parse(registrationData);
-    } catch (e) {
-      log.checkout.error('Error parsing registration data:', e);
-    }
-  }
-  return null;
-};
+import {
+  buildCheckoutPayload,
+  buildInitialShippingInfo,
+  getDefaultPaymentMethod,
+  type PaymentInfo,
+  type ShippingInfo,
+  validateShippingInfo,
+} from '@/features/checkout/model';
+import { useCheckoutMutation } from '@/features/checkout/mutations';
+import { isCheckoutSuccess, normalizeCheckoutFailure } from '@/features/checkout/result';
+import { clearAuthSession, getBusinessPartnerId, getPersistedRegistrationDraft, saveRegistrationDraft } from '@/features/auth/session';
+import { createCorrelationId, recordAppEvent } from '@/lib/observability';
 
 export const CheckoutPage: React.FC = () => {
   const { cart, clearCart, addNotification, auth } = useStore();
   const navigate = useNavigate();
+  const checkoutMutation = useCheckoutMutation();
   
-  // Obtener configuración de métodos de pago
+  const defaultPaymentMethod = useMemo(() => getDefaultPaymentMethod(), []);
   const paymentMethodsConfig = useMemo(() => getPaymentMethodsConfig(), []);
-  
-  // Determinar el método de pago por defecto (el primero habilitado)
-  const defaultPaymentMethod = useMemo(() => {
-    if (paymentMethodsConfig.transferencia) return 'transferencia';
-    if (paymentMethodsConfig.efectivo) return 'efectivo';
-    if (paymentMethodsConfig.mercadopago) return 'mercadopago';
-    if (paymentMethodsConfig.tarjeta) return 'tarjeta';
-    return 'transferencia'; // fallback
-  }, [paymentMethodsConfig]);
   
   const [currentStep, setCurrentStep] = useState<'shipping' | 'payment' | 'review'>('shipping');
   const [isProcessing, setIsProcessing] = useState(false);
 
   // Obtener datos guardados del registro
-  const savedUserData = getUserData();
+  const savedUserData = getPersistedRegistrationDraft();
 
-  // El business_partner_id viene de /auth/me (guardado automáticamente en localStorage después del login)
-  const businessPartnerId = localStorage.getItem('business_partner_id');
+  const businessPartnerId = getBusinessPartnerId();
 
-  // Pre-llenar datos del usuario logueado (prioridad: person > savedUserData > vacío)
-  const [shippingInfo, setShippingInfo] = useState<ShippingInfo>({
-    firstName: auth.user?.person?.first_name || savedUserData?.first_name || '',
-    lastName: auth.user?.person?.last_name || savedUserData?.last_name || '',
-    email: auth.user?.email || '',
-    phone: auth.user?.person?.phone || savedUserData?.phone || '',
-    address: savedUserData?.address || '',
-    city: savedUserData?.city || '',
-    state: savedUserData?.state || '',
-    zipCode: savedUserData?.zipCode || '',
-    country: BUSINESS.DEFAULT_COUNTRY
-  });
+  const [shippingInfo, setShippingInfo] = useState<ShippingInfo>(buildInitialShippingInfo({
+    authUser: auth.user,
+    registrationDraft: savedUserData,
+  }));
 
   const [paymentInfo, setPaymentInfo] = useState<PaymentInfo>({
     cardNumber: '',
     expiryDate: '',
     cvv: '',
     cardName: '',
-    paymentMethod: defaultPaymentMethod as any
+    paymentMethod: defaultPaymentMethod,
   });
 
   const formatPrice = (price: number, currency?: string) => {
@@ -147,30 +107,25 @@ export const CheckoutPage: React.FC = () => {
   };
 
   const validateShipping = () => {
-    const required = ['firstName', 'lastName', 'email', 'phone', 'address', 'city', 'zipCode'];
-    for (const field of required) {
-      if (!shippingInfo[field as keyof ShippingInfo]) {
-        addNotification({
-          type: 'error',
-          title: 'Campo requerido',
-          message: `Por favor completa el campo ${field}`,
-        });
-        return false;
-      }
+    const result = validateShippingInfo(shippingInfo);
+    if (!result.valid) {
+      addNotification({
+        type: 'error',
+        title: 'Campo requerido',
+        message: `Por favor completa el campo ${result.missingField}`,
+      });
+      return false;
     }
     
-    // Guardar datos del usuario para próximas compras
-    const userData = {
+    saveRegistrationDraft({
       first_name: shippingInfo.firstName,
       last_name: shippingInfo.lastName,
       phone: shippingInfo.phone,
-      // También guardar dirección para próximas compras
       address: shippingInfo.address,
       city: shippingInfo.city,
       state: shippingInfo.state,
-      zipCode: shippingInfo.zipCode
-    };
-    localStorage.setItem('registration_data', JSON.stringify(userData));
+      zipCode: shippingInfo.zipCode,
+    });
     
     return true;
   };
@@ -180,70 +135,77 @@ export const CheckoutPage: React.FC = () => {
     return true;
   };
 
+  const handleCheckoutFailure = (failure: ReturnType<typeof normalizeCheckoutFailure>, checkoutId?: string | null) => {
+    recordAppEvent('checkout_failed', {
+      checkoutId: checkoutId || null,
+      code: failure.code,
+      status: failure.status || null,
+      orderNumber: failure.orderNumber || null,
+      supportCode: failure.supportCode,
+    });
+
+    addNotification({
+      type: 'error',
+      title: failure.title,
+      message: `${failure.message} Código: ${failure.supportCode}`,
+      duration: 7000,
+    });
+
+    if (failure.shouldInvalidateSession) {
+      clearAuthSession({
+        redirect: failure.redirectTo || '/login?session=expired',
+        preserveCart: true,
+      });
+      return;
+    }
+
+    if (failure.redirectTo) {
+      navigate(failure.redirectTo, { replace: true });
+    }
+  };
+
   const handleFinalizeOrder = async () => {
     log.checkout.info('Iniciando checkout...');
     log.checkout.debug('Business Partner ID:', businessPartnerId);
     log.checkout.debug('Auth:', { isAuthenticated: auth.isAuthenticated, user: auth.user?.username });
     log.checkout.debug('Cart:', { items: cart.items.length, total: cart.total_amount, currency: cart.currency });
     setIsProcessing(true);
+    const checkoutId = createCorrelationId('chk');
     
     try {
-      // Preparar datos del checkout con la nueva estructura
-      // El servicio se encarga de (Order State Machine v2):
-      // 1. Verificar business_partner_id
-      // 2. Crear la orden (draft)
-      // 3. Submit: draft → pending_payment (reserva stock)
-      // 4. Crear el pago
-      // 5. Confirm Payment: pending_payment → confirmed (deduce stock)
-      const checkoutData = {
-        shippingInfo: {
-          firstName: shippingInfo.firstName,
-          lastName: shippingInfo.lastName,
-          email: shippingInfo.email,
-          phone: shippingInfo.phone,
-          address: shippingInfo.address,
-          city: shippingInfo.city,
-          state: shippingInfo.state,
-          zipCode: shippingInfo.zipCode,
-          country: shippingInfo.country,
-        },
-        items: cart.items.map(item => ({
-          product_id: item.product.id,
-          description: item.variant
-            ? `${item.product.name} - ${item.variant.name} (${Object.entries(item.selected_options || {}).map(([key, value]) => `${key}: ${value}`).join(', ')})`
-            : item.product.name,
-          quantity: item.quantity,
-          unit_price: item.unit_price,
-          tax_rate: item.product.tax_rate && item.product.tax_rate > 1 ? item.product.tax_rate / 100 : (item.product.tax_rate || BUSINESS.DEFAULT_TAX_RATE) // IVA en formato decimal
-        })),
-        lineItemsMetadata: cart.items.map(item => ({
-          product_id: item.product.id,
-          description: item.variant ? item.variant.name : item.product.name,
-          quantity: item.quantity,
-          unit_price: item.unit_price,
-          variant_id: item.variant?.id,
-          variant_sku: item.variant?.sku,
-          option_values: item.selected_options,
-        })),
+      const checkoutData = buildCheckoutPayload({
+        shippingInfo,
+        items: cart.items,
         currency: cart.currency || BUSINESS.DEFAULT_CURRENCY,
         totalAmount: cart.total_amount,
         paymentMethod: paymentInfo.paymentMethod,
-        notes: `Pedido web - ${shippingInfo.firstName} ${shippingInfo.lastName}`
-      };
+      });
+      recordAppEvent('checkout_started', {
+        checkoutId,
+        items: cart.items.length,
+        totalAmount: cart.total_amount,
+        paymentMethod: paymentInfo.paymentMethod,
+      });
 
-      // Pasar el business_partner_id del usuario logueado
       log.checkout.group('CheckoutData', () => console.log(JSON.stringify(checkoutData, null, 2)));
-      const result = await orderService.processCheckout(checkoutData, businessPartnerId || undefined);
+      const result = await checkoutMutation.mutateAsync({
+        payload: checkoutData,
+        businessPartnerId: businessPartnerId || undefined,
+      });
       
       log.checkout.group('Resultado checkout', () => console.log(JSON.stringify(result, null, 2)));
       
-      // Verificar que todas las operaciones fueron exitosas
-      if (result.success && result.salesOrder && result.payment) {
-        // Pago exitoso
+      if (isCheckoutSuccess(result)) {
+        recordAppEvent('checkout_succeeded', {
+          checkoutId,
+          orderNumber: result.orderNumber,
+          paymentMethod: result.paymentMethod || paymentInfo.paymentMethod,
+          paymentStatus: 'pending_backend_validation',
+        });
         addNotification({
           type: 'success',
-          title: '¡Pedido procesado exitosamente! 🎉',
-          message: `Tu orden ${result.orderNumber} ha sido creada. Te contactaremos pronto con novedades de tu pedido.`,
+          title: 'Pedido recibido',
+          message: `Tu orden ${result.orderNumber} fue creada y quedó pendiente de validación de pago por el backend.`,
         });
 
         // Guardar el total antes de limpiar el carrito
@@ -258,64 +220,17 @@ export const CheckoutPage: React.FC = () => {
           state: { 
             orderSuccess: true, 
             orderNumber: result.orderNumber,
-            paymentNumber: result.paymentNumber,
+            paymentMethod: result.paymentMethod || paymentInfo.paymentMethod,
             customerEmail: shippingInfo.email,
             totalAmount: totalAmount
           } 
         });
-        
       } else {
-        // Error en el procesamiento
-        const errorStep = result.error?.step || 'unknown';
-        let errorMessage = result.message || 'Error al procesar el pedido';
-        
-        if (errorStep === 'business_partner') {
-          errorMessage = 'No pudimos crear tu cuenta de cliente. Por favor intenta nuevamente.';
-        } else if (errorStep === 'stock_validation') {
-          errorMessage = result.message || 'Algunos productos no tienen stock suficiente. Por favor revisa tu carrito.';
-        } else if (errorStep === 'order') {
-          errorMessage = 'No pudimos crear tu orden. Por favor intenta nuevamente.';
-        } else if (errorStep === 'payment') {
-          errorMessage = 'Tu orden fue creada pero hubo un problema con el pago. Te contactaremos pronto.';
-        }
-        
-        throw new Error(errorMessage);
+        handleCheckoutFailure(normalizeCheckoutFailure(result), checkoutId);
       }
       
     } catch (error: any) {
-      let errorTitle = 'Error al procesar el pedido';
-      let errorMessage = error.message || 'Hubo un problema procesando tu pedido. Por favor intenta nuevamente.';
-      
-      // Personalizar mensaje según el tipo de error
-      if (error.response?.status === 400) {
-        errorTitle = 'Datos inválidos';
-        errorMessage = 'Por favor revisa la información ingresada e intenta nuevamente.';
-      } else if (error.response?.status === 401) {
-        errorTitle = 'Error de autenticación';
-        errorMessage = 'Tu sesión ha expirado. Por favor inicia sesión nuevamente.';
-      } else if (error.response?.status === 402) {
-        errorTitle = 'Pago rechazado';
-        errorMessage = 'El pago fue rechazado. Verifica los datos de tu tarjeta o prueba con otro método de pago.';
-      } else if (error.response?.status === 409) {
-        errorTitle = 'Orden duplicada';
-        errorMessage = 'Esta orden ya fue procesada. Revisa tu email para confirmar.';
-      } else if (error.response?.status >= 500) {
-        errorTitle = 'Error del servidor';
-        errorMessage = 'El servidor de pagos no está disponible. Intenta más tarde o contacta a soporte.';
-      } else if (error.code === 'NETWORK_ERROR' || error.message?.includes('Network')) {
-        errorTitle = 'Error de conexión';
-        errorMessage = 'No hay conexión con el servidor. Verifica tu internet e intenta nuevamente.';
-      } else if (error.message?.includes('timeout')) {
-        errorTitle = 'Tiempo agotado';
-        errorMessage = 'La operación tardó demasiado. Tu pago puede estar siendo procesado, revisa tu email.';
-      }
-      
-      addNotification({
-        type: 'error',
-        title: errorTitle,
-        message: `${errorMessage} Si el problema persiste, contacta a nuestro soporte con el código de error: ${error.response?.status || 'UNKNOWN'}`,
-      });
-      
+      handleCheckoutFailure(normalizeCheckoutFailure(error), checkoutId);
     } finally {
       setIsProcessing(false);
     }
@@ -726,7 +641,7 @@ export const CheckoutPage: React.FC = () => {
                     {cart.items.map((item) => (
                       <div key={item.line_id} className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg">
                         <img
-                          src={item.product.image_url || '/placeholder-product.jpg'}
+                          src={item.product.image_url || '/placeholder-product.svg'}
                           alt={item.product.name}
                           className="w-16 h-16 object-cover rounded"
                         />
@@ -784,7 +699,7 @@ export const CheckoutPage: React.FC = () => {
                 {cart.items.map((item) => (
                   <div key={item.line_id} className="flex items-center space-x-3">
                     <img
-                      src={item.product.image_url || '/placeholder-product.jpg'}
+                      src={item.product.image_url || '/placeholder-product.svg'}
                       alt={item.product.name}
                       className="w-12 h-12 object-cover rounded"
                     />

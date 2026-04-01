@@ -151,7 +151,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
                   <div key={item.line_id} className="flex space-x-3 p-3 border rounded-lg">
                     <div className="flex-shrink-0">
                       <img
-                        src={item.product.image_url || '/placeholder-product.jpg'}
+                        src={item.product.image_url || '/placeholder-product.svg'}
                         alt={item.product.name}
                         className="w-16 h-16 object-cover rounded-md"
                       />

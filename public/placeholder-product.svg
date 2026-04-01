@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800">
+  <rect width="800" height="800" fill="#f3f4f6"/>
+  <g transform="translate(400,380)" text-anchor="middle" font-family="system-ui,sans-serif">
+    <rect x="-60" y="-80" width="120" height="100" rx="8" fill="none" stroke="#9ca3af" stroke-width="4"/>
+    <circle cx="20" cy="-50" r="12" fill="none" stroke="#9ca3af" stroke-width="3"/>
+    <polyline points="-45,5 -15,-30 10,0 30,-15 50,5" fill="none" stroke="#9ca3af" stroke-width="3" stroke-linejoin="round"/>
+    <text y="60" font-size="24" fill="#9ca3af">Imagen no disponible</text>
+  </g>
+</svg>

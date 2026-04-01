@@ -124,8 +124,10 @@ const ToastItem: React.FC<ToastItemProps> = ({ notification, onDismiss }) => {
   );
 };
 
+const EMPTY_NOTIFICATIONS: never[] = [];
+
 export const NotificationToast: React.FC = () => {
-  const notifications = useStore((state) => state.ui?.notifications || []);
+  const notifications = useStore((state) => state.ui?.notifications ?? EMPTY_NOTIFICATIONS);
   const removeNotification = useStore((state) => state.removeNotification);
 
   if (notifications.length === 0) return null;

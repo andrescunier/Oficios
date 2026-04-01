@@ -4,7 +4,7 @@
 
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
+import {
   User, 
   Mail, 
   Phone, 
@@ -18,7 +18,6 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import { useStore } from '@/store/useStore';
-import { authService } from '@/services/authService';
 import { getBusinessConfig } from '@/config/runtime';
 
 export const ProfilePage: React.FC = () => {

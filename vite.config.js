@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import path from 'node:path';
@@ -14,9 +14,38 @@ export default defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) {
+            return;
+          }
+
+          if (id.includes('@radix-ui') || id.includes('embla-carousel-react') || id.includes('vaul')) {
+            return 'ui';
+          }
+
+          if (id.includes('@tanstack/react-query') || id.includes('axios')) {
+            return 'data';
+          }
+
+          if (id.includes('react') || id.includes('react-dom')) {
+            return 'react-vendor';
+          }
+        },
+      },
+    },
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
+  },
+  test: {
+    environment: 'jsdom',
+    setupFiles: './src/test/setup.ts',
+    globals: true,
+    exclude: ['e2e/**', 'dist/**', 'node_modules/**'],
   },
 });

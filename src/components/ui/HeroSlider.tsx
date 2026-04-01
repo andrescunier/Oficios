@@ -3,6 +3,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ASSETS } from '@/config/branding';
@@ -10,6 +11,7 @@ import { ASSETS } from '@/config/branding';
 export const HeroSlider: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const slides = ASSETS.HERO_SLIDES;
+  const navigate = useNavigate();
 
   // Auto-play slider
   useEffect(() => {
@@ -30,6 +32,15 @@ export const HeroSlider: React.FC = () => {
 
   const goToNext = () => {
     setCurrentSlide((prev) => (prev + 1) % slides.length);
+  };
+
+  const handleSlideNavigation = (link: string) => {
+    if (/^https?:\/\//.test(link)) {
+      window.location.assign(link);
+      return;
+    }
+
+    navigate(link);
   };
 
   if (!slides.length) {
@@ -77,7 +88,7 @@ export const HeroSlider: React.FC = () => {
               <Button
                 size="lg"
                 className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
-                onClick={() => window.location.href = slide.link}
+                onClick={() => handleSlideNavigation(slide.link)}
               >
                 {slide.cta}
               </Button>

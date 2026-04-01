@@ -1,13 +1,13 @@
 /**
- * Configuración central de la aplicación basada en variables de entorno
- * NOTA: Este archivo mantiene compatibilidad con el código existente
- * pero ahora usa la configuración runtime como fuente principal
+ * Fachada de configuración para el resto de la app.
+ * Mantiene la API pública existente, pero ya no depende de variables
+ * de entorno legacy fuera del bootstrap de la API.
  */
 
-import { 
-  getApiConfig, 
-  getAppConfig, 
-  getContactConfig, 
+import {
+  getApiConfig,
+  getAppConfig,
+  getContactConfig,
   getLegalConfig,
   getPaymentConfig,
   getBusinessConfig,
@@ -15,232 +15,148 @@ import {
   getThemeConfig,
   getSocialConfig,
   getFeaturesConfig,
-  getImagesConfig
+  getImagesConfig,
 } from './runtime';
+import { getPersistedActiveAccountId } from '@/features/auth/session';
 
-// =========================================
-// API CONFIGURATION (desde runtime)
-// =========================================
-const runtimeApi = getApiConfig();
 export const API_CONFIG = {
-  BASE_URL: runtimeApi.url,
-  ACCOUNT_ID: runtimeApi.accountId,
-  ACCOUNT_SLUG: runtimeApi.accountSlug,
+  get BASE_URL() { return getApiConfig().url; },
+  get ACCOUNT_ID() { return getApiConfig().accountId; },
+  get ACCOUNT_SLUG() { return getApiConfig().accountSlug; },
   TIMEOUT: 30000,
-  EXTRA_HEADERS: (() => {
-    try {
-      return JSON.parse(import.meta.env.VITE_API_EXTRA_HEADERS || '{}');
-    } catch {
-      return {};
-    }
-  })(),
-} as const;
+  get EXTRA_HEADERS() { return getApiConfig().extraHeaders; },
+};
 
-// =========================================
-// BRANDING & COMPANY INFO (desde runtime)
-// =========================================
-const runtimeApp = getAppConfig();
-const runtimeContact = getContactConfig();
 export const BRANDING = {
-  // App Information
-  APP_NAME: runtimeApp.name,
-  COMPANY_NAME: runtimeApp.companyName,
-  APP_SLOGAN: runtimeApp.slogan,
-  APP_URL: runtimeApp.url,
-  APP_DESCRIPTION: runtimeApp.description,
-  
-  // Contact Information
-  CONTACT_EMAIL: runtimeContact.email,
-  CONTACT_PHONE: runtimeContact.phone,
-  CONTACT_ADDRESS: runtimeContact.address,
-} as const;
+  get APP_NAME() { return getAppConfig().name; },
+  get COMPANY_NAME() { return getAppConfig().companyName; },
+  get APP_SLOGAN() { return getAppConfig().slogan; },
+  get APP_URL() { return getAppConfig().url; },
+  get APP_DESCRIPTION() { return getAppConfig().description; },
+  get CONTACT_EMAIL() { return getContactConfig().email; },
+  get CONTACT_PHONE() { return getContactConfig().phone; },
+  get CONTACT_ADDRESS() { return getContactConfig().address; },
+};
 
-// =========================================
-// ASSETS & IMAGES (desde runtime)
-// =========================================
-const runtimeBranding = getRuntimeBranding();
-const runtimeImages = getImagesConfig();
 export const ASSETS = {
-  // Logos
-  LOGO_PATH: runtimeBranding.logo,
-  FAVICON_PATH: runtimeBranding.favicon,
-  HEADER_LOGO_PATH: runtimeBranding.logo,
-  FOOTER_LOGO_PATH: runtimeBranding.logo,
-  LOGO_DARK_PATH: runtimeBranding.logoDark,
-  
-  // Hero Slider Images (desde runtime config)
-  HERO_SLIDES: runtimeImages.heroSlides,
-  
-  // Category Images (dinámico desde runtime config productFallbacks)
-  CATEGORIES: runtimeImages.productFallbacks,
-  
-  // Banner & Promotional Images (desde runtime config)
-  BANNERS: {
-    MAIN: runtimeImages.banners.main,
-    SECONDARY: runtimeImages.banners.secondary,
-    SEASONAL: runtimeImages.banners.seasonal,
-    SALE: runtimeImages.banners.sale
+  get LOGO_PATH() { return getRuntimeBranding().logo; },
+  get FAVICON_PATH() { return getRuntimeBranding().favicon; },
+  get HEADER_LOGO_PATH() { return getRuntimeBranding().headerLogo; },
+  get FOOTER_LOGO_PATH() { return getRuntimeBranding().footerLogo; },
+  get LOGO_DARK_PATH() { return getRuntimeBranding().logoDark; },
+  get HERO_SLIDES() { return getImagesConfig().heroSlides; },
+  get CATEGORIES() { return getImagesConfig().productFallbacks; },
+  get BANNERS() {
+    const images = getImagesConfig();
+    return {
+      MAIN: images.banners.main,
+      SECONDARY: images.banners.secondary,
+      SEASONAL: images.banners.seasonal,
+      SALE: images.banners.sale,
+    };
   },
-  
-  // Background Images (desde runtime config)
-  BACKGROUNDS: {
-    HERO: runtimeImages.backgrounds.hero,
-    FEATURES: runtimeImages.backgrounds.features,
-    TESTIMONIALS: runtimeImages.backgrounds.testimonials
+  get BACKGROUNDS() {
+    const images = getImagesConfig();
+    return {
+      HERO: images.backgrounds.hero,
+      FEATURES: images.backgrounds.features,
+      TESTIMONIALS: images.backgrounds.testimonials,
+    };
   },
-  
-  // Placeholder Images (desde runtime config)
-  PLACEHOLDERS: {
-    PRODUCT: runtimeImages.placeholders.product,
-    CATEGORY: runtimeImages.placeholders.category,
-    USER: runtimeImages.placeholders.user
+  get PLACEHOLDERS() {
+    const images = getImagesConfig();
+    return {
+      PRODUCT: images.placeholders.product,
+      CATEGORY: images.placeholders.category,
+      USER: images.placeholders.user,
+    };
   },
-  
-  // Función helper para obtener URLs completas
   getAssetUrl: (path: string) => {
     if (path.startsWith('http')) return path;
     return `${BRANDING.APP_URL}${path.startsWith('/') ? path : `/${path}`}`;
-  }
-} as const;
+  },
+};
 
-// =========================================
-// SOCIAL MEDIA & LINKS (desde runtime)
-// =========================================
-const runtimeSocial = getSocialConfig();
 export const SOCIAL_LINKS = {
-  FACEBOOK: runtimeSocial.facebook,
-  INSTAGRAM: runtimeSocial.instagram,
-  TWITTER: runtimeSocial.twitter,
-  LINKEDIN: runtimeSocial.linkedin,
-} as const;
+  get FACEBOOK() { return getSocialConfig().facebook; },
+  get INSTAGRAM() { return getSocialConfig().instagram; },
+  get TWITTER() { return getSocialConfig().twitter; },
+  get LINKEDIN() { return getSocialConfig().linkedin; },
+};
 
-// Función helper para verificar si un link está configurado
 export const isSocialLinkConfigured = (platform: keyof typeof SOCIAL_LINKS): boolean => {
   return Boolean(SOCIAL_LINKS[platform]);
 };
 
-// =========================================
-// CONTACT CONFIG (desde runtime)
-// =========================================
-const runtimeContact2 = getContactConfig();
 export const CONTACT = {
-  EMAIL: runtimeContact2.email,
-  SALES_EMAIL: runtimeContact2.salesEmail,
-  PHONE: runtimeContact2.phone,
-  WHATSAPP: runtimeContact2.whatsapp,
-  ADDRESS: runtimeContact2.address,
-  WHATSAPP_LINK: runtimeContact2.whatsapp ? `https://wa.me/${runtimeContact2.whatsapp}` : '',
-} as const;
+  get EMAIL() { return getContactConfig().email; },
+  get SALES_EMAIL() { return getContactConfig().salesEmail; },
+  get PHONE() { return getContactConfig().phone; },
+  get WHATSAPP() { return getContactConfig().whatsapp; },
+  get ADDRESS() { return getContactConfig().address; },
+  get WHATSAPP_LINK() {
+    const whatsapp = getContactConfig().whatsapp;
+    return whatsapp ? `https://wa.me/${whatsapp}` : '';
+  },
+};
 
-// =========================================
-// LEGAL CONFIG (desde runtime)
-// =========================================
-const runtimeLegal = getLegalConfig();
 export const LEGAL = {
-  COMPANY_NAME: runtimeLegal.companyName,
-  CUIT: runtimeLegal.cuit,
-  ADDRESS: runtimeLegal.address,
-  JURISDICTION: runtimeLegal.jurisdiction,
-} as const;
+  get COMPANY_NAME() { return getLegalConfig().companyName; },
+  get CUIT() { return getLegalConfig().cuit; },
+  get ADDRESS() { return getLegalConfig().address; },
+  get JURISDICTION() { return getLegalConfig().jurisdiction; },
+};
 
-// =========================================
-// PAYMENT CONFIG (desde runtime)
-// =========================================
-const runtimePayment = getPaymentConfig();
 export const PAYMENT_INFO = {
-  BANK_NAME: runtimePayment.bankName,
-  ACCOUNT_HOLDER: runtimePayment.accountHolder,
-  CBU: runtimePayment.cbu,
-  ALIAS: runtimePayment.alias,
-  WA_VERIFICATION: runtimePayment.whatsappVerification,
-} as const;
+  get BANK_NAME() { return getPaymentConfig().bankName; },
+  get ACCOUNT_HOLDER() { return getPaymentConfig().accountHolder; },
+  get CBU() { return getPaymentConfig().cbu; },
+  get ALIAS() { return getPaymentConfig().alias; },
+  get WA_VERIFICATION() { return getPaymentConfig().whatsappVerification; },
+};
 
-// =========================================
-// BUSINESS CONFIG (desde runtime)
-// =========================================
-const runtimeBusiness = getBusinessConfig();
 export const BUSINESS = {
-  DEFAULT_TAX_RATE: runtimeBusiness.defaultTaxRate,
-  MAX_QUANTITY_PER_PRODUCT: runtimeBusiness.maxQuantityPerProduct,
-  DEFAULT_CURRENCY: runtimeBusiness.defaultCurrency,
-  DEFAULT_COUNTRY: runtimeBusiness.defaultCountry,
-  BUSINESS_HOURS: runtimeBusiness.businessHours,
-  RETURN_POLICY_DAYS: runtimeBusiness.returnPolicyDays,
-  REFUND_PROCESSING_TIME: runtimeBusiness.refundProcessingTime,
-  PRODUCTS_PER_PAGE: runtimeBusiness.productsPerPage,
-  FEATURED_PRODUCTS_COUNT: runtimeBusiness.featuredProductsCount,
-  HERO_SLIDER_INTERVAL: runtimeBusiness.heroSliderInterval,
-  INVOICE_NOTE: runtimeBusiness.invoiceNote,
-  FREE_SHIPPING_THRESHOLD: runtimeBusiness.freeShippingThreshold,
-  LOCALE: runtimeBusiness.locale,
-} as const;
+  get DEFAULT_TAX_RATE() { return getBusinessConfig().defaultTaxRate; },
+  get MAX_QUANTITY_PER_PRODUCT() { return getBusinessConfig().maxQuantityPerProduct; },
+  get DEFAULT_CURRENCY() { return getBusinessConfig().defaultCurrency; },
+  get DEFAULT_COUNTRY() { return getBusinessConfig().defaultCountry; },
+  get BUSINESS_HOURS() { return getBusinessConfig().businessHours; },
+  get RETURN_POLICY_DAYS() { return getBusinessConfig().returnPolicyDays; },
+  get REFUND_PROCESSING_TIME() { return getBusinessConfig().refundProcessingTime; },
+  get PRODUCTS_PER_PAGE() { return getBusinessConfig().productsPerPage; },
+  get FEATURED_PRODUCTS_COUNT() { return getBusinessConfig().featuredProductsCount; },
+  get HERO_SLIDER_INTERVAL() { return getBusinessConfig().heroSliderInterval; },
+  get INVOICE_NOTE() { return getBusinessConfig().invoiceNote; },
+  get FREE_SHIPPING_THRESHOLD() { return getBusinessConfig().freeShippingThreshold; },
+  get LOCALE() { return getBusinessConfig().locale; },
+};
 
-// =========================================
-// APP CONFIGURATION
-// =========================================
 export const APP_CONFIG = {
-  ENV: import.meta.env.VITE_APP_ENV || 'production',
-  VERSION: import.meta.env.VITE_APP_VERSION || '1.2.14',
+  ENV: import.meta.env.DEV ? 'development' : 'production',
+  VERSION: __APP_VERSION__,
   IS_DEVELOPMENT: import.meta.env.DEV,
   IS_PRODUCTION: import.meta.env.PROD,
   API_LOGGING: false,
 } as const;
 
-// =========================================
-// FEATURE FLAGS (desde runtime)
-// =========================================
-const runtimeFeatures = getFeaturesConfig();
 export const FEATURES = {
-  // Feature flags
-  NOTIFICATIONS: runtimeFeatures.notifications,
-  ANALYTICS: runtimeFeatures.analytics,
-  REAL_PAYMENTS: runtimeFeatures.realPayments,
-  
-  // B2B Specific Features (desde runtime app config)
-  HIDE_PRICES_FOR_GUESTS: runtimeApp.hidePricesForGuests,
-  LOGIN_TO_VIEW_PRICES_MESSAGE: runtimeApp.loginMessage,
-  LOGIN_FOR_PRICES_CTA: runtimeApp.loginCta,
-  REQUIRE_AUTH_FOR_CART: runtimeApp.requireAuthForCart,
-  
-  // Shipping and benefits features
-  SHIPPING_BENEFITS: [
-    {
-      icon: 'Truck',
-      title: import.meta.env.VITE_FEATURE_FREE_SHIPPING_TITLE || 'Envío Gratis',
-      description: import.meta.env.VITE_FEATURE_FREE_SHIPPING_DESC || 'En todas tus compras'
-    },
-    {
-      icon: 'Shield',
-      title: import.meta.env.VITE_FEATURE_SECURE_PURCHASE_TITLE || 'Compra Segura',
-      description: import.meta.env.VITE_FEATURE_SECURE_PURCHASE_DESC || 'Protegemos tus datos'
-    },
-    {
-      icon: 'CreditCard',
-      title: import.meta.env.VITE_FEATURE_PAYMENT_METHOD_TITLE || 'Transferencia Bancaria',
-      description: import.meta.env.VITE_FEATURE_PAYMENT_METHOD_DESC || 'Método de pago seguro'
-    }
-  ]
-} as const;
+  get NOTIFICATIONS() { return getFeaturesConfig().notifications; },
+  get ANALYTICS() { return getFeaturesConfig().analytics; },
+  get REAL_PAYMENTS() { return getFeaturesConfig().realPayments; },
+  get HIDE_PRICES_FOR_GUESTS() { return getAppConfig().hidePricesForGuests; },
+  get LOGIN_TO_VIEW_PRICES_MESSAGE() { return getAppConfig().loginMessage; },
+  get LOGIN_FOR_PRICES_CTA() { return getAppConfig().loginCta; },
+  get REQUIRE_AUTH_FOR_CART() { return getAppConfig().requireAuthForCart; },
+  get SHIPPING_BENEFITS() { return getFeaturesConfig().benefits; },
+};
 
-// =========================================
-// COLORS & THEMING (desde runtime)
-// =========================================
-const runtimeTheme = getThemeConfig();
 export const THEME = {
-  PRIMARY_COLOR: runtimeTheme.colorPrimary,
-  SECONDARY_COLOR: runtimeTheme.colorSecondary,
-  ACCENT_COLOR: runtimeTheme.colorAccent,
-  
-  // Función helper para aplicar colores CSS (ahora manejado por theme.ts)
-  applyCSSVariables: () => {
-    // Las variables CSS ahora se manejan en src/config/theme.ts
-    // Esta función se mantiene por compatibilidad
-  },
-} as const;
+  get PRIMARY_COLOR() { return getThemeConfig().colorPrimary; },
+  get SECONDARY_COLOR() { return getThemeConfig().colorSecondary; },
+  get ACCENT_COLOR() { return getThemeConfig().colorAccent; },
+  applyCSSVariables: () => {},
+};
 
-// =========================================
-// METADATA FOR SEO
-// =========================================
 export const SEO_METADATA = {
   title: `${BRANDING.APP_NAME} - ${BRANDING.APP_SLOGAN}`,
   description: `${BRANDING.COMPANY_NAME} - ${BRANDING.APP_SLOGAN}. Productos de tecnología con la mejor calidad y precios.`,
@@ -250,9 +166,6 @@ export const SEO_METADATA = {
   image: ASSETS.getAssetUrl(ASSETS.LOGO_PATH),
 } as const;
 
-// =========================================
-// EXPORTS
-// =========================================
 export default {
   API_CONFIG,
   BRANDING,
@@ -264,19 +177,15 @@ export default {
   SEO_METADATA,
 };
 
-// =========================================
-// HELPER FUNCTIONS
-// =========================================
-
-/**
- * Obtiene la configuración completa de branding
- */
 export const getBrandingConfig = () => ({
   name: BRANDING.APP_NAME,
   fullName: BRANDING.COMPANY_NAME,
   slogan: BRANDING.APP_SLOGAN,
   logo: ASSETS.LOGO_PATH,
   headerLogo: ASSETS.HEADER_LOGO_PATH,
+  footerLogo: ASSETS.FOOTER_LOGO_PATH,
+  favicon: ASSETS.FAVICON_PATH,
+  ogImage: getRuntimeBranding().ogImage,
   contact: {
     email: BRANDING.CONTACT_EMAIL,
     phone: BRANDING.CONTACT_PHONE,
@@ -284,56 +193,21 @@ export const getBrandingConfig = () => ({
   social: SOCIAL_LINKS,
 });
 
-/**
- * Obtiene los headers para llamadas API
- */
 export const getAPIHeaders = () => ({
   'Content-Type': 'application/json',
-  'Accept': 'application/json',
-  'X-Account-ID': (() => {
-    if (typeof window === 'undefined') {
-      return API_CONFIG.ACCOUNT_ID;
-    }
-    return window.localStorage.getItem('active_account_id') || API_CONFIG.ACCOUNT_ID;
-  })(),
-  ...API_CONFIG.EXTRA_HEADERS,
+  Accept: 'application/json',
+  ...getApiConfig().extraHeaders,
+  'X-Account-ID': getPersistedActiveAccountId() || API_CONFIG.ACCOUNT_ID,
 });
 
-/**
- * Valida que todas las variables de entorno críticas estén configuradas
- */
 export const validateEnvironment = () => {
-  // En producción, la configuración puede venir de window.__APP_CONFIG__ (runtime config)
-  const runtimeConfig = (window as any).__APP_CONFIG__;
-  if (runtimeConfig?.API_BASE_URL && runtimeConfig?.ACCOUNT_ID) {
-    return true;
-  }
-
-  const required = [
-    'VITE_API_BASE_URL',
-    'VITE_ACCOUNT_ID',
-  ];
-  
-  const missing = required.filter(key => !import.meta.env[key]);
-  
-  if (missing.length > 0) {
-    return false;
-  }
-  
-  return true;
+  return Boolean(import.meta.env.VITE_API_BASE_URL && import.meta.env.VITE_ACCOUNT_ID);
 };
 
-/**
- * Inicializa la configuración de la aplicación
- */
 export const initializeApp = () => {
-  // Validar variables de entorno
   if (!validateEnvironment()) {
-    throw new Error('Configuración de variables de entorno inválida');
+    throw new Error('Configuración de entorno inválida: faltan VITE_API_BASE_URL o VITE_ACCOUNT_ID');
   }
-  
-  // Aplicar colores CSS
+
   THEME.applyCSSVariables();
-  
-  // Configuración inicializada
 };

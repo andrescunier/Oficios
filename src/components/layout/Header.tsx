@@ -2,7 +2,7 @@
  * Header profesional para Ecommerce
  */
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   Search, 
@@ -12,7 +12,8 @@ import {
   LogIn,
   UserPlus,
   X,
-  Heart
+  Heart,
+  ChevronDown,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,7 +27,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useStore } from '@/store/useStore';
-import { clearClientSession } from '@/lib/session';
 import { BRANDING, ASSETS } from '@/config/branding';
 import { getCategoriesConfig } from '@/config/runtime';
 
@@ -55,16 +55,23 @@ export const Header: React.FC = () => {
 
   const handleLogout = () => {
     logout();
-    clearClientSession();
     setIsMenuOpen(false);
-    // Redirigir a home después del logout
-    window.location.href = '/';
+    navigate('/', { replace: true });
   };
 
-  const categories = getCategoriesConfig().map(c => ({
-    name: c.name,
-    href: c.link,
-  }));
+  const categories = getCategoriesConfig();
+  const categoryGroups = useMemo(() => {
+    const grouped = categories.reduce<Record<string, typeof categories>>((acc, category) => {
+      const groupName = category.group?.trim() || 'Categorias';
+      if (!acc[groupName]) {
+        acc[groupName] = [];
+      }
+      acc[groupName].push(category);
+      return acc;
+    }, {});
+
+    return Object.entries(grouped);
+  }, [categories]);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -95,16 +102,48 @@ export const Header: React.FC = () => {
               )}
             </Link>
 
-            <nav className="hidden lg:flex space-x-8">
-              {categories.map((category) => (
-                <Link
-                  key={category.name}
-                  to={category.href}
-                  className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
-                >
-                  {category.name}
-                </Link>
-              ))}
+            <nav className="hidden lg:flex items-center space-x-6">
+              {categoryGroups.length > 0 ? (
+                <div className="relative group">
+                  <button className="flex items-center gap-1 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
+                    Categorias
+                    <ChevronDown className="h-3.5 w-3.5 transition-transform group-hover:rotate-180" />
+                  </button>
+                  <div className="absolute left-0 top-full z-50 invisible pt-2 opacity-0 transition-all duration-200 group-hover:visible group-hover:opacity-100">
+                    <div
+                      className="grid min-w-[280px] gap-4 rounded-lg border bg-background p-4 shadow-lg"
+                      style={{
+                        gridTemplateColumns: `repeat(${Math.min(Math.max(categoryGroups.length, 1), 3)}, minmax(0, 1fr))`,
+                      }}
+                    >
+                      {categoryGroups.map(([groupName, groupCategories]) => (
+                        <div key={groupName}>
+                          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                            {groupName}
+                          </p>
+                          <div className="space-y-1">
+                            {groupCategories.map((category) => (
+                              <Link
+                                key={category.slug || category.name}
+                                to={category.link}
+                                className="block py-1 text-sm text-foreground transition-colors hover:text-primary"
+                              >
+                                {category.name}
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+              <Link
+                to="/productos"
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+              >
+                Todos los Productos
+              </Link>
             </nav>
           </div>
 
@@ -224,16 +263,30 @@ export const Header: React.FC = () => {
             </form>
 
             <nav className="space-y-2 mb-4">
-              {categories.map((category) => (
-                <Link
-                  key={category.name}
-                  to={category.href}
-                  className="block py-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  {category.name}
-                </Link>
+              {categoryGroups.map(([groupName, groupCategories]) => (
+                <div key={groupName} className="space-y-1">
+                  <p className="pt-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    {groupName}
+                  </p>
+                  {groupCategories.map((category) => (
+                    <Link
+                      key={category.slug || category.name}
+                      to={category.link}
+                      className="block py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      {category.name}
+                    </Link>
+                  ))}
+                </div>
               ))}
+              <Link
+                to="/productos"
+                className="block py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Todos los Productos
+              </Link>
             </nav>
 
             <div className="space-y-2 border-t pt-4">

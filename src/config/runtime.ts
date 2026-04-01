@@ -1,12 +1,16 @@
 /**
- * Runtime Configuration Helper
- * Accede a la configuración inyectada en window.__APP_CONFIG__
- * con fallbacks a variables de entorno de Vite para desarrollo
+ * Runtime configuration
+ * La app se inicializa con dos variables de entorno:
+ * - VITE_API_BASE_URL
+ * - VITE_ACCOUNT_ID
+ *
+ * Todo el resto debe venir del endpoint:
+ * GET /api/accounts/{accountId}/ecommerce-config
  */
 
-// Tipo para la configuración runtime
 export interface HeroSlideConfig {
   image: string;
+  mobileImage?: string;
   title: string;
   subtitle: string;
   cta: string;
@@ -18,10 +22,15 @@ export interface CategoryConfig {
   image: string;
   link: string;
   description: string;
-  /** Slug usado en la URL (ej: 'ssd-sata'). Si no se provee, se extrae de link. */
   slug?: string;
-  /** Keywords para buscar productos de esta categoría en nombre, descripción y metadata */
+  group?: string;
   searchTerms?: string[];
+}
+
+export interface FeatureBenefitConfig {
+  icon: string;
+  title: string;
+  description: string;
 }
 
 export interface ImagesConfig {
@@ -43,7 +52,6 @@ export interface ImagesConfig {
     seasonal: string;
     sale: string;
   };
-  /** Mapa de keyword → URL de imagen para fallback de productos sin image_url */
   productFallbacks: Record<string, string>;
 }
 
@@ -51,10 +59,16 @@ export interface FilterConfig {
   enabled: boolean;
   capacidad: boolean;
   velocidad: boolean;
-  /** Opciones personalizadas de capacidad */
   capacidadOptions?: Array<{ value: string; label: string }>;
-  /** Opciones personalizadas de velocidad */
   velocidadOptions?: Array<{ value: string; label: string }>;
+}
+
+export interface ObservabilityConfig {
+  enabled: boolean;
+  endpoint: string;
+  flushIntervalMs: number;
+  maxQueueSize: number;
+  useBeacon: boolean;
 }
 
 export interface RuntimeConfig {
@@ -63,7 +77,9 @@ export interface RuntimeConfig {
     accountId: string;
     accountSlug: string;
     channel?: string;
+    extraHeaders: Record<string, string>;
   };
+  cdnBaseUrl?: string;
   app: {
     name: string;
     companyName: string;
@@ -88,33 +104,25 @@ export interface RuntimeConfig {
     address: string;
     jurisdiction: string;
   };
-  /** Reglas de negocio configurables por tenant */
   business: {
-    /** Tasa de IVA por defecto (decimal, ej: 0.21 = 21%) */
     defaultTaxRate: number;
-    /** Cantidad máxima de unidades por producto en el carrito */
     maxQuantityPerProduct: number;
-    /** Moneda por defecto (código ISO, ej: "ARS") */
     defaultCurrency: string;
-    /** País por defecto */
     defaultCountry: string;
-    /** Horario de atención */
     businessHours: string;
-    /** Plazo de devolución en texto */
     returnPolicyDays: string;
-    /** Plazo de reembolso en texto */
     refundProcessingTime: string;
-    /** Productos por página en listados */
     productsPerPage: number;
-    /** Cantidad de productos destacados en Home */
     featuredProductsCount: number;
-    /** Intervalo de autoplay del hero slider (ms) */
     heroSliderInterval: number;
-    /** Nota o texto corto de facturación */
     invoiceNote: string;
+    freeShippingThreshold: number;
+    locale: string;
   };
   branding: {
     logo: string;
+    headerLogo: string;
+    footerLogo: string;
     logoDark: string;
     favicon: string;
     banner: string;
@@ -153,6 +161,7 @@ export interface RuntimeConfig {
     notifications: boolean;
     analytics: boolean;
     realPayments: boolean;
+    benefits: FeatureBenefitConfig[];
   };
   filters: FilterConfig;
   paymentMethods: {
@@ -168,363 +177,537 @@ export interface RuntimeConfig {
     alias: string;
     whatsappVerification: string;
   };
+  observability: ObservabilityConfig;
   images: ImagesConfig;
 }
 
-// Extender Window para TypeScript
+type DeepPartial<T> = {
+  [K in keyof T]?: T[K] extends Array<infer U>
+    ? Array<DeepPartial<U>>
+    : T[K] extends object
+      ? DeepPartial<T[K]>
+      : T[K];
+};
+
 declare global {
   interface Window {
-    __APP_CONFIG__?: RuntimeConfig;
+    __APP_CONFIG__?: DeepPartial<RuntimeConfig>;
   }
 }
 
-/**
- * Obtiene el valor de configuración runtime con fallback a Vite env
- */
-function getEnvValue(runtimeValue: string | undefined, viteKey: string, defaultValue: string): string {
-  // Primero intentar runtime config
-  if (runtimeValue !== undefined && runtimeValue !== '') {
-    return runtimeValue;
-  }
-  // Luego intentar variable de Vite (solo en desarrollo)
-  const viteValue = import.meta.env[viteKey];
-  if (viteValue !== undefined && viteValue !== '') {
-    return viteValue;
-  }
-  // Finalmente usar default
-  return defaultValue;
-}
-
-/**
- * Obtiene valor boolean con fallback
- */
-function getBoolValue(runtimeValue: boolean | undefined, viteKey: string, defaultValue: boolean): boolean {
-  if (runtimeValue !== undefined) {
-    return runtimeValue;
-  }
-  const viteValue = import.meta.env[viteKey];
-  if (viteValue !== undefined) {
-    return viteValue === 'true';
-  }
-  return defaultValue;
-}
-
-/**
- * Obtiene valor numérico con fallback
- */
-function getNumberValue(runtimeValue: number | undefined, viteKey: string, defaultValue: number): number {
-  if (runtimeValue !== undefined && !isNaN(runtimeValue)) {
-    return runtimeValue;
-  }
-  const viteValue = import.meta.env[viteKey];
-  if (viteValue !== undefined && !isNaN(Number(viteValue))) {
-    return Number(viteValue);
-  }
-  return defaultValue;
-}
-
-/**
- * Configuración de API
- */
-export const getApiConfig = () => {
-  const rc = window.__APP_CONFIG__;
-  return {
-    url: getEnvValue(rc?.api?.url, 'VITE_API_BASE_URL', 'https://api.cumar.com.ar'),
-    accountId: getEnvValue(rc?.api?.accountId, 'VITE_ACCOUNT_ID', 'bed2df35-717f-4900-a4b1-7c3a7fb59b7c'),
-    accountSlug: getEnvValue(rc?.api?.accountSlug, 'VITE_ACCOUNT_SLUG', 'diap'),
-    channel: getEnvValue(rc?.api?.channel, 'VITE_CHANNEL', 'ecommerce'),
-  };
-};
-
-/**
- * Configuración de la aplicación
- */
-export const getAppConfig = () => {
-  const rc = window.__APP_CONFIG__;
-  return {
-    name: getEnvValue(rc?.app?.name, 'VITE_APP_NAME', 'Mi Tienda'),
-    companyName: getEnvValue(rc?.app?.companyName, 'VITE_COMPANY_NAME', 'Mi Empresa'),
-    slogan: getEnvValue(rc?.app?.slogan, 'VITE_APP_SLOGAN', 'Tu tienda online'),
-    description: getEnvValue(rc?.app?.description, 'VITE_APP_DESCRIPTION', 'Tienda online de productos'),
-    url: getEnvValue(rc?.app?.url, 'VITE_APP_URL', ''),
-    hidePricesForGuests: getBoolValue(rc?.app?.hidePricesForGuests, 'VITE_HIDE_PRICES_FOR_GUESTS', true),
-    requireAuthForCart: getBoolValue(rc?.app?.requireAuthForCart, 'VITE_REQUIRE_AUTH_FOR_CART', true),
-    loginMessage: getEnvValue(rc?.app?.loginMessage, 'VITE_LOGIN_TO_VIEW_PRICES_MESSAGE', 'Inicia sesión para ver precios'),
-    loginCta: getEnvValue(rc?.app?.loginCta, 'VITE_LOGIN_FOR_PRICES_CTA', 'Iniciar Sesión'),
-  };
-};
-
-/**
- * Configuración de contacto
- */
-export const getContactConfig = () => {
-  const rc = window.__APP_CONFIG__;
-  return {
-    email: getEnvValue(rc?.contact?.email, 'VITE_CONTACT_EMAIL', 'info@tienda.com'),
-    salesEmail: getEnvValue(rc?.contact?.salesEmail, 'VITE_CONTACT_SALES_EMAIL', 'ventas@tienda.com'),
-    phone: getEnvValue(rc?.contact?.phone, 'VITE_CONTACT_PHONE', ''),
-    whatsapp: getEnvValue(rc?.contact?.whatsapp, 'VITE_CONTACT_WHATSAPP', ''),
-    address: getEnvValue(rc?.contact?.address, 'VITE_CONTACT_ADDRESS', ''),
-  };
-};
-
-/**
- * Configuración de datos legales de la empresa
- */
-export const getLegalConfig = () => {
-  const rc = window.__APP_CONFIG__;
-  const app = getAppConfig();
-  return {
-    companyName: getEnvValue(rc?.legal?.companyName, 'VITE_LEGAL_COMPANY_NAME', app.companyName),
-    cuit: getEnvValue(rc?.legal?.cuit, 'VITE_LEGAL_CUIT', ''),
-    address: getEnvValue(rc?.legal?.address, 'VITE_LEGAL_ADDRESS', ''),
-    jurisdiction: getEnvValue(rc?.legal?.jurisdiction, 'VITE_LEGAL_JURISDICTION', ''),
-  };
-};
-
-/**
- * Configuración de datos de pago (transferencia bancaria)
- */
-export const getPaymentConfig = () => {
-  const rc = window.__APP_CONFIG__;
-  return {
-    bankName: getEnvValue(rc?.payment?.bankName, 'VITE_PAYMENT_BANK_NAME', ''),
-    accountHolder: getEnvValue(rc?.payment?.accountHolder, 'VITE_PAYMENT_ACCOUNT_HOLDER', ''),
-    cbu: getEnvValue(rc?.payment?.cbu, 'VITE_PAYMENT_CBU', ''),
-    alias: getEnvValue(rc?.payment?.alias, 'VITE_PAYMENT_ALIAS', ''),
-    whatsappVerification: getEnvValue(rc?.payment?.whatsappVerification, 'VITE_PAYMENT_WA_VERIFICATION', ''),
-  };
-};
-
-/**
- * Configuración de reglas de negocio
- */
-export const getBusinessConfig = () => {
-  const rc = window.__APP_CONFIG__;
-  return {
-    defaultTaxRate: getNumberValue(rc?.business?.defaultTaxRate, 'VITE_DEFAULT_TAX_RATE', 0.21),
-    maxQuantityPerProduct: getNumberValue(rc?.business?.maxQuantityPerProduct, 'VITE_MAX_QUANTITY_PER_PRODUCT', 5),
-    defaultCurrency: getEnvValue(rc?.business?.defaultCurrency, 'VITE_DEFAULT_CURRENCY', 'ARS'),
-    defaultCountry: getEnvValue(rc?.business?.defaultCountry, 'VITE_DEFAULT_COUNTRY', 'Argentina'),
-    businessHours: getEnvValue(rc?.business?.businessHours, 'VITE_BUSINESS_HOURS', 'Lunes a Viernes: 9:00 - 18:00hs'),
-    returnPolicyDays: getEnvValue(rc?.business?.returnPolicyDays, 'VITE_RETURN_POLICY_DAYS', '10 días corridos'),
-    refundProcessingTime: getEnvValue(rc?.business?.refundProcessingTime, 'VITE_REFUND_PROCESSING_TIME', '5 a 10 días hábiles'),
-    productsPerPage: getNumberValue(rc?.business?.productsPerPage, 'VITE_PRODUCTS_PER_PAGE', 50),
-    featuredProductsCount: getNumberValue(rc?.business?.featuredProductsCount, 'VITE_FEATURED_PRODUCTS_COUNT', 8),
-    heroSliderInterval: getNumberValue(rc?.business?.heroSliderInterval, 'VITE_HERO_SLIDER_INTERVAL', 5000),
-    invoiceNote: getEnvValue(rc?.business?.invoiceNote, 'VITE_INVOICE_NOTE', 'Se emite factura tipo A o B según la condición fiscal del comprador.'),
-    freeShippingThreshold: getNumberValue(rc?.business?.freeShippingThreshold, 'VITE_FREE_SHIPPING_THRESHOLD', 50000),
-    locale: getEnvValue(rc?.business?.locale, 'VITE_LOCALE', 'es-AR'),
-  };
-};
-
-/**
- * Configuración de branding
- */
-export const getBrandingConfig = () => {
-  const rc = window.__APP_CONFIG__;
-  return {
-    logo: getEnvValue(rc?.branding?.logo, 'VITE_LOGO_PATH', '/logo.png'),
-    logoDark: getEnvValue(rc?.branding?.logoDark, 'VITE_LOGO_DARK_PATH', ''),
-    favicon: getEnvValue(rc?.branding?.favicon, 'VITE_FAVICON_PATH', '/favicon.ico'),
-    banner: getEnvValue(rc?.branding?.banner, 'VITE_BANNER_URL', ''),
-    ogImage: getEnvValue(rc?.branding?.ogImage, 'VITE_OG_IMAGE_URL', '/logo.png'),
-  };
-};
-
-/**
- * Configuración de tema/colores
- */
-export const getThemeConfig = () => {
-  const rc = window.__APP_CONFIG__;
-  return {
-    colorPrimary: getEnvValue(rc?.theme?.colorPrimary, 'VITE_COLOR_PRIMARY', '#2563eb'),
-    colorPrimaryHover: getEnvValue(rc?.theme?.colorPrimaryHover, 'VITE_COLOR_PRIMARY_HOVER', '#1d4ed8'),
-    colorPrimaryForeground: getEnvValue(rc?.theme?.colorPrimaryForeground, 'VITE_COLOR_PRIMARY_FOREGROUND', '#ffffff'),
-    colorSecondary: getEnvValue(rc?.theme?.colorSecondary, 'VITE_COLOR_SECONDARY', '#f1f5f9'),
-    colorSecondaryForeground: getEnvValue(rc?.theme?.colorSecondaryForeground, 'VITE_COLOR_SECONDARY_FOREGROUND', '#0f172a'),
-    colorBackground: getEnvValue(rc?.theme?.colorBackground, 'VITE_COLOR_BACKGROUND', '#ffffff'),
-    colorForeground: getEnvValue(rc?.theme?.colorForeground, 'VITE_COLOR_FOREGROUND', '#0f172a'),
-    colorSurface: getEnvValue(rc?.theme?.colorSurface, 'VITE_COLOR_SURFACE', '#ffffff'),
-    colorSurfaceForeground: getEnvValue(rc?.theme?.colorSurfaceForeground, 'VITE_COLOR_SURFACE_FOREGROUND', '#0f172a'),
-    colorMuted: getEnvValue(rc?.theme?.colorMuted, 'VITE_COLOR_MUTED', '#f1f5f9'),
-    colorMutedForeground: getEnvValue(rc?.theme?.colorMutedForeground, 'VITE_COLOR_MUTED_FOREGROUND', '#64748b'),
-    colorBorder: getEnvValue(rc?.theme?.colorBorder, 'VITE_COLOR_BORDER', '#e2e8f0'),
-    colorInput: getEnvValue(rc?.theme?.colorInput, 'VITE_COLOR_INPUT', '#e2e8f0'),
-    colorRing: getEnvValue(rc?.theme?.colorRing, 'VITE_COLOR_RING', '#2563eb'),
-    colorSuccess: getEnvValue(rc?.theme?.colorSuccess, 'VITE_COLOR_SUCCESS', '#22c55e'),
-    colorWarning: getEnvValue(rc?.theme?.colorWarning, 'VITE_COLOR_WARNING', '#f59e0b'),
-    colorError: getEnvValue(rc?.theme?.colorError, 'VITE_COLOR_ERROR', '#ef4444'),
-    colorAccent: getEnvValue(rc?.theme?.colorAccent, 'VITE_COLOR_ACCENT', '#f1f5f9'),
-    colorAccentForeground: getEnvValue(rc?.theme?.colorAccentForeground, 'VITE_COLOR_ACCENT_FOREGROUND', '#0f172a'),
-    fontFamily: getEnvValue(rc?.theme?.fontFamily, 'VITE_FONT_FAMILY', ''),
-    fontUrl: getEnvValue(rc?.theme?.fontUrl, 'VITE_FONT_URL', ''),
-  };
-};
-
-/**
- * Configuración de redes sociales
- */
-export const getSocialConfig = () => {
-  const rc = window.__APP_CONFIG__;
-  return {
-    facebook: getEnvValue(rc?.social?.facebook, 'VITE_FACEBOOK_URL', ''),
-    instagram: getEnvValue(rc?.social?.instagram, 'VITE_INSTAGRAM_URL', ''),
-    twitter: getEnvValue(rc?.social?.twitter, 'VITE_TWITTER_URL', ''),
-    linkedin: getEnvValue(rc?.social?.linkedin, 'VITE_LINKEDIN_URL', ''),
-  };
-};
-
-/**
- * Configuración de features
- */
-export const getFeaturesConfig = () => {
-  const rc = window.__APP_CONFIG__;
-  return {
-    notifications: getBoolValue(rc?.features?.notifications, 'VITE_FEATURE_NOTIFICATIONS', false),
-    analytics: getBoolValue(rc?.features?.analytics, 'VITE_FEATURE_ANALYTICS', false),
-    realPayments: getBoolValue(rc?.features?.realPayments, 'VITE_FEATURE_REAL_PAYMENTS', false),
-  };
-};
-
-/**
- * Configuración de filtros de productos
- */
-export const getFiltersConfig = (): FilterConfig => {
-  const rc = window.__APP_CONFIG__;
-  return {
-    enabled: getBoolValue(rc?.filters?.enabled, 'VITE_FILTERS_ENABLED', false),
-    capacidad: getBoolValue(rc?.filters?.capacidad, 'VITE_FILTER_CAPACIDAD', false),
-    velocidad: getBoolValue(rc?.filters?.velocidad, 'VITE_FILTER_VELOCIDAD', false),
-    capacidadOptions: rc?.filters?.capacidadOptions || undefined,
-    velocidadOptions: rc?.filters?.velocidadOptions || undefined,
-  };
-};
-
-/**
- * Configuración de imágenes (hero slides, categorías, placeholders, banners, backgrounds, fallbacks de productos)
- */
-export const getImagesConfig = (): ImagesConfig => {
-  const rc = window.__APP_CONFIG__;
-
-  const defaultHeroSlides: HeroSlideConfig[] = [
-    {
-      image: '/images/heroes/slide-1.jpg',
-      title: 'Tecnología Profesional para Empresas',
-      subtitle: 'Soluciones B2B en componentes de alta gama',
-      cta: 'Ver Catálogo',
-      link: '/productos'
-    },
-    {
-      image: '/images/heroes/slide-2.jpg',
-      title: 'SSDs de Alto Rendimiento',
-      subtitle: 'Almacenamiento profesional para tu negocio',
-      cta: 'Explorar SSDs',
-      link: '/productos'
-    },
-    {
-      image: '/images/heroes/slide-3.jpg',
-      title: 'Memorias RAM DDR4 & DDR5',
-      subtitle: 'Maximiza el rendimiento de tus equipos',
-      cta: 'Ver Memorias',
-      link: '/productos'
-    }
-  ];
-
-  const defaultCategories: CategoryConfig[] = [
-    {
-      name: 'SSD SATA',
-      slug: 'ssd-sata',
-      image: '/images/categories/ssd-sata.jpg',
-      link: '/categoria/ssd-sata',
-      description: 'SATA III para máximo rendimiento',
-      searchTerms: ['ssd']
-    },
-    {
-      name: 'Memoria RAM',
-      slug: 'memoria-ram',
-      image: '/images/categories/ddr4.jpg',
-      link: '/categoria/memoria-ram',
-      description: 'Módulos de memoria de alta velocidad',
-      searchTerms: ['ram', 'ddr', 'sodimm', 'udimm', 'memoria', 'memory']
-    }
-  ];
-
-  const defaultProductFallbacks: Record<string, string> = {
-    'ssd-m2': '/images/categories/ssd-m2.jpg',
-    'ssd-nvme': '/images/categories/ssd-m2.jpg',
-    'ssd-sata': '/images/categories/ssd-sata.jpg',
-    'ssd': '/images/categories/ssd-m2.jpg',
-    'ddr5': '/images/categories/ddr5.jpg',
-    'ddr4': '/images/categories/ddr4.jpg',
-    'memoria': '/images/categories/ddr4.jpg',
-    'ram': '/images/categories/ddr4.jpg',
-    'gaming': '/images/categories/gaming.jpg',
-    'componentes': '/images/categories/componentes.jpg',
-    'default': '/images/categories/componentes.jpg'
-  };
-
-  return {
-    heroSlides: rc?.images?.heroSlides?.length ? rc.images.heroSlides : defaultHeroSlides,
-    categories: rc?.images?.categories?.length ? rc.images.categories : defaultCategories,
+const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
+  api: {
+    url: import.meta.env.VITE_API_BASE_URL || 'https://api.cumar.com.ar',
+    accountId: import.meta.env.VITE_ACCOUNT_ID || '',
+    accountSlug: '',
+    channel: 'ecommerce',
+    extraHeaders: {},
+  },
+  cdnBaseUrl: '',
+  app: {
+    name: 'Mi Tienda',
+    companyName: 'Mi Empresa',
+    slogan: 'Tu tienda online',
+    description: 'Tienda online de productos',
+    url: '',
+    hidePricesForGuests: true,
+    requireAuthForCart: true,
+    loginMessage: 'Inicia sesión para ver precios',
+    loginCta: 'Iniciar sesión',
+  },
+  contact: {
+    email: 'info@tienda.com',
+    salesEmail: 'ventas@tienda.com',
+    phone: '',
+    whatsapp: '',
+    address: '',
+  },
+  legal: {
+    companyName: 'Mi Empresa',
+    cuit: '',
+    address: '',
+    jurisdiction: '',
+  },
+  business: {
+    defaultTaxRate: 0.21,
+    maxQuantityPerProduct: 5,
+    defaultCurrency: 'ARS',
+    defaultCountry: 'Argentina',
+    businessHours: 'Lunes a Viernes: 9:00 - 18:00hs',
+    returnPolicyDays: '10 días corridos',
+    refundProcessingTime: '5 a 10 días hábiles',
+    productsPerPage: 50,
+    featuredProductsCount: 8,
+    heroSliderInterval: 5000,
+    invoiceNote: 'Se emite factura tipo A o B según la condición fiscal del comprador.',
+    freeShippingThreshold: 50000,
+    locale: 'es-AR',
+  },
+  branding: {
+    logo: '/diap-logo.png',
+    headerLogo: '/diap-logo.png',
+    footerLogo: '/diap-logo.png',
+    logoDark: '',
+    favicon: '/favicon.ico',
+    banner: '',
+    ogImage: '/diap-logo.png',
+  },
+  theme: {
+    colorPrimary: '#2563eb',
+    colorPrimaryHover: '#1d4ed8',
+    colorPrimaryForeground: '#ffffff',
+    colorSecondary: '#f1f5f9',
+    colorSecondaryForeground: '#0f172a',
+    colorBackground: '#ffffff',
+    colorForeground: '#0f172a',
+    colorSurface: '#ffffff',
+    colorSurfaceForeground: '#0f172a',
+    colorMuted: '#f1f5f9',
+    colorMutedForeground: '#64748b',
+    colorBorder: '#e2e8f0',
+    colorInput: '#e2e8f0',
+    colorRing: '#2563eb',
+    colorSuccess: '#22c55e',
+    colorWarning: '#f59e0b',
+    colorError: '#ef4444',
+    colorAccent: '#f1f5f9',
+    colorAccentForeground: '#0f172a',
+    fontFamily: '',
+    fontUrl: '',
+  },
+  social: {
+    facebook: '',
+    instagram: '',
+    twitter: '',
+    linkedin: '',
+  },
+  features: {
+    notifications: false,
+    analytics: false,
+    realPayments: false,
+    benefits: [
+      {
+        icon: 'Truck',
+        title: 'Envio Gratis',
+        description: 'En compras seleccionadas',
+      },
+      {
+        icon: 'RotateCcw',
+        title: 'Devolucion Facil',
+        description: 'Cambios y devoluciones simples',
+      },
+      {
+        icon: 'Shield',
+        title: 'Compra Segura',
+        description: 'Protegemos tus datos',
+      },
+      {
+        icon: 'CreditCard',
+        title: 'Multiples Pagos',
+        description: 'Transferencia y medios seleccionados',
+      },
+    ],
+  },
+  filters: {
+    enabled: false,
+    capacidad: false,
+    velocidad: false,
+  },
+  paymentMethods: {
+    transferencia: true,
+    efectivo: true,
+    mercadopago: false,
+    tarjeta: false,
+  },
+  payment: {
+    bankName: '',
+    accountHolder: '',
+    cbu: '',
+    alias: '',
+    whatsappVerification: '',
+  },
+  observability: {
+    enabled: false,
+    endpoint: '',
+    flushIntervalMs: 15000,
+    maxQueueSize: 50,
+    useBeacon: true,
+  },
+  images: {
+    heroSlides: [],
+    categories: [],
     placeholders: {
-      product: rc?.images?.placeholders?.product || '/images/placeholders/product-placeholder.jpg',
-      category: rc?.images?.placeholders?.category || '/images/placeholders/category-placeholder.jpg',
-      user: rc?.images?.placeholders?.user || '/images/placeholders/user-placeholder.jpg',
+      product: '/placeholder-product.svg',
+      category: '/placeholder-product.svg',
+      user: '/placeholder-product.svg',
     },
     backgrounds: {
-      hero: rc?.images?.backgrounds?.hero || '/images/backgrounds/hero-bg.jpg',
-      features: rc?.images?.backgrounds?.features || '/images/backgrounds/features-bg.jpg',
-      testimonials: rc?.images?.backgrounds?.testimonials || '/images/backgrounds/testimonials-bg.jpg',
+      hero: '',
+      features: '',
+      testimonials: '',
     },
     banners: {
-      main: rc?.images?.banners?.main || '/images/banners/main-banner.jpg',
-      secondary: rc?.images?.banners?.secondary || '/images/banners/secondary-banner.jpg',
-      seasonal: rc?.images?.banners?.seasonal || '/images/banners/seasonal-banner.jpg',
-      sale: rc?.images?.banners?.sale || '/images/banners/sale-banner.jpg',
+      main: '',
+      secondary: '',
+      seasonal: '',
+      sale: '',
     },
-    productFallbacks: rc?.images?.productFallbacks || defaultProductFallbacks,
-  };
+    productFallbacks: {},
+  },
 };
 
-/**
- * Configuración de métodos de pago
- */
-export const getPaymentMethodsConfig = () => {
-  const rc = window.__APP_CONFIG__;
+function getConfigRoot(): DeepPartial<RuntimeConfig> {
+  if (typeof window === 'undefined') {
+    return {};
+  }
+
+  return window.__APP_CONFIG__ || {};
+}
+
+export const setRuntimeConfig = (config: DeepPartial<RuntimeConfig>): void => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.__APP_CONFIG__ = config;
+};
+
+function readString(value: string | undefined, fallback: string): string {
+  return typeof value === 'string' && value.trim() !== '' ? value : fallback;
+}
+
+function readBoolean(value: boolean | undefined, fallback: boolean): boolean {
+  return typeof value === 'boolean' ? value : fallback;
+}
+
+function readNumber(value: number | undefined, fallback: number): number {
+  return typeof value === 'number' && !Number.isNaN(value) ? value : fallback;
+}
+
+function readStringMap(value: unknown, fallback: Record<string, string>): Record<string, string> {
+  if (typeof value !== 'object' || value === null) {
+    return { ...fallback };
+  }
+
+  return Object.entries(value as Record<string, unknown>).reduce<Record<string, string>>((acc, [key, entry]) => {
+    if (typeof entry === 'string' && entry.trim() !== '') {
+      acc[key] = entry;
+    }
+    return acc;
+  }, { ...fallback });
+}
+
+function normalizeHeroSlides(raw: unknown): HeroSlideConfig[] {
+  if (!Array.isArray(raw)) {
+    return DEFAULT_RUNTIME_CONFIG.images.heroSlides;
+  }
+
+  return raw
+    .map((item) => {
+      if (typeof item === 'string') {
+        return { image: item, title: '', subtitle: '', cta: '', link: '/productos' };
+      }
+
+      if (typeof item === 'object' && item !== null) {
+        const slide = item as Partial<HeroSlideConfig>;
+        return {
+          image: slide.image || '',
+          mobileImage: slide.mobileImage || '',
+          title: slide.title || '',
+          subtitle: slide.subtitle || '',
+          cta: slide.cta || '',
+          link: slide.link || '/productos',
+        };
+      }
+
+      return null;
+    })
+    .filter(Boolean) as HeroSlideConfig[];
+}
+
+function normalizeCategories(raw: unknown): CategoryConfig[] {
+  if (!Array.isArray(raw)) {
+    return DEFAULT_RUNTIME_CONFIG.images.categories;
+  }
+
+  return raw
+    .map((item) => {
+      if (typeof item !== 'object' || item === null) {
+        return null;
+      }
+
+      const category = item as Partial<CategoryConfig>;
+      return {
+        name: category.name || '',
+        image: category.image || '',
+        link: category.link || '',
+        description: category.description || '',
+        slug: category.slug || '',
+        group: category.group || '',
+        searchTerms: Array.isArray(category.searchTerms) ? category.searchTerms : [],
+      };
+    })
+    .filter(Boolean) as CategoryConfig[];
+}
+
+function normalizeFeatureBenefits(raw: unknown): FeatureBenefitConfig[] {
+  if (!Array.isArray(raw)) {
+    return DEFAULT_RUNTIME_CONFIG.features.benefits;
+  }
+
+  const normalized = raw
+    .map((item) => {
+      if (typeof item !== 'object' || item === null) {
+        return null;
+      }
+
+      const benefit = item as Partial<FeatureBenefitConfig>;
+      if (!benefit.title && !benefit.description) {
+        return null;
+      }
+
+      return {
+        icon: benefit.icon || 'Shield',
+        title: benefit.title || '',
+        description: benefit.description || '',
+      };
+    })
+    .filter(Boolean) as FeatureBenefitConfig[];
+
+  return normalized.length > 0 ? normalized : DEFAULT_RUNTIME_CONFIG.features.benefits;
+}
+
+function normalizeImageMap<T extends Record<string, string>>(raw: unknown, fallback: T): T {
+  if (typeof raw !== 'object' || raw === null) {
+    return { ...fallback };
+  }
+
+  const result = { ...fallback };
+  for (const key of Object.keys(fallback)) {
+    const value = (raw as Record<string, unknown>)[key];
+    if (typeof value === 'string' && value.trim() !== '') {
+      result[key as keyof T] = value as T[keyof T];
+    }
+  }
+
+  return result;
+}
+
+export const getApiConfig = () => {
+  const api = getConfigRoot().api;
   return {
-    transferencia: getBoolValue(rc?.paymentMethods?.transferencia, 'VITE_PAYMENT_TRANSFERENCIA', true),
-    efectivo: getBoolValue(rc?.paymentMethods?.efectivo, 'VITE_PAYMENT_EFECTIVO', true),
-    mercadopago: getBoolValue(rc?.paymentMethods?.mercadopago, 'VITE_PAYMENT_MERCADOPAGO', false),
-    tarjeta: getBoolValue(rc?.paymentMethods?.tarjeta, 'VITE_PAYMENT_TARJETA', false),
+    url: readString(api?.url, DEFAULT_RUNTIME_CONFIG.api.url),
+    accountId: readString(api?.accountId, DEFAULT_RUNTIME_CONFIG.api.accountId),
+    accountSlug: readString(api?.accountSlug, DEFAULT_RUNTIME_CONFIG.api.accountSlug),
+    channel: readString(api?.channel, DEFAULT_RUNTIME_CONFIG.api.channel || 'ecommerce'),
+    extraHeaders: readStringMap(api?.extraHeaders, DEFAULT_RUNTIME_CONFIG.api.extraHeaders),
   };
 };
 
-/**
- * Helper: devuelve las categorías navegables con slug normalizado.
- * Cada categoría incluye searchTerms para filtrado genérico de productos.
- */
+export const getCdnBaseUrl = (): string => {
+  return readString(getConfigRoot().cdnBaseUrl, DEFAULT_RUNTIME_CONFIG.cdnBaseUrl || '');
+};
+
+export const getAppConfig = () => {
+  const app = getConfigRoot().app;
+  return {
+    name: readString(app?.name, DEFAULT_RUNTIME_CONFIG.app.name),
+    companyName: readString(app?.companyName, DEFAULT_RUNTIME_CONFIG.app.companyName),
+    slogan: readString(app?.slogan, DEFAULT_RUNTIME_CONFIG.app.slogan),
+    description: readString(app?.description, DEFAULT_RUNTIME_CONFIG.app.description),
+    url: readString(app?.url, DEFAULT_RUNTIME_CONFIG.app.url),
+    hidePricesForGuests: readBoolean(app?.hidePricesForGuests, DEFAULT_RUNTIME_CONFIG.app.hidePricesForGuests),
+    requireAuthForCart: readBoolean(app?.requireAuthForCart, DEFAULT_RUNTIME_CONFIG.app.requireAuthForCart),
+    loginMessage: readString(app?.loginMessage, DEFAULT_RUNTIME_CONFIG.app.loginMessage),
+    loginCta: readString(app?.loginCta, DEFAULT_RUNTIME_CONFIG.app.loginCta),
+  };
+};
+
+export const getContactConfig = () => {
+  const contact = getConfigRoot().contact;
+  return {
+    email: readString(contact?.email, DEFAULT_RUNTIME_CONFIG.contact.email),
+    salesEmail: readString(contact?.salesEmail, DEFAULT_RUNTIME_CONFIG.contact.salesEmail),
+    phone: readString(contact?.phone, DEFAULT_RUNTIME_CONFIG.contact.phone),
+    whatsapp: readString(contact?.whatsapp, DEFAULT_RUNTIME_CONFIG.contact.whatsapp),
+    address: readString(contact?.address, DEFAULT_RUNTIME_CONFIG.contact.address),
+  };
+};
+
+export const getLegalConfig = () => {
+  const legal = getConfigRoot().legal;
+  const app = getAppConfig();
+  return {
+    companyName: readString(legal?.companyName, app.companyName),
+    cuit: readString(legal?.cuit, DEFAULT_RUNTIME_CONFIG.legal.cuit),
+    address: readString(legal?.address, DEFAULT_RUNTIME_CONFIG.legal.address),
+    jurisdiction: readString(legal?.jurisdiction, DEFAULT_RUNTIME_CONFIG.legal.jurisdiction),
+  };
+};
+
+export const getPaymentConfig = () => {
+  const payment = getConfigRoot().payment;
+  return {
+    bankName: readString(payment?.bankName, DEFAULT_RUNTIME_CONFIG.payment.bankName),
+    accountHolder: readString(payment?.accountHolder, DEFAULT_RUNTIME_CONFIG.payment.accountHolder),
+    cbu: readString(payment?.cbu, DEFAULT_RUNTIME_CONFIG.payment.cbu),
+    alias: readString(payment?.alias, DEFAULT_RUNTIME_CONFIG.payment.alias),
+    whatsappVerification: readString(payment?.whatsappVerification, DEFAULT_RUNTIME_CONFIG.payment.whatsappVerification),
+  };
+};
+
+export const getObservabilityConfig = (): ObservabilityConfig => {
+  const observability = getConfigRoot().observability;
+  return {
+    enabled: readBoolean(observability?.enabled, DEFAULT_RUNTIME_CONFIG.observability.enabled),
+    endpoint: readString(observability?.endpoint, DEFAULT_RUNTIME_CONFIG.observability.endpoint),
+    flushIntervalMs: readNumber(observability?.flushIntervalMs, DEFAULT_RUNTIME_CONFIG.observability.flushIntervalMs),
+    maxQueueSize: readNumber(observability?.maxQueueSize, DEFAULT_RUNTIME_CONFIG.observability.maxQueueSize),
+    useBeacon: readBoolean(observability?.useBeacon, DEFAULT_RUNTIME_CONFIG.observability.useBeacon),
+  };
+};
+
+export const getBusinessConfig = () => {
+  const business = getConfigRoot().business;
+  return {
+    defaultTaxRate: readNumber(business?.defaultTaxRate, DEFAULT_RUNTIME_CONFIG.business.defaultTaxRate),
+    maxQuantityPerProduct: readNumber(business?.maxQuantityPerProduct, DEFAULT_RUNTIME_CONFIG.business.maxQuantityPerProduct),
+    defaultCurrency: readString(business?.defaultCurrency, DEFAULT_RUNTIME_CONFIG.business.defaultCurrency),
+    defaultCountry: readString(business?.defaultCountry, DEFAULT_RUNTIME_CONFIG.business.defaultCountry),
+    businessHours: readString(business?.businessHours, DEFAULT_RUNTIME_CONFIG.business.businessHours),
+    returnPolicyDays: readString(business?.returnPolicyDays, DEFAULT_RUNTIME_CONFIG.business.returnPolicyDays),
+    refundProcessingTime: readString(business?.refundProcessingTime, DEFAULT_RUNTIME_CONFIG.business.refundProcessingTime),
+    productsPerPage: readNumber(business?.productsPerPage, DEFAULT_RUNTIME_CONFIG.business.productsPerPage),
+    featuredProductsCount: readNumber(business?.featuredProductsCount, DEFAULT_RUNTIME_CONFIG.business.featuredProductsCount),
+    heroSliderInterval: readNumber(business?.heroSliderInterval, DEFAULT_RUNTIME_CONFIG.business.heroSliderInterval),
+    invoiceNote: readString(business?.invoiceNote, DEFAULT_RUNTIME_CONFIG.business.invoiceNote),
+    freeShippingThreshold: readNumber(business?.freeShippingThreshold, DEFAULT_RUNTIME_CONFIG.business.freeShippingThreshold),
+    locale: readString(business?.locale, DEFAULT_RUNTIME_CONFIG.business.locale),
+  };
+};
+
+export const getBrandingConfig = () => {
+  const branding = getConfigRoot().branding;
+  const logo = readString(branding?.logo, DEFAULT_RUNTIME_CONFIG.branding.logo);
+  const headerLogo = readString(branding?.headerLogo, logo);
+  const footerLogo = readString(branding?.footerLogo, headerLogo);
+  return {
+    logo,
+    headerLogo,
+    footerLogo,
+    logoDark: readString(branding?.logoDark, DEFAULT_RUNTIME_CONFIG.branding.logoDark),
+    favicon: readString(branding?.favicon, DEFAULT_RUNTIME_CONFIG.branding.favicon),
+    banner: readString(branding?.banner, DEFAULT_RUNTIME_CONFIG.branding.banner),
+    ogImage: readString(branding?.ogImage, DEFAULT_RUNTIME_CONFIG.branding.ogImage),
+  };
+};
+
+export const getThemeConfig = () => {
+  const theme = getConfigRoot().theme;
+  return {
+    colorPrimary: readString(theme?.colorPrimary, DEFAULT_RUNTIME_CONFIG.theme.colorPrimary),
+    colorPrimaryHover: readString(theme?.colorPrimaryHover, DEFAULT_RUNTIME_CONFIG.theme.colorPrimaryHover),
+    colorPrimaryForeground: readString(theme?.colorPrimaryForeground, DEFAULT_RUNTIME_CONFIG.theme.colorPrimaryForeground),
+    colorSecondary: readString(theme?.colorSecondary, DEFAULT_RUNTIME_CONFIG.theme.colorSecondary),
+    colorSecondaryForeground: readString(theme?.colorSecondaryForeground, DEFAULT_RUNTIME_CONFIG.theme.colorSecondaryForeground),
+    colorBackground: readString(theme?.colorBackground, DEFAULT_RUNTIME_CONFIG.theme.colorBackground),
+    colorForeground: readString(theme?.colorForeground, DEFAULT_RUNTIME_CONFIG.theme.colorForeground),
+    colorSurface: readString(theme?.colorSurface, DEFAULT_RUNTIME_CONFIG.theme.colorSurface),
+    colorSurfaceForeground: readString(theme?.colorSurfaceForeground, DEFAULT_RUNTIME_CONFIG.theme.colorSurfaceForeground),
+    colorMuted: readString(theme?.colorMuted, DEFAULT_RUNTIME_CONFIG.theme.colorMuted),
+    colorMutedForeground: readString(theme?.colorMutedForeground, DEFAULT_RUNTIME_CONFIG.theme.colorMutedForeground),
+    colorBorder: readString(theme?.colorBorder, DEFAULT_RUNTIME_CONFIG.theme.colorBorder),
+    colorInput: readString(theme?.colorInput, DEFAULT_RUNTIME_CONFIG.theme.colorInput),
+    colorRing: readString(theme?.colorRing, DEFAULT_RUNTIME_CONFIG.theme.colorRing),
+    colorSuccess: readString(theme?.colorSuccess, DEFAULT_RUNTIME_CONFIG.theme.colorSuccess),
+    colorWarning: readString(theme?.colorWarning, DEFAULT_RUNTIME_CONFIG.theme.colorWarning),
+    colorError: readString(theme?.colorError, DEFAULT_RUNTIME_CONFIG.theme.colorError),
+    colorAccent: readString(theme?.colorAccent, DEFAULT_RUNTIME_CONFIG.theme.colorAccent),
+    colorAccentForeground: readString(theme?.colorAccentForeground, DEFAULT_RUNTIME_CONFIG.theme.colorAccentForeground),
+    fontFamily: readString(theme?.fontFamily, DEFAULT_RUNTIME_CONFIG.theme.fontFamily),
+    fontUrl: readString(theme?.fontUrl, DEFAULT_RUNTIME_CONFIG.theme.fontUrl),
+  };
+};
+
+export const getSocialConfig = () => {
+  const social = getConfigRoot().social;
+  return {
+    facebook: readString(social?.facebook, DEFAULT_RUNTIME_CONFIG.social.facebook),
+    instagram: readString(social?.instagram, DEFAULT_RUNTIME_CONFIG.social.instagram),
+    twitter: readString(social?.twitter, DEFAULT_RUNTIME_CONFIG.social.twitter),
+    linkedin: readString(social?.linkedin, DEFAULT_RUNTIME_CONFIG.social.linkedin),
+  };
+};
+
+export const getFeaturesConfig = () => {
+  const features = getConfigRoot().features;
+  return {
+    notifications: readBoolean(features?.notifications, DEFAULT_RUNTIME_CONFIG.features.notifications),
+    analytics: readBoolean(features?.analytics, DEFAULT_RUNTIME_CONFIG.features.analytics),
+    realPayments: readBoolean(features?.realPayments, DEFAULT_RUNTIME_CONFIG.features.realPayments),
+    benefits: normalizeFeatureBenefits(features?.benefits),
+  };
+};
+
+export const getFiltersConfig = (): FilterConfig => {
+  const filters = getConfigRoot().filters;
+  return {
+    enabled: readBoolean(filters?.enabled, DEFAULT_RUNTIME_CONFIG.filters.enabled),
+    capacidad: readBoolean(filters?.capacidad, DEFAULT_RUNTIME_CONFIG.filters.capacidad),
+    velocidad: readBoolean(filters?.velocidad, DEFAULT_RUNTIME_CONFIG.filters.velocidad),
+    capacidadOptions: Array.isArray(filters?.capacidadOptions) ? filters.capacidadOptions : undefined,
+    velocidadOptions: Array.isArray(filters?.velocidadOptions) ? filters.velocidadOptions : undefined,
+  };
+};
+
+export const getImagesConfig = (): ImagesConfig => {
+  const images = getConfigRoot().images;
+
+  return {
+    heroSlides: normalizeHeroSlides(images?.heroSlides),
+    categories: normalizeCategories(images?.categories),
+    placeholders: normalizeImageMap(images?.placeholders, DEFAULT_RUNTIME_CONFIG.images.placeholders),
+    backgrounds: normalizeImageMap(images?.backgrounds, DEFAULT_RUNTIME_CONFIG.images.backgrounds),
+    banners: normalizeImageMap(images?.banners, DEFAULT_RUNTIME_CONFIG.images.banners),
+    productFallbacks: readStringMap(images?.productFallbacks, DEFAULT_RUNTIME_CONFIG.images.productFallbacks),
+  };
+};
+
+export const getPaymentMethodsConfig = () => {
+  const paymentMethods = getConfigRoot().paymentMethods;
+  return {
+    transferencia: readBoolean(paymentMethods?.transferencia, DEFAULT_RUNTIME_CONFIG.paymentMethods.transferencia),
+    efectivo: readBoolean(paymentMethods?.efectivo, DEFAULT_RUNTIME_CONFIG.paymentMethods.efectivo),
+    mercadopago: readBoolean(paymentMethods?.mercadopago, DEFAULT_RUNTIME_CONFIG.paymentMethods.mercadopago),
+    tarjeta: readBoolean(paymentMethods?.tarjeta, DEFAULT_RUNTIME_CONFIG.paymentMethods.tarjeta),
+  };
+};
+
 export const getCategoriesConfig = (): CategoryConfig[] => {
-  const images = getImagesConfig();
-  return images.categories.map(cat => ({
-    ...cat,
-    slug: cat.slug || cat.link.replace(/^\/categoria\//, ''),
+  return getImagesConfig().categories.map((category) => ({
+    ...category,
+    slug:
+      category.slug ||
+      (() => {
+        const link = category.link || '';
+        const categoryMatch = link.match(/[?&]category=([^&]+)/);
+        if (categoryMatch?.[1]) {
+          return decodeURIComponent(categoryMatch[1]);
+        }
+        return link.replace(/^\/categoria\//, '');
+      })(),
+    group: category.group || '',
   }));
 };
 
-/**
- * Helper: busca la config de una categoría por slug.
- */
 export const getCategoryBySlug = (slug: string): CategoryConfig | undefined => {
-  return getCategoriesConfig().find(c => (c.slug || c.link.replace(/^\/categoria\//, '')) === slug);
+  return getCategoriesConfig().find((category) => category.slug === slug);
 };
 
-/**
- * Obtiene toda la configuración runtime
- */
 export const getRuntimeConfig = (): RuntimeConfig => {
   return {
     api: getApiConfig(),
+    cdnBaseUrl: getCdnBaseUrl(),
     app: getAppConfig(),
     contact: getContactConfig(),
     legal: getLegalConfig(),
@@ -536,18 +719,15 @@ export const getRuntimeConfig = (): RuntimeConfig => {
     filters: getFiltersConfig(),
     paymentMethods: getPaymentMethodsConfig(),
     payment: getPaymentConfig(),
+    observability: getObservabilityConfig(),
     images: getImagesConfig(),
   };
 };
 
-/**
- * Verificar si hay configuración runtime disponible
- */
 export const hasRuntimeConfig = (): boolean => {
   return typeof window !== 'undefined' && window.__APP_CONFIG__ !== undefined;
 };
 
-// Exportar configuración como constantes para acceso rápido
 export const API_CONFIG = getApiConfig();
 export const APP_CONFIG = getAppConfig();
 export const CONTACT_CONFIG = getContactConfig();

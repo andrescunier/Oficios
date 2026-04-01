@@ -7,6 +7,7 @@ import { httpClient } from './httpClient';
 import { API_ENDPOINTS, getActiveAccountId } from '@/config/api';
 import { getBusinessConfig } from '@/config/runtime';
 import log from '@/lib/logger';
+import { clearAuthSession, saveAccountSession, saveBusinessPartnerId, saveRegistrationDraft } from '@/features/auth/session';
 
 export interface LoginCredentials {
   email: string;
@@ -38,6 +39,11 @@ export interface LoginResponse {
     token_type?: string;
     user: User;
     account?: Account;
+    accessible_accounts?: Array<Account & { role?: string; is_default?: boolean }>;
+    customer?: {
+      business_partner_id?: string | null;
+    } | null;
+    business_partner_id?: string | null;
   };
   timestamp?: string;
 }
@@ -47,7 +53,8 @@ export interface SimpleRegistrationResponse {
   message?: string;
   data?: {
     person_id: string;
-    partner_id: string;
+    partner_id?: string;
+    business_partner_id?: string;
     user_id: string;
     link_id: string;
     email: string;
@@ -62,6 +69,8 @@ export interface SimpleRegistrationResponse {
 export interface MeResponse {
   success: boolean;
   data: {
+    account?: Account;
+    accessible_accounts?: Array<Account & { role?: string; is_default?: boolean }>;
     user: {
       id: string;
       username: string;
@@ -97,8 +106,40 @@ export interface MeResponse {
       zip_code?: string;
       country?: string;
     };
+    customer?: {
+      business_partner_id?: string | null;
+    } | null;
+    business_partner_id?: string | null;
   };
 }
+
+type BusinessPartnerCarrier =
+  | {
+      business_partner_id?: unknown;
+      partner_id?: unknown;
+      customer?: { business_partner_id?: unknown } | null;
+      billing?: { business_partner_id?: unknown } | null;
+    }
+  | null
+  | undefined;
+
+const asNonEmptyString = (value: unknown): string | null => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+};
+
+export const extractBusinessPartnerIdFromAuthData = (data: BusinessPartnerCarrier): string | null => {
+  return (
+    asNonEmptyString(data?.business_partner_id)
+    || asNonEmptyString(data?.customer?.business_partner_id)
+    || asNonEmptyString(data?.billing?.business_partner_id)
+    || asNonEmptyString(data?.partner_id)
+  );
+};
 
 export class AuthService {
   /**
@@ -112,10 +153,10 @@ export class AuthService {
       const response = await httpClient.post<LoginResponse>(API_ENDPOINTS.AUTH.LOGIN, {
         email: credentials.email,
         password: credentials.password,
-        account_id: getActiveAccountId()
       });
 
       const { token, user, account } = this.normalizeLoginResponse(response, credentials);
+      const businessPartnerId = extractBusinessPartnerIdFromAuthData(response?.data);
 
       // Configurar token en el cliente HTTP automáticamente
       httpClient.setAuthToken(token);
@@ -123,9 +164,13 @@ export class AuthService {
 
       // Guardar información adicional si es necesaria
       if (account) {
-        localStorage.setItem('account_info', JSON.stringify(account));
-        localStorage.setItem('active_account_id', account.id);
+        saveAccountSession(account);
         httpClient.setAccountId(account.id);
+      }
+
+      if (businessPartnerId) {
+        saveBusinessPartnerId(businessPartnerId);
+        log.auth.info('Business Partner ID guardado desde /auth/login:', businessPartnerId);
       }
 
       return {
@@ -199,13 +244,13 @@ export class AuthService {
         phone: data.phone,
         company_name: data.companyName
       };
-      localStorage.setItem('registration_data', JSON.stringify(registrationData));
+      saveRegistrationDraft(registrationData);
 
-      // Guardar el partner_id (business_partner_id) del registro
-      // Este es el customer_id que necesitamos para crear órdenes
-      if (response.data?.partner_id) {
-        localStorage.setItem('business_partner_id', response.data.partner_id);
-        log.auth.info('Business Partner ID guardado del registro:', response.data.partner_id);
+      // Guardar business_partner_id canónico del contrato storefront
+      const businessPartnerId = extractBusinessPartnerIdFromAuthData(response.data);
+      if (businessPartnerId) {
+        saveBusinessPartnerId(businessPartnerId);
+        log.auth.info('Business Partner ID guardado del registro:', businessPartnerId);
       }
 
       // Luego de un registro exitoso, iniciamos sesión automáticamente
@@ -236,24 +281,14 @@ export class AuthService {
   async logout(userId?: string): Promise<void> {
     log.auth.info('Cerrando sesión', userId ? `para usuario: ${userId}` : '');
     try {
-      // Llamar al endpoint de logout si existe
-      await httpClient.post(API_ENDPOINTS.AUTH.LOGOUT, {
-        user_id: userId,
-        account_id: getActiveAccountId()
-      });
+      // El contrato storefront resuelve logout por token + header de tenant.
+      await httpClient.post(API_ENDPOINTS.AUTH.LOGOUT);
     } catch (error) {
       // No importa si el logout falla en el servidor
     } finally {
       // Remover token del cliente HTTP
       httpClient.removeAuthToken();
-      
-      // Limpiar storage local
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('user_info');
-      localStorage.removeItem('account_info');
-      localStorage.removeItem('business_partner_info');
-      localStorage.removeItem('business_partner_id');
-      localStorage.removeItem('active_account_id');
+      clearAuthSession({ removeAuthToken: () => {} });
     }
   }
 
@@ -270,12 +305,9 @@ export class AuthService {
       });
 
       if (response.success && response.data) {
-        // Intentar obtener business_partner_id de distintas ubicaciones posibles en la respuesta
-        const bpId = response.data.billing?.business_partner_id 
-          || (response.data as any).business_partner_id
-          || (response.data as any).partner_id;
+        const bpId = extractBusinessPartnerIdFromAuthData(response.data);
         if (bpId) {
-          localStorage.setItem('business_partner_id', bpId);
+          saveBusinessPartnerId(bpId);
           log.auth.info('Business Partner ID guardado desde /auth/me:', bpId);
         } else {
           log.auth.warn('/auth/me no devolvió business_partner_id. Se usará user.id como fallback.');
@@ -347,6 +379,8 @@ export class AuthService {
     }
 
     const account = payload.account
+      || payload.accessible_accounts?.find((item: any) => item?.is_default)
+      || payload.accessible_accounts?.[0]
       || payload.accounts?.find((item: any) => item?.is_default)
       || payload.accounts?.[0]
       || null;

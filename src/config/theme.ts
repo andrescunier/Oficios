@@ -4,6 +4,7 @@
  */
 
 import { getThemeConfig, getBrandingConfig, getAppConfig } from './runtime';
+import log from '@/lib/logger';
 
 /**
  * Convierte un color HEX a formato oklch para compatibilidad con Tailwind v4
@@ -241,9 +242,9 @@ export function initializeTheme(): void {
     // Actualizar metadatos
     updateMetadata();
     
-    console.log('✅ Theme runtime initialized successfully');
+    log.config.info('Theme runtime initialized successfully');
   } catch (error) {
-    console.error('❌ Error initializing theme:', error);
+    log.config.error('Error initializing theme:', error);
   }
 }
 

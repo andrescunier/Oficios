@@ -1,16 +1,15 @@
 # DIAP Ecommerce
 
-Frontend ecommerce B2B construido con React, Vite y Zustand. El proyecto quedó preparado para operar por tenant, cuenta activa y canal visible sin depender de valores hardcodeados.
+Frontend ecommerce B2B en React + Vite orientado a consumir configuración de tenant desde API.
 
 ## Stack
 
-- React 19 + TypeScript
+- React 19
 - Vite 6
 - Tailwind CSS 4
 - Zustand
 - React Router 7
 - Axios
-- Docker + Nginx
 
 ## Desarrollo
 
@@ -20,7 +19,7 @@ cp .env.example .env
 pnpm dev
 ```
 
-Build de producción:
+Build local:
 
 ```bash
 pnpm build
@@ -29,83 +28,77 @@ pnpm preview
 
 ## Configuración
 
-La app soporta dos capas de configuración:
-
-1. Variables `VITE_*` para desarrollo local.
-2. `window.__APP_CONFIG__` para runtime en Docker/Nginx generado desde `config.js.template`.
-
-Variables clave:
+La app necesita solamente estas dos variables de entorno:
 
 ```env
 VITE_API_BASE_URL=https://api.cumar.com.ar
 VITE_ACCOUNT_ID=bed2df35-717f-4900-a4b1-7c3a7fb59b7c
-VITE_ACCOUNT_SLUG=diap
-VITE_CHANNEL=ecommerce
-VITE_APP_NAME=DIAP
-VITE_COMPANY_NAME=DIAP
-VITE_HIDE_PRICES_FOR_GUESTS=true
-VITE_REQUIRE_AUTH_FOR_CART=true
 ```
 
-En runtime Docker las equivalentes son:
+Todo lo demás se obtiene en el arranque desde:
 
-```env
-API_URL=https://api.cumar.com.ar
-ACCOUNT_ID=bed2df35-717f-4900-a4b1-7c3a7fb59b7c
-ACCOUNT_SLUG=diap
-API_CHANNEL=ecommerce
-APP_NAME=DIAP
-COMPANY_NAME=DIAP
+```http
+GET /api/accounts/{accountId}/ecommerce-config
 ```
 
-Documentación ampliada:
+Referencia de contrato:
 
-- [RUNTIME_CONFIG.md](/home/andis/simpleEcommerce/RUNTIME_CONFIG.md)
+- [docs/API_ECOMMERCE_CONFIG.md](/home/andis/simpleEcommerce/docs/API_ECOMMERCE_CONFIG.md)
+- [docs/BACKEND_CONTRACT.md](/home/andis/simpleEcommerce/docs/BACKEND_CONTRACT.md)
 
-## Multi-tenant y canal
+Export Warpla listo para persistir en plataforma:
 
-- El frontend usa la cuenta activa real de sesión si existe.
-- Si no hay sesión, usa la cuenta configurada en runtime.
-- El catálogo consulta productos con `channels=<canal activo>`.
-- Checkout guarda el canal en metadata de orden y pago.
-- Mis pedidos enriquece órdenes con pagos e historial de estados.
+- [exports/warpla-platform-upload/README.md](/home/andis/simpleEcommerce/exports/warpla-platform-upload/README.md)
 
 ## Scripts útiles
 
 ```bash
 pnpm dev
 pnpm build
+pnpm build:check
 pnpm lint
-bash ./test-api.sh
-bash ./test-all-apis.sh
+pnpm test
+pnpm test:run
+pnpm test:e2e
+pnpm test:e2e:headed
 ```
 
-Los scripts de prueba ya no dependen de valores fijos. Usan variables de entorno:
+## Calidad
 
-```env
-API_BASE_URL=https://api.cumar.com.ar
-API_ACCOUNT_ID=bed2df35-717f-4900-a4b1-7c3a7fb59b7c
-API_ACCOUNT_SLUG=diap
-API_CHANNEL=ecommerce
-API_TEST_EMAIL=qatest@gmail.com
-API_TEST_PASSWORD=Hola12345.
-API_TEST_CURRENCY=ARS
-API_TEST_ORDER_QTY=1
+- `pnpm build` valida el bundle final.
+- `pnpm build:check` valida el build y aplica presupuesto de bundle sobre `index` y `react-vendor`.
+- `pnpm lint` valida el código del frontend.
+- `pnpm test:run` ejecuta tests unitarios, store, runtime schema y observabilidad.
+- `pnpm test:e2e` ejecuta Playwright con mocks deterministas para bootstrap, catálogo, login y checkout.
+- `.github/workflows/quality.yml` reinstala un quality gate con `lint + unit + build:check + e2e`.
+- `window.__APP_MONITOR__` expone `getEvents()`, `getPending()`, `getSessionId()` y `flush()` en desarrollo.
+
+## Integración backend
+
+- Auth storefront aprobado:
+  - `POST /api/auth/login`
+  - `POST /api/auth/logout`
+  - `GET /api/auth/me`
+  - `POST /api/simple/register-customer`
+- El catálogo anónimo consume `GET /api/accounts/{accountId}/products/public`.
+- El catálogo autenticado consume `GET /api/accounts/{accountId}/products`.
+- El checkout storefront crea y envía órdenes, pero no crea ni confirma pagos.
+- El frontend informa el método de pago en metadata y el backend valida el pago después.
+
+## Observabilidad remota opcional
+
+Si backend expone un collector, el frontend puede enviar batches de eventos configurando en `ecommerce-config`:
+
+```json
+{
+  "observability": {
+    "enabled": true,
+    "endpoint": "https://api.ejemplo.com/api/accounts/{accountId}/frontend-events",
+    "flushIntervalMs": 15000,
+    "maxQueueSize": 50,
+    "useBeacon": true
+  }
+}
 ```
 
-Ejemplo:
-
-```bash
-API_BASE_URL=https://api.cumar.com.ar \
-API_ACCOUNT_ID=bed2df35-717f-4900-a4b1-7c3a7fb59b7c \
-API_CHANNEL=ecommerce \
-API_TEST_EMAIL=usuario@test.com \
-API_TEST_PASSWORD=secreto \
-bash ./test-all-apis.sh
-```
-
-## Estado de calidad
-
-- `pnpm build` debe pasar para validar bundle.
-- `pnpm lint` valida frontend y archivos JS del proyecto.
-- `test-all-apis.sh` cubre login, `/auth/me`, productos, órdenes, pagos y creación de orden de prueba.
+Cada evento incluye `sessionId`, `accountId`, `channel`, `pathname` y detalles del dominio como `checkoutId`, `orderNumber` o códigos de soporte.

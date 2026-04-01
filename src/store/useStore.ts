@@ -10,15 +10,14 @@ import type {
   ProductVariant,
   CartItem, 
   Cart, 
-  BusinessPartner,
   Account 
 } from '@/types/api';
 // cartService eliminado — no existe API de carrito en el backend (ver documentacion.md)
 import { httpClient } from '@/services/httpClient';
-import { authService } from '@/services/authService';
 import log from '@/lib/logger';
 import { getBusinessConfig } from '@/config/runtime';
-import { clearClientSession, setPendingRedirect } from '@/lib/session';
+import { clearAuthSession, getAuthIntegrityIssue, saveAccountSession } from '@/features/auth/session';
+import { recordAppEvent } from '@/lib/observability';
 
 // Tipos del store
 interface AuthState {
@@ -67,6 +66,7 @@ interface AppStore {
   updateCartQuantity: (lineId: string, quantity: number) => void;
   clearCart: () => void;
   calculateCartTotals: () => void;
+  syncRuntimeConfig: () => void;
 
   
   // UI state
@@ -102,13 +102,13 @@ const initialAuthState: AuthState = {
   token: null,
 };
 
-const initialCartState: CartState = {
+const createInitialCartState = (): CartState => ({
   items: [],
   subtotal: 0,
   tax_amount: 0,
   total_amount: 0,
   currency: getBusinessConfig().defaultCurrency,
-};
+});
 
 const initialUIState: UIState = {
   isLoading: false,
@@ -135,7 +135,7 @@ const calculateTotals = (items: CartItem[], currency: string = getBusinessConfig
 };
 
 // Límite máximo de unidades por producto (desde config)
-const MAX_QUANTITY_PER_PRODUCT = getBusinessConfig().maxQuantityPerProduct;
+const getMaxQuantityPerProduct = () => getBusinessConfig().maxQuantityPerProduct;
 
 const buildCartLineId = (productId: string, variantId?: string) =>
   variantId ? `${productId}::${variantId}` : productId;
@@ -176,79 +176,43 @@ export const useStore = create<AppStore>()(
       login: (user, token, account) => {
         // Configurar token en el cliente HTTP
         httpClient.setAuthToken(token);
-        if (account?.id) {
-          httpClient.setAccountId(account.id);
-          localStorage.setItem('active_account_id', account.id);
-          localStorage.setItem('account_info', JSON.stringify(account));
+        const resolvedAccount = account || get().auth.account || null;
+        if (resolvedAccount?.id) {
+          httpClient.setAccountId(resolvedAccount.id);
+          saveAccountSession(resolvedAccount);
         }
         
         // Cargar favoritos del usuario
         const userFavorites = loadUserFavorites(user.id);
         
-        set((state) => ({
+        set(() => ({
           auth: {
             user,
-            account: account || state.auth.account,
+            account: resolvedAccount,
             isAuthenticated: true,
             token,
           },
           favorites: userFavorites, // Cargar favoritos del usuario
         }));
-        
-        // Después del login, obtener el perfil completo con business_partner_id
-        authService.getMe().then((meResponse) => {
-          if (meResponse?.success && meResponse.data) {
-            // Intentar obtener business_partner_id de múltiples ubicaciones
-            const bpId = meResponse.data.billing?.business_partner_id
-              || (meResponse.data as any).business_partner_id
-              || (meResponse.data as any).partner_id;
-            if (bpId) {
-              localStorage.setItem('business_partner_id', bpId);
-              log.auth.info('Business Partner ID obtenido de /auth/me:', bpId);
-            } else if (!localStorage.getItem('business_partner_id')) {
-              log.auth.warn('/auth/me no devolvió business_partner_id, usando user.id como fallback');
-            }
-            
-            // Actualizar datos del usuario con la información de person
-            if (meResponse.data.person) {
-              set((state) => ({
-                auth: {
-                  ...state.auth,
-                  user: state.auth.user ? {
-                    ...state.auth.user,
-                    person: {
-                      first_name: meResponse.data.person?.first_name || '',
-                      last_name: meResponse.data.person?.last_name || '',
-                      phone: meResponse.data.person?.phone,
-                    }
-                  } : null
-                }
-              }));
-            }
-          }
-        }).catch((err) => log.auth.error('Error en getMe post-login:', err));
-        
 
       },
       
       logout: () => {
         // Remover token del cliente HTTP
         httpClient.removeAuthToken();
+        httpClient.removeAccountId();
         
-        // Limpiar business_partner_id
-        localStorage.removeItem('business_partner_id');
-        localStorage.removeItem('active_account_id');
-        localStorage.removeItem('account_info');
+        clearAuthSession({ removeAuthToken: () => httpClient.removeAuthToken() });
         
         set({
           auth: initialAuthState,
-          cart: initialCartState, // Limpiar carrito al logout
+          cart: createInitialCartState(), // Limpiar carrito al logout
           favorites: [], // Limpiar favoritos al logout (se mantienen guardados en localStorage por usuario)
         });
       },
       
       // Cart state
-      cart: initialCartState,
+      cart: createInitialCartState(),
       
       addToCart: (product, quantity, variant) => {
         set((state) => {
@@ -259,22 +223,24 @@ export const useStore = create<AppStore>()(
           const unitPrice = variant?.effective_price ?? variant?.unit_price ?? product.unit_price;
           const displayName = variant?.name || product.name;
           
-          // Verificar límite de 5 unidades por producto
-          if (newQuantity > MAX_QUANTITY_PER_PRODUCT) {
+          const maxQuantityPerProduct = getMaxQuantityPerProduct();
+
+          // Verificar límite de unidades por producto
+          if (newQuantity > maxQuantityPerProduct) {
             get().addNotification({
               type: 'warning',
               title: 'Límite alcanzado',
-              message: `Máximo ${MAX_QUANTITY_PER_PRODUCT} unidades por producto. Ya tienes ${currentQuantity} en el carrito.`,
+              message: `Máximo ${maxQuantityPerProduct} unidades por producto. Ya tienes ${currentQuantity} en el carrito.`,
               duration: 4000,
             });
             
             // Si ya tiene el máximo, no agregar más
-            if (currentQuantity >= MAX_QUANTITY_PER_PRODUCT) {
+            if (currentQuantity >= maxQuantityPerProduct) {
               return state;
             }
             
             // Ajustar cantidad al máximo permitido
-            const adjustedQuantity = MAX_QUANTITY_PER_PRODUCT - currentQuantity;
+            const adjustedQuantity = maxQuantityPerProduct - currentQuantity;
             if (adjustedQuantity <= 0) {
               return state;
             }
@@ -283,7 +249,7 @@ export const useStore = create<AppStore>()(
             if (existingItem) {
               newItems = state.cart.items.map(item =>
                 item.line_id === lineId
-                  ? { ...item, quantity: MAX_QUANTITY_PER_PRODUCT }
+                  ? { ...item, quantity: maxQuantityPerProduct }
                   : item
               );
             } else {
@@ -320,6 +286,11 @@ export const useStore = create<AppStore>()(
           }
           
           const newCart = calculateTotals(newItems, state.cart.currency);
+          recordAppEvent('add_to_cart', {
+            productId: product.id,
+            quantity,
+            variantId: variant?.id || null,
+          });
           
           // Agregar notificación
           get().addNotification({
@@ -357,15 +328,17 @@ export const useStore = create<AppStore>()(
           return { cart: newCart };
         }
         
-        // Verificar límite de 5 unidades por producto
-        if (quantity > MAX_QUANTITY_PER_PRODUCT) {
+        const maxQuantityPerProduct = getMaxQuantityPerProduct();
+
+        // Verificar límite de unidades por producto
+        if (quantity > maxQuantityPerProduct) {
           get().addNotification({
             type: 'warning',
             title: 'Límite alcanzado',
-            message: `Máximo ${MAX_QUANTITY_PER_PRODUCT} unidades por producto`,
+            message: `Máximo ${maxQuantityPerProduct} unidades por producto`,
             duration: 3000,
           });
-          quantity = MAX_QUANTITY_PER_PRODUCT;
+          quantity = maxQuantityPerProduct;
         }
         
         const newItems = state.cart.items.map(item =>
@@ -379,12 +352,23 @@ export const useStore = create<AppStore>()(
       }),
       
       clearCart: () => set({
-        cart: initialCartState,
+        cart: createInitialCartState(),
       }),
       
       calculateCartTotals: () => set((state) => {
         const newCart = calculateTotals(state.cart.items, state.cart.currency);
         return { cart: newCart };
+      }),
+
+      syncRuntimeConfig: () => set((state) => {
+        const businessConfig = getBusinessConfig();
+        const currency = state.cart.items.length > 0
+          ? state.cart.currency || businessConfig.defaultCurrency
+          : businessConfig.defaultCurrency;
+
+        return {
+          cart: calculateTotals(state.cart.items, currency),
+        };
       }),
 
 
@@ -498,39 +482,54 @@ export const useStore = create<AppStore>()(
           theme: state.ui.theme,
         },
       }),
+      merge: (persistedState, currentState) => {
+        if (!persistedState) return currentState;
+        const persisted = persistedState as Partial<AppStore>;
+        return {
+          ...currentState,
+          ...persisted,
+          // Deep-merge ui para no perder notifications, isLoading, etc.
+          ui: {
+            ...currentState.ui,
+            ...(persisted.ui || {}),
+          },
+        };
+      },
       onRehydrateStorage: () => {
         return (state, error) => {
-          useStore.setState({ hasHydrated: true });
-
           if (error) {
             log.store.error('Error al hidratar store:', error);
-            clearClientSession({ removeAuthToken: () => httpClient.removeAuthToken() });
+            clearAuthSession({ removeAuthToken: () => httpClient.removeAuthToken() });
+            queueMicrotask(() => useStore.setState({ hasHydrated: true }));
             return;
           }
 
           if (!state) {
             log.store.info('No hay estado para hidratar');
+            queueMicrotask(() => useStore.setState({ hasHydrated: true }));
             return;
           }
 
           // Validar integridad del estado antes de configurar
-          const hasInconsistentState = 
-            (state.auth?.isAuthenticated && !state.auth?.token) ||
-            (state.auth?.isAuthenticated && !state.auth?.user) ||
-            (!state.auth?.isAuthenticated && state.auth?.token) ||
-            (state.auth?.token && state.auth.token.length < 10);
+          const integrityIssue = getAuthIntegrityIssue(state.auth);
 
-          if (hasInconsistentState) {
+          if (integrityIssue) {
             log.store.error('Estado inconsistente detectado durante hidratación!');
             log.store.debug('Estado inconsistente:', {
+              issue: integrityIssue,
               isAuthenticated: state.auth?.isAuthenticated,
               hasToken: !!state.auth?.token,
               tokenLength: state.auth?.token?.length,
               hasUser: !!state.auth?.user,
             });
             
-            // Limpiar estado corrupto
-            clearClientSession({
+            // Resetear auth en memoria Y limpiar storage
+            queueMicrotask(() => useStore.setState({
+              auth: initialAuthState,
+              cart: createInitialCartState(),
+              hasHydrated: true,
+            }));
+            clearAuthSession({
               redirect: '/login?session=corrupted_hydration',
               removeAuthToken: () => httpClient.removeAuthToken(),
             });
@@ -541,10 +540,16 @@ export const useStore = create<AppStore>()(
           if (state.auth?.token && state.auth?.isAuthenticated && state.auth?.user) {
             log.store.info('Configurando token desde hidratación');
             httpClient.setAuthToken(state.auth.token);
+            if (state.auth.account?.id) {
+              httpClient.setAccountId(state.auth.account.id);
+            }
           } else {
             log.store.info('No hay sesión válida para hidratar');
             httpClient.removeAuthToken();
+            httpClient.removeAccountId();
           }
+
+          queueMicrotask(() => useStore.setState({ hasHydrated: true }));
         };
       },
     }
@@ -573,16 +578,14 @@ export const useCartItem = (productId: string) => useStore((state) =>
 // Función para inicializar la autenticación al cargar la aplicación
 export const initializeAuth = () => {
   const store = useStore.getState();
+  store.syncRuntimeConfig();
   
-  // Primero: verificar si hay inconsistencia en el estado
-  const hasInconsistentState = 
-    (store.auth.isAuthenticated && !store.auth.token) ||
-    (store.auth.isAuthenticated && !store.auth.user) ||
-    (!store.auth.isAuthenticated && store.auth.token);
+  const integrityIssue = getAuthIntegrityIssue(store.auth);
   
-  if (hasInconsistentState) {
+  if (integrityIssue) {
     log.store.error('ESTADO INCONSISTENTE DETECTADO - Limpiando todo...');
     log.store.debug('Estado:', {
+      issue: integrityIssue,
       isAuthenticated: store.auth.isAuthenticated,
       hasToken: !!store.auth.token,
       hasUser: !!store.auth.user,
@@ -590,7 +593,7 @@ export const initializeAuth = () => {
     
     // Forzar limpieza total
     store.logout();
-    clearClientSession({
+    clearAuthSession({
       redirect: '/login?session=corrupted',
       removeAuthToken: () => httpClient.removeAuthToken(),
     });
@@ -599,20 +602,11 @@ export const initializeAuth = () => {
   
   // Si hay token y está marcado como autenticado
   if (store.auth.token && store.auth.isAuthenticated) {
-    // Validar que el token no esté vacío o corrupto
-    if (store.auth.token.length < 10 || !store.auth.user) {
-      // Token inválido - limpiar todo
-      log.store.warn('Token inválido detectado, limpiando sesión...');
-      store.logout();
-      clearClientSession({
-        redirect: '/login?session=invalid_token',
-        removeAuthToken: () => httpClient.removeAuthToken(),
-      });
-      return;
-    }
-    
     // Configurar token en httpClient
     httpClient.setAuthToken(store.auth.token);
+    if (store.auth.account?.id) {
+      httpClient.setAccountId(store.auth.account.id);
+    }
     log.store.info('Sesión restaurada correctamente', {
       user: store.auth.user?.email,
       tokenLength: store.auth.token.length,
@@ -620,6 +614,7 @@ export const initializeAuth = () => {
   } else {
     // No hay sesión - asegurarse que esté limpio
     httpClient.removeAuthToken();
+    httpClient.removeAccountId();
     log.store.info('No hay sesión activa');
   }
 };

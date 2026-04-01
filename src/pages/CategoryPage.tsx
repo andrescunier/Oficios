@@ -4,13 +4,14 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { productService } from '@/services/productService';
+import { useQuery } from '@tanstack/react-query';
 import type { Product } from '@/types/api';
 import { Loader2, Filter, X, ChevronDown, ChevronUp, SlidersHorizontal, Plus, Minus, Heart } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { PriceDisplay } from '@/hooks/usePriceVisibility';
-import { getFiltersConfig, getImagesConfig, getCategoryBySlug, getCategoriesConfig } from '@/config/runtime';
+import { getFiltersConfig, getCategoryBySlug } from '@/config/runtime';
 import { handleImgError } from '@/utils/imageHelpers';
+import { productsQueryOptions } from '@/features/catalog/queries';
 
 // Tipos para filtros
 interface FilterOption {
@@ -24,6 +25,8 @@ interface ActiveFilters {
   enStock?: boolean;
 }
 
+type FilterSectionsMap = Record<string, { label: string; options: FilterOption[] }>;
+
 export const CategoryPage: React.FC = () => {
   const { category } = useParams<{ category: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -35,9 +38,6 @@ export const CategoryPage: React.FC = () => {
   const filtersConfig = getFiltersConfig();
   const showFilters = filtersConfig.enabled;
   
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [expandedFilters, setExpandedFilters] = useState<string[]>(['capacidad', 'velocidad']);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
@@ -57,7 +57,7 @@ export const CategoryPage: React.FC = () => {
   const categoryName = categoryConfig?.name || category || 'Productos';
 
   // Configuración de filtros (solo si están habilitados en runtime config)
-  const filterConfig = useMemo(() => {
+  const filterConfig = useMemo<FilterSectionsMap>(() => {
     if (!showFilters) return {};
 
     const runtimeCapacidadOpts = filtersConfig.capacidadOptions?.length ? filtersConfig.capacidadOptions : undefined;
@@ -90,7 +90,7 @@ export const CategoryPage: React.FC = () => {
       { value: '6000', label: '6000 MHz' },
     ];
 
-    const config: any = {};
+    const config: FilterSectionsMap = {};
     if (filtersConfig.capacidad) {
       config.capacidad = {
         label: 'Capacidad',
@@ -106,34 +106,13 @@ export const CategoryPage: React.FC = () => {
     return config;
   }, [category, showFilters, filtersConfig]);
 
-  // Función para obtener imagen del producto
-  const getProductImage = (product: Product): string => {
-    if (product.image_url) return product.image_url;
-    
-    const fallbacks = getImagesConfig().productFallbacks;
-    const defaultImg = fallbacks['default'] || '/images/categories/componentes.jpg';
-    const name = product.name?.toLowerCase() || '';
-    
-    if (name.includes('ssd') && (name.includes('m.2') || name.includes('nvme'))) {
-      return fallbacks['ssd-m2'] || fallbacks['ssd-nvme'] || defaultImg;
-    }
-    if (name.includes('ssd')) {
-      return fallbacks['ssd-sata'] || fallbacks['ssd'] || defaultImg;
-    }
-    if (name.includes('ddr5')) {
-      return fallbacks['ddr5'] || defaultImg;
-    }
-    if (name.includes('ddr4') || name.includes('ram') || name.includes('memoria')) {
-      return fallbacks['ddr4'] || fallbacks['memoria'] || fallbacks['ram'] || defaultImg;
-    }
-    
-    return defaultImg;
-  };
+  const productsQuery = useQuery(productsQueryOptions({ page: 1, per_page: 100, is_active: true }));
+  const products = productsQuery.data?.data || [];
+  const loading = productsQuery.isLoading;
+  const error = productsQuery.isError ? 'Error al cargar los productos' : null;
 
   // Cargar productos cuando cambia la categoría
   useEffect(() => {
-    loadProducts();
-    
     // Sincronizar filtros desde URL solo al montar o cambiar categoría
     const urlFilters: ActiveFilters = {
       capacidad: searchParams.getAll('capacidad'),
@@ -147,49 +126,20 @@ export const CategoryPage: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [category]);
 
-  const loadProducts = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await productService.getProducts({ page: 1, per_page: 100 });
-      
-      let filtered = response.data;
-      
-      console.log('Total products from API:', filtered.length);
-      console.log('Category filter:', category);
-      
-      // Filtrado genérico basado en searchTerms del config de la categoría
-      if (categoryConfig?.searchTerms && categoryConfig.searchTerms.length > 0) {
-        const terms = categoryConfig.searchTerms.map(t => t.toLowerCase());
-        filtered = filtered.filter(p => {
-          const name = p.name?.toLowerCase() || '';
-          const desc = p.description?.toLowerCase() || '';
-          const metaCat = (p.metadata as any)?.category?.toLowerCase() || '';
-          const searchable = `${name} ${desc} ${metaCat}`;
-          return terms.some(term => searchable.includes(term));
-        });
-        console.log(`After ${category} filter (terms: ${terms.join(', ')}):`, filtered.length);
-      }
-      
-      // Asignar imágenes
-      const productsWithImages = filtered.map(p => ({
-        ...p,
-        image_url: getProductImage(p)
-      }));
-      
-      setProducts(productsWithImages);
-    } catch (err) {
-      console.error('Error loading products:', err);
-      setError('Error al cargar los productos');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // Aplicar filtros a los productos
   const filteredProducts = useMemo(() => {
     let result = [...products];
+
+    if (categoryConfig?.searchTerms && categoryConfig.searchTerms.length > 0) {
+      const terms = categoryConfig.searchTerms.map((term) => term.toLowerCase());
+      result = result.filter((product) => {
+        const name = product.name?.toLowerCase() || '';
+        const description = product.description?.toLowerCase() || '';
+        const metadataCategory = (product.metadata as any)?.category?.toLowerCase() || '';
+        const searchable = `${name} ${description} ${metadataCategory}`;
+        return terms.some((term) => searchable.includes(term));
+      });
+    }
     
     // Filtrar por capacidad
     if (activeFilters.capacidad && activeFilters.capacidad.length > 0) {
@@ -241,7 +191,7 @@ export const CategoryPage: React.FC = () => {
     });
     
     return result;
-  }, [products, activeFilters, sortBy]);
+  }, [activeFilters, categoryConfig?.searchTerms, products, sortBy]);
 
   // Actualizar URL con filtros
   const updateFilters = (filterKey: keyof ActiveFilters, value: string | boolean) => {
@@ -691,7 +641,7 @@ export const CategoryPage: React.FC = () => {
                             src={product.image_url} 
                             alt={product.name}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            onError={(e) => handleImgError(e, '/placeholder-product.jpg')}
+                            onError={(e) => handleImgError(e)}
                           />
                         </div>
                       </Link>

@@ -4,6 +4,7 @@
  */
 
 import React, { useMemo } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { FEATURES, BUSINESS } from '@/config/branding';
 import { useStore } from '@/store/useStore';
 
@@ -79,13 +80,22 @@ export const PriceDisplay = ({
   onLoginClick?: () => void;
 }) => {
   const { canViewPrices, loginMessage, loginCTA } = usePriceVisibility();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   // Función por defecto para redirigir a login
   const handleLoginClick = () => {
     if (onLoginClick) {
       onLoginClick();
     } else {
-      window.location.href = '/login';
+      navigate('/login', {
+        state: {
+          from: {
+            pathname: location.pathname,
+            search: location.search,
+          },
+        },
+      });
     }
   };
 

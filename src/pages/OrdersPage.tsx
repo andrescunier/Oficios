@@ -22,12 +22,12 @@ import {
 import { useStore } from '@/store/useStore';
 import { orderService } from '@/services/orderService';
 import { getBusinessConfig } from '@/config/runtime';
-import type { PaymentSummary, SalesOrder } from '@/services/orderService';
+import { getBusinessPartnerId } from '@/features/auth/session';
+import type { SalesOrder } from '@/services/orderService';
 
 export const OrdersPage: React.FC = () => {
   const { auth, addNotification } = useStore();
   const [orders, setOrders] = useState<SalesOrder[]>([]);
-  const [payments, setPayments] = useState<PaymentSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDetailLoading, setIsDetailLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -64,18 +64,17 @@ export const OrdersPage: React.FC = () => {
   const loadOrders = async () => {
     setIsLoading(true);
     try {
-      const businessPartnerId = localStorage.getItem('business_partner_id');
+      const businessPartnerId = getBusinessPartnerId();
 
       if (!businessPartnerId) {
         throw new Error('No se encontró tu información de cliente. Intenta cerrar sesión y volver a entrar.');
       }
 
-      const response = await orderService.getUserOrdersWithPayments(businessPartnerId, {
+      const response = await orderService.getUserOrders(businessPartnerId, {
         per_page: getBusinessConfig().productsPerPage,
       });
 
       setOrders(response.data);
-      setPayments(response.payments);
     } catch (error: any) {
       addNotification({
         type: 'error',
@@ -83,7 +82,6 @@ export const OrdersPage: React.FC = () => {
         message: error.message || 'No se pudieron cargar tus pedidos. Intenta nuevamente.',
       });
       setOrders([]);
-      setPayments([]);
     } finally {
       setIsLoading(false);
     }
@@ -93,13 +91,7 @@ export const OrdersPage: React.FC = () => {
     setIsDetailLoading(true);
     try {
       const detail = await orderService.getOrderDetail(orderId);
-      const current = orders.find((order) => order.id === orderId);
-      setSelectedOrder({
-        ...(current || detail),
-        ...detail,
-        payments: current?.payments || [],
-        payment_summary: current?.payment_summary,
-      });
+      setSelectedOrder(detail);
     } catch (error: any) {
       addNotification({
         type: 'error',
@@ -138,16 +130,27 @@ export const OrdersPage: React.FC = () => {
     };
   };
 
-  const getPaymentStatusInfo = (status?: string) => {
-    const statusConfig: Record<string, string> = {
-      pending: 'text-yellow-700 bg-yellow-100',
-      received: 'text-green-700 bg-green-100',
-      rejected: 'text-red-700 bg-red-100',
-      failed: 'text-red-700 bg-red-100',
-      cancelled: 'text-gray-700 bg-gray-100',
+  const getPaymentReviewInfo = (order: SalesOrder) => {
+    const statusConfig: Record<string, { label: string; color: string }> = {
+      draft: { label: 'Pendiente de envio', color: 'text-gray-700 bg-gray-100' },
+      pending_payment: { label: 'Pendiente de validacion', color: 'text-yellow-700 bg-yellow-100' },
+      payment_review: { label: 'En revision backend', color: 'text-orange-700 bg-orange-100' },
+      confirmed: { label: 'Validado por backend', color: 'text-green-700 bg-green-100' },
+      preparing: { label: 'Validado por backend', color: 'text-green-700 bg-green-100' },
+      ready_to_ship: { label: 'Validado por backend', color: 'text-green-700 bg-green-100' },
+      shipped: { label: 'Validado por backend', color: 'text-green-700 bg-green-100' },
+      in_transit: { label: 'Validado por backend', color: 'text-green-700 bg-green-100' },
+      out_for_delivery: { label: 'Validado por backend', color: 'text-green-700 bg-green-100' },
+      delivered: { label: 'Validado por backend', color: 'text-green-700 bg-green-100' },
+      completed: { label: 'Validado por backend', color: 'text-green-700 bg-green-100' },
+      cancelled: { label: 'Cancelado', color: 'text-red-700 bg-red-100' },
+      return_requested: { label: 'En devolucion', color: 'text-amber-700 bg-amber-100' },
+      return_in_transit: { label: 'En devolucion', color: 'text-amber-700 bg-amber-100' },
+      returned: { label: 'Devuelto', color: 'text-amber-700 bg-amber-100' },
+      refunded: { label: 'Reembolsado', color: 'text-red-700 bg-red-100' },
     };
 
-    return statusConfig[status || 'pending'] || 'text-gray-700 bg-gray-100';
+    return statusConfig[order.status] || { label: 'Pendiente', color: 'text-gray-700 bg-gray-100' };
   };
 
   const getPaymentMethodLabel = (method?: string) => {
@@ -290,10 +293,6 @@ export const OrdersPage: React.FC = () => {
               </Link>
               <h1 className="text-2xl font-bold">Mis Pedidos</h1>
             </div>
-            <div className="hidden md:flex items-center gap-3 text-sm text-gray-600">
-              <CreditCard className="w-4 h-4" />
-              <span>{payments.length} pago(s) registrados</span>
-            </div>
           </div>
         </div>
       </div>
@@ -366,8 +365,7 @@ export const OrdersPage: React.FC = () => {
             {filteredOrders.map((order) => {
               const statusInfo = getStatusInfo(order.status);
               const StatusIcon = statusInfo.icon;
-              const paidAmount = order.payment_summary?.total || 0;
-              const orderPayments = order.payments || [];
+              const paymentReview = getPaymentReviewInfo(order);
 
               return (
                 <div key={order.id} className="bg-white rounded-lg shadow-sm p-6">
@@ -445,32 +443,19 @@ export const OrdersPage: React.FC = () => {
                     <div className="bg-gray-50 rounded-lg p-4">
                       <div className="flex items-center text-gray-700 mb-3">
                         <CreditCard className="w-4 h-4 mr-2" />
-                        <span className="font-medium">Pagos</span>
+                        <span className="font-medium">Pago informado</span>
                       </div>
-                      {orderPayments.length === 0 ? (
-                        <p className="text-sm text-gray-500">Todavía no hay pagos vinculados a este pedido.</p>
-                      ) : (
-                        <div className="space-y-2">
-                          {orderPayments.slice(0, 2).map((payment) => (
-                            <div key={payment.id} className="text-sm">
-                              <div className="flex items-center justify-between gap-2">
-                                <span className="font-medium text-gray-900">{payment.payment_number}</span>
-                                <span
-                                  className={`px-2 py-1 rounded-full text-xs font-medium ${getPaymentStatusInfo(payment.status)}`}
-                                >
-                                  {payment.status}
-                                </span>
-                              </div>
-                              <p className="text-gray-600">
-                                {getPaymentMethodLabel(payment.method)} • {formatPrice(payment.amount, payment.currency)}
-                              </p>
-                            </div>
-                          ))}
-                          <p className="text-sm font-medium text-gray-800">
-                            Total pagado: {formatPrice(paidAmount, order.currency)}
-                          </p>
-                        </div>
-                      )}
+                      <div className="space-y-2 text-sm">
+                        <p className="font-medium text-gray-900">
+                          {getPaymentMethodLabel(order.metadata?.payment_method)}
+                        </p>
+                        <p className="text-gray-600">
+                          El storefront solo informa el medio de pago. La validación queda del lado backend.
+                        </p>
+                        <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${paymentReview.color}`}>
+                          {paymentReview.label}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -562,35 +547,23 @@ export const OrdersPage: React.FC = () => {
 
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Pagos realizados</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Estado de pago</label>
                       <div className="space-y-3">
-                        {(selectedOrder.payments || []).length === 0 ? (
-                          <div className="p-4 bg-gray-50 rounded-lg text-sm text-gray-500">
-                            No hay pagos vinculados para este pedido.
+                        <div className="p-4 border rounded-lg">
+                          <div className="flex items-center justify-between gap-3 mb-2">
+                            <p className="font-medium text-gray-900">
+                              {getPaymentMethodLabel(selectedOrder.metadata?.payment_method)}
+                            </p>
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${getPaymentReviewInfo(selectedOrder).color}`}
+                            >
+                              {getPaymentReviewInfo(selectedOrder).label}
+                            </span>
                           </div>
-                        ) : (
-                          selectedOrder.payments?.map((payment) => (
-                            <div key={payment.id} className="p-4 border rounded-lg">
-                              <div className="flex items-center justify-between gap-3 mb-2">
-                                <p className="font-medium text-gray-900">{payment.payment_number}</p>
-                                <span
-                                  className={`px-2 py-1 rounded-full text-xs font-medium ${getPaymentStatusInfo(payment.status)}`}
-                                >
-                                  {payment.status}
-                                </span>
-                              </div>
-                              <p className="text-sm text-gray-600">
-                                {getPaymentMethodLabel(payment.method)} • {formatPrice(payment.amount, payment.currency)}
-                              </p>
-                              <p className="text-sm text-gray-500 mt-1">
-                                {formatDate(payment.received_at || payment.created_at)}
-                              </p>
-                              {payment.reference && (
-                                <p className="text-xs text-gray-500 mt-1">Referencia: {payment.reference}</p>
-                              )}
-                            </div>
-                          ))
-                        )}
+                          <p className="text-sm text-gray-600">
+                            El frontend informó el medio de pago y el backend controla la validación.
+                          </p>
+                        </div>
                       </div>
                     </div>
 

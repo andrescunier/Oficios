@@ -267,7 +267,7 @@ export const FavoritesPage: React.FC = () => {
                       <div key={product.id} className="bg-white rounded-lg shadow-sm p-6">
                         <div className="flex items-center space-x-6">
                           <img
-                            src={product.image_url || '/placeholder-product.jpg'}
+                            src={product.image_url || '/placeholder-product.svg'}
                             alt={product.name}
                             className="w-24 h-24 object-cover rounded-lg flex-shrink-0"
                           />

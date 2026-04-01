@@ -4,120 +4,84 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  ArrowRight, 
-  Star, 
-  Truck, 
-  Shield, 
-  RotateCcw,
-  CreditCard,
-  ChevronLeft,
-  ChevronRight
-} from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ProductCard } from '@/components/product/ProductCard';
 import { useStore } from '@/store/useStore';
-import { productService } from '@/services/productService';
-import type { Product } from '@/types/api';
-import { ASSETS, BRANDING, BUSINESS } from '@/config/branding';
+import { useQuery } from '@tanstack/react-query';
+import { ASSETS, BRANDING, BUSINESS, FEATURES } from '@/config/branding';
 import { getImagesConfig } from '@/config/runtime';
 import { handleImgError } from '@/utils/imageHelpers';
+import { featuredProductsQueryOptions, productsQueryOptions } from '@/features/catalog/queries';
+import { getFeatureBenefitIcon } from '@/components/ui/featureBenefitIcons';
 
 export const Home: React.FC = () => {
-  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
-  const [newProducts, setNewProducts] = useState<Product[]>([]);
-  const [onSaleProducts, setOnSaleProducts] = useState<Product[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [slidesError, setSlidesError] = useState<string | null>(null);
-  
   const { setError, addNotification } = useStore();
+  const featuredProductsQuery = useQuery(featuredProductsQueryOptions(BUSINESS.FEATURED_PRODUCTS_COUNT));
+  const newProductsQuery = useQuery(productsQueryOptions({
+    per_page: BUSINESS.FEATURED_PRODUCTS_COUNT,
+    is_active: true,
+  }));
+  const onSaleProductsQuery = useQuery(productsQueryOptions({
+    per_page: BUSINESS.FEATURED_PRODUCTS_COUNT,
+    is_active: true,
+  }));
+  const featuredProducts = featuredProductsQuery.data || [];
+  const newProducts = newProductsQuery.data?.data || [];
+  const onSaleProducts = useMemo(() => {
+    const products = onSaleProductsQuery.data?.data || [];
+    return products.filter((product) =>
+      product?.metadata?.original_price && product.metadata.original_price > product.unit_price
+    );
+  }, [onSaleProductsQuery.data]);
+  const isLoading = featuredProductsQuery.isLoading || newProductsQuery.isLoading || onSaleProductsQuery.isLoading;
 
-  // Hero slides - usando configuración de branding
-  const { heroSlides, usedFallbackSlides } = useMemo(() => {
-    const configuredSlides = (ASSETS.HERO_SLIDES || []).filter(
+  // Hero slides - solo lo que viene de la API, sin fallbacks hardcodeados
+  const heroSlides = useMemo(() => {
+    return (ASSETS.HERO_SLIDES || []).filter(
       (slide) => slide && typeof slide.image === 'string' && slide.image.trim().length > 0
     );
-
-    if (configuredSlides.length) {
-      return { heroSlides: configuredSlides, usedFallbackSlides: false };
-    }
-
-    return {
-      heroSlides: [
-        {
-          image: '/images/heroes/slide-1.jpg',
-          title: 'Tecnología Profesional para Empresas',
-          subtitle: 'Soluciones B2B en componentes de alta gama',
-          cta: 'Ver catálogo',
-          link: '/productos',
-        },
-        {
-          image: '/images/heroes/slide-2.jpg',
-          title: 'SSDs de Alto Rendimiento',
-          subtitle: 'Almacenamiento profesional para tu negocio',
-          cta: 'Explorar SSDs',
-          link: '/productos',
-        },
-        {
-          image: '/images/heroes/slide-3.jpg',
-          title: 'Memorias RAM DDR4 & DDR5',
-          subtitle: 'Maximiza el rendimiento de tus equipos',
-          cta: 'Ver memorias',
-          link: '/productos',
-        },
-      ],
-      usedFallbackSlides: true,
-    };
   }, []);
-
-  useEffect(() => {
-    if (usedFallbackSlides) {
-      setSlidesError('No se encontraron diapositivas configuradas. Mostrando contenido por defecto.');
-    } else {
-      setSlidesError(null);
-    }
-  }, [usedFallbackSlides]);
   
   // Pre-cargar imágenes para mejor rendimiento
   useEffect(() => {
-    heroSlides.forEach((slide, index) => {
+    heroSlides.forEach((slide) => {
       const img = new Image();
-      img.onerror = () => {
-        setSlidesError('No se pudieron cargar algunas imágenes del slider. Revisa la configuración del CDN.');
-      };
       img.src = slide.image;
+
+      if (slide.mobileImage) {
+        const mobileImg = new Image();
+        mobileImg.src = slide.mobileImage;
+      }
     });
   }, [heroSlides]);
 
-  // Features
-  const features = [
-    {
-      icon: Truck,
-      title: "Envío Gratis",
-      description: "En todas tus compras"
-    },
-    {
-      icon: Shield,
-      title: "Compra Segura",
-      description: "Protegemos tus datos con la mejor tecnología"
-    },
-    {
-      icon: CreditCard,
-      title: "Transferencia Bancaria",
-      description: "Método de pago seguro"
-    }
-  ];
+  const benefits = FEATURES.SHIPPING_BENEFITS;
+  const heroSliderInterval = BUSINESS.HERO_SLIDER_INTERVAL;
 
   // Categories (desde runtime config)
   const runtimeImages = getImagesConfig();
   const categories = runtimeImages.categories;
 
   useEffect(() => {
-    loadHomeData();
-  }, []);
+    if (featuredProductsQuery.isError || newProductsQuery.isError || onSaleProductsQuery.isError) {
+      setError('Error al cargar los datos de la página principal');
+      addNotification({
+        type: 'error',
+        title: 'Error de carga',
+        message: 'No se pudieron cargar algunos productos. Intenta recargar la página.',
+      });
+    }
+  }, [
+    addNotification,
+    featuredProductsQuery.isError,
+    newProductsQuery.isError,
+    onSaleProductsQuery.isError,
+    setError,
+  ]);
 
   useEffect(() => {
     // Auto-slide del hero
@@ -125,60 +89,10 @@ export const Home: React.FC = () => {
 
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
-    }, BUSINESS.HERO_SLIDER_INTERVAL);
+    }, heroSliderInterval);
 
     return () => clearInterval(interval);
-  }, [heroSlides]);
-
-  const loadHomeData = async () => {
-    try {
-      setIsLoading(true);
-      
-      // Cargar productos destacados
-      const featured = await productService.getFeaturedProducts(8);
-      setFeaturedProducts(featured);
-
-      const normalizeProducts = (response: any): Product[] => {
-        const productsData = Array.isArray(response) ? response : 
-                           (response?.data && Array.isArray(response.data) ? response.data : []);
-        
-        if (!Array.isArray(productsData)) {
-          return [];
-        }
-        
-        return productsData;
-      };
-
-      // Cargar productos nuevos (simulado con los más recientes)
-      const newProductsResponse = await productService.getProducts({
-        per_page: BUSINESS.FEATURED_PRODUCTS_COUNT,
-        is_active: true
-      });
-      setNewProducts(normalizeProducts(newProductsResponse));
-
-      // Cargar productos en oferta (simulado con productos que tienen descuento)
-      const onSaleResponse = await productService.getProducts({
-        per_page: BUSINESS.FEATURED_PRODUCTS_COUNT,
-        is_active: true
-      });
-      const normalizedOnSale = normalizeProducts(onSaleResponse);
-      const onSale = normalizedOnSale.filter(product => 
-        product?.metadata?.original_price && 
-        product.metadata.original_price > product.unit_price
-      );
-      setOnSaleProducts(onSale);
-
-    } catch (error) {
-      setError('Error al cargar los datos de la página principal');
-      addNotification({
-        type: 'error',
-        title: 'Error de carga',
-        message: 'No se pudieron cargar algunos productos. Intenta recargar la página.',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [heroSlides, heroSliderInterval]);
 
   const nextSlide = () => { 
     setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
@@ -194,137 +108,164 @@ export const Home: React.FC = () => {
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="relative h-[500px] md:h-[600px] overflow-hidden bg-gray-900">
-        <div className="relative w-full h-full">
-          {heroSlides.map((slide, index) => (
-            <div
-              key={index}
-              className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
-                index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
-              }`}
-            >
-              <div 
-                className="relative w-full h-full"
-                style={{
-                  backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('${slide.image}')`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                  backgroundRepeat: 'no-repeat'
-                }}
+      {/* Hero Section - solo si hay slides de la API */}
+      {heroSlides.length > 0 && (
+        <section className="relative min-h-[540px] overflow-hidden bg-gray-950 sm:min-h-[620px]">
+          <div className="relative h-full min-h-[540px] w-full sm:min-h-[620px]">
+            {heroSlides.map((slide, index) => (
+              <div
+                key={index}
+                className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
+                  index === currentSlide ? 'z-10 opacity-100' : 'z-0 opacity-0'
+                }`}
               >
-                <div className="relative container mx-auto px-4 h-full flex items-center">
-                  <div className="max-w-2xl text-white">
-                    <h1 className="text-4xl md:text-6xl font-bold mb-4 drop-shadow-lg">
-                      {slide.title}
-                    </h1>
-                    <h2 className="text-xl md:text-2xl mb-6 text-blue-100 drop-shadow-md">
-                      {slide.subtitle}
-                    </h2>
-                    <Link to={slide.link}>
-                      <Button size="lg" variant="secondary" className="text-lg px-8 shadow-lg hover:shadow-xl transition-shadow">
-                        {slide.cta}
-                        <ArrowRight className="ml-2 h-5 w-5" />
-                      </Button>
-                    </Link>
+                <div className="relative min-h-[540px] sm:min-h-[620px]">
+                  <picture className="absolute inset-0">
+                    {slide.mobileImage ? (
+                      <source media="(max-width: 767px)" srcSet={slide.mobileImage} />
+                    ) : null}
+                    <img
+                      src={slide.image}
+                      alt={slide.title || BRANDING.APP_NAME}
+                      className="h-full w-full object-cover object-center"
+                    />
+                  </picture>
+                  <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/45 to-black/25" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+                  <div className="relative container mx-auto flex min-h-[540px] items-end px-4 pb-14 pt-24 sm:min-h-[620px] sm:items-center sm:pb-20">
+                    <div className="max-w-2xl text-white">
+                      <p className="mb-3 text-xs font-semibold uppercase tracking-[0.32em] text-white/75">
+                        {BRANDING.COMPANY_NAME}
+                      </p>
+                      <h1 className="mb-4 text-4xl font-bold leading-tight drop-shadow-lg sm:text-5xl lg:text-6xl">
+                        {slide.title}
+                      </h1>
+                      <h2 className="mb-6 max-w-xl text-base text-white/85 drop-shadow-md sm:text-xl lg:text-2xl">
+                        {slide.subtitle}
+                      </h2>
+                      <Link to={slide.link}>
+                        <Button
+                          size="lg"
+                          variant="secondary"
+                          className="px-6 text-base shadow-lg transition-shadow hover:shadow-xl sm:px-8 sm:text-lg"
+                        >
+                          {slide.cta}
+                          <ArrowRight className="ml-2 h-5 w-5" />
+                        </Button>
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </div>
+            ))}
+          </div>
+
+          {/* Navigation arrows */}
+          {heroSlides.length > 1 ? (
+            <>
+              <Button
+                variant="secondary"
+                size="icon"
+                className="absolute left-4 top-1/2 z-20 hidden -translate-y-1/2 transition-transform hover:scale-110 md:inline-flex"
+                onClick={prevSlide}
+                aria-label="Slide anterior"
+              >
+                <ChevronLeft className="h-6 w-6" />
+              </Button>
+              <Button
+                variant="secondary"
+                size="icon"
+                className="absolute right-4 top-1/2 z-20 hidden -translate-y-1/2 transition-transform hover:scale-110 md:inline-flex"
+                onClick={nextSlide}
+                aria-label="Siguiente slide"
+              >
+                <ChevronRight className="h-6 w-6" />
+              </Button>
+            </>
+          ) : null}
+
+          {/* Dots indicator */}
+          {heroSlides.length > 1 ? (
+            <div className="absolute bottom-8 left-1/2 z-20 flex -translate-x-1/2 space-x-2">
+              {heroSlides.map((_, index) => (
+                <button
+                  key={index}
+                  className={`h-3 w-3 rounded-full transition-all duration-300 ${
+                    index === currentSlide ? 'w-8 bg-white' : 'bg-white/50 hover:bg-white/75'
+                  }`}
+                  onClick={() => goToSlide(index)}
+                  aria-label={`Ir a slide ${index + 1}`}
+                />
+              ))}
             </div>
-          ))}
-        </div>
-
-        {/* Navigation arrows */}
-        <Button
-          variant="secondary"
-          size="icon"
-          className="absolute left-4 top-1/2 transform -translate-y-1/2 z-20 hover:scale-110 transition-transform"
-          onClick={prevSlide}
-          aria-label="Slide anterior"
-        >
-          <ChevronLeft className="h-6 w-6" />
-        </Button>
-        <Button
-          variant="secondary"
-          size="icon"
-          className="absolute right-4 top-1/2 transform -translate-y-1/2 z-20 hover:scale-110 transition-transform"
-          onClick={nextSlide}
-          aria-label="Siguiente slide"
-        >
-          <ChevronRight className="h-6 w-6" />
-        </Button>
-
-        {/* Dots indicator */}
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex space-x-2 z-20">
-          {heroSlides.map((_, index) => (
-            <button
-              key={index}
-              className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                index === currentSlide ? 'bg-white w-8' : 'bg-white/50 hover:bg-white/75'
-              }`}
-              onClick={() => goToSlide(index)}
-              aria-label={`Ir a slide ${index + 1}`}
-            />
-          ))}
-        </div>
-      </section>
+          ) : null}
+        </section>
+      )}
 
       {/* Features Section */}
       <section className="py-16 bg-muted/50">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            {features.map((feature, index) => (
-              <div key={index} className="text-center">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
-                  <feature.icon className="w-8 h-8 text-primary" />
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
+            {benefits.map((feature, index) => {
+              const Icon = getFeatureBenefitIcon(feature.icon);
+              return (
+                <div key={index} className="text-center">
+                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                    <Icon className="h-8 w-8 text-primary" />
+                  </div>
+                  <h3 className="mb-2 text-lg font-semibold">{feature.title}</h3>
+                  <p className="text-muted-foreground">{feature.description}</p>
                 </div>
-                <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
-                <p className="text-muted-foreground">{feature.description}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* Categories Section */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Explora por Categorías</h2>
-            <p className="text-lg text-muted-foreground">
-              Encuentra exactamente lo que necesitas para tu hogar
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            {categories.map((category, index) => (
-              <Link key={index} to={category.link}>
-                <Card className="group hover:shadow-lg transition-all duration-300 overflow-hidden">
-                  <CardContent className="p-0">
-                    <div className="relative h-64 overflow-hidden bg-gray-100">
-                      <img 
-                        src={category.image} 
-                        alt={category.name}
-                        className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
-                        onError={(e) => handleImgError(e, runtimeImages.productFallbacks['default'] || '/images/categories/componentes.jpg')}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                      <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                        <h3 className="text-xl font-bold mb-1 group-hover:text-blue-300 transition-colors">
-                          {category.name}
-                        </h3>
-                        <p className="text-sm text-gray-200">
-                          {category.description}
-                        </p>
+      {/* Categories Section - solo si la API devolvió categorías */}
+      {categories.length > 0 && (
+        <section className="py-16">
+          <div className="container mx-auto px-4">
+            <div className="mb-12 text-center">
+              <h2 className="mb-4 text-3xl font-bold">Explora por Categorías</h2>
+              <p className="text-lg text-muted-foreground">
+                Encuentra exactamente lo que necesitas para tu hogar
+              </p>
+            </div>
+
+            <div className="mx-auto grid max-w-4xl grid-cols-1 gap-6 md:grid-cols-2">
+              {categories.map((category, index) => (
+                <Link key={index} to={category.link}>
+                  <Card className="group overflow-hidden transition-all duration-300 hover:shadow-lg">
+                    <CardContent className="p-0">
+                      <div className="relative h-64 overflow-hidden bg-gray-100">
+                        <img
+                          src={category.image}
+                          alt={category.name}
+                          className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-105"
+                          onError={(e) =>
+                            handleImgError(
+                              e,
+                              runtimeImages.productFallbacks.default || '/images/categories/componentes.jpg',
+                            )
+                          }
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                        <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                          <h3 className="mb-1 text-xl font-bold transition-colors group-hover:text-blue-300">
+                            {category.name}
+                          </h3>
+                          <p className="text-sm text-gray-200">{category.description}</p>
+                        </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Featured Products */}
       <section className="py-16 bg-muted/50">

@@ -34,7 +34,7 @@ test.describe('frontend hardening', () => {
     await expect(page.getByText('Todo por API')).toBeVisible();
 
     await page.goto('/productos');
-    await expect(page.getByRole('heading', { name: 'Catálogo de Productos' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Tienda QA' })).toBeVisible();
     await expect(page.getByText('Notebook QA')).toBeVisible();
 
     await page.getByRole('link', { name: /Notebook QA/i }).first().click();
@@ -124,7 +124,7 @@ test.describe('frontend hardening', () => {
     });
 
     await page.goto('/productos');
-    await expect(page.getByRole('heading', { name: 'Catálogo de Productos' })).toBeVisible({ timeout: 20000 });
+    await expect(page.getByRole('heading', { name: 'Mi Tienda' })).toBeVisible({ timeout: 20000 });
     await expect(page.getByText('Notebook QA')).toBeVisible({ timeout: 20000 });
   });
 });

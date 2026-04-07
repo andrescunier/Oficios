@@ -278,6 +278,13 @@ async function retryFetchUntilSuccess(
       return result.data;
     }
 
+    // Invalid payload means the server responded but the data is unparseable.
+    // Retrying won't help — fall back to empty defaults so the app can render.
+    if (result.reason === 'invalid_payload') {
+      recordAppEvent('tenant_config_fallback', { reason: 'invalid_payload' });
+      return {} as NonNullable<ReturnType<typeof parseRuntimeConfigPayload>>;
+    }
+
     attempt += 1;
     const nextRetryInMs = getRetryDelay(attempt);
     options?.onRetry?.({

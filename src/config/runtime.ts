@@ -402,10 +402,15 @@ function normalizeHeroSlides(raw: unknown): HeroSlideConfig[] {
     return DEFAULT_RUNTIME_CONFIG.images.heroSlides;
   }
 
+  // When slides are plain strings, use branding info as overlay text
+  const app = getConfigRoot().app;
+  const defaultTitle = readString(app?.slogan, DEFAULT_RUNTIME_CONFIG.app.slogan);
+  const defaultSubtitle = readString(app?.description, DEFAULT_RUNTIME_CONFIG.app.description);
+
   return raw
     .map((item) => {
       if (typeof item === 'string') {
-        return { image: item, title: '', subtitle: '', cta: '', link: '/productos' };
+        return { image: item, title: defaultTitle, subtitle: defaultSubtitle, cta: 'Ver Catálogo', link: '/productos' };
       }
 
       if (typeof item === 'object' && item !== null) {

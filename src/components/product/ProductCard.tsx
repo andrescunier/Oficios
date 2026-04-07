@@ -61,6 +61,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   const isProductFavorite = isFavorite(product.id);
   const isOutOfStock = (product.stock_quantity || 0) <= 0;
+  const canAddToCart = product.unit_price != null && !isOutOfStock;
   const originalPrice = product.metadata?.original_price;
   const hasDiscount = typeof originalPrice === 'number' && originalPrice > product.unit_price;
   const discountPercentage = hasDiscount 
@@ -286,43 +287,42 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                           {product.description}
                         </p>
 
-                        {isAuthenticated && (
-                          <>
-                            <div className="flex items-center space-x-2">
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={(e: React.MouseEvent) => {
-                                  e.stopPropagation();
-                                  setQuantity(Math.max(1, quantity - 1));
-                                }}
-                                disabled={quantity <= 1}
-                              >
-                                <Minus className="w-4 h-4" />
-                              </Button>
-                              <span className="w-12 text-center font-medium">{quantity}</span>
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={(e: React.MouseEvent) => {
-                                  e.stopPropagation();
-                                  setQuantity(quantity + 1);
-                                }}
-                                disabled={quantity >= (product.stock_quantity || 0)}
-                              >
-                                <Plus className="w-4 h-4" />
-                              </Button>
-                            </div>
+                        {canAddToCart && (
+                        <>
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={(e: React.MouseEvent) => {
+                              e.stopPropagation();
+                              setQuantity(Math.max(1, quantity - 1));
+                            }}
+                            disabled={quantity <= 1}
+                          >
+                            <Minus className="w-4 h-4" />
+                          </Button>
+                          <span className="w-12 text-center font-medium">{quantity}</span>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={(e: React.MouseEvent) => {
+                              e.stopPropagation();
+                              setQuantity(quantity + 1);
+                            }}
+                            disabled={quantity >= (product.stock_quantity || 0)}
+                          >
+                            <Plus className="w-4 h-4" />
+                          </Button>
+                        </div>
 
-                            <Button 
-                              className="w-full" 
-                  onClick={handleAddToCart}
-                  disabled={isOutOfStock}
-                >
-                  <ShoppingCart className="w-4 h-4 mr-2" />
-                  {product.has_variants ? 'Elegir variante' : isOutOfStock ? 'Sin Stock' : 'Agregar al Carrito'}
-                </Button>
-                          </>
+                        <Button 
+                          className="w-full" 
+                          onClick={handleAddToCart}
+                        >
+                          <ShoppingCart className="w-4 h-4 mr-2" />
+                          {product.has_variants ? 'Elegir variante' : 'Agregar al Carrito'}
+                        </Button>
+                        </>
                         )}
                       </div>
                     </div>
@@ -331,19 +331,18 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               )}
             </div>
 
-            {/* Quick add to cart overlay - solo para usuarios autenticados */}
-            {isAuthenticated && (
-              <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <Button 
-                  size="sm" 
-                  className="w-full" 
-                  onClick={handleAddToCart}
-                  disabled={isOutOfStock}
-                >
-                  <ShoppingCart className="w-4 h-4 mr-2" />
-                  {product.has_variants ? 'Elegir variante' : isOutOfStock ? 'Sin Stock' : 'Agregar'}
-                </Button>
-              </div>
+            {/* Quick add to cart overlay */}
+            {canAddToCart && (
+            <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <Button 
+                size="sm" 
+                className="w-full" 
+                onClick={handleAddToCart}
+              >
+                <ShoppingCart className="w-4 h-4 mr-2" />
+                {product.has_variants ? 'Elegir variante' : 'Agregar'}
+              </Button>
+            </div>
             )}
           </div>
         </Link>
@@ -375,8 +374,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             showLoginButton={true}
           />
 
-          {/* Stock info - solo para usuarios autenticados */}
-          {isAuthenticated && !isOutOfStock && (product.stock_quantity || 0) <= 5 && (
+          {/* Stock info */}
+          {product.stock_quantity != null && product.stock_quantity > 0 && product.stock_quantity <= 5 && (
             <p className="text-xs text-orange-600 mb-2">
               ¡Solo quedan {product.stock_quantity} unidades!
             </p>

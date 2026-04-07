@@ -455,6 +455,8 @@ export const ProductDetailPage: React.FC = () => {
                 </span>
               </div>
 
+              {product.unit_price != null && !isOutOfStock && (
+              <>
               <div className="flex items-center space-x-3">
                 <button
                   onClick={() => setQuantity((current) => Math.max(1, current - 1))}
@@ -475,12 +477,14 @@ export const ProductDetailPage: React.FC = () => {
 
               <button
                 onClick={handleAddToCart}
-                disabled={isOutOfStock || variantSelectionIncomplete}
+                disabled={variantSelectionIncomplete}
                 className="w-full bg-blue-600 text-white py-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center"
               >
                 <ShoppingCart className="w-5 h-5 mr-2" />
-                {variantSelectionIncomplete ? 'Elegí una variante' : isOutOfStock ? 'Sin Stock' : 'Agregar al Carrito'}
+                {variantSelectionIncomplete ? 'Elegí una variante' : 'Agregar al Carrito'}
               </button>
+              </>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

@@ -99,26 +99,25 @@ export const PriceDisplay = ({
     }
   };
 
-  if (!canViewPrices) {
-    return (
-      <div className={`${className} space-y-2`}>
-        <p className="text-muted-foreground italic text-sm">
-          {loginMessage}
-        </p>
-        {showLoginButton && (
-          <button
-            onClick={handleLoginClick}
-            className="text-primary hover:text-primary/80 text-sm font-medium underline"
-          >
-            {loginCTA}
-          </button>
-        )}
-      </div>
-    );
-  }
-
-  // Validar que el precio sea un número válido
+  // Si el precio no es un número válido, mostrar mensaje de login o "no disponible"
   if (typeof price !== 'number' || isNaN(price) || price === null || price === undefined) {
+    if (!canViewPrices) {
+      return (
+        <div className={`${className} space-y-2`}>
+          <p className="text-muted-foreground italic text-sm">
+            {loginMessage}
+          </p>
+          {showLoginButton && (
+            <button
+              onClick={handleLoginClick}
+              className="text-primary hover:text-primary/80 text-sm font-medium underline"
+            >
+              {loginCTA}
+            </button>
+          )}
+        </div>
+      );
+    }
     return (
       <div className={className}>
         <span className="text-sm text-muted-foreground italic">

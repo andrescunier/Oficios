@@ -1,0 +1,113 @@
+{
+  "version": "1.0.0",
+  "api": {
+    "storefrontBaseUrl": "https://diapstore.com",
+    "assetsBaseUrl": "https://www.cumar.com.ar/CDN/diapstore"
+  },
+  "app": {
+    "name": "DIAP",
+    "companyName": "DIAP",
+    "slogan": "Tecnología Profesional para Empresas",
+    "description": "Distribuidora de productos tecnológicos de primera calidad",
+    "url": "https://diapstore.com",
+    "hidePricesForGuests": true,
+    "requireAuthForCart": true,
+    "loginMessage": "Inicia sesión para ver precios",
+    "loginCta": "Iniciar Sesión"
+  },
+  "contact": {
+    "email": "info@diap.com",
+    "salesEmail": "ventas@diap.com",
+    "phone": "+54 11 2631-0884",
+    "whatsapp": "5491126310884",
+    "address": "Buenos Aires, Argentina"
+  },
+  "legal": {
+    "companyName": "DIAP INGENIERÍA S.A.",
+    "cuit": "30-71036886-0",
+    "address": "Buenos Aires, Argentina",
+    "jurisdiction": "Buenos Aires, Argentina"
+  },
+  "business": {
+    "defaultTaxRate": 0.21,
+    "maxQuantityPerProduct": 5,
+    "defaultCurrency": "ARS",
+    "defaultCountry": "AR",
+    "businessHours": "Lunes a Viernes: 9:00 - 18:00hs",
+    "returnPolicyDays": 10,
+    "refundProcessingTime": "5 a 10 días hábiles",
+    "productsPerPage": 50,
+    "featuredProductsCount": 8,
+    "heroSliderInterval": 5000,
+    "invoiceNote": "Se emite factura tipo A o B según la condición fiscal del comprador.",
+    "freeShippingThreshold": 50000,
+    "locale": "es-AR"
+  },
+  "branding": {
+    "logo": "https://www.cumar.com.ar/CDN/diapstore/diap-logo.png",
+    "favicon": "https://www.cumar.com.ar/CDN/diapstore/favicon.ico",
+    "ogImage": "https://www.cumar.com.ar/CDN/diapstore/diap-logo.png"
+  },
+  "theme": {
+    "colorPrimary": "#2563EB",
+    "colorPrimaryHover": "#1D4ED8",
+    "colorPrimaryForeground": "#FFFFFF",
+    "colorSecondary": "#F1F5F9",
+    "colorSecondaryForeground": "#0F172A",
+    "colorBackground": "#FFFFFF",
+    "colorForeground": "#0F172A",
+    "colorSurface": "#FFFFFF",
+    "colorSurfaceForeground": "#0F172A",
+    "colorMuted": "#F1F5F9",
+    "colorMutedForeground": "#64748B",
+    "colorBorder": "#E2E8F0",
+    "colorInput": "#E2E8F0",
+    "colorRing": "#2563EB",
+    "colorSuccess": "#22C55E",
+    "colorWarning": "#F59E0B",
+    "colorError": "#EF4444",
+    "colorAccent": "#F1F5F9",
+    "colorAccentForeground": "#0F172A"
+  },
+  "social": {},
+  "features": {
+    "notifications": false,
+    "analytics": false,
+    "realPayments": false
+  },
+  "filters": {
+    "enabled": false,
+    "capacidad": false,
+    "velocidad": false,
+    "capacidadOptions": [],
+    "velocidadOptions": []
+  },
+  "paymentMethods": {
+    "transferencia": false,
+    "efectivo": true,
+    "mercadopago": false,
+    "tarjeta": false
+  },
+  "payment": {},
+  "images": {
+    "heroSlides": [
+      "https://www.cumar.com.ar/CDN/diapstore/slide-1.jpg",
+      "https://www.cumar.com.ar/CDN/diapstore/slide-2.jpg",
+      "https://www.cumar.com.ar/CDN/diapstore/slide-3.jpg"
+    ],
+    "categories": [
+      "https://www.cumar.com.ar/CDN/diapstore/ssd-sata.jpg",
+      "https://www.cumar.com.ar/CDN/diapstore/ddr4.jpg"
+    ],
+    "placeholders": [],
+    "backgrounds": [],
+    "banners": [],
+    "productFallbacks": []
+  },
+  "observability": {
+    "enabled": false,
+    "flushIntervalMs": 15000,
+    "maxQueueSize": 50,
+    "useBeacon": true
+  }
+}

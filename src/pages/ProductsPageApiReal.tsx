@@ -10,7 +10,7 @@ import { useStore } from '@/store/useStore';
 import type { Product } from '@/types/api';
 import { getBusinessConfig } from '@/config/runtime';
 import { PriceDisplay } from '@/hooks/usePriceVisibility';
-import { FEATURES } from '@/config/branding';
+import { BRANDING, FEATURES } from '@/config/branding';
 import { handleImgError } from '@/utils/imageHelpers';
 import { productsQueryOptions } from '@/features/catalog/queries';
 
@@ -150,10 +150,10 @@ export const ProductsPageApiReal: React.FC = () => {
         <div className="container mx-auto px-4">
           <div className="text-center">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              Catálogo de Productos
+              {BRANDING.APP_NAME}
             </h1>
             <p className="text-xl opacity-90">
-              SSDs, Memoria RAM y componentes de última tecnología
+              {BRANDING.APP_DESCRIPTION}
             </p>
           </div>
         </div>
@@ -265,11 +265,11 @@ export const ProductsPageApiReal: React.FC = () => {
                     />
                   </div>
                   
-                  {/* Stock y SKU - solo stock visible para autenticados */}
+                  {/* Stock y SKU */}
                   <div className="flex items-center justify-between mb-2">
                     {product.has_variants ? (
                       <span className="text-sm text-blue-600">Variantes disponibles</span>
-                    ) : isAuthenticated && product.stock_quantity !== undefined && (
+                    ) : product.stock_quantity != null && (
                       <span className={`text-sm ${product.stock_quantity > 0 ? 'text-green-600' : 'text-red-600'}`}>
                         {product.stock_quantity > 0 ? `Stock: ${product.stock_quantity}` : 'Sin stock'}
                       </span>
@@ -287,48 +287,46 @@ export const ProductsPageApiReal: React.FC = () => {
                     )}
                   </div>
 
-                  {/* Controles de acción - solo para usuarios autenticados */}
-                  {isAuthenticated && (
-                    <div className="space-y-3">
-                      {/* Selector de cantidad */}
-                      {!product.has_variants && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-gray-700">Cantidad:</span>
-                          <div className="flex items-center space-x-2">
-                            <button
-                              onClick={() => updateQuantity(product.id.toString(), getQuantity(product.id.toString()) - 1)}
-                              className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-300 text-gray-600 hover:bg-gray-100 transition-colors"
-                              disabled={getQuantity(product.id.toString()) <= 1}
-                            >
-                              <Minus className="w-4 h-4" />
-                            </button>
-                            <span className="w-8 text-center font-medium">
-                              {getQuantity(product.id.toString())}
-                            </span>
-                            <button
-                              onClick={() => updateQuantity(product.id.toString(), getQuantity(product.id.toString()) + 1)}
-                              className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-300 text-gray-600 hover:bg-gray-100 transition-colors"
-                              disabled={(product.stock_quantity || 0) <= getQuantity(product.id.toString())}
-                            >
-                              <Plus className="w-4 h-4" />
-                            </button>
-                          </div>
+                  {/* Controles de acción */}
+                  {product.unit_price != null && product.stock_quantity != null && product.stock_quantity > 0 && (
+                  <div className="space-y-3">
+                    {/* Selector de cantidad */}
+                    {!product.has_variants && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-700">Cantidad:</span>
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => updateQuantity(product.id.toString(), getQuantity(product.id.toString()) - 1)}
+                            className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-300 text-gray-600 hover:bg-gray-100 transition-colors"
+                            disabled={getQuantity(product.id.toString()) <= 1}
+                          >
+                            <Minus className="w-4 h-4" />
+                          </button>
+                          <span className="w-8 text-center font-medium">
+                            {getQuantity(product.id.toString())}
+                          </span>
+                          <button
+                            onClick={() => updateQuantity(product.id.toString(), getQuantity(product.id.toString()) + 1)}
+                            className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-300 text-gray-600 hover:bg-gray-100 transition-colors"
+                            disabled={(product.stock_quantity || 0) <= getQuantity(product.id.toString())}
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
                         </div>
-                      )}
+                      </div>
+                    )}
 
-                      {/* Botón agregar al carrito */}
-                      <button 
-                        onClick={() => handleAddToCart(product)}
-                        disabled={!product.has_variants && (!product.stock_quantity || product.stock_quantity <= 0)}
-                        className="w-full py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-                      >
-                        {product.has_variants
-                          ? 'Elegir Color / Talle'
-                          : product.stock_quantity && product.stock_quantity > 0
-                            ? 'Agregar al Carrito'
-                            : 'Sin Stock'}
-                      </button>
-                    </div>
+                    {/* Botón agregar al carrito */}
+                    <button 
+                      onClick={() => handleAddToCart(product)}
+                      disabled={!product.has_variants && (!product.stock_quantity || product.stock_quantity <= 0)}
+                      className="w-full py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    >
+                      {product.has_variants
+                        ? 'Elegir Color / Talle'
+                        : 'Agregar al Carrito'}
+                    </button>
+                  </div>
                   )}
                 </div>
               </div>

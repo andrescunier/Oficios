@@ -141,3 +141,6 @@ logs/
 kubeconfig
 *.kubeconfig
 secrets.yaml
+
+# Local runtime config (generated per-environment)
+public/config.js

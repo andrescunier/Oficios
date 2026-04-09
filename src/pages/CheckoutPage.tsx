@@ -647,6 +647,7 @@ export const CheckoutPage: React.FC = () => {
                         />
                         <div className="flex-1">
                           <h4 className="font-medium">{item.variant?.name || item.product.name}</h4>
+                          <p className="text-xs text-gray-400">SKU: {item.variant?.sku || item.product.sku}</p>
                           {item.selected_options && Object.keys(item.selected_options).length > 0 && (
                             <p className="text-xs text-gray-500">
                               {Object.entries(item.selected_options).map(([key, value]) => `${key}: ${value}`).join(' • ')}

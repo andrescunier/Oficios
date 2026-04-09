@@ -16,6 +16,8 @@ import { getImagesConfig } from '@/config/runtime';
 import { handleImgError } from '@/utils/imageHelpers';
 import { featuredProductsQueryOptions, productsQueryOptions } from '@/features/catalog/queries';
 import { getFeatureBenefitIcon } from '@/components/ui/featureBenefitIcons';
+import { groupProductsBySku } from '@/utils/skuGrouping';
+import { ProductGroupCard } from '@/components/product/ProductGroupCard';
 
 export const Home: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -38,6 +40,10 @@ export const Home: React.FC = () => {
     );
   }, [onSaleProductsQuery.data]);
   const isLoading = featuredProductsQuery.isLoading || newProductsQuery.isLoading || onSaleProductsQuery.isLoading;
+
+  const groupedFeatured = useMemo(() => groupProductsBySku(featuredProducts), [featuredProducts]);
+  const groupedNew = useMemo(() => groupProductsBySku(newProducts), [newProducts]);
+  const groupedOnSale = useMemo(() => groupProductsBySku(onSaleProducts), [onSaleProducts]);
 
   // Hero slides - solo lo que viene de la API, sin fallbacks hardcodeados
   const heroSlides = useMemo(() => {
@@ -300,9 +306,9 @@ export const Home: React.FC = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {featuredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} variant="featured" />
-              ))}
+              {groupedFeatured.map((item) =>
+                <ProductGroupCard key={item.groupKey} group={item} />
+              )}
             </div>
           )}
         </div>
@@ -325,9 +331,9 @@ export const Home: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {newProducts.slice(0, 4).map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
+            {groupedNew.slice(0, 4).map((item) =>
+              <ProductGroupCard key={item.groupKey} group={item} />
+            )}
           </div>
         </div>
       </section>
@@ -353,9 +359,9 @@ export const Home: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {onSaleProducts.slice(0, 4).map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
+              {groupedOnSale.slice(0, 4).map((item) =>
+                <ProductGroupCard key={item.groupKey} group={item} />
+              )}
             </div>
           </div>
         </section>

@@ -14,6 +14,7 @@ interface SalesOrderItem {
   quantity: number;
   unit_price: number;
   tax_rate: number;
+  sku?: string;
 }
 
 // Estado completo de la máquina de estados (Order State Machine v2)
@@ -791,7 +792,7 @@ class OrderService {
             informed_at: new Date().toISOString(),
           },
           line_items_variant_info: Array.isArray(lineItemsMetadata)
-            ? lineItemsMetadata.filter((item) => item.variant_id)
+            ? lineItemsMetadata
             : []
         }
       });

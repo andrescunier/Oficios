@@ -161,6 +161,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
                       <h4 className="text-sm font-medium line-clamp-2 mb-1">
                         {item.variant?.name || item.product.name}
                       </h4>
+                      <p className="text-xs text-muted-foreground/60 mb-0.5">SKU: {item.variant?.sku || item.product.sku}</p>
                       {item.selected_options && Object.keys(item.selected_options).length > 0 && (
                         <p className="text-xs text-muted-foreground mb-1">
                           {Object.entries(item.selected_options).map(([key, value]) => `${key}: ${value}`).join(' • ')}

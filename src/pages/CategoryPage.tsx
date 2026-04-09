@@ -12,6 +12,8 @@ import { PriceDisplay } from '@/hooks/usePriceVisibility';
 import { getFiltersConfig, getCategoryBySlug } from '@/config/runtime';
 import { handleImgError } from '@/utils/imageHelpers';
 import { productsQueryOptions } from '@/features/catalog/queries';
+import { groupProductsBySku } from '@/utils/skuGrouping';
+import { ProductGroupCard } from '@/components/product/ProductGroupCard';
 
 // Tipos para filtros
 interface FilterOption {
@@ -192,6 +194,8 @@ export const CategoryPage: React.FC = () => {
     
     return result;
   }, [activeFilters, categoryConfig?.searchTerms, products, sortBy]);
+
+  const groupedProducts = useMemo(() => groupProductsBySku(filteredProducts), [filteredProducts]);
 
   // Actualizar URL con filtros
   const updateFilters = (filterKey: keyof ActiveFilters, value: string | boolean) => {
@@ -605,128 +609,12 @@ export const CategoryPage: React.FC = () => {
 
               {!loading && !error && filteredProducts.length > 0 && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {filteredProducts.map((product) => (
-                    <div key={product.id} className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-all duration-300 group relative">
-                      {/* Botón de favoritos */}
-                      <button
-                        onClick={() => handleToggleFavorite(product)}
-                        className={`absolute top-3 right-3 z-10 w-9 h-9 rounded-full shadow-md transition-all duration-200 ${
-                          isFavorite(product.id)
-                            ? 'bg-red-50 border-red-200 hover:bg-red-100' 
-                            : 'bg-white/90 hover:bg-white'
-                        } flex items-center justify-center`}
-                        title={isFavorite(product.id) ? 'Quitar de favoritos' : 'Agregar a favoritos'}
-                      >
-                        <Heart 
-                          className={`w-5 h-5 ${
-                            isFavorite(product.id)
-                              ? 'fill-red-500 text-red-500' 
-                              : 'text-gray-600 hover:text-red-400'
-                          }`} 
-                        />
-                      </button>
-                      
-                      {/* Product Image */}
-                      <Link to={`/productos/${product.id}`}>
-                        <div className="aspect-square bg-gray-100 overflow-hidden">
-                          <img 
-                            src={product.image_url} 
-                            alt={product.name}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            onError={(e) => handleImgError(e)}
-                          />
-                        </div>
-                      </Link>
-
-                      {/* Product Info */}
-                      <div className="p-4">
-                        <Link to={`/productos/${product.id}`}>
-                          <div className="flex items-start justify-between mb-2">
-                            <h3 className="font-semibold text-gray-900 line-clamp-2 flex-1 hover:text-blue-600 transition-colors">
-                              {product.name}
-                            </h3>
-                            {product.is_featured && (
-                              <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full ml-2">
-                                Destacado
-                              </span>
-                            )}
-                          </div>
-                        </Link>
-                        
-                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                          {product.description || 'Sin descripción disponible'}
-                        </p>
-                        
-                        {/* Precio - Solo visible para autenticados */}
-                        <div className="mb-2">
-                          <PriceDisplay
-                            price={product.unit_price}
-                            currency={product.currency}
-                            showLoginButton={true}
-                          />
-                        </div>
-                        
-                        {/* Stock */}
-                        <div className="flex items-center justify-between mb-2">
-                          {product.has_variants ? (
-                            <span className="text-sm text-blue-600">Variantes disponibles</span>
-                          ) : product.stock_quantity != null && (
-                            <span className={`text-sm ${product.stock_quantity > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                              {product.stock_quantity > 0 ? `Stock: ${product.stock_quantity}` : 'Sin stock'}
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="flex items-center justify-between mb-3">
-                          <span className="text-xs text-gray-500">
-                            SKU: {product.sku}
-                          </span>
-                        </div>
-
-                        {/* Controles de acción */}
-                        {product.unit_price != null && product.stock_quantity != null && product.stock_quantity > 0 && (
-                        <div className="space-y-3">
-                          {/* Selector de cantidad */}
-                          {!product.has_variants && (
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm font-medium text-gray-700">Cantidad:</span>
-                              <div className="flex items-center space-x-2">
-                                <button
-                                  onClick={() => updateQuantity(product.id.toString(), getQuantity(product.id.toString()) - 1)}
-                                  className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-300 text-gray-600 hover:bg-gray-100 transition-colors"
-                                  disabled={getQuantity(product.id.toString()) <= 1}
-                                >
-                                  <Minus className="w-4 h-4" />
-                                </button>
-                                <span className="w-8 text-center font-medium">
-                                  {getQuantity(product.id.toString())}
-                                </span>
-                                <button
-                                  onClick={() => updateQuantity(product.id.toString(), getQuantity(product.id.toString()) + 1)}
-                                  className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-300 text-gray-600 hover:bg-gray-100 transition-colors"
-                                  disabled={(product.stock_quantity || 0) <= getQuantity(product.id.toString())}
-                                >
-                                  <Plus className="w-4 h-4" />
-                                </button>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Botón agregar al carrito */}
-                          <button 
-                            onClick={() => handleAddToCart(product)}
-                            disabled={!product.has_variants && (!product.stock_quantity || product.stock_quantity <= 0)}
-                            className="w-full py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-                          >
-                            {product.has_variants
-                              ? 'Elegir Color / Talle'
-                              : 'Agregar al Carrito'}
-                          </button>
-                        </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                  {groupedProducts.map((item) => {
+                    if (item.type === 'group') {
+                      return <ProductGroupCard key={item.groupKey} group={item} />;
+                    }
+                    return null;
+                  })}
                 </div>
               )}
             </div>

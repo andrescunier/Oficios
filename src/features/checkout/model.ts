@@ -98,6 +98,7 @@ export const buildCheckoutPayload = (args: {
     tax_rate: item.product.tax_rate && item.product.tax_rate > 1
       ? item.product.tax_rate / 100
       : (item.product.tax_rate || BUSINESS.DEFAULT_TAX_RATE),
+    sku: item.variant?.sku || item.product.sku,
   })),
   lineItemsMetadata: args.items.map((item) => ({
     product_id: item.product.id,
@@ -106,6 +107,7 @@ export const buildCheckoutPayload = (args: {
     unit_price: item.unit_price,
     variant_id: item.variant?.id,
     variant_sku: item.variant?.sku,
+    product_sku: item.product.sku,
     option_values: item.selected_options,
   })),
   currency: args.currency || BUSINESS.DEFAULT_CURRENCY,

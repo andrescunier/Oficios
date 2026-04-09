@@ -167,6 +167,7 @@ export const CartPage: React.FC = () => {
                         <h3 className="font-semibold text-gray-900 truncate">
                           {item.variant?.name || item.product.name}
                         </h3>
+                        <p className="text-xs text-gray-400">SKU: {item.variant?.sku || item.product.sku}</p>
                         {item.selected_options && Object.keys(item.selected_options).length > 0 && (
                           <p className="text-xs text-gray-500 mt-1">
                             {Object.entries(item.selected_options).map(([key, value]) => `${key}: ${value}`).join(' • ')}

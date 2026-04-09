@@ -25,6 +25,17 @@ import { getBusinessConfig } from '@/config/runtime';
 import { getBusinessPartnerId } from '@/features/auth/session';
 import type { SalesOrder } from '@/services/orderService';
 
+/** Resolve SKU from item.sku or order metadata fallback */
+function getItemSku(order: SalesOrder, item: SalesOrder['items'][number], index: number): string | undefined {
+  if (item.sku) return item.sku;
+  const variantInfo = (order.metadata as any)?.line_items_variant_info;
+  if (Array.isArray(variantInfo)) {
+    const match = variantInfo.find((vi: any) => vi.product_id === item.product_id) ?? variantInfo[index];
+    return match?.variant_sku || match?.product_sku;
+  }
+  return undefined;
+}
+
 export const OrdersPage: React.FC = () => {
   const { auth, addNotification } = useStore();
   const [orders, setOrders] = useState<SalesOrder[]>([]);
@@ -417,16 +428,20 @@ export const OrdersPage: React.FC = () => {
 
                   <div className="grid gap-4 lg:grid-cols-[2fr,1fr] border-t pt-4">
                     <div className="space-y-2">
-                      {order.items.map((item, index) => (
+                      {order.items.map((item, index) => {
+                        const sku = getItemSku(order, item, index);
+                        return (
                         <div key={`${order.id}-${index}`} className="flex justify-between items-center text-sm">
                           <span className="text-gray-700">
                             {item.quantity}x {item.description}
+                            {sku && <span className="text-gray-400 ml-1">({sku})</span>}
                           </span>
                           <span className="font-medium">
                             {formatPrice(item.unit_price * item.quantity, order.currency)}
                           </span>
                         </div>
-                      ))}
+                        );
+                      })}
 
                       {order.metadata?.tracking_number && (
                         <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
@@ -523,13 +538,16 @@ export const OrdersPage: React.FC = () => {
                   <div className="mb-6">
                     <label className="block text-sm font-medium text-gray-700 mb-2">Productos</label>
                     <div className="space-y-3">
-                      {selectedOrder.items.map((item, index) => (
+                      {selectedOrder.items.map((item, index) => {
+                        const sku = getItemSku(selectedOrder, item, index);
+                        return (
                         <div
                           key={`${selectedOrder.id}-detail-${index}`}
                           className="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
                         >
                           <div>
                             <p className="font-medium">{item.description}</p>
+                            {sku && <p className="text-xs text-gray-400">SKU: {sku}</p>}
                             <p className="text-sm text-gray-600">Cantidad: {item.quantity}</p>
                           </div>
                           <div className="text-right">
@@ -541,7 +559,8 @@ export const OrdersPage: React.FC = () => {
                             </p>
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
 

@@ -68,6 +68,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     ? Math.round(((originalPrice - product.unit_price) / originalPrice) * 100)
     : 0;
 
+  // Extract talle from metadata or SKU segments (PREFIX-COLOR-TALLE)
+  const talle = product.metadata?.talle
+    || product.metadata?.size
+    || (() => {
+        const parts = (product.sku || '').split('-');
+        return parts.length >= 3 ? parts[parts.length - 1] : undefined;
+      })();
+
   const handleAddToCart = () => {
     if (product.has_variants) {
       navigate(`/productos/${product.id}`);
@@ -378,6 +386,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           {product.stock_quantity != null && product.stock_quantity > 0 && product.stock_quantity <= 5 && (
             <p className="text-xs text-orange-600 mb-2">
               ¡Solo quedan {product.stock_quantity} unidades!
+            </p>
+          )}
+
+          {/* Talle from SKU */}
+          {talle && (
+            <p className="text-xs text-muted-foreground mb-1">
+              Talle: <span className="font-medium">{talle}</span>
             </p>
           )}
 

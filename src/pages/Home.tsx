@@ -306,9 +306,12 @@ export const Home: React.FC = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {groupedFeatured.map((item) =>
-                <ProductGroupCard key={item.groupKey} group={item} />
-              )}
+              {groupedFeatured.map((item) => {
+                if (item.type === 'group') {
+                  return <ProductGroupCard key={item.groupKey} group={item} />;
+                }
+                return <ProductCard key={item.product.id} product={item.product} />;
+              })}
             </div>
           )}
         </div>
@@ -331,9 +334,12 @@ export const Home: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {groupedNew.slice(0, 4).map((item) =>
-              <ProductGroupCard key={item.groupKey} group={item} />
-            )}
+            {groupedNew.slice(0, 4).map((item) => {
+              if (item.type === 'group') {
+                return <ProductGroupCard key={item.groupKey} group={item} />;
+              }
+              return <ProductCard key={item.product.id} product={item.product} />;
+            })}
           </div>
         </div>
       </section>
@@ -359,9 +365,12 @@ export const Home: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {groupedOnSale.slice(0, 4).map((item) =>
-                <ProductGroupCard key={item.groupKey} group={item} />
-              )}
+              {groupedOnSale.slice(0, 4).map((item) => {
+                if (item.type === 'group') {
+                  return <ProductGroupCard key={item.groupKey} group={item} />;
+                }
+                return <ProductCard key={item.product.id} product={item.product} />;
+              })}
             </div>
           </div>
         </section>

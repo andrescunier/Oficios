@@ -15,6 +15,7 @@ import { handleImgError } from '@/utils/imageHelpers';
 import { productsQueryOptions } from '@/features/catalog/queries';
 import { groupProductsBySku } from '@/utils/skuGrouping';
 import { ProductGroupCard } from '@/components/product/ProductGroupCard';
+import { ProductCard } from '@/components/product/ProductCard';
 
 export const ProductsPageApiReal: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -213,7 +214,7 @@ export const ProductsPageApiReal: React.FC = () => {
               if (item.type === 'group') {
                 return <ProductGroupCard key={item.groupKey} group={item} />;
               }
-              return null;
+              return <ProductCard key={item.product.id} product={item.product} />;
             })}
           </div>
         )}

@@ -172,12 +172,8 @@ export const groupProductsBySku = (products: Product[]): ProductOrGroup[] => {
 
     if (!key) {
       result.push({
-        type: 'group',
-        groupKey: product.id,
-        products: [product],
-        optionNames: [],
-        optionValues: {},
-        representative: product,
+        type: 'single',
+        product,
       });
       continue;
     }
@@ -190,20 +186,9 @@ export const groupProductsBySku = (products: Product[]): ProductOrGroup[] => {
 
     if (bucket.length === 1) {
       const single = bucket[0];
-      const optionNames = discoverOptionNames(bucket);
-      const optionValues: Record<string, string[]> = {};
-      for (const name of optionNames) {
-        optionValues[name] = uniqueOrdered(
-          bucket.map((p) => getOptionValue(p, name) || '').filter(Boolean),
-        );
-      }
       result.push({
-        type: 'group',
-        groupKey: key,
-        products: bucket,
-        optionNames,
-        optionValues,
-        representative: single,
+        type: 'single',
+        product: single,
       });
     } else {
       const optionNames = discoverOptionNames(bucket);

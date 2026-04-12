@@ -135,7 +135,6 @@ Thumbs.db
 # Deploy files
 logs/
 *.log
-.dockerignore
 
 # Kubernetes files
 kubeconfig

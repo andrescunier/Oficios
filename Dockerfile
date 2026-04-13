@@ -4,7 +4,7 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 COPY package.json pnpm-lock.yaml ./
-RUN corepack enable && corepack prepare pnpm@10.4.1 --activate
+RUN corepack enable && corepack prepare --activate
 
 COPY . .
 RUN pnpm install --frozen-lockfile

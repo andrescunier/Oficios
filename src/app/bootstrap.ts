@@ -41,11 +41,20 @@ const applyBaseRuntimeConfig = (apiBaseUrl: string, accountId: string) => {
 export const bootstrapApplication = async (options: BootstrapOptions = {}) => {
   installGlobalErrorHandlers();
 
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://api.cumar.com.ar';
-  const accountId = import.meta.env.VITE_ACCOUNT_ID || '';
+  const windowConfig = typeof window !== 'undefined' ? window.__APP_CONFIG__ : undefined;
+
+  const apiBaseUrl =
+    windowConfig?.api?.url ||
+    import.meta.env.VITE_API_BASE_URL ||
+    'https://api.cumar.com.ar';
+
+  const accountId =
+    windowConfig?.api?.accountId ||
+    import.meta.env.VITE_ACCOUNT_ID ||
+    '';
 
   if (!accountId) {
-    throw new Error('Falta VITE_ACCOUNT_ID para resolver ecommerce-config');
+    throw new Error('Falta ACCOUNT_ID (window.__APP_CONFIG__ o VITE_ACCOUNT_ID) para resolver ecommerce-config');
   }
 
   applyBaseRuntimeConfig(apiBaseUrl, accountId);

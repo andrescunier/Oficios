@@ -4,7 +4,7 @@
 
 import type { User, Account } from '@/types/api';
 import { httpClient } from './httpClient';
-import { API_ENDPOINTS, getActiveAccountId } from '@/config/api';
+import { API_ENDPOINTS } from '@/config/api';
 import { getBusinessConfig } from '@/config/runtime';
 import log from '@/lib/logger';
 import { clearAuthSession, saveAccountSession, saveBusinessPartnerId, saveRegistrationDraft } from '@/features/auth/session';
@@ -298,11 +298,7 @@ export class AuthService {
    */
   async getMe(): Promise<MeResponse | null> {
     try {
-      const response = await httpClient.get<MeResponse>(API_ENDPOINTS.AUTH.ME, {
-        headers: {
-          'X-Account-ID': getActiveAccountId(),
-        }
-      });
+      const response = await httpClient.get<MeResponse>(API_ENDPOINTS.AUTH.ME);
 
       if (response.success && response.data) {
         const bpId = extractBusinessPartnerIdFromAuthData(response.data);

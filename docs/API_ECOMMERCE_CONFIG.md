@@ -208,7 +208,8 @@ GET /api/accounts/{account_id}/ecommerce-config
           "description": "Decks y tablas completas",
           "slug": "tablas",
           "group": "Skateboarding",
-          "searchTerms": ["tablas", "deck", "skate"]
+          "searchTerms": ["tablas", "deck", "skate"],
+          "productCategories": ["tablas"]
         }
       ],
       "placeholders": {
@@ -240,6 +241,7 @@ GET /api/accounts/{account_id}/ecommerce-config
 - `features.benefits[]`: cards configurables para home/footer.
 - `images.heroSlides[].mobileImage`: hero responsive por tenant.
 - `images.categories[].group`: agrupación de categorías para navegación.
+- `images.categories[].productCategories`: taxonomía estructurada para matchear productos sin depender solo de texto libre.
 
 ## Export listo para Warpla
 

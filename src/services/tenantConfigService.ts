@@ -11,6 +11,7 @@ import { recordAppEvent } from '@/lib/observability';
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
 const INITIAL_RETRY_DELAY_MS = 1500;
 const MAX_RETRY_DELAY_MS = 15000;
+const MAX_RETRY_DURATION_MS = 2 * 60 * 1000; // 2 minutos
 
 interface CachedConfig {
   data: NonNullable<ReturnType<typeof parseRuntimeConfigPayload>>;
@@ -270,6 +271,7 @@ async function retryFetchUntilSuccess(
   },
 ): Promise<NonNullable<ReturnType<typeof parseRuntimeConfigPayload>>> {
   let attempt = 0;
+  const startedAt = Date.now();
 
   while (true) {
     const result = await fetchConfigFromAPI(apiBaseUrl, accountId);
@@ -285,8 +287,14 @@ async function retryFetchUntilSuccess(
       return {} as NonNullable<ReturnType<typeof parseRuntimeConfigPayload>>;
     }
 
+    const elapsed = Date.now() - startedAt;
+    if (elapsed >= MAX_RETRY_DURATION_MS) {
+      recordAppEvent('tenant_config_fallback', { reason: 'timeout', elapsed });
+      throw new Error('No se pudo obtener la configuración del sitio después de 2 minutos de intentos.');
+    }
+
     attempt += 1;
-    const nextRetryInMs = getRetryDelay(attempt);
+    const nextRetryInMs = Math.min(getRetryDelay(attempt), MAX_RETRY_DURATION_MS - elapsed);
     options?.onRetry?.({
       attempt,
       nextRetryInMs,

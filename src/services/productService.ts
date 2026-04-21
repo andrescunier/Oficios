@@ -122,6 +122,41 @@ export class ProductService {
     return normalizePaginatedProducts(response, params);
   }
 
+  async getAllProducts(params?: {
+    search?: string;
+    category?: string;
+    sku?: string;
+    name?: string;
+    is_active?: boolean;
+    is_featured?: boolean;
+    in_stock?: boolean;
+    channel?: string;
+    channels?: string | string[];
+    min_price?: number;
+    max_price?: number;
+    sort_by?: 'name' | 'price' | 'stock' | 'created';
+    sort_order?: 'asc' | 'desc';
+  }): Promise<Product[]> {
+    const perPage = 100;
+    let page = 1;
+    let totalPages = 1;
+    const products: Product[] = [];
+
+    do {
+      const response = await this.getProducts({
+        ...params,
+        page,
+        per_page: perPage,
+      });
+
+      products.push(...response.data);
+      totalPages = Math.max(response.pagination?.total_pages || 1, 1);
+      page += 1;
+    } while (page <= totalPages);
+
+    return products;
+  }
+
   /**
    * Obtener un producto por ID
    */

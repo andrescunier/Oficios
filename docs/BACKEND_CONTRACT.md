@@ -25,6 +25,7 @@ Notas:
 - público
 - devuelve contrato canónico versionado
 - es la única fuente de configuración visual y operativa del storefront
+- expone categorías estructuradas y anidadas en `images.categories[]`, con `searchTerms`, `productCategories` y `subcategories`
 
 ### Observabilidad frontend
 

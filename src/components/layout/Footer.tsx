@@ -41,11 +41,17 @@ export const Footer: React.FC = () => {
     },
     categories: {
       title: 'Categorías',
-      links: getCategoriesConfig().map(c => ({
-        label: c.name,
-        href: c.link,
-        external: false,
-      }))
+      links: getCategoriesConfig().flatMap(c => [
+        { label: c.name, href: c.link, external: false },
+        ...(c.subcategories || []).flatMap(sub => [
+          { label: `  ${sub.name}`, href: sub.link, external: false },
+          ...(sub.subcategories || []).map(subsub => ({
+            label: `    ${subsub.name}`,
+            href: subsub.link,
+            external: false,
+          })),
+        ]),
+      ])
     },
     legal: {
       title: 'Legal',

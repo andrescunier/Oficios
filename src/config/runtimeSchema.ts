@@ -10,7 +10,7 @@ const heroSlideSchema = z.object({
   link: z.string().optional(),
 });
 
-const categorySchema = z.object({
+const baseCategorySchema = z.object({
   name: z.string().optional(),
   image: z.string().optional(),
   link: z.string().optional(),
@@ -18,6 +18,11 @@ const categorySchema = z.object({
   slug: z.string().optional(),
   group: z.string().optional(),
   searchTerms: z.array(z.string()).optional(),
+  productCategories: z.array(z.string()).optional(),
+});
+
+const categorySchema: z.ZodType<z.infer<typeof baseCategorySchema> & { subcategories?: z.infer<typeof baseCategorySchema>[] }> = baseCategorySchema.extend({
+  subcategories: z.lazy(() => z.array(categorySchema)).optional(),
 });
 
 const featureBenefitSchema = z.object({

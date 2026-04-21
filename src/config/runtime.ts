@@ -25,6 +25,8 @@ export interface CategoryConfig {
   slug?: string;
   group?: string;
   searchTerms?: string[];
+  productCategories?: string[];
+  subcategories?: CategoryConfig[];
 }
 
 export interface FeatureBenefitConfig {
@@ -430,29 +432,33 @@ function normalizeHeroSlides(raw: unknown): HeroSlideConfig[] {
     .filter(Boolean) as HeroSlideConfig[];
 }
 
+function normalizeSingleCategory(item: unknown): CategoryConfig | null {
+  if (typeof item !== 'object' || item === null) {
+    return null;
+  }
+
+  const category = item as Partial<CategoryConfig> & { subcategories?: unknown };
+  return {
+    name: category.name || '',
+    image: category.image || '',
+    link: category.link || '',
+    description: category.description || '',
+    slug: category.slug || '',
+    group: category.group || '',
+    searchTerms: Array.isArray(category.searchTerms) ? category.searchTerms : [],
+    productCategories: Array.isArray(category.productCategories) ? category.productCategories : [],
+    subcategories: Array.isArray(category.subcategories)
+      ? (category.subcategories.map(normalizeSingleCategory).filter(Boolean) as CategoryConfig[])
+      : undefined,
+  };
+}
+
 function normalizeCategories(raw: unknown): CategoryConfig[] {
   if (!Array.isArray(raw)) {
     return DEFAULT_RUNTIME_CONFIG.images.categories;
   }
 
-  return raw
-    .map((item) => {
-      if (typeof item !== 'object' || item === null) {
-        return null;
-      }
-
-      const category = item as Partial<CategoryConfig>;
-      return {
-        name: category.name || '',
-        image: category.image || '',
-        link: category.link || '',
-        description: category.description || '',
-        slug: category.slug || '',
-        group: category.group || '',
-        searchTerms: Array.isArray(category.searchTerms) ? category.searchTerms : [],
-      };
-    })
-    .filter(Boolean) as CategoryConfig[];
+  return raw.map(normalizeSingleCategory).filter(Boolean) as CategoryConfig[];
 }
 
 function normalizeFeatureBenefits(raw: unknown): FeatureBenefitConfig[] {
@@ -688,25 +694,46 @@ export const getPaymentMethodsConfig = () => {
   };
 };
 
-export const getCategoriesConfig = (): CategoryConfig[] => {
-  return getImagesConfig().categories.map((category) => ({
+function resolveSlug(category: CategoryConfig): string {
+  if (category.slug) return category.slug;
+  const link = category.link || '';
+  const categoryMatch = link.match(/[?&]category=([^&]+)/);
+  if (categoryMatch?.[1]) return decodeURIComponent(categoryMatch[1]);
+  return link.replace(/^\/categoria\//, '').replace(/\/.*$/, '');
+}
+
+function enrichCategoryRecursive(category: CategoryConfig, parentPath: string, parentGroup: string): CategoryConfig {
+  const slug = resolveSlug(category);
+  const path = `${parentPath}/${slug}`;
+  return {
     ...category,
-    slug:
-      category.slug ||
-      (() => {
-        const link = category.link || '';
-        const categoryMatch = link.match(/[?&]category=([^&]+)/);
-        if (categoryMatch?.[1]) {
-          return decodeURIComponent(categoryMatch[1]);
-        }
-        return link.replace(/^\/categoria\//, '');
-      })(),
-    group: category.group || '',
-  }));
+    slug,
+    group: category.group || parentGroup,
+    link: category.link || path,
+    subcategories: category.subcategories?.map((sub) =>
+      enrichCategoryRecursive(sub, path, category.group || parentGroup),
+    ),
+  };
+}
+
+function enrichCategory(category: CategoryConfig): CategoryConfig {
+  return enrichCategoryRecursive(category, '/categoria', '');
+}
+
+export const getCategoriesConfig = (): CategoryConfig[] => {
+  return getImagesConfig().categories.map(enrichCategory);
 };
 
-export const getCategoryBySlug = (slug: string): CategoryConfig | undefined => {
-  return getCategoriesConfig().find((category) => category.slug === slug);
+export const getCategoryBySlug = (...slugs: string[]): CategoryConfig | undefined => {
+  let current: CategoryConfig | undefined;
+  let list = getCategoriesConfig();
+  for (const s of slugs) {
+    if (!s) break;
+    current = list.find((c) => c.slug === s);
+    if (!current) return undefined;
+    list = current.subcategories || [];
+  }
+  return current;
 };
 
 export const getRuntimeConfig = (): RuntimeConfig => {

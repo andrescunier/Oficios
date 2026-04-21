@@ -22,6 +22,10 @@ export const ProductsPageApiReal: React.FC = () => {
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const perPage = getBusinessConfig().productsPerPage;
+
+  // Paginación: leer página actual desde URL
+  const currentPage = Number(searchParams.get('page')) || 1;
 
   // Leer búsqueda desde URL al cargar
   useEffect(() => {
@@ -34,13 +38,26 @@ export const ProductsPageApiReal: React.FC = () => {
   const { addToCart, addNotification, auth, addToFavorites, removeFromFavorites, isFavorite } = useStore();
   const isAuthenticated = auth.isAuthenticated;
   const productsQuery = useQuery(productsQueryOptions({
-    page: 1,
-    per_page: getBusinessConfig().productsPerPage,
+    page: currentPage,
+    per_page: perPage,
     is_active: true,
   }));
   const products = productsQuery.data?.data || [];
+  const pagination = productsQuery.data?.pagination;
+  const totalPages = pagination?.total_pages || 1;
   const loading = productsQuery.isLoading;
   const error = productsQuery.error ? 'No se pudieron cargar los productos' : null;
+
+  const goToPage = (page: number) => {
+    const params = new URLSearchParams(searchParams);
+    if (page <= 1) {
+      params.delete('page');
+    } else {
+      params.set('page', String(page));
+    }
+    setSearchParams(params);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   useEffect(() => {
     if (productsQuery.isSuccess && products.length === 0) {
@@ -217,6 +234,56 @@ export const ProductsPageApiReal: React.FC = () => {
               return <ProductCard key={item.product.id} product={item.product} />;
             })}
           </div>
+        )}
+
+        {/* Pagination */}
+        {!loading && totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 mt-10">
+            <button
+              onClick={() => goToPage(currentPage - 1)}
+              disabled={currentPage <= 1}
+              className="px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
+            >
+              Anterior
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 2)
+              .reduce<(number | 'ellipsis')[]>((acc, p, idx, arr) => {
+                if (idx > 0 && p - (arr[idx - 1]) > 1) acc.push('ellipsis');
+                acc.push(p);
+                return acc;
+              }, [])
+              .map((item, idx) =>
+                item === 'ellipsis' ? (
+                  <span key={`ellipsis-${idx}`} className="px-2 text-gray-400">…</span>
+                ) : (
+                  <button
+                    key={item}
+                    onClick={() => goToPage(item)}
+                    className={`min-w-[40px] px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      item === currentPage
+                        ? 'bg-blue-600 text-white'
+                        : 'border border-gray-300 hover:bg-gray-100'
+                    }`}
+                  >
+                    {item}
+                  </button>
+                )
+              )
+            }
+            <button
+              onClick={() => goToPage(currentPage + 1)}
+              disabled={currentPage >= totalPages}
+              className="px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
+            >
+              Siguiente
+            </button>
+          </div>
+        )}
+        {pagination && (
+          <p className="text-center text-sm text-gray-500 mt-3">
+            Mostrando {products.length} de {pagination.total} productos
+          </p>
         )}
 
         {/* No Results */}

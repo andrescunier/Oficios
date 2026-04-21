@@ -4,43 +4,32 @@
  */
 
 import { getApiConfig } from './runtime';
-import { getPersistedActiveAccountId, getPersistedActiveAccountSlug } from '@/features/auth/session';
 
-// Obtener configuración de API desde runtime config
-const apiConfig = getApiConfig();
-
-// Base URL desde runtime config con fallback a variable de entorno
-export const API_BASE_URL = apiConfig.url;
-
-// Account ID para multi-tenant
-export const ACCOUNT_ID = apiConfig.accountId;
-
-// Account Slug
-export const ACCOUNT_SLUG = apiConfig.accountSlug;
-export const CHANNEL = apiConfig.channel;
-
+/**
+ * Devuelve el accountId vigente leyendo SIEMPRE el runtime config actual
+ * desde runtime config.
+ */
 export const getActiveAccountId = (): string => {
-  return getPersistedActiveAccountId() || ACCOUNT_ID;
+  return getApiConfig().accountId;
 };
 
 export const getActiveAccountSlug = (): string => {
-  return getPersistedActiveAccountSlug() || ACCOUNT_SLUG;
+  return getApiConfig().accountSlug;
 };
 
 export const getActiveChannel = (): string => {
-  return CHANNEL || 'ecommerce';
+  return getApiConfig().channel || 'ecommerce';
 };
 
 // Configuración de headers por defecto
 export const DEFAULT_HEADERS = {
   'Content-Type': 'application/json',
   Accept: 'application/json',
-  ...getApiConfig().extraHeaders,
-  'X-Account-ID': getActiveAccountId(),
 };
 
 export const getDefaultHeaders = () => ({
   ...DEFAULT_HEADERS,
+  ...getApiConfig().extraHeaders,
   'X-Account-ID': getActiveAccountId(),
 });
 

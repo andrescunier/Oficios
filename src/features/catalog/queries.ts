@@ -12,6 +12,10 @@ interface ProductWithVariantsPayload {
   variantOptions: ProductVariantOption[];
 }
 
+interface CategoryListingCriteria {
+  sourceCategory?: string;
+}
+
 const normalizePaginatedProducts = (response: PaginatedResponse<Product>): PaginatedResponse<Product> => ({
   ...response,
   data: withProductImages(response.data),
@@ -21,6 +25,7 @@ export const catalogQueryKeys = {
   all: ['catalog'] as const,
   authMode: () => (hasPersistedAuthToken() ? 'authenticated' : 'public'),
   products: (params?: ProductQueryParams) => [...catalogQueryKeys.all, 'products', catalogQueryKeys.authMode(), params ?? {}] as const,
+  categoryListing: (criteria: CategoryListingCriteria) => [...catalogQueryKeys.all, 'category-listing', catalogQueryKeys.authMode(), criteria] as const,
   featured: (limit: number) => [...catalogQueryKeys.all, 'featured', catalogQueryKeys.authMode(), limit] as const,
   productDetail: (productId: string) => [...catalogQueryKeys.all, 'product-detail', catalogQueryKeys.authMode(), productId] as const,
 };
@@ -29,6 +34,16 @@ export const productsQueryOptions = (params?: ProductQueryParams) =>
   queryOptions({
     queryKey: catalogQueryKeys.products(params),
     queryFn: async () => normalizePaginatedProducts(await productService.getProducts(params)),
+    placeholderData: keepPreviousData,
+  });
+
+export const categoryListingQueryOptions = (criteria: CategoryListingCriteria) =>
+  queryOptions({
+    queryKey: catalogQueryKeys.categoryListing(criteria),
+    queryFn: async () => withProductImages(await productService.getAllProducts({
+      category: criteria.sourceCategory,
+      is_active: true,
+    })),
     placeholderData: keepPreviousData,
   });
 

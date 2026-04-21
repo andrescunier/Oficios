@@ -6,7 +6,7 @@ import { initializeAuth, useStore } from '@/store/useStore';
 import log from '@/lib/logger';
 
 type BootstrapStep = 'tenant_config' | 'theme' | 'runtime_sync' | 'auth';
-type BootstrapPhase = 'tenant_config' | 'retrying_tenant_config' | 'theme' | 'runtime_sync' | 'auth' | 'ready';
+type BootstrapPhase = 'tenant_config' | 'retrying_tenant_config' | 'theme' | 'runtime_sync' | 'auth' | 'ready' | 'failed';
 
 export interface BootstrapStatus {
   phase: BootstrapPhase;

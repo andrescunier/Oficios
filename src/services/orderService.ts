@@ -4,7 +4,7 @@
  */
 
 import { httpClient } from './httpClient';
-import { API_ENDPOINTS, getActiveAccountId, getActiveChannel, getDefaultHeaders } from '@/config/api';
+import { API_ENDPOINTS, getActiveAccountId, getActiveChannel } from '@/config/api';
 import log from '@/lib/logger';
 import { extractCustomerIdFromPersistedSession } from '@/features/auth/session';
 
@@ -343,10 +343,6 @@ function normalizeSalesOrder(raw: any): SalesOrder {
 }
 
 class OrderService {
-  private getHeaders() {
-    return getDefaultHeaders();
-  }
-
   private getAccountId() {
     return getActiveAccountId();
   }
@@ -367,8 +363,7 @@ class OrderService {
             unit_price: 0,
             tax_rate: 0
           }))
-        },
-        { headers: this.getHeaders() }
+        }
       );
       
       return response;
@@ -396,8 +391,7 @@ class OrderService {
           reason: reason || 'Cancelado por el cliente',
           event_id: eventId,
           restore_stock: restoreStock
-        },
-        { headers: this.getHeaders() }
+        }
       );
       
       return response;
@@ -434,8 +428,7 @@ class OrderService {
           validate_stock: options?.validateStock ?? true,
           reservation_ttl_hours: options?.reservationTtlHours ?? 48,
           event_id: eventId
-        },
-        { headers: this.getHeaders() }
+        }
       );
 
       return response;
@@ -458,8 +451,7 @@ class OrderService {
         {
           reason: reason,
           event_id: eventId
-        },
-        { headers: this.getHeaders() }
+        }
       );
 
       return response;
@@ -476,8 +468,7 @@ class OrderService {
   async getValidTransitions(orderId: string): Promise<ValidTransitionsResponse> {
     try {
       const response = await httpClient.get<ValidTransitionsResponse>(
-        API_ENDPOINTS.VALID_TRANSITIONS(this.getAccountId(), orderId),
-        { headers: this.getHeaders() }
+        API_ENDPOINTS.VALID_TRANSITIONS(this.getAccountId(), orderId)
       );
       return response;
     } catch (error) {
@@ -493,8 +484,7 @@ class OrderService {
   async getStatusHistory(orderId: string): Promise<StatusHistoryResponse> {
     try {
       const response = await httpClient.get<StatusHistoryResponse>(
-        API_ENDPOINTS.STATUS_HISTORY(this.getAccountId(), orderId),
-        { headers: this.getHeaders() }
+        API_ENDPOINTS.STATUS_HISTORY(this.getAccountId(), orderId)
       );
       return response;
     } catch (error) {
@@ -517,8 +507,7 @@ class OrderService {
         {
           ...data,
           event_id: data.event_id || eventId
-        },
-        { headers: this.getHeaders() }
+        }
       );
 
       return response;
@@ -536,7 +525,6 @@ class OrderService {
       const response = await httpClient.get<any>(
         API_ENDPOINTS.SALES_ORDERS(this.getAccountId()),
         {
-          headers: this.getHeaders(),
           params: params
         }
       );
@@ -586,10 +574,7 @@ class OrderService {
   async getOrder(orderId: string): Promise<SalesOrder> {
     try {
       const response = await httpClient.get<any>(
-        API_ENDPOINTS.SALES_ORDER(this.getAccountId(), orderId),
-        {
-          headers: this.getHeaders(),
-        }
+        API_ENDPOINTS.SALES_ORDER(this.getAccountId(), orderId)
       );
 
       // La API devuelve { success, data: { id, order_number, ... } }
@@ -696,10 +681,7 @@ class OrderService {
     try {
       const response = await httpClient.post<any>(
         API_ENDPOINTS.SALES_ORDERS(this.getAccountId()),
-        orderData,
-        {
-          headers: this.getHeaders(),
-        }
+        orderData
       );
 
       // La API devuelve { success, data: { id, order_number, ... } }
@@ -719,8 +701,7 @@ class OrderService {
     try {
       const response = await httpClient.post<any>(
         API_ENDPOINTS.ORDER_INVOICE(this.getAccountId(), orderId),
-        invoiceData,
-        { headers: this.getHeaders() }
+        invoiceData
       );
       return unwrapApiResponse<GenerateInvoiceResponse>(response);
     } catch (error) {

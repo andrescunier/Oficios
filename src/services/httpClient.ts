@@ -3,7 +3,7 @@
  */
 
 import axios, { AxiosHeaders, AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
-import { API_BASE_URL, API_TIMEOUT, getActiveAccountId, getActiveAccountSlug } from '@/config/api';
+import { API_TIMEOUT, getActiveAccountId, getActiveAccountSlug } from '@/config/api';
 import { getApiConfig } from '@/config/runtime';
 import type { ApiError } from '@/types/api';
 import log from '@/lib/logger';
@@ -14,12 +14,10 @@ class HttpClient {
 
   constructor() {
     this.client = axios.create({
-      baseURL: API_BASE_URL,
       timeout: API_TIMEOUT,
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        ...getApiConfig().extraHeaders,
       },
     });
 
@@ -30,6 +28,11 @@ class HttpClient {
     // Request interceptor
     this.client.interceptors.request.use(
       (config) => {
+        // Resolver baseURL dinámicamente para que refleje el runtime config actual
+        if (!config.baseURL) {
+          config.baseURL = getApiConfig().url;
+        }
+
         const headers = new AxiosHeaders({
           ...getApiConfig().extraHeaders,
           ...config.headers,

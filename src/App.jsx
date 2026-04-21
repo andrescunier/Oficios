@@ -118,6 +118,8 @@ function App() {
                 <Route path="/devoluciones" element={<ReturnsPage />} />
                 <Route path="/garantias" element={<WarrantyPage />} />
                 <Route path="/categoria/:category" element={<CategoryPage />} />
+                <Route path="/categoria/:category/:subcategory" element={<CategoryPage />} />
+                <Route path="/categoria/:category/:subcategory/:subsubcategory" element={<CategoryPage />} />
                 <Route path="*" element={
                   <div className="min-h-screen flex items-center justify-center">
                     <div className="text-center">

@@ -21,6 +21,27 @@ function renderBootstrapScreen(status) {
     return;
   }
 
+  // Sitio no disponible — bootstrap agotó los reintentos
+  if (status.phase === 'failed') {
+    rootElement.innerHTML = `
+      <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px;background:#020617;color:#f8fafc;font-family:Inter,system-ui,sans-serif;">
+        <div style="width:min(560px,100%);border:1px solid rgba(239,68,68,.3);border-radius:24px;padding:40px;background:rgba(15,23,42,.92);box-shadow:0 24px 80px rgba(2,6,23,.45);text-align:center;">
+          <div style="margin-bottom:20px;font-size:48px;">⚠️</div>
+          <h1 style="margin:0 0 12px;font-size:28px;line-height:1.2;">Sitio no disponible</h1>
+          <p style="margin:0 0 24px;color:#cbd5e1;font-size:16px;line-height:1.6;">
+            No se pudo cargar la configuración del sitio.<br/>
+            Por favor, recargá la página cuando seas informado de que el servicio fue restaurado.
+          </p>
+          <button onclick="location.reload()" style="padding:12px 32px;border:none;border-radius:12px;background:#2563eb;color:#fff;font-size:16px;font-weight:600;cursor:pointer;transition:background .2s;">
+            Recargar página
+          </button>
+          ${status.error ? `<p style="margin:20px 0 0;color:#fca5a5;font-size:13px;">${escapeHtml(status.error)}</p>` : ''}
+        </div>
+      </div>
+    `;
+    return;
+  }
+
   const retryHint = status.nextRetryInMs
     ? `<p style="margin:8px 0 0;color:#94a3b8;font-size:14px;">Proximo intento en ${Math.ceil(status.nextRetryInMs / 1000)}s</p>`
     : '';
@@ -86,7 +107,7 @@ async function bootstrap() {
 
 bootstrap().catch((error) => {
   renderBootstrapScreen({
-    phase: 'retrying_tenant_config',
+    phase: 'failed',
     message: 'No se pudo completar el bootstrap del storefront.',
     error: error instanceof Error ? error.message : String(error),
   });

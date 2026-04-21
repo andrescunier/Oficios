@@ -17,7 +17,7 @@ import {
   getFeaturesConfig,
   getImagesConfig,
 } from './runtime';
-import { getPersistedActiveAccountId } from '@/features/auth/session';
+import { getActiveAccountId } from '@/config/api';
 
 export const API_CONFIG = {
   get BASE_URL() { return getApiConfig().url; },
@@ -197,16 +197,17 @@ export const getAPIHeaders = () => ({
   'Content-Type': 'application/json',
   Accept: 'application/json',
   ...getApiConfig().extraHeaders,
-  'X-Account-ID': getPersistedActiveAccountId() || API_CONFIG.ACCOUNT_ID,
+  'X-Account-ID': getActiveAccountId(),
 });
 
 export const validateEnvironment = () => {
-  return Boolean(import.meta.env.VITE_API_BASE_URL && import.meta.env.VITE_ACCOUNT_ID);
+  const apiConfig = getApiConfig();
+  return Boolean(apiConfig.url && apiConfig.accountId);
 };
 
 export const initializeApp = () => {
   if (!validateEnvironment()) {
-    throw new Error('Configuración de entorno inválida: faltan VITE_API_BASE_URL o VITE_ACCOUNT_ID');
+    throw new Error('Configuración de entorno inválida: falta API base URL o account ID para bootstrap');
   }
 
   THEME.applyCSSVariables();

@@ -1,22 +1,19 @@
 /**
- * Página de categoría con filtros y cards unificadas
+ * Página de categoría con filtros y paginación sobre dataset completo.
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import type { Product } from '@/types/api';
-import { Loader2, Filter, X, ChevronDown, ChevronUp, SlidersHorizontal, Plus, Minus, Heart } from 'lucide-react';
-import { useStore } from '@/store/useStore';
-import { PriceDisplay } from '@/hooks/usePriceVisibility';
-import { getFiltersConfig, getCategoryBySlug } from '@/config/runtime';
-import { handleImgError } from '@/utils/imageHelpers';
-import { productsQueryOptions } from '@/features/catalog/queries';
-import { groupProductsBySku } from '@/utils/skuGrouping';
-import { ProductGroupCard } from '@/components/product/ProductGroupCard';
+import { ChevronDown, ChevronUp, Filter, SlidersHorizontal, X } from 'lucide-react';
+import { categoryListingQueryOptions } from '@/features/catalog/queries';
+import { getBusinessConfig, getCategoryBySlug, getFiltersConfig } from '@/config/runtime';
+import type { CategoryConfig } from '@/config/runtime';
 import { ProductCard } from '@/components/product/ProductCard';
+import { ProductGroupCard } from '@/components/product/ProductGroupCard';
+import { groupProductsBySku } from '@/utils/skuGrouping';
 
-// Tipos para filtros
 interface FilterOption {
   value: string;
   label: string;
@@ -30,38 +27,96 @@ interface ActiveFilters {
 
 type FilterSectionsMap = Record<string, { label: string; options: FilterOption[] }>;
 
+const normalizeToken = (value: string) =>
+  value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+
+const uniqueNormalized = (values: string[]) => [...new Set(values.map(normalizeToken).filter(Boolean))];
+
+const getProductCategoryValues = (product: Product) => {
+  const metadata = product.metadata && typeof product.metadata === 'object'
+    ? product.metadata as Record<string, unknown>
+    : undefined;
+
+  return uniqueNormalized([
+    typeof product.category === 'string' ? product.category : '',
+    typeof metadata?.category === 'string' ? metadata.category : '',
+  ]);
+};
+
+const matchesStructuredCategories = (product: Product, categories: string[]) => {
+  if (categories.length === 0) {
+    return true;
+  }
+
+  const productCategories = getProductCategoryValues(product);
+  return productCategories.some((productCategory) =>
+    categories.some((categoryToken) => (
+      productCategory === categoryToken
+      || productCategory.includes(categoryToken)
+      || categoryToken.includes(productCategory)
+    )),
+  );
+};
+
+const matchesTextTerms = (product: Product, terms: string[]) => {
+  if (terms.length === 0) {
+    return true;
+  }
+
+  const metadata = product.metadata && typeof product.metadata === 'object'
+    ? product.metadata as Record<string, unknown>
+    : undefined;
+  const searchable = normalizeToken([
+    product.name || '',
+    product.description || '',
+    typeof metadata?.category === 'string' ? metadata.category : '',
+  ].join(' '));
+
+  return terms.some((term) => searchable.includes(term));
+};
+
 export const CategoryPage: React.FC = () => {
-  const { category } = useParams<{ category: string }>();
+  const { category, subcategory, subsubcategory } = useParams<{
+    category: string;
+    subcategory?: string;
+    subsubcategory?: string;
+  }>();
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const { auth, addToCart, addToFavorites, removeFromFavorites, isFavorite, addNotification } = useStore();
-  const isAuthenticated = auth.isAuthenticated;
-  
-  // Obtener configuración de filtros
   const filtersConfig = getFiltersConfig();
   const showFilters = filtersConfig.enabled;
-  
+  const productsPerPage = getBusinessConfig().productsPerPage;
+  const currentPage = Math.max(Number(searchParams.get('page')) || 1, 1);
+
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [expandedFilters, setExpandedFilters] = useState<string[]>(['capacidad', 'velocidad']);
-  const [quantities, setQuantities] = useState<Record<string, number>>({});
-  
-  // Filtros activos
   const [activeFilters, setActiveFilters] = useState<ActiveFilters>({
     capacidad: [],
     velocidad: [],
     enStock: false,
   });
-
-  // Ordenamiento
   const [sortBy, setSortBy] = useState<string>('nombre-asc');
-  
-  // Obtener configuración de la categoría actual desde runtime config
-  const categoryConfig = getCategoryBySlug(category || '');
-  const categoryName = categoryConfig?.name || category || 'Productos';
 
-  // Configuración de filtros (solo si están habilitados en runtime config)
+  const rootConfig = getCategoryBySlug(category || '');
+  const level2Config = subcategory ? getCategoryBySlug(category || '', subcategory) : undefined;
+  const level3Config = subsubcategory ? getCategoryBySlug(category || '', subcategory || '', subsubcategory) : undefined;
+
+  const categoryConfig = level3Config || level2Config || rootConfig;
+  const categoryName = categoryConfig?.name || category || 'Productos';
+  const hierarchyNodes = [rootConfig, level2Config, level3Config].filter(Boolean) as CategoryConfig[];
+  const navSubcategories: CategoryConfig[] = (level3Config ? undefined : (level2Config || rootConfig))?.subcategories || [];
+
+  const structuredCategories = uniqueNormalized(
+    hierarchyNodes.flatMap((node) => node.productCategories || []),
+  );
+  const textTerms = uniqueNormalized(
+    hierarchyNodes.flatMap((node) => node.searchTerms || []),
+  );
+  const sourceCategory = rootConfig?.productCategories?.[0] || categoryConfig?.productCategories?.[0];
+
   const filterConfig = useMemo<FilterSectionsMap>(() => {
-    if (!showFilters) return {};
+    if (!showFilters) {
+      return {};
+    }
 
     const runtimeCapacidadOpts = filtersConfig.capacidadOptions?.length ? filtersConfig.capacidadOptions : undefined;
     const runtimeVelocidadOpts = filtersConfig.velocidadOptions?.length ? filtersConfig.velocidadOptions : undefined;
@@ -106,78 +161,79 @@ export const CategoryPage: React.FC = () => {
         options: runtimeVelocidadOpts || defaultVelocidadOpts,
       };
     }
+
     return config;
-  }, [category, showFilters, filtersConfig]);
+  }, [filtersConfig, showFilters]);
 
-  const productsQuery = useQuery(productsQueryOptions({ page: 1, per_page: 100, is_active: true }));
-  const products = productsQuery.data?.data || [];
-  const loading = productsQuery.isLoading;
-  const error = productsQuery.isError ? 'Error al cargar los productos' : null;
+  const categoryDatasetQuery = useQuery(categoryListingQueryOptions({ sourceCategory }));
+  const products = categoryDatasetQuery.data || [];
+  const loading = categoryDatasetQuery.isLoading;
+  const error = categoryDatasetQuery.isError ? 'Error al cargar los productos' : null;
 
-  // Cargar productos cuando cambia la categoría
   useEffect(() => {
-    // Sincronizar filtros desde URL solo al montar o cambiar categoría
-    const urlFilters: ActiveFilters = {
+    setActiveFilters({
       capacidad: searchParams.getAll('capacidad'),
       velocidad: searchParams.getAll('velocidad'),
       enStock: searchParams.get('stock') === 'true',
-    };
-    setActiveFilters(urlFilters);
-    
-    const urlSort = searchParams.get('orden');
-    if (urlSort) setSortBy(urlSort);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [category]);
+    });
 
-  // Aplicar filtros a los productos
-  const filteredProducts = useMemo(() => {
-    let result = [...products];
+    setSortBy(searchParams.get('orden') || 'nombre-asc');
+  }, [category, subcategory, subsubcategory, searchParams]);
 
-    if (categoryConfig?.searchTerms && categoryConfig.searchTerms.length > 0) {
-      const terms = categoryConfig.searchTerms.map((term) => term.toLowerCase());
-      result = result.filter((product) => {
-        const name = product.name?.toLowerCase() || '';
-        const description = product.description?.toLowerCase() || '';
-        const metadataCategory = (product.metadata as any)?.category?.toLowerCase() || '';
-        const searchable = `${name} ${description} ${metadataCategory}`;
-        return terms.some((term) => searchable.includes(term));
-      });
+  const syncUrlState = (nextFilters: ActiveFilters, nextSort: string, nextPage: number) => {
+    const params = new URLSearchParams();
+
+    Object.entries(nextFilters).forEach(([key, val]) => {
+      if (key === 'enStock' && val) {
+        params.set('stock', 'true');
+      } else if (Array.isArray(val)) {
+        val.forEach((item) => params.append(key, item));
+      }
+    });
+
+    if (nextSort !== 'nombre-asc') {
+      params.set('orden', nextSort);
     }
-    
-    // Filtrar por capacidad
+    if (nextPage > 1) {
+      params.set('page', String(nextPage));
+    }
+
+    setSearchParams(params);
+  };
+
+  const filteredProducts = useMemo(() => {
+    let result = products.filter((product) => {
+      if (!matchesStructuredCategories(product, structuredCategories)) {
+        return false;
+      }
+      return matchesTextTerms(product, textTerms);
+    });
+
     if (activeFilters.capacidad && activeFilters.capacidad.length > 0) {
-      result = result.filter(p => {
-        const productText = `${p.name} ${p.description}`.toLowerCase();
-        return activeFilters.capacidad!.some(cap => {
-          // Buscar variaciones como "8gb", "8 gb", "8GB"
-          const variations = [
-            cap,
-            cap.replace('gb', ' gb'),
-            cap.replace('tb', ' tb'),
-          ];
-          return variations.some(v => productText.includes(v));
+      result = result.filter((product) => {
+        const productText = `${product.name} ${product.description}`.toLowerCase();
+        return activeFilters.capacidad!.some((cap) => {
+          const variations = [cap, cap.replace('gb', ' gb'), cap.replace('tb', ' tb')];
+          return variations.some((value) => productText.includes(value));
         });
       });
     }
-    
-    // Filtrar por velocidad
+
     if (activeFilters.velocidad && activeFilters.velocidad.length > 0) {
-      result = result.filter(p => {
-        const productText = `${p.name} ${p.description}`.toLowerCase();
-        return activeFilters.velocidad!.some(vel => 
-          productText.includes(vel + 'mhz') || 
-          productText.includes(vel + ' mhz') ||
-          productText.includes(vel)
-        );
+      result = result.filter((product) => {
+        const productText = `${product.name} ${product.description}`.toLowerCase();
+        return activeFilters.velocidad!.some((vel) => (
+          productText.includes(`${vel}mhz`)
+          || productText.includes(`${vel} mhz`)
+          || productText.includes(vel)
+        ));
       });
     }
-    
-    // Filtrar por stock
+
     if (activeFilters.enStock) {
-      result = result.filter(p => (p.stock_quantity || 0) > 0);
+      result = result.filter((product) => (product.stock_quantity || 0) > 0);
     }
-    
-    // Ordenar
+
     result.sort((a, b) => {
       switch (sortBy) {
         case 'nombre-asc':
@@ -192,139 +248,72 @@ export const CategoryPage: React.FC = () => {
           return 0;
       }
     });
-    
+
     return result;
-  }, [activeFilters, categoryConfig?.searchTerms, products, sortBy]);
+  }, [activeFilters, products, sortBy, structuredCategories, textTerms]);
 
-  const groupedProducts = useMemo(() => groupProductsBySku(filteredProducts), [filteredProducts]);
+  const totalPages = Math.max(Math.ceil(filteredProducts.length / productsPerPage), 1);
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (safeCurrentPage - 1) * productsPerPage;
+    return filteredProducts.slice(startIndex, startIndex + productsPerPage);
+  }, [filteredProducts, productsPerPage, safeCurrentPage]);
+  const groupedProducts = useMemo(() => groupProductsBySku(paginatedProducts), [paginatedProducts]);
 
-  // Actualizar URL con filtros
   const updateFilters = (filterKey: keyof ActiveFilters, value: string | boolean) => {
-    const newFilters = { ...activeFilters };
-    
+    const nextFilters = { ...activeFilters };
+
     if (filterKey === 'enStock') {
-      newFilters.enStock = value as boolean;
+      nextFilters.enStock = value as boolean;
     } else {
-      const currentValues = newFilters[filterKey] as string[] || [];
-      const valueStr = value as string;
-      
-      if (currentValues.includes(valueStr)) {
-        newFilters[filterKey] = currentValues.filter(v => v !== valueStr) as any;
-      } else {
-        newFilters[filterKey] = [...currentValues, valueStr] as any;
-      }
+      const currentValues = nextFilters[filterKey] as string[] || [];
+      const typedValue = value as string;
+      nextFilters[filterKey] = currentValues.includes(typedValue)
+        ? currentValues.filter((entry) => entry !== typedValue) as never
+        : [...currentValues, typedValue] as never;
     }
-    
-    setActiveFilters(newFilters);
-    
-    // Actualizar URL
-    const params = new URLSearchParams();
-    Object.entries(newFilters).forEach(([key, val]) => {
-      if (key === 'enStock' && val) {
-        params.set('stock', 'true');
-      } else if (Array.isArray(val)) {
-        val.forEach(v => params.append(key, v));
-      }
-    });
-    if (sortBy !== 'nombre-asc') params.set('orden', sortBy);
-    setSearchParams(params);
+
+    setActiveFilters(nextFilters);
+    syncUrlState(nextFilters, sortBy, 1);
   };
 
   const clearFilters = () => {
-    setActiveFilters({
+    const clearedFilters: ActiveFilters = {
       capacidad: [],
       velocidad: [],
       enStock: false,
-    });
-    setSearchParams({});
+    };
+    setActiveFilters(clearedFilters);
+    setSortBy('nombre-asc');
+    syncUrlState(clearedFilters, 'nombre-asc', 1);
+  };
+
+  const handleSortChange = (nextSort: string) => {
+    setSortBy(nextSort);
+    syncUrlState(activeFilters, nextSort, 1);
+  };
+
+  const goToPage = (page: number) => {
+    const nextPage = Math.min(Math.max(page, 1), totalPages);
+    syncUrlState(activeFilters, sortBy, nextPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const toggleFilterSection = (section: string) => {
-    setExpandedFilters(prev => 
-      prev.includes(section) 
-        ? prev.filter(s => s !== section)
-        : [...prev, section]
-    );
+    setExpandedFilters((prev) => prev.includes(section)
+      ? prev.filter((entry) => entry !== section)
+      : [...prev, section]);
   };
 
-  const activeFilterCount = 
-    (activeFilters.capacidad?.length || 0) +
-    (activeFilters.velocidad?.length || 0) +
-    (activeFilters.enStock ? 1 : 0);
+  const activeFilterCount =
+    (activeFilters.capacidad?.length || 0)
+    + (activeFilters.velocidad?.length || 0)
+    + (activeFilters.enStock ? 1 : 0);
 
-  // Funciones para manejar cantidades
-  const updateQuantity = (productId: string, quantity: number) => {
-    if (quantity < 1) quantity = 1;
-    setQuantities(prev => ({
-      ...prev,
-      [productId]: quantity
-    }));
-  };
-
-  const getQuantity = (productId: string) => {
-    return quantities[productId] || 1;
-  };
-
-  // Función para agregar al carrito
-  const handleAddToCart = (product: Product) => {
-    if (!isAuthenticated) {
-      navigate('/login', { state: { from: `/categoria/${category}` } });
-      return;
-    }
-
-    if (product.has_variants) {
-      navigate(`/productos/${product.id}`);
-      return;
-    }
-
-    if (!product.stock_quantity || product.stock_quantity <= 0) {
-      addNotification({
-        type: 'error',
-        title: 'Sin stock',
-        message: 'Este producto no tiene stock disponible',
-      });
-      return;
-    }
-
-    const quantity = getQuantity(product.id.toString());
-    addToCart(product, quantity);
-  };
-
-  const handleToggleFavorite = (product: Product) => {
-    if (!isAuthenticated) {
-      addNotification({
-        type: 'warning',
-        title: 'Inicia sesión',
-        message: 'Necesitas iniciar sesión para agregar productos a favoritos',
-      });
-      navigate('/login', { state: { from: `/categoria/${category}` } });
-      return;
-    }
-    
-    const isProductFavorite = isFavorite(product.id);
-    
-    if (isProductFavorite) {
-      removeFromFavorites(product.id);
-      addNotification({
-        type: 'info',
-        title: 'Eliminado de favoritos',
-        message: `${product.name} eliminado de favoritos`,
-      });
-    } else {
-      addToFavorites(product.id);
-      addNotification({
-        type: 'success',
-        title: 'Agregado a favoritos',
-        message: `${product.name} agregado a tus favoritos`,
-      });
-    }
-  };
-
-  // Componente de filtro individual
   const FilterSection = ({ filterKey, config }: { filterKey: string; config: { label: string; options: FilterOption[] } }) => {
     const isExpanded = expandedFilters.includes(filterKey);
-    const selectedValues = (activeFilters as any)[filterKey] || [];
-    
+    const selectedValues = (activeFilters as Record<string, string[]>)[filterKey] || [];
+
     return (
       <div className="border-b border-gray-200 py-4">
         <button
@@ -334,10 +323,10 @@ export const CategoryPage: React.FC = () => {
           <span>{config.label}</span>
           {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </button>
-        
+
         {isExpanded && (
           <div className="mt-3 space-y-2">
-            {config.options.map(option => (
+            {config.options.map((option) => (
               <label key={option.value} className="flex items-center cursor-pointer group">
                 <input
                   type="checkbox"
@@ -358,66 +347,110 @@ export const CategoryPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Section */}
       <section className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-12">
         <div className="container mx-auto px-4">
-          <h1 className="text-3xl md:text-4xl font-bold mb-2">
-            {categoryName}
-          </h1>
-          <p className="text-lg opacity-90">
-            Productos de alta calidad para tu setup tecnológico
-          </p>
+          <div className="mb-2 flex items-center gap-1 text-sm text-white/70">
+            <Link to="/" className="hover:text-white">Inicio</Link>
+            <span>/</span>
+            {rootConfig && (
+              <Link to={rootConfig.link} className={`hover:text-white ${!subcategory ? 'text-white font-semibold' : ''}`}>
+                {rootConfig.name}
+              </Link>
+            )}
+            {level2Config && (
+              <>
+                <span>/</span>
+                <Link to={level2Config.link} className={`hover:text-white ${!subsubcategory ? 'text-white font-semibold' : ''}`}>
+                  {level2Config.name}
+                </Link>
+              </>
+            )}
+            {level3Config && (
+              <>
+                <span>/</span>
+                <span className="text-white font-semibold">{level3Config.name}</span>
+              </>
+            )}
+          </div>
+
+          <h1 className="text-3xl md:text-4xl font-bold mb-2">{categoryName}</h1>
+          <p className="text-lg opacity-90">{categoryConfig?.description || 'Productos de alta calidad'}</p>
+
+          {navSubcategories.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Link
+                to={(level2Config || rootConfig)?.link || `/categoria/${category}`}
+                className={`inline-flex items-center rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                  (!subcategory || (subcategory && !subsubcategory && !level3Config && level2Config === categoryConfig))
+                    ? 'bg-white text-blue-700'
+                    : 'bg-white/20 text-white hover:bg-white/30'
+                }`}
+              >
+                Todos
+              </Link>
+              {navSubcategories.map((sub) => {
+                const isActive = subsubcategory
+                  ? sub.slug === subsubcategory
+                  : subcategory
+                    ? sub.slug === subcategory && !level3Config
+                    : false;
+
+                return (
+                  <Link
+                    key={sub.slug}
+                    to={sub.link}
+                    className={`inline-flex items-center rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                      isActive
+                        ? 'bg-white text-blue-700'
+                        : 'bg-white/20 text-white hover:bg-white/30'
+                    }`}
+                  >
+                    {sub.name}
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
 
-      {/* Content */}
       <section className="py-8">
         <div className="container mx-auto px-4">
           <div className="flex flex-col lg:flex-row gap-8">
-            
-            {/* Sidebar Filters - Desktop */}
             {showFilters && (
-            <aside className="hidden lg:block w-64 flex-shrink-0">
-              <div className="bg-white rounded-lg shadow-sm p-4 sticky top-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-semibold text-lg flex items-center">
-                    <Filter className="w-5 h-5 mr-2" />
-                    Filtros
-                  </h2>
-                  {activeFilterCount > 0 && (
-                    <button
-                      onClick={clearFilters}
-                      className="text-sm text-blue-600 hover:text-blue-800"
-                    >
-                      Limpiar ({activeFilterCount})
-                    </button>
-                  )}
+              <aside className="hidden lg:block w-64 flex-shrink-0">
+                <div className="bg-white rounded-lg shadow-sm p-4 sticky top-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="font-semibold text-lg flex items-center">
+                      <Filter className="w-5 h-5 mr-2" />
+                      Filtros
+                    </h2>
+                    {activeFilterCount > 0 && (
+                      <button onClick={clearFilters} className="text-sm text-blue-600 hover:text-blue-800">
+                        Limpiar ({activeFilterCount})
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="border-b border-gray-200 py-4">
+                    <label className="flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={activeFilters.enStock || false}
+                        onChange={(e) => updateFilters('enStock', e.target.checked)}
+                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="ml-3 text-sm font-medium text-gray-900">Solo con stock</span>
+                    </label>
+                  </div>
+
+                  {Object.entries(filterConfig).map(([key, config]) => (
+                    <FilterSection key={key} filterKey={key} config={config} />
+                  ))}
                 </div>
-                
-                {/* Filtro de stock */}
-                <div className="border-b border-gray-200 py-4">
-                  <label className="flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={activeFilters.enStock || false}
-                      onChange={(e) => updateFilters('enStock', e.target.checked)}
-                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="ml-3 text-sm font-medium text-gray-900">
-                      Solo con stock
-                    </span>
-                  </label>
-                </div>
-                
-                {/* Filtros dinámicos */}
-                {Object.entries(filterConfig).map(([key, config]) => (
-                  <FilterSection key={key} filterKey={key} config={config} />
-                ))}
-              </div>
-            </aside>
+              </aside>
             )}
 
-            {/* Mobile Filter Button */}
             <div className="lg:hidden flex items-center justify-between mb-4">
               {showFilters ? (
                 <button
@@ -433,12 +466,12 @@ export const CategoryPage: React.FC = () => {
                   )}
                 </button>
               ) : (
-                <div /> 
+                <div />
               )}
-              
+
               <select
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
+                onChange={(e) => handleSortChange(e.target.value)}
                 className="px-3 py-2 bg-white rounded-lg shadow-sm border text-sm"
               >
                 <option value="nombre-asc">Nombre A-Z</option>
@@ -448,7 +481,6 @@ export const CategoryPage: React.FC = () => {
               </select>
             </div>
 
-            {/* Mobile Filters Modal */}
             {showFilters && showMobileFilters && (
               <div className="fixed inset-0 z-50 lg:hidden">
                 <div className="absolute inset-0 bg-black/50" onClick={() => setShowMobileFilters(false)} />
@@ -459,18 +491,14 @@ export const CategoryPage: React.FC = () => {
                       <X className="w-6 h-6" />
                     </button>
                   </div>
-                  
+
                   <div className="p-4">
                     {activeFilterCount > 0 && (
-                      <button
-                        onClick={clearFilters}
-                        className="w-full mb-4 py-2 text-blue-600 border border-blue-600 rounded-lg"
-                      >
+                      <button onClick={clearFilters} className="w-full mb-4 py-2 text-blue-600 border border-blue-600 rounded-lg">
                         Limpiar filtros ({activeFilterCount})
                       </button>
                     )}
-                    
-                    {/* Filtro de stock */}
+
                     <div className="border-b border-gray-200 py-4">
                       <label className="flex items-center cursor-pointer">
                         <input
@@ -479,17 +507,15 @@ export const CategoryPage: React.FC = () => {
                           onChange={(e) => updateFilters('enStock', e.target.checked)}
                           className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
-                        <span className="ml-3 text-sm font-medium text-gray-900">
-                          Solo con stock
-                        </span>
+                        <span className="ml-3 text-sm font-medium text-gray-900">Solo con stock</span>
                       </label>
                     </div>
-                    
+
                     {Object.entries(filterConfig).map(([key, config]) => (
                       <FilterSection key={key} filterKey={key} config={config} />
                     ))}
                   </div>
-                  
+
                   <div className="p-4 border-t">
                     <button
                       onClick={() => setShowMobileFilters(false)}
@@ -502,19 +528,17 @@ export const CategoryPage: React.FC = () => {
               </div>
             )}
 
-            {/* Products Grid */}
             <div className="flex-1">
-              {/* Sorting - Desktop */}
               <div className="hidden lg:flex items-center justify-between mb-6">
                 <p className="text-gray-600">
-                  Mostrando {filteredProducts.length} de {products.length} producto{products.length !== 1 ? 's' : ''}
+                  Mostrando {paginatedProducts.length} de {filteredProducts.length} producto{filteredProducts.length !== 1 ? 's' : ''}
                 </p>
-                
+
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-gray-600">Ordenar por:</span>
                   <select
                     value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
+                    onChange={(e) => handleSortChange(e.target.value)}
                     className="px-3 py-2 bg-white rounded-lg shadow-sm border text-sm"
                   >
                     <option value="nombre-asc">Nombre A-Z</option>
@@ -525,7 +549,6 @@ export const CategoryPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Active Filters Tags */}
               {activeFilterCount > 0 && (
                 <div className="flex flex-wrap gap-2 mb-4">
                   {activeFilters.enStock && (
@@ -538,7 +561,8 @@ export const CategoryPage: React.FC = () => {
                   )}
                   {Object.entries(activeFilters).map(([key, values]) => {
                     if (key === 'enStock' || !Array.isArray(values)) return null;
-                    return values.map(value => (
+
+                    return values.map((value) => (
                       <span key={`${key}-${value}`} className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
                         {value.toUpperCase()}
                         <button onClick={() => updateFilters(key as keyof ActiveFilters, value)} className="ml-2">
@@ -568,10 +592,7 @@ export const CategoryPage: React.FC = () => {
               {error && (
                 <div className="text-center py-20">
                   <p className="text-red-600 mb-4">{error}</p>
-                  <Link 
-                    to="/" 
-                    className="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-                  >
+                  <Link to="/" className="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
                     Volver al Inicio
                   </Link>
                 </div>
@@ -580,28 +601,19 @@ export const CategoryPage: React.FC = () => {
               {!loading && !error && filteredProducts.length === 0 && (
                 <div className="text-center py-16 bg-white rounded-lg shadow-sm">
                   <Filter className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-                  <h2 className="text-xl font-bold mb-2">
-                    No se encontraron productos
-                  </h2>
+                  <h2 className="text-xl font-bold mb-2">No se encontraron productos</h2>
                   <p className="text-gray-600 mb-6">
-                    {activeFilterCount > 0 
+                    {activeFilterCount > 0
                       ? 'Intenta ajustar los filtros para ver más resultados'
-                      : `No hay productos disponibles en ${categoryName}`
-                    }
+                      : `No hay productos disponibles en ${categoryName}`}
                   </p>
-                  
+
                   {activeFilterCount > 0 ? (
-                    <button
-                      onClick={clearFilters}
-                      className="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-                    >
+                    <button onClick={clearFilters} className="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
                       Limpiar filtros
                     </button>
                   ) : (
-                    <Link 
-                      to="/" 
-                      className="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-                    >
+                    <Link to="/" className="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
                       Volver al Inicio
                     </Link>
                   )}
@@ -609,14 +621,59 @@ export const CategoryPage: React.FC = () => {
               )}
 
               {!loading && !error && filteredProducts.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {groupedProducts.map((item) => {
-                    if (item.type === 'group') {
-                      return <ProductGroupCard key={item.groupKey} group={item} />;
-                    }
-                    return <ProductCard key={item.product.id} product={item.product} />;
-                  })}
-                </div>
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {groupedProducts.map((item) => {
+                      if (item.type === 'group') {
+                        return <ProductGroupCard key={item.groupKey} group={item} />;
+                      }
+                      return <ProductCard key={item.product.id} product={item.product} />;
+                    })}
+                  </div>
+
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-center gap-2 mt-10">
+                      <button
+                        onClick={() => goToPage(safeCurrentPage - 1)}
+                        disabled={safeCurrentPage <= 1}
+                        className="px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
+                      >
+                        Anterior
+                      </button>
+                      {Array.from({ length: totalPages }, (_, i) => i + 1)
+                        .filter((page) => page === 1 || page === totalPages || Math.abs(page - safeCurrentPage) <= 2)
+                        .reduce<(number | 'ellipsis')[]>((acc, page, idx, arr) => {
+                          if (idx > 0 && page - arr[idx - 1] > 1) {
+                            acc.push('ellipsis');
+                          }
+                          acc.push(page);
+                          return acc;
+                        }, [])
+                        .map((item, idx) => item === 'ellipsis' ? (
+                          <span key={`ellipsis-${idx}`} className="px-2 text-gray-400">…</span>
+                        ) : (
+                          <button
+                            key={item}
+                            onClick={() => goToPage(item)}
+                            className={`min-w-[40px] px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                              item === safeCurrentPage
+                                ? 'bg-blue-600 text-white'
+                                : 'border border-gray-300 hover:bg-gray-100'
+                            }`}
+                          >
+                            {item}
+                          </button>
+                        ))}
+                      <button
+                        onClick={() => goToPage(safeCurrentPage + 1)}
+                        disabled={safeCurrentPage >= totalPages}
+                        className="px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
+                      >
+                        Siguiente
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>

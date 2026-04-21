@@ -24,11 +24,13 @@ export const Home: React.FC = () => {
   const { setError, addNotification } = useStore();
   const featuredProductsQuery = useQuery(featuredProductsQueryOptions(BUSINESS.FEATURED_PRODUCTS_COUNT));
   const newProductsQuery = useQuery(productsQueryOptions({
-    per_page: BUSINESS.FEATURED_PRODUCTS_COUNT,
+    per_page: BUSINESS.PRODUCTS_PER_PAGE,
     is_active: true,
+    sort_by: 'created',
+    sort_order: 'desc',
   }));
   const onSaleProductsQuery = useQuery(productsQueryOptions({
-    per_page: BUSINESS.FEATURED_PRODUCTS_COUNT,
+    per_page: BUSINESS.PRODUCTS_PER_PAGE,
     is_active: true,
   }));
   const featuredProducts = featuredProductsQuery.data || [];
@@ -235,38 +237,64 @@ export const Home: React.FC = () => {
             <div className="mb-12 text-center">
               <h2 className="mb-4 text-3xl font-bold">Explora por Categorías</h2>
               <p className="text-lg text-muted-foreground">
-                Encuentra exactamente lo que necesitas para tu hogar
+                Encuentra exactamente lo que necesitas
               </p>
             </div>
 
-            <div className="mx-auto grid max-w-4xl grid-cols-1 gap-6 md:grid-cols-2">
+            <div className="mx-auto grid max-w-5xl grid-cols-1 gap-8 md:grid-cols-2">
               {categories.map((category, index) => (
-                <Link key={index} to={category.link}>
-                  <Card className="group overflow-hidden transition-all duration-300 hover:shadow-lg">
-                    <CardContent className="p-0">
-                      <div className="relative h-64 overflow-hidden bg-gray-100">
-                        <img
-                          src={category.image}
-                          alt={category.name}
-                          className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-105"
-                          onError={(e) =>
-                            handleImgError(
-                              e,
-                              runtimeImages.productFallbacks.default || '/images/categories/componentes.jpg',
-                            )
-                          }
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                        <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                          <h3 className="mb-1 text-xl font-bold transition-colors group-hover:text-blue-300">
-                            {category.name}
-                          </h3>
-                          <p className="text-sm text-gray-200">{category.description}</p>
+                <div key={index} className="space-y-3">
+                  <Link to={category.link}>
+                    <Card className="group overflow-hidden transition-all duration-300 hover:shadow-lg">
+                      <CardContent className="p-0">
+                        <div className="relative h-64 overflow-hidden bg-gray-100">
+                          <img
+                            src={category.image}
+                            alt={category.name}
+                            className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-105"
+                            onError={(e) =>
+                              handleImgError(
+                                e,
+                                runtimeImages.productFallbacks.default || '/images/categories/componentes.jpg',
+                              )
+                            }
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                          <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                            <h3 className="mb-1 text-xl font-bold transition-colors group-hover:text-blue-300">
+                              {category.name}
+                            </h3>
+                            <p className="text-sm text-gray-200">{category.description}</p>
+                          </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                  {category.subcategories && category.subcategories.length > 0 && (
+                    <div className="flex flex-wrap gap-2 px-1">
+                      {category.subcategories.map((sub, subIdx) => (
+                        <div key={subIdx} className="flex items-center gap-1">
+                          <Link
+                            to={sub.link}
+                            className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
+                          >
+                            {sub.name}
+                          </Link>
+                          {sub.subcategories && sub.subcategories.length > 0 &&
+                            sub.subcategories.map((subsub, ssi) => (
+                              <Link
+                                key={ssi}
+                                to={subsub.link}
+                                className="inline-flex items-center rounded-full border border-dashed border-border bg-muted/50 px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
+                              >
+                                {subsub.name}
+                              </Link>
+                            ))}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           </div>

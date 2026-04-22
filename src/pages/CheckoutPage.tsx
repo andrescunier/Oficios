@@ -6,13 +6,14 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CreditCard, MapPin, User, Mail, Phone, Lock } from 'lucide-react';
 import { useStore } from '@/store/useStore';
-import { PAYMENT_INFO, LEGAL, BUSINESS } from '@/config/branding';
+import { PAYMENT_INFO, LEGAL, BUSINESS, SHIPPING } from '@/config/branding';
 import { getPaymentMethodsConfig } from '@/config/runtime';
 import log from '@/lib/logger';
 import {
   buildCheckoutPayload,
   buildInitialShippingInfo,
   getDefaultPaymentMethod,
+  getCheckoutShippingCharge,
   type PaymentInfo,
   type ShippingInfo,
   validateShippingInfo,
@@ -29,6 +30,8 @@ export const CheckoutPage: React.FC = () => {
   
   const defaultPaymentMethod = useMemo(() => getDefaultPaymentMethod(), []);
   const paymentMethodsConfig = useMemo(() => getPaymentMethodsConfig(), []);
+  const shippingAmount = useMemo(() => getCheckoutShippingCharge(), []);
+  const totalWithShipping = cart.total_amount + shippingAmount;
   
   const [currentStep, setCurrentStep] = useState<'shipping' | 'payment' | 'review'>('shipping');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -168,7 +171,7 @@ export const CheckoutPage: React.FC = () => {
     log.checkout.info('Iniciando checkout...');
     log.checkout.debug('Business Partner ID:', businessPartnerId);
     log.checkout.debug('Auth:', { isAuthenticated: auth.isAuthenticated, user: auth.user?.username });
-    log.checkout.debug('Cart:', { items: cart.items.length, total: cart.total_amount, currency: cart.currency });
+    log.checkout.debug('Cart:', { items: cart.items.length, total: totalWithShipping, shippingAmount, currency: cart.currency });
     setIsProcessing(true);
     const checkoutId = createCorrelationId('chk');
     
@@ -177,13 +180,13 @@ export const CheckoutPage: React.FC = () => {
         shippingInfo,
         items: cart.items,
         currency: cart.currency || BUSINESS.DEFAULT_CURRENCY,
-        totalAmount: cart.total_amount,
+        totalAmount: totalWithShipping,
         paymentMethod: paymentInfo.paymentMethod,
       });
       recordAppEvent('checkout_started', {
         checkoutId,
         items: cart.items.length,
-        totalAmount: cart.total_amount,
+        totalAmount: totalWithShipping,
         paymentMethod: paymentInfo.paymentMethod,
       });
 
@@ -209,7 +212,7 @@ export const CheckoutPage: React.FC = () => {
         });
 
         // Guardar el total antes de limpiar el carrito
-        const totalAmount = cart.total_amount;
+        const totalAmount = totalWithShipping;
         
         // Limpiar carrito
         clearCart();
@@ -728,13 +731,15 @@ export const CheckoutPage: React.FC = () => {
                   <span>{formatPrice(cart.tax_amount, cart.currency)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span>Envío</span>
-                  <span className="text-green-600">Gratis</span>
+                  <span>{SHIPPING.LABEL}</span>
+                  <span className={shippingAmount > 0 ? 'text-foreground' : 'text-green-600'}>
+                    {shippingAmount > 0 ? formatPrice(shippingAmount, cart.currency) : SHIPPING.FREE_LABEL}
+                  </span>
                 </div>
                 <div className="border-t pt-2">
                   <div className="flex justify-between font-semibold text-lg">
                     <span>Total</span>
-                    <span className="text-blue-600">{formatPrice(cart.total_amount, cart.currency)}</span>
+                    <span className="text-blue-600">{formatPrice(totalWithShipping, cart.currency)}</span>
                   </div>
                 </div>
               </div>
@@ -742,7 +747,7 @@ export const CheckoutPage: React.FC = () => {
               <div className="text-center text-sm text-gray-500">
                 <div className="flex items-center justify-center space-x-4 mb-2">
                   <span>🔒 Pago seguro</span>
-                  <span>🚚 Envío gratis</span>
+                  <span>🚚 {shippingAmount > 0 ? SHIPPING.CHARGED_MESSAGE : SHIPPING.DRAWER_MESSAGE}</span>
                 </div>
                 <p>Compra protegida por SSL</p>
                 <p className="mt-2 text-xs">

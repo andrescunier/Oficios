@@ -20,6 +20,7 @@ import type { Product, ProductVariant, ProductVariantOption } from '@/types/api'
 import { PriceDisplay } from '@/hooks/usePriceVisibility';
 import { handleImgError } from '@/utils/imageHelpers';
 import { getBusinessConfig } from '@/config/runtime';
+import { SHIPPING } from '@/config/branding';
 import { productDetailQueryOptions } from '@/features/catalog/queries';
 import { recordAppEvent } from '@/lib/observability';
 
@@ -490,8 +491,8 @@ export const ProductDetailPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-white p-4 rounded-lg shadow-sm text-center">
                 <Truck className="w-6 h-6 text-blue-600 mx-auto mb-2" />
-                <h4 className="font-medium mb-1">Envío Gratis</h4>
-                <p className="text-sm text-gray-600">En compras superiores al mínimo</p>
+                <h4 className="font-medium mb-1">{SHIPPING.PRODUCT_BADGE_TITLE}</h4>
+                <p className="text-sm text-gray-600">{SHIPPING.PRODUCT_BADGE_DESCRIPTION}</p>
               </div>
               <div className="bg-white p-4 rounded-lg shadow-sm text-center">
                 <Shield className="w-6 h-6 text-green-600 mx-auto mb-2" />

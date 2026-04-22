@@ -35,6 +35,36 @@ export interface FeatureBenefitConfig {
   description: string;
 }
 
+export interface ShippingConfig {
+  enabled: boolean;
+  mode: 'free' | 'flat_rate';
+  bannerText: string;
+  label: string;
+  freeLabel: string;
+  pendingLabel: string;
+  drawerMessage: string;
+  chargedMessage: string;
+  productBadgeTitle: string;
+  productBadgeDescription: string;
+  chargeAmount: number;
+  chargeProductId: string;
+  chargeProductSku: string;
+  chargeProductDescription: string;
+  taxRate: number;
+}
+
+export interface NewsletterConfig {
+  enabled: boolean;
+  endpoint: string;
+  headers: Record<string, string>;
+  title: string;
+  description: string;
+  placeholder: string;
+  buttonLabel: string;
+  successMessage: string;
+  errorMessage: string;
+}
+
 export interface ImagesConfig {
   heroSlides: HeroSlideConfig[];
   categories: CategoryConfig[];
@@ -165,6 +195,8 @@ export interface RuntimeConfig {
     realPayments: boolean;
     benefits: FeatureBenefitConfig[];
   };
+  shipping: ShippingConfig;
+  newsletter: NewsletterConfig;
   filters: FilterConfig;
   paymentMethods: {
     transferencia: boolean;
@@ -310,6 +342,34 @@ const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
       },
     ],
   },
+  shipping: {
+    enabled: true,
+    mode: 'free',
+    bannerText: 'Envio gratis en todas tus compras',
+    label: 'Envio',
+    freeLabel: 'Gratis',
+    pendingLabel: 'A calcular',
+    drawerMessage: 'Envio gratis en todas tus compras',
+    chargedMessage: 'El costo de envio se suma al finalizar la compra',
+    productBadgeTitle: 'Envio Gratis',
+    productBadgeDescription: 'En compras superiores al minimo',
+    chargeAmount: 0,
+    chargeProductId: '',
+    chargeProductSku: '',
+    chargeProductDescription: 'Cargo de envio',
+    taxRate: 0,
+  },
+  newsletter: {
+    enabled: true,
+    endpoint: '',
+    headers: {},
+    title: 'No te pierdas nuestras ofertas',
+    description: 'Suscribite a nuestro newsletter y recibi descuentos exclusivos',
+    placeholder: 'Tu email',
+    buttonLabel: 'Suscribirse',
+    successMessage: 'Gracias por suscribirte.',
+    errorMessage: 'No pudimos registrar tu suscripcion. Intenta nuevamente.',
+  },
   filters: {
     enabled: false,
     capacidad: false,
@@ -438,6 +498,10 @@ function normalizeSingleCategory(item: unknown): CategoryConfig | null {
   }
 
   const category = item as Partial<CategoryConfig> & { subcategories?: unknown };
+  if (!category.name && !category.link && !category.slug) {
+    return null;
+  }
+
   return {
     name: category.name || '',
     image: category.image || '',
@@ -486,6 +550,61 @@ function normalizeFeatureBenefits(raw: unknown): FeatureBenefitConfig[] {
     .filter(Boolean) as FeatureBenefitConfig[];
 
   return normalized.length > 0 ? normalized : DEFAULT_RUNTIME_CONFIG.features.benefits;
+}
+
+function normalizeShippingConfig(raw: unknown): ShippingConfig {
+  if (typeof raw !== 'object' || raw === null) {
+    return { ...DEFAULT_RUNTIME_CONFIG.shipping };
+  }
+
+  const shipping = raw as Partial<ShippingConfig>;
+  const mode = shipping.mode === 'flat_rate' ? 'flat_rate' : 'free';
+
+  return {
+    enabled: readBoolean(shipping.enabled, DEFAULT_RUNTIME_CONFIG.shipping.enabled),
+    mode,
+    bannerText: readString(shipping.bannerText, DEFAULT_RUNTIME_CONFIG.shipping.bannerText),
+    label: readString(shipping.label, DEFAULT_RUNTIME_CONFIG.shipping.label),
+    freeLabel: readString(shipping.freeLabel, DEFAULT_RUNTIME_CONFIG.shipping.freeLabel),
+    pendingLabel: readString(shipping.pendingLabel, DEFAULT_RUNTIME_CONFIG.shipping.pendingLabel),
+    drawerMessage: readString(shipping.drawerMessage, DEFAULT_RUNTIME_CONFIG.shipping.drawerMessage),
+    chargedMessage: readString(shipping.chargedMessage, DEFAULT_RUNTIME_CONFIG.shipping.chargedMessage),
+    productBadgeTitle: readString(shipping.productBadgeTitle, DEFAULT_RUNTIME_CONFIG.shipping.productBadgeTitle),
+    productBadgeDescription: readString(
+      shipping.productBadgeDescription,
+      DEFAULT_RUNTIME_CONFIG.shipping.productBadgeDescription,
+    ),
+    chargeAmount: readNumber(shipping.chargeAmount, DEFAULT_RUNTIME_CONFIG.shipping.chargeAmount),
+    chargeProductId: readString(shipping.chargeProductId, DEFAULT_RUNTIME_CONFIG.shipping.chargeProductId),
+    chargeProductSku: readString(shipping.chargeProductSku, DEFAULT_RUNTIME_CONFIG.shipping.chargeProductSku),
+    chargeProductDescription: readString(
+      shipping.chargeProductDescription,
+      DEFAULT_RUNTIME_CONFIG.shipping.chargeProductDescription,
+    ),
+    taxRate: readNumber(shipping.taxRate, DEFAULT_RUNTIME_CONFIG.shipping.taxRate),
+  };
+}
+
+function normalizeNewsletterConfig(raw: unknown): NewsletterConfig {
+  if (typeof raw !== 'object' || raw === null) {
+    return {
+      ...DEFAULT_RUNTIME_CONFIG.newsletter,
+      headers: { ...DEFAULT_RUNTIME_CONFIG.newsletter.headers },
+    };
+  }
+
+  const newsletter = raw as Partial<NewsletterConfig>;
+  return {
+    enabled: readBoolean(newsletter.enabled, DEFAULT_RUNTIME_CONFIG.newsletter.enabled),
+    endpoint: readString(newsletter.endpoint, DEFAULT_RUNTIME_CONFIG.newsletter.endpoint),
+    headers: readStringMap(newsletter.headers, DEFAULT_RUNTIME_CONFIG.newsletter.headers),
+    title: readString(newsletter.title, DEFAULT_RUNTIME_CONFIG.newsletter.title),
+    description: readString(newsletter.description, DEFAULT_RUNTIME_CONFIG.newsletter.description),
+    placeholder: readString(newsletter.placeholder, DEFAULT_RUNTIME_CONFIG.newsletter.placeholder),
+    buttonLabel: readString(newsletter.buttonLabel, DEFAULT_RUNTIME_CONFIG.newsletter.buttonLabel),
+    successMessage: readString(newsletter.successMessage, DEFAULT_RUNTIME_CONFIG.newsletter.successMessage),
+    errorMessage: readString(newsletter.errorMessage, DEFAULT_RUNTIME_CONFIG.newsletter.errorMessage),
+  };
 }
 
 function normalizeImageMap<T extends Record<string, string>>(raw: unknown, fallback: T): T {
@@ -660,6 +779,14 @@ export const getFeaturesConfig = () => {
   };
 };
 
+export const getShippingConfig = (): ShippingConfig => {
+  return normalizeShippingConfig(getConfigRoot().shipping);
+};
+
+export const getNewsletterConfig = (): NewsletterConfig => {
+  return normalizeNewsletterConfig(getConfigRoot().newsletter);
+};
+
 export const getFiltersConfig = (): FilterConfig => {
   const filters = getConfigRoot().filters;
   return {
@@ -748,6 +875,8 @@ export const getRuntimeConfig = (): RuntimeConfig => {
     theme: getThemeConfig(),
     social: getSocialConfig(),
     features: getFeaturesConfig(),
+    shipping: getShippingConfig(),
+    newsletter: getNewsletterConfig(),
     filters: getFiltersConfig(),
     paymentMethods: getPaymentMethodsConfig(),
     payment: getPaymentConfig(),

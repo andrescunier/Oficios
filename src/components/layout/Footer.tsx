@@ -76,10 +76,10 @@ export const Footer: React.FC = () => {
       <div className="border-b">
         <div className="container mx-auto px-4 py-8">
           <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {FEATURES.SHIPPING_BENEFITS.map((feature, index) => {
+            {FEATURES.SHIPPING_BENEFITS.map((feature) => {
               const Icon = getFeatureBenefitIcon(feature.icon);
               return (
-                <div key={index} className="flex items-center justify-center space-x-3">
+                <div key={`${feature.icon}-${feature.title}-${feature.description}`} className="flex items-center justify-center space-x-3">
                   <div className="flex-shrink-0">
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
                       <Icon className="h-6 w-6 text-primary" />
@@ -139,9 +139,9 @@ export const Footer: React.FC = () => {
 
             {/* Social links */}
             <div className="flex space-x-2">
-              {socialLinks.map((social, index) => (
+              {socialLinks.map((social) => (
                 <Button
-                  key={index}
+                  key={`${social.label}-${social.href}`}
                   variant="outline"
                   size="icon"
                   asChild
@@ -165,8 +165,8 @@ export const Footer: React.FC = () => {
             <div key={key}>
               <h3 className="font-semibold mb-4">{section.title}</h3>
               <ul className="space-y-2">
-                {section.links.map((link, index) => (
-                  <li key={index}>
+                {section.links.map((link) => (
+                  <li key={`${link.href}-${link.label}`}>
                     {link.external ? (
                       <a 
                         href={link.href}
@@ -209,7 +209,7 @@ export const Footer: React.FC = () => {
                 pattern="[0-9+\s()-]+"
               />
               <Button type="submit" className="bg-green-600 hover:bg-green-700 text-white font-semibold">
-                Suscribirse
+                Abrir WhatsApp
               </Button>
             </form>
           </div>

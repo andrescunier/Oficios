@@ -15,6 +15,8 @@ import {
   getThemeConfig,
   getSocialConfig,
   getFeaturesConfig,
+  getNewsletterConfig,
+  getShippingConfig,
   getImagesConfig,
 } from './runtime';
 import { getActiveAccountId } from '@/config/api';
@@ -148,6 +150,30 @@ export const FEATURES = {
   get LOGIN_FOR_PRICES_CTA() { return getAppConfig().loginCta; },
   get REQUIRE_AUTH_FOR_CART() { return getAppConfig().requireAuthForCart; },
   get SHIPPING_BENEFITS() { return getFeaturesConfig().benefits; },
+};
+
+export const SHIPPING = {
+  get ENABLED() { return getShippingConfig().enabled; },
+  get MODE() { return getShippingConfig().mode; },
+  get BANNER_TEXT() { return getShippingConfig().bannerText; },
+  get LABEL() { return getShippingConfig().label; },
+  get FREE_LABEL() { return getShippingConfig().freeLabel; },
+  get PENDING_LABEL() { return getShippingConfig().pendingLabel; },
+  get DRAWER_MESSAGE() { return getShippingConfig().drawerMessage; },
+  get CHARGED_MESSAGE() { return getShippingConfig().chargedMessage; },
+  get PRODUCT_BADGE_TITLE() { return getShippingConfig().productBadgeTitle; },
+  get PRODUCT_BADGE_DESCRIPTION() { return getShippingConfig().productBadgeDescription; },
+};
+
+export const NEWSLETTER = {
+  get ENABLED() { return getNewsletterConfig().enabled; },
+  get ENDPOINT() { return getNewsletterConfig().endpoint; },
+  get TITLE() { return getNewsletterConfig().title; },
+  get DESCRIPTION() { return getNewsletterConfig().description; },
+  get PLACEHOLDER() { return getNewsletterConfig().placeholder; },
+  get BUTTON_LABEL() { return getNewsletterConfig().buttonLabel; },
+  get SUCCESS_MESSAGE() { return getNewsletterConfig().successMessage; },
+  get ERROR_MESSAGE() { return getNewsletterConfig().errorMessage; },
 };
 
 export const THEME = {

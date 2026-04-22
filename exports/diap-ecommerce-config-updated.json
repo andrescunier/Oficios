@@ -1,0 +1,223 @@
+{
+  "api": {
+    "assetsBaseUrl": "https://www.cumar.com.ar/CDN/diapstore",
+    "supportBaseUrl": null,
+    "storefrontBaseUrl": "https://diapstore.com"
+  },
+  "app": {
+    "url": "https://diapstore.com",
+    "name": "DIAP",
+    "slogan": "Tecnología Profesional para Empresas",
+    "loginCta": "Iniciar Sesión",
+    "companyName": "DIAP",
+    "description": "Distribuidora de productos tecnológicos de primera calidad",
+    "loginMessage": "Inicia sesión para ver precios",
+    "requireAuthForCart": true,
+    "hidePricesForGuests": true
+  },
+  "legal": {
+    "cuit": "30-71036886-0",
+    "address": "Buenos Aires, Argentina",
+    "companyName": "DIAP INGENIERÍA S.A.",
+    "jurisdiction": "Buenos Aires, Argentina"
+  },
+  "theme": {
+    "fontUrl": null,
+    "colorRing": "#2563EB",
+    "colorError": "#EF4444",
+    "colorInput": "#E2E8F0",
+    "colorMuted": "#F1F5F9",
+    "fontFamily": "system-ui, sans-serif",
+    "colorAccent": "#F1F5F9",
+    "colorBorder": "#E2E8F0",
+    "colorPrimary": "#2563EB",
+    "colorSuccess": "#22C55E",
+    "colorSurface": "#FFFFFF",
+    "colorWarning": "#F59E0B",
+    "colorSecondary": "#F1F5F9",
+    "colorBackground": "#FFFFFF",
+    "colorForeground": "#0F172A",
+    "colorPrimaryHover": "#1D4ED8",
+    "colorMutedForeground": "#64748B",
+    "colorAccentForeground": "#0F172A",
+    "colorPrimaryForeground": "#FFFFFF",
+    "colorSurfaceForeground": "#0F172A",
+    "colorSecondaryForeground": "#0F172A"
+  },
+  "images": {
+    "banners": [],
+    "categories": [
+      {
+        "name": "Micro Sd",
+        "image": "https://www.cumar.com.ar/CDN/diapstore/categories/micro-sd.jpg",
+        "link": "/categoria/micro-sd",
+        "slug": "micro-sd",
+        "group": "Almacenamiento",
+        "searchTerms": ["micro sd", "tarjeta", "memoria"],
+        "productCategories": ["micro sd"]
+      },
+      {
+        "name": "Pendrive",
+        "image": "https://www.cumar.com.ar/CDN/diapstore/categories/pendrive.jpg",
+        "link": "/categoria/pendrive",
+        "slug": "pendrive",
+        "group": "Almacenamiento",
+        "productCategories": ["pendrive"]
+      },
+      {
+        "name": "Discos",
+        "image": "https://www.cumar.com.ar/CDN/diapstore/categories/discos.jpg",
+        "link": "/categoria/discos",
+        "slug": "discos",
+        "group": "Almacenamiento",
+        "productCategories": ["discos"],
+        "subcategories": [
+          {
+            "name": "Unidades SATA",
+            "slug": "unidades-sata",
+            "link": "/categoria/discos/unidades-sata",
+            "productCategories": ["discos/sata"]
+          },
+          {
+            "name": "Unidades M.2",
+            "slug": "unidades-m2",
+            "link": "/categoria/discos/unidades-m2",
+            "productCategories": ["discos/m2"]
+          }
+        ]
+      },
+      {
+        "name": "Memorias",
+        "image": "https://www.cumar.com.ar/CDN/diapstore/categories/memorias.jpg",
+        "link": "/categoria/memorias",
+        "slug": "memorias",
+        "group": "Componentes",
+        "productCategories": ["memorias"],
+        "subcategories": [
+          {
+            "name": "Udimm",
+            "slug": "udimm",
+            "link": "/categoria/memorias/udimm",
+            "productCategories": ["memorias/udimm"]
+          },
+          {
+            "name": "Sodimm",
+            "slug": "sodimm",
+            "link": "/categoria/memorias/sodimm",
+            "productCategories": ["memorias/sodimm"]
+          }
+        ]
+      },
+      {
+        "name": "Computadoras",
+        "image": "https://www.cumar.com.ar/CDN/diapstore/categories/computadoras.jpg",
+        "link": "/categoria/computadoras",
+        "slug": "computadoras",
+        "group": "Equipos",
+        "productCategories": ["computadoras"],
+        "subcategories": [
+          {
+            "name": "Mini Pc",
+            "slug": "mini-pc",
+            "link": "/categoria/computadoras/mini-pc",
+            "productCategories": ["computadoras/mini-pc"]
+          }
+        ]
+      }
+    ],
+    "heroSlides": [
+      {
+        "cta": "Ver Catálogo",
+        "link": "/productos",
+        "image": "https://www.cumar.com.ar/CDN/diapstore/slide-1.jpg",
+        "title": "Tecnología Profesional para Empresas",
+        "subtitle": "Soluciones B2B en componentes de alta gama"
+      },
+      {
+        "cta": "Explorar SSDs",
+        "link": "/productos",
+        "image": "https://www.cumar.com.ar/CDN/diapstore/slide-2.jpg",
+        "title": "SSDs de Alto Rendimiento",
+        "subtitle": "Almacenamiento profesional para tu negocio"
+      },
+      {
+        "cta": "Ver Memorias",
+        "link": "/productos",
+        "image": "https://www.cumar.com.ar/CDN/diapstore/slide-3.jpg",
+        "title": "Memorias RAM DDR4 & DDR5",
+        "subtitle": "Maximiza el rendimiento de tus equipos"
+      }
+    ],
+    "backgrounds": [],
+    "placeholders": [],
+    "productFallbacks": []
+  },
+  "social": {
+    "twitter": null,
+    "facebook": null,
+    "linkedin": null,
+    "instagram": null
+  },
+  "contact": {
+    "email": "info@diapstore.com",
+    "phone": "+54 11 2631-0884",
+    "address": "Buenos Aires, Argentina",
+    "whatsapp": "5491126310884",
+    "salesEmail": "ventas@diapstore.com"
+  },
+  "filters": {
+    "enabled": false,
+    "capacidad": false,
+    "velocidad": false,
+    "capacidadOptions": [],
+    "velocidadOptions": []
+  },
+  "payment": {
+    "cbu": null,
+    "alias": null,
+    "bankName": null,
+    "accountHolder": null,
+    "whatsappVerification": null
+  },
+  "version": "1.0.0",
+  "branding": {
+    "logo": "https://www.cumar.com.ar/CDN/diapstore/diap-logo.png",
+    "banner": null,
+    "favicon": "https://www.cumar.com.ar/CDN/diapstore/favicon.ico",
+    "ogImage": "https://www.cumar.com.ar/CDN/diapstore/diap-logo.png",
+    "logoDark": null
+  },
+  "business": {
+    "locale": "es-AR",
+    "invoiceNote": "Se emite factura tipo A o B según la condición fiscal del comprador.",
+    "businessHours": "Lunes a Viernes: 9:00 - 18:00hs",
+    "defaultCountry": "AR",
+    "defaultTaxRate": 0.21,
+    "defaultCurrency": "ARS",
+    "productsPerPage": 50,
+    "returnPolicyDays": 10,
+    "heroSliderInterval": 5000,
+    "refundProcessingTime": "5 a 10 días hábiles",
+    "featuredProductsCount": 8,
+    "freeShippingThreshold": 50000,
+    "maxQuantityPerProduct": 5
+  },
+  "features": {
+    "analytics": false,
+    "realPayments": false,
+    "notifications": false
+  },
+  "observability": {
+    "enabled": false,
+    "endpoint": null,
+    "useBeacon": true,
+    "maxQueueSize": 50,
+    "flushIntervalMs": 15000
+  },
+  "paymentMethods": {
+    "tarjeta": false,
+    "efectivo": true,
+    "mercadopago": false,
+    "transferencia": false
+  }
+}

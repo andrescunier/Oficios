@@ -26,6 +26,8 @@ Notas:
 - devuelve contrato canónico versionado
 - es la única fuente de configuración visual y operativa del storefront
 - expone categorías estructuradas y anidadas en `images.categories[]`, con `searchTerms`, `productCategories` y `subcategories`
+- expone `shipping` para textos de envío y cargos flat-rate trazables dentro del checkout
+- expone `newsletter` para endpoint, headers y textos configurables del bloque de suscripción
 
 ### Observabilidad frontend
 
@@ -126,3 +128,9 @@ No depender de:
 ## Regla práctica
 
 Si un endpoint no está en este archivo, no se considera aprobado para este storefront.
+
+## Notas de Contrato para `ecommerce-config`
+
+- `shipping.mode=flat_rate` con `shipping.chargeAmount>0` y `shipping.chargeProductId` habilita un cargo de envío trazable como línea separada dentro del payload de checkout.
+- `shipping` y `newsletter` forman parte del contrato canónico del tenant; no deben inferirse desde variables de entorno ni hardcodearse en UI.
+- `newsletter.endpoint` puede venir vacío o `null`; el storefront debe manejar esa ausencia sin romper bootstrap.

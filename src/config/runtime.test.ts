@@ -4,6 +4,8 @@ import {
   getCategoriesConfig,
   getFeaturesConfig,
   getImagesConfig,
+  getNewsletterConfig,
+  getShippingConfig,
 } from './runtime';
 
 describe('runtime', () => {
@@ -29,6 +31,16 @@ describe('runtime', () => {
             description: 'En compras seleccionadas',
           },
         ],
+      },
+      shipping: {
+        mode: 'flat_rate',
+        bannerText: 'Envio a cargo del cliente',
+        chargeAmount: 3500,
+        chargeProductId: 'shipping-product',
+      },
+      newsletter: {
+        endpoint: 'https://hooks.example.com/newsletter',
+        successMessage: 'Alta ok',
       },
       images: {
         heroSlides: [
@@ -106,5 +118,18 @@ describe('runtime', () => {
         description: 'En compras seleccionadas',
       },
     ]);
+  });
+
+  it('expone shipping y newsletter configurables', () => {
+    expect(getShippingConfig()).toMatchObject({
+      mode: 'flat_rate',
+      bannerText: 'Envio a cargo del cliente',
+      chargeAmount: 3500,
+      chargeProductId: 'shipping-product',
+    });
+    expect(getNewsletterConfig()).toMatchObject({
+      endpoint: 'https://hooks.example.com/newsletter',
+      successMessage: 'Alta ok',
+    });
   });
 });

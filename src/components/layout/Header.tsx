@@ -27,7 +27,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useStore } from '@/store/useStore';
-import { BRANDING, ASSETS } from '@/config/branding';
+import { BRANDING, ASSETS, SHIPPING } from '@/config/branding';
 import { getCategoriesConfig } from '@/config/runtime';
 
 export const Header: React.FC = () => {
@@ -78,7 +78,7 @@ export const Header: React.FC = () => {
       <div className="bg-primary text-primary-foreground">
         <div className="container mx-auto px-4 py-2">
           <p className="text-center text-sm font-medium">
-            🎉 {BRANDING.APP_SLOGAN} - Envío gratis en todas tus compras
+            🎉 {BRANDING.APP_SLOGAN} - {SHIPPING.BANNER_TEXT}
           </p>
         </div>
       </div>
@@ -111,9 +111,9 @@ export const Header: React.FC = () => {
                   </button>
                   <div className="absolute left-0 top-full z-50 invisible pt-2 opacity-0 transition-all duration-200 group-hover:visible group-hover:opacity-100">
                     <div
-                      className="grid min-w-[280px] gap-4 rounded-lg border bg-background p-4 shadow-lg"
+                      className="grid w-[min(960px,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] gap-x-8 gap-y-4 rounded-lg border bg-background p-5 shadow-lg"
                       style={{
-                        gridTemplateColumns: `repeat(${Math.min(Math.max(categoryGroups.length, 1), 3)}, minmax(0, 1fr))`,
+                        gridTemplateColumns: `repeat(${Math.min(Math.max(categoryGroups.length, 1), 4)}, minmax(180px, 1fr))`,
                       }}
                     >
                       {categoryGroups.map(([groupName, groupCategories]) => (
@@ -123,7 +123,7 @@ export const Header: React.FC = () => {
                           </p>
                           <div className="space-y-1">
                             {groupCategories.map((category) => (
-                              <div key={category.slug || category.name}>
+                              <div key={category.link || category.slug || category.name}>
                                 <Link
                                   to={category.link}
                                   className="block py-1 text-sm font-medium text-foreground transition-colors hover:text-primary"
@@ -133,7 +133,7 @@ export const Header: React.FC = () => {
                                 {category.subcategories && category.subcategories.length > 0 && (
                                   <div className="ml-3 space-y-0.5">
                                     {category.subcategories.map((sub) => (
-                                      <div key={sub.slug || sub.name}>
+                                      <div key={sub.link || sub.slug || sub.name}>
                                         <Link
                                           to={sub.link}
                                           className="block py-0.5 text-xs text-muted-foreground transition-colors hover:text-primary"
@@ -144,7 +144,7 @@ export const Header: React.FC = () => {
                                           <div className="ml-3 space-y-0.5">
                                             {sub.subcategories.map((subsub) => (
                                               <Link
-                                                key={subsub.slug || subsub.name}
+                                                key={subsub.link || subsub.slug || subsub.name}
                                                 to={subsub.link}
                                                 className="block py-0.5 text-xs text-muted-foreground/70 transition-colors hover:text-primary"
                                               >
@@ -297,7 +297,7 @@ export const Header: React.FC = () => {
                     {groupName}
                   </p>
                   {groupCategories.map((category) => (
-                    <div key={category.slug || category.name}>
+                    <div key={category.link || category.slug || category.name}>
                       <Link
                         to={category.link}
                         className="block py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
@@ -308,7 +308,7 @@ export const Header: React.FC = () => {
                       {category.subcategories && category.subcategories.length > 0 && (
                         <div className="ml-4 space-y-1">
                           {category.subcategories.map((sub) => (
-                            <div key={sub.slug || sub.name}>
+                            <div key={sub.link || sub.slug || sub.name}>
                               <Link
                                 to={sub.link}
                                 className="block py-1 text-xs text-muted-foreground transition-colors hover:text-primary"
@@ -320,7 +320,7 @@ export const Header: React.FC = () => {
                                 <div className="ml-4 space-y-0.5">
                                   {sub.subcategories.map((subsub) => (
                                     <Link
-                                      key={subsub.slug || subsub.name}
+                                      key={subsub.link || subsub.slug || subsub.name}
                                       to={subsub.link}
                                       className="block py-0.5 text-xs text-muted-foreground/70 transition-colors hover:text-primary"
                                       onClick={() => setIsMenuOpen(false)}

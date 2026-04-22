@@ -24,18 +24,60 @@ function renderBootstrapScreen(status) {
   // Sitio no disponible — bootstrap agotó los reintentos
   if (status.phase === 'failed') {
     rootElement.innerHTML = `
-      <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px;background:#020617;color:#f8fafc;font-family:Inter,system-ui,sans-serif;">
-        <div style="width:min(560px,100%);border:1px solid rgba(239,68,68,.3);border-radius:24px;padding:40px;background:rgba(15,23,42,.92);box-shadow:0 24px 80px rgba(2,6,23,.45);text-align:center;">
-          <div style="margin-bottom:20px;font-size:48px;">⚠️</div>
-          <h1 style="margin:0 0 12px;font-size:28px;line-height:1.2;">Sitio no disponible</h1>
-          <p style="margin:0 0 24px;color:#cbd5e1;font-size:16px;line-height:1.6;">
-            No se pudo cargar la configuración del sitio.<br/>
-            Por favor, recargá la página cuando seas informado de que el servicio fue restaurado.
-          </p>
-          <button onclick="location.reload()" style="padding:12px 32px;border:none;border-radius:12px;background:#2563eb;color:#fff;font-size:16px;font-weight:600;cursor:pointer;transition:background .2s;">
-            Recargar página
-          </button>
-          ${status.error ? `<p style="margin:20px 0 0;color:#fca5a5;font-size:13px;">${escapeHtml(status.error)}</p>` : ''}
+      <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px;background:radial-gradient(circle at top, rgba(37,99,235,.22), transparent 28%),linear-gradient(180deg,#020617 0%,#0f172a 52%,#111827 100%);color:#f8fafc;font-family:Inter,system-ui,sans-serif;">
+        <div style="position:relative;overflow:hidden;width:min(760px,100%);border:1px solid rgba(248,113,113,.2);border-radius:32px;padding:44px;background:linear-gradient(180deg,rgba(15,23,42,.94) 0%,rgba(15,23,42,.88) 100%);box-shadow:0 30px 90px rgba(2,6,23,.55);">
+          <div style="position:absolute;inset:auto -90px -90px auto;width:220px;height:220px;border-radius:999px;background:radial-gradient(circle, rgba(248,113,113,.18), transparent 70%);"></div>
+          <div style="position:relative;display:grid;gap:26px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+              <div style="display:inline-flex;align-items:center;gap:10px;padding:8px 14px;border-radius:999px;background:rgba(127,29,29,.18);border:1px solid rgba(248,113,113,.2);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#fecaca;">
+                Estado del storefront
+              </div>
+              <div style="display:flex;align-items:center;justify-content:center;width:66px;height:66px;border-radius:20px;background:linear-gradient(180deg,rgba(127,29,29,.42),rgba(69,10,10,.55));border:1px solid rgba(248,113,113,.28);box-shadow:inset 0 1px 0 rgba(255,255,255,.04);font-size:30px;">
+                !
+              </div>
+            </div>
+
+            <div style="display:grid;gap:12px;max-width:560px;">
+              <h1 style="margin:0;font-size:40px;line-height:1.02;letter-spacing:-.03em;">No pudimos abrir la tienda</h1>
+              <p style="margin:0;color:#cbd5e1;font-size:17px;line-height:1.75;">
+                La configuración inicial del storefront no respondió correctamente.
+                Cuando el servicio vuelva a estar disponible, podés reintentar la carga desde esta misma pantalla.
+              </p>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1.15fr .85fr;gap:18px;align-items:stretch;">
+              <div style="border:1px solid rgba(148,163,184,.14);border-radius:22px;padding:22px;background:rgba(15,23,42,.56);">
+                <p style="margin:0 0 8px;color:#f8fafc;font-size:15px;font-weight:600;">Qué pasó</p>
+                <p style="margin:0;color:#cbd5e1;font-size:14px;line-height:1.7;">
+                  El bootstrap agotó los intentos de carga y no recibió un
+                  <span style="color:#f8fafc;"> ecommerce-config </span>
+                  válido para este tenant.
+                </p>
+              </div>
+              <div style="border:1px solid rgba(59,130,246,.18);border-radius:22px;padding:22px;background:linear-gradient(180deg,rgba(30,41,59,.78),rgba(15,23,42,.82));">
+                <p style="margin:0 0 8px;color:#bfdbfe;font-size:15px;font-weight:600;">Acción recomendada</p>
+                <p style="margin:0;color:#dbeafe;font-size:14px;line-height:1.7;">
+                  Recargá la página cuando el backend o la configuración del tenant vuelvan a estar accesibles.
+                </p>
+              </div>
+            </div>
+
+            <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+              <button onclick="location.reload()" style="padding:14px 22px;border:none;border-radius:16px;background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;font-size:15px;font-weight:700;letter-spacing:.01em;cursor:pointer;box-shadow:0 12px 30px rgba(37,99,235,.28);transition:transform .18s ease,box-shadow .18s ease;">
+                Reintentar ahora
+              </button>
+              <span style="color:#94a3b8;font-size:13px;line-height:1.6;">
+                Si el problema persiste, verificá conectividad, CORS o disponibilidad del tenant configurado.
+              </span>
+            </div>
+
+            ${status.error ? `
+              <div style="border:1px solid rgba(248,113,113,.16);border-radius:20px;padding:18px 20px;background:rgba(28,25,23,.46);">
+                <p style="margin:0 0 8px;color:#fca5a5;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;">Detalle técnico</p>
+                <p style="margin:0;color:#fecaca;font-size:13px;line-height:1.7;word-break:break-word;">${escapeHtml(status.error)}</p>
+              </div>
+            ` : ''}
+          </div>
         </div>
       </div>
     `;

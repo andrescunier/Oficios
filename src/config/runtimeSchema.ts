@@ -31,6 +31,36 @@ const featureBenefitSchema = z.object({
   description: z.string().optional(),
 });
 
+const shippingSchema = z.object({
+  enabled: z.boolean().optional(),
+  mode: z.enum(['free', 'flat_rate']).optional(),
+  bannerText: z.string().optional(),
+  label: z.string().optional(),
+  freeLabel: z.string().optional(),
+  pendingLabel: z.string().optional(),
+  drawerMessage: z.string().optional(),
+  chargedMessage: z.string().optional(),
+  productBadgeTitle: z.string().optional(),
+  productBadgeDescription: z.string().optional(),
+  chargeAmount: z.number().optional(),
+  chargeProductId: z.string().optional(),
+  chargeProductSku: z.string().optional(),
+  chargeProductDescription: z.string().optional(),
+  taxRate: z.number().optional(),
+});
+
+const newsletterSchema = z.object({
+  enabled: z.boolean().optional(),
+  endpoint: z.string().optional(),
+  headers: z.record(z.string(), z.string()).optional(),
+  title: z.string().optional(),
+  description: z.string().optional(),
+  placeholder: z.string().optional(),
+  buttonLabel: z.string().optional(),
+  successMessage: z.string().optional(),
+  errorMessage: z.string().optional(),
+});
+
 const namedStringMapSchema = z.record(z.string(), z.string()).optional();
 
 const apiSchema = z.object({
@@ -196,6 +226,8 @@ const runtimeConfigSchema = z.object({
   theme: themeSchema.optional(),
   social: socialSchema.optional(),
   features: featuresSchema.optional(),
+  shipping: shippingSchema.optional(),
+  newsletter: newsletterSchema.optional(),
   filters: filtersSchema.optional(),
   paymentMethods: paymentMethodsSchema.optional(),
   payment: paymentSchema.optional(),

@@ -7,9 +7,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Minus, Plus, Trash2, ShoppingCart, ArrowLeft } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { getBusinessConfig } from '@/config/runtime';
+import { SHIPPING } from '@/config/branding';
+import { getCheckoutShippingCharge } from '@/features/checkout/model';
 
 export const CartPage: React.FC = () => {
-    const { 
+  const {
     cart, 
     removeFromCart, 
     updateCartQuantity, 
@@ -18,6 +20,8 @@ export const CartPage: React.FC = () => {
     auth,
   } = useStore();
   const navigate = useNavigate();
+  const shippingAmount = getCheckoutShippingCharge();
+  const totalWithShipping = cart.total_amount + shippingAmount;
 
 
 
@@ -238,13 +242,15 @@ export const CartPage: React.FC = () => {
                   <span>{formatPrice(cart.tax_amount, cart.currency)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span>Envío</span>
-                  <span className="text-green-600">Gratis</span>
+                  <span>{SHIPPING.LABEL}</span>
+                  <span className={shippingAmount > 0 ? 'text-foreground' : 'text-green-600'}>
+                    {shippingAmount > 0 ? formatPrice(shippingAmount, cart.currency) : SHIPPING.FREE_LABEL}
+                  </span>
                 </div>
                 <div className="border-t pt-3">
                   <div className="flex justify-between font-semibold text-lg">
                     <span>Total</span>
-                    <span className="text-blue-600">{formatPrice(cart.total_amount, cart.currency)}</span>
+                    <span className="text-blue-600">{formatPrice(totalWithShipping, cart.currency)}</span>
                   </div>
                 </div>
               </div>
@@ -264,7 +270,7 @@ export const CartPage: React.FC = () => {
                 <div className="text-center text-sm text-gray-500">
                   <div className="flex items-center justify-center space-x-4 mb-2">
                     <span>🔒 Pago seguro</span>
-                    <span>🚚 Envío gratis</span>
+                    <span>🚚 {shippingAmount > 0 ? SHIPPING.CHARGED_MESSAGE : SHIPPING.DRAWER_MESSAGE}</span>
                   </div>
                   <p>Compra protegida por SSL</p>
                   <p className="mt-2 text-xs">

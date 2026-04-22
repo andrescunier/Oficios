@@ -1,5 +1,5 @@
 import { BUSINESS } from '@/config/branding';
-import { getPaymentMethodsConfig } from '@/config/runtime';
+import { getPaymentMethodsConfig, getShippingConfig } from '@/config/runtime';
 import type { CartItem } from '@/types/api';
 import type { RegistrationDraft } from '@/features/auth/session';
 
@@ -31,6 +31,7 @@ export interface CheckoutPayload {
     quantity: number;
     unit_price: number;
     tax_rate: number;
+    sku?: string;
   }>;
   lineItemsMetadata: Array<{
     product_id: string;
@@ -39,12 +40,34 @@ export interface CheckoutPayload {
     unit_price: number;
     variant_id?: string;
     variant_sku?: string;
+    product_sku?: string;
     option_values?: Record<string, string>;
+    kind?: 'product' | 'shipping';
+    hidden?: boolean;
   }>;
   currency: string;
   totalAmount: number;
   paymentMethod: PaymentInfo['paymentMethod'];
   notes: string;
+}
+
+interface ShippingChargeLine {
+  product_id: string;
+  description: string;
+  quantity: number;
+  unit_price: number;
+  tax_rate: number;
+  sku?: string;
+}
+
+interface ShippingChargeMetadata {
+  product_id: string;
+  description: string;
+  quantity: number;
+  unit_price: number;
+  product_sku?: string;
+  kind: 'shipping';
+  hidden: true;
 }
 
 export const getDefaultPaymentMethod = (): PaymentInfo['paymentMethod'] => {
@@ -80,15 +103,58 @@ export const validateShippingInfo = (shippingInfo: ShippingInfo): { valid: boole
   };
 };
 
+function resolveShippingCharge(): {
+  lineItem: ShippingChargeLine;
+  metadata: ShippingChargeMetadata;
+} | null {
+  const shipping = getShippingConfig();
+  const chargeAmount = Math.max(shipping.chargeAmount, 0);
+
+  if (
+    !shipping.enabled ||
+    shipping.mode !== 'flat_rate' ||
+    chargeAmount <= 0 ||
+    !shipping.chargeProductId.trim()
+  ) {
+    return null;
+  }
+
+  const normalizedTaxRate = shipping.taxRate > 1 ? shipping.taxRate / 100 : shipping.taxRate;
+
+  return {
+    lineItem: {
+      product_id: shipping.chargeProductId,
+      description: shipping.chargeProductDescription,
+      quantity: 1,
+      unit_price: chargeAmount,
+      tax_rate: normalizedTaxRate,
+      sku: shipping.chargeProductSku || undefined,
+    },
+    metadata: {
+      product_id: shipping.chargeProductId,
+      description: shipping.chargeProductDescription,
+      quantity: 1,
+      unit_price: chargeAmount,
+      product_sku: shipping.chargeProductSku || undefined,
+      kind: 'shipping',
+      hidden: true,
+    },
+  };
+}
+
+export const getCheckoutShippingCharge = (): number => {
+  return resolveShippingCharge()?.lineItem.unit_price || 0;
+};
+
 export const buildCheckoutPayload = (args: {
   shippingInfo: ShippingInfo;
   items: CartItem[];
   currency: string;
   totalAmount: number;
   paymentMethod: PaymentInfo['paymentMethod'];
-}): CheckoutPayload => ({
-  shippingInfo: args.shippingInfo,
-  items: args.items.map((item) => ({
+}): CheckoutPayload => {
+  const shippingCharge = resolveShippingCharge();
+  const baseItems = args.items.map((item) => ({
     product_id: item.product.id,
     description: item.variant
       ? `${item.product.name} - ${item.variant.name} (${Object.entries(item.selected_options || {}).map(([key, value]) => `${key}: ${value}`).join(', ')})`
@@ -99,8 +165,8 @@ export const buildCheckoutPayload = (args: {
       ? item.product.tax_rate / 100
       : (item.product.tax_rate || BUSINESS.DEFAULT_TAX_RATE),
     sku: item.variant?.sku || item.product.sku,
-  })),
-  lineItemsMetadata: args.items.map((item) => ({
+  }));
+  const baseMetadata = args.items.map((item) => ({
     product_id: item.product.id,
     description: item.variant ? item.variant.name : item.product.name,
     quantity: item.quantity,
@@ -109,9 +175,16 @@ export const buildCheckoutPayload = (args: {
     variant_sku: item.variant?.sku,
     product_sku: item.product.sku,
     option_values: item.selected_options,
-  })),
-  currency: args.currency || BUSINESS.DEFAULT_CURRENCY,
-  totalAmount: args.totalAmount,
-  paymentMethod: args.paymentMethod,
-  notes: `Pedido web - ${args.shippingInfo.firstName} ${args.shippingInfo.lastName}`,
-});
+    kind: 'product' as const,
+  }));
+
+  return {
+    shippingInfo: args.shippingInfo,
+    items: shippingCharge ? [...baseItems, shippingCharge.lineItem] : baseItems,
+    lineItemsMetadata: shippingCharge ? [...baseMetadata, shippingCharge.metadata] : baseMetadata,
+    currency: args.currency || BUSINESS.DEFAULT_CURRENCY,
+    totalAmount: args.totalAmount,
+    paymentMethod: args.paymentMethod,
+    notes: `Pedido web - ${args.shippingInfo.firstName} ${args.shippingInfo.lastName}`,
+  };
+};

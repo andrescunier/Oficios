@@ -11,16 +11,19 @@ import { Badge } from '@/components/ui/badge';
 import { ProductCard } from '@/components/product/ProductCard';
 import { useStore } from '@/store/useStore';
 import { useQuery } from '@tanstack/react-query';
-import { ASSETS, BRANDING, BUSINESS, FEATURES } from '@/config/branding';
+import { ASSETS, BRANDING, BUSINESS, FEATURES, NEWSLETTER } from '@/config/branding';
 import { getImagesConfig } from '@/config/runtime';
 import { handleImgError } from '@/utils/imageHelpers';
 import { featuredProductsQueryOptions, productsQueryOptions } from '@/features/catalog/queries';
 import { getFeatureBenefitIcon } from '@/components/ui/featureBenefitIcons';
 import { groupProductsBySku } from '@/utils/skuGrouping';
 import { ProductGroupCard } from '@/components/product/ProductGroupCard';
+import { subscribeToNewsletter } from '@/services/newsletterService';
 
 export const Home: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [isSubmittingNewsletter, setIsSubmittingNewsletter] = useState(false);
   const { setError, addNotification } = useStore();
   const featuredProductsQuery = useQuery(featuredProductsQueryOptions(BUSINESS.FEATURED_PRODUCTS_COUNT));
   const newProductsQuery = useQuery(productsQueryOptions({
@@ -114,6 +117,33 @@ export const Home: React.FC = () => {
     setCurrentSlide(index);
   };
 
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!newsletterEmail.trim()) {
+      return;
+    }
+
+    setIsSubmittingNewsletter(true);
+    try {
+      await subscribeToNewsletter(newsletterEmail.trim());
+      addNotification({
+        type: 'success',
+        title: 'Suscripcion registrada',
+        message: NEWSLETTER.SUCCESS_MESSAGE,
+      });
+      setNewsletterEmail('');
+    } catch {
+      addNotification({
+        type: 'error',
+        title: 'No pudimos suscribirte',
+        message: NEWSLETTER.ERROR_MESSAGE,
+      });
+    } finally {
+      setIsSubmittingNewsletter(false);
+    }
+  };
+
   return (
     <div className="min-h-screen">
       {/* Hero Section - solo si hay slides de la API */}
@@ -122,7 +152,7 @@ export const Home: React.FC = () => {
           <div className="relative h-full min-h-[540px] w-full sm:min-h-[620px]">
             {heroSlides.map((slide, index) => (
               <div
-                key={index}
+                key={`${slide.link}-${slide.image}-${index}`}
                 className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
                   index === currentSlide ? 'z-10 opacity-100' : 'z-0 opacity-0'
                 }`}
@@ -197,7 +227,7 @@ export const Home: React.FC = () => {
             <div className="absolute bottom-8 left-1/2 z-20 flex -translate-x-1/2 space-x-2">
               {heroSlides.map((_, index) => (
                 <button
-                  key={index}
+                  key={`${heroSlides[index]?.link || ''}-${heroSlides[index]?.image || ''}-${index}`}
                   className={`h-3 w-3 rounded-full transition-all duration-300 ${
                     index === currentSlide ? 'w-8 bg-white' : 'bg-white/50 hover:bg-white/75'
                   }`}
@@ -214,10 +244,10 @@ export const Home: React.FC = () => {
       <section className="py-16 bg-muted/50">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
-            {benefits.map((feature, index) => {
+            {benefits.map((feature) => {
               const Icon = getFeatureBenefitIcon(feature.icon);
               return (
-                <div key={index} className="text-center">
+                <div key={`${feature.icon}-${feature.title}-${feature.description}`} className="text-center">
                   <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
                     <Icon className="h-8 w-8 text-primary" />
                   </div>
@@ -242,8 +272,8 @@ export const Home: React.FC = () => {
             </div>
 
             <div className="mx-auto grid max-w-5xl grid-cols-1 gap-8 md:grid-cols-2">
-              {categories.map((category, index) => (
-                <div key={index} className="space-y-3">
+              {categories.map((category) => (
+                <div key={category.slug || category.link || category.name} className="space-y-3">
                   <Link to={category.link}>
                     <Card className="group overflow-hidden transition-all duration-300 hover:shadow-lg">
                       <CardContent className="p-0">
@@ -272,8 +302,8 @@ export const Home: React.FC = () => {
                   </Link>
                   {category.subcategories && category.subcategories.length > 0 && (
                     <div className="flex flex-wrap gap-2 px-1">
-                      {category.subcategories.map((sub, subIdx) => (
-                        <div key={subIdx} className="flex items-center gap-1">
+                      {category.subcategories.map((sub) => (
+                        <div key={sub.slug || sub.link || `${category.name}-${sub.name}`} className="flex items-center gap-1">
                           <Link
                             to={sub.link}
                             className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
@@ -281,9 +311,9 @@ export const Home: React.FC = () => {
                             {sub.name}
                           </Link>
                           {sub.subcategories && sub.subcategories.length > 0 &&
-                            sub.subcategories.map((subsub, ssi) => (
+                            sub.subcategories.map((subsub) => (
                               <Link
-                                key={ssi}
+                                key={subsub.slug || subsub.link || `${sub.name}-${subsub.name}`}
                                 to={subsub.link}
                                 className="inline-flex items-center rounded-full border border-dashed border-border bg-muted/50 px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
                               >
@@ -405,24 +435,29 @@ export const Home: React.FC = () => {
       )}
 
       {/* Newsletter Section */}
+      {NEWSLETTER.ENABLED && (
       <section className="py-16 bg-primary text-primary-foreground">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-4">¡No te pierdas nuestras ofertas!</h2>
+          <h2 className="text-3xl font-bold mb-4">{NEWSLETTER.TITLE}</h2>
           <p className="text-lg mb-8 text-primary-foreground/80">
-            Suscríbete a nuestro newsletter y recibe descuentos exclusivos
+            {NEWSLETTER.DESCRIPTION}
           </p>
-          <div className="max-w-md mx-auto flex space-x-2">
+          <form onSubmit={handleNewsletterSubmit} className="max-w-md mx-auto flex space-x-2">
             <input
               type="email"
-              placeholder="Tu email"
+              placeholder={NEWSLETTER.PLACEHOLDER}
+              value={newsletterEmail}
+              onChange={(e) => setNewsletterEmail(e.target.value)}
               className="flex-1 px-4 py-2 rounded-lg text-foreground"
+              required
             />
-            <Button variant="secondary">
-              Suscribirse
+            <Button variant="secondary" type="submit" disabled={isSubmittingNewsletter}>
+              {isSubmittingNewsletter ? 'Enviando...' : NEWSLETTER.BUTTON_LABEL}
             </Button>
-          </div>
+          </form>
         </div>
       </section>
+      )}
     </div>
   );
 };

@@ -26,6 +26,8 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { useStore } from '@/store/useStore';
 import { getBusinessConfig } from '@/config/runtime';
+import { SHIPPING } from '@/config/branding';
+import { getCheckoutShippingCharge } from '@/features/checkout/model';
 import log from '@/lib/logger';
 
 interface CartDrawerProps {
@@ -43,12 +45,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
   } = useStore();
 
   const itemsCount = cart.items.reduce((sum, item) => sum + item.quantity, 0);
-  const total = cart.total_amount;
-  log.cart.debug('CartDrawer render:', { itemsCount, total, currency: cart.currency });
+  const shippingAmount = getCheckoutShippingCharge();
+  const total = cart.total_amount + shippingAmount;
+  log.cart.debug('CartDrawer render:', { itemsCount, total, shippingAmount, currency: cart.currency });
   const businessCfg = getBusinessConfig();
-  const freeShippingThreshold = businessCfg.freeShippingThreshold;
-  const isEligibleForFreeShipping = total >= freeShippingThreshold;
-  const amountForFreeShipping = freeShippingThreshold - total;
 
   const formatPrice = (price: number, currency?: string) => {
     if (typeof price !== 'number' || isNaN(price)) {
@@ -123,7 +123,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
               <div className="flex items-center space-x-2 text-green-600">
                 <Package className="h-4 w-4" />
                 <span className="text-sm font-medium">
-                  ¡Envío gratis en todas tus compras!
+                  {shippingAmount > 0 ? SHIPPING.CHARGED_MESSAGE : SHIPPING.DRAWER_MESSAGE}
                 </span>
               </div>
             </div>
@@ -223,13 +223,13 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Subtotal:</span>
-                  <span className="font-medium">{formatPrice(total)}</span>
+                  <span className="font-medium">{formatPrice(cart.total_amount)}</span>
                 </div>
                 
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Envío:</span>
+                  <span className="text-sm text-muted-foreground">{SHIPPING.LABEL}:</span>
                   <span className="font-medium">
-                    {isEligibleForFreeShipping ? 'Gratis' : 'A calcular'}
+                    {shippingAmount > 0 ? formatPrice(shippingAmount) : SHIPPING.FREE_LABEL}
                   </span>
                 </div>
                 

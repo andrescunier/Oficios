@@ -28,6 +28,15 @@ describe('runtimeSchema', () => {
           },
         ],
       },
+      shipping: {
+        mode: 'flat_rate',
+        chargeAmount: 2500,
+        chargeProductId: 'shipping-product',
+      },
+      newsletter: {
+        endpoint: 'https://hooks.example.com/newsletter',
+        buttonLabel: 'Suscribirme',
+      },
       business: {
         defaultCurrency: 'ARS',
       },
@@ -56,6 +65,8 @@ describe('runtimeSchema', () => {
     expect(payload?.images?.heroSlides?.[0]).toMatchObject({
       mobileImage: 'https://cdn.example.com/hero-mobile.jpg',
     });
+    expect(payload?.shipping?.chargeProductId).toBe('shipping-product');
+    expect(payload?.newsletter?.buttonLabel).toBe('Suscribirme');
   });
 
   it('rechaza payloads inválidos', () => {

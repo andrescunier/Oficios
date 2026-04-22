@@ -66,6 +66,14 @@ GET /api/accounts/{account_id}/ecommerce-config
 | Path param | `account_id` UUID del tenant |
 | Respuesta | `application/json` |
 
+## Notas sobre Shipping y Newsletter
+
+- El contrato backend canónico garantiza `shipping` y `newsletter` como secciones top-level del payload.
+- Para `shipping`, el backend garantiza `enabled`, `mode`, textos principales, `chargeAmount`, `chargeProductId`, `chargeProductSku` y `taxRate`.
+- El runtime del frontend todavía normaliza además `pendingLabel` y `chargeProductDescription` con defaults internos por compatibilidad visual; esos dos campos no son obligatorios en la respuesta del backend.
+- Cuando `shipping.mode="flat_rate"` y `chargeAmount>0`, el checkout del frontend modela el cargo como línea trazable separada usando `chargeProductId`.
+- `newsletter.endpoint` puede venir vacío o `null`; la UI debe manejarlo sin romper render ni bootstrap.
+
 ## Estructura esperada
 
 ```jsonc
@@ -169,6 +177,34 @@ GET /api/accounts/{account_id}/ecommerce-config
         }
       ]
     },
+    "shipping": {
+      "enabled": true,
+      "mode": "flat_rate",
+      "bannerText": "Envio a cargo del cliente",
+      "label": "Envio",
+      "freeLabel": "Gratis",
+      "drawerMessage": "Envio gratis en todas tus compras",
+      "chargedMessage": "El costo de envio se suma al finalizar la compra",
+      "productBadgeTitle": "Envio a todo el pais",
+      "productBadgeDescription": "El cargo se informa dentro del checkout",
+      "chargeAmount": 3500,
+      "chargeProductId": "shipping-product-id",
+      "chargeProductSku": "SHIP-001",
+      "taxRate": 0.21
+    },
+    "newsletter": {
+      "enabled": true,
+      "endpoint": "https://hooks.ejemplo.com/newsletter",
+      "headers": {
+        "X-Tenant": "diap"
+      },
+      "title": "No te pierdas nuestras ofertas",
+      "description": "Suscribite a nuestro newsletter y recibi descuentos exclusivos",
+      "placeholder": "Tu email",
+      "buttonLabel": "Suscribirse",
+      "successMessage": "Gracias por suscribirte.",
+      "errorMessage": "No pudimos registrar tu suscripcion. Intenta nuevamente."
+    },
     "filters": {
       "enabled": false,
       "capacidad": false,
@@ -239,6 +275,8 @@ GET /api/accounts/{account_id}/ecommerce-config
 - `api.extraHeaders`: headers por tenant para integraciones puntuales.
 - `branding.headerLogo` y `branding.footerLogo`: permiten separar logos sin volver a env vars.
 - `features.benefits[]`: cards configurables para home/footer.
+- `shipping`: centraliza textos visibles de envío y permite modelar envío con cargo como un item trazable en checkout usando `chargeProductId`.
+- `newsletter`: define la URL y los textos del POST de suscripción del home.
 - `images.heroSlides[].mobileImage`: hero responsive por tenant.
 - `images.categories[].group`: agrupación de categorías para navegación.
 - `images.categories[].productCategories`: taxonomía estructurada para matchear productos sin depender solo de texto libre.

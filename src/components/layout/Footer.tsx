@@ -8,39 +8,64 @@ import { Instagram, Linkedin, Mail, MapPin, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { BRANDING, ASSETS, SOCIAL_LINKS, FEATURES, CONTACT } from '@/config/branding';
-import { getCategoriesConfig } from '@/config/runtime';
+import { getCategoriesConfig, getUIConfig, getFooterConfig } from '@/config/runtime';
 import { getFeatureBenefitIcon } from '@/components/ui/featureBenefitIcons';
+import { subscribePhoneToNewsletter } from '@/services/newsletterService';
+import { useStore } from '@/store/useStore';
 
 export const Footer: React.FC = () => {
   const [phoneNumber, setPhoneNumber] = React.useState('');
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const addNotification = useStore((state) => state.addNotification);
+  const uiCfg = getUIConfig();
+  const footerCfg = getFooterConfig();
 
-  const handleWhatsAppSubmit = (e: React.FormEvent) => {
+  const handleWhatsAppSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (phoneNumber.trim()) {
-      const message = encodeURIComponent('Hola! Quiero recibir notificaciones de ofertas y novedades.');
-      window.open(`https://wa.me/${phoneNumber.replace(/\D/g, '')}?text=${message}`, '_blank');
+    const telefono = phoneNumber.trim();
+    if (!telefono || isSubmitting) return;
+
+    setIsSubmitting(true);
+    try {
+      await subscribePhoneToNewsletter(telefono);
+      addNotification({
+        type: 'success',
+        title: '¡Listo!',
+        message: footerCfg.whatsappOptInSuccessMessage,
+        duration: 4000,
+      });
       setPhoneNumber('');
+    } catch {
+      addNotification({
+        type: 'error',
+        title: 'No pudimos suscribirte',
+        message: 'Intentá nuevamente en unos minutos.',
+        duration: 4000,
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const footerSections = {
+  // Default sections (legacy) — used when footer.sections is empty
+  const defaultSections = {
     company: {
-      title: 'Empresa',
+      title: uiCfg.footerCompanyTitle,
       links: [
-        { label: 'Sobre Nosotros', href: '/sobrenosotros', external: false },
+        { label: uiCfg.footerCompanyAboutLabel, href: '/sobrenosotros', external: false },
       ]
     },
     customer: {
-      title: 'Atención al Cliente',
+      title: uiCfg.footerCustomerServiceTitle,
       links: [
-        { label: 'Centro de Ayuda', href: '/contacto', external: false },
-        { label: 'Seguimiento de Pedido', href: '/seguimiento', external: false },
-        { label: 'Devoluciones', href: '/devoluciones', external: false },
-        { label: 'Garantías', href: '/garantias', external: false },
+        { label: uiCfg.footerCustomerHelpLabel, href: '/contacto', external: false },
+        { label: uiCfg.footerCustomerTrackingLabel, href: '/seguimiento', external: false },
+        { label: uiCfg.footerCustomerReturnsLabel, href: '/devoluciones', external: false },
+        { label: uiCfg.footerCustomerWarrantyLabel, href: '/garantias', external: false },
       ]
     },
     categories: {
-      title: 'Categorías',
+      title: uiCfg.footerCategoriesTitle,
       links: getCategoriesConfig().flatMap(c => [
         { label: c.name, href: c.link, external: false },
         ...(c.subcategories || []).flatMap(sub => [
@@ -54,16 +79,34 @@ export const Footer: React.FC = () => {
       ])
     },
     legal: {
-      title: 'Legal',
+      title: uiCfg.footerLegalTitle,
       links: [
-        { label: 'Términos y Condiciones', href: '/terminos', external: false },
-        { label: 'Política de Privacidad', href: '/privacidad', external: false },
-        { label: 'Política de Cookies', href: '/cookies', external: false },
-        { label: 'Aviso Legal', href: '/aviso-legal', external: false },
-        { label: 'Arrepentimiento', href: CONTACT.WHATSAPP_LINK ? CONTACT.WHATSAPP_LINK + '?text=' + encodeURIComponent('Me arrepiento de mi compra y deseo ejercer mi derecho de arrepentimiento.') : '/contacto', external: !!CONTACT.WHATSAPP_LINK },
+        { label: uiCfg.footerLegalTermsLabel, href: '/terminos', external: false },
+        { label: uiCfg.footerLegalPrivacyLabel, href: '/privacidad', external: false },
+        { label: uiCfg.footerLegalCookiesLabel, href: '/cookies', external: false },
+        { label: uiCfg.footerLegalNoticeLabel, href: '/aviso-legal', external: false },
+        { label: uiCfg.footerLegalWithdrawalLabel, href: CONTACT.WHATSAPP_LINK ? CONTACT.WHATSAPP_LINK + '?text=' + encodeURIComponent(footerCfg.withdrawalWhatsappMessage) : '/contacto', external: !!CONTACT.WHATSAPP_LINK },
       ]
     }
   };
+
+  // Merge config-driven footer.sections override on top of defaults.
+  // Each section can override links by id, or hide via fromCategories/empty links
+  const footerSections: Record<string, { title: string; links: Array<{ label: string; href: string; external?: boolean }> }> = { ...defaultSections } as any;
+  if (Array.isArray(footerCfg.sections) && footerCfg.sections.length > 0) {
+    for (const section of footerCfg.sections) {
+      if (!section?.id) continue;
+      const links = (section.links || []).map((l) => ({
+        label: l.label || '',
+        href: l.href || '#',
+        external: !!l.external,
+      }));
+      footerSections[section.id] = {
+        title: section.title || (footerSections[section.id]?.title ?? ''),
+        links: links.length > 0 ? links : (footerSections[section.id]?.links ?? []),
+      };
+    }
+  }
 
   const socialLinks = [
     ...(SOCIAL_LINKS.LINKEDIN ? [{ icon: Linkedin, href: SOCIAL_LINKS.LINKEDIN, label: 'LinkedIn' }] : []),
@@ -192,28 +235,30 @@ export const Footer: React.FC = () => {
         </div>
 
         {/* WhatsApp Notifications */}
-        <div className="mt-12 pt-8 border-t">
+        {footerCfg.showWhatsappCapture !== false && (
+          <div className="mt-12 pt-8 border-t">
           <div className="max-w-md">
-            <h3 className="font-semibold mb-2">Recibe notificaciones por WhatsApp</h3>
+            <h3 className="font-semibold mb-2">{uiCfg.footerWhatsappTitle}</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              Ingresa tu número y recibe ofertas exclusivas y novedades directamente en WhatsApp.
+              {uiCfg.footerWhatsappBody}
             </p>
             <form onSubmit={handleWhatsAppSubmit} className="flex space-x-2">
               <Input
                 type="tel"
-                placeholder="Tu número (ej: 5491123456789)"
+                placeholder={uiCfg.footerWhatsappPlaceholder}
                 value={phoneNumber}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPhoneNumber(e.target.value)}
                 className="flex-1 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-primary focus:border-primary"
                 required
                 pattern="[0-9+\s()-]+"
               />
-              <Button type="submit" className="bg-green-600 hover:bg-green-700 text-white font-semibold">
-                Abrir WhatsApp
+              <Button type="submit" disabled={isSubmitting} className="bg-green-600 hover:bg-green-700 text-white font-semibold">
+                {isSubmitting ? 'Enviando...' : uiCfg.footerWhatsappButton}
               </Button>
             </form>
           </div>
         </div>
+        )}
       </div>
 
       {/* Bottom bar */}
@@ -221,17 +266,19 @@ export const Footer: React.FC = () => {
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <div className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} {BRANDING.COMPANY_NAME}. Todos los derechos reservados. | v{__APP_VERSION__}
+              © {new Date().getFullYear()} {BRANDING.COMPANY_NAME}. {uiCfg.footerCopyrightSuffix} | v{__APP_VERSION__}
             </div>
             
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-muted-foreground">Métodos de pago:</span>
-              <div className="flex space-x-2">
-                <div className="px-3 py-1 bg-muted rounded border flex items-center justify-center">
-                  <span className="text-xs font-semibold text-muted-foreground">
-                    Transferencia Bancaria
-                  </span>
-                </div>
+              <span className="text-sm text-muted-foreground">{uiCfg.footerPaymentMethodsLabel}</span>
+              <div className="flex flex-wrap gap-2">
+                {footerCfg.paymentMethods.map((method) => (
+                  <div key={method} className="px-3 py-1 bg-muted rounded border flex items-center justify-center">
+                    <span className="text-xs font-semibold text-muted-foreground">
+                      {method}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

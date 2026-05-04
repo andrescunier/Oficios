@@ -56,20 +56,26 @@ export const API_ENDPOINTS = {
   SALES_ORDERS: (accountId: string) => `/api/accounts/${accountId}/sales-orders`,
   SALES_ORDER: (accountId: string, orderId: string) => `/api/accounts/${accountId}/sales-orders/${orderId}`,
   VALIDATE_STOCK: (accountId: string) => `/api/accounts/${accountId}/sales-orders/validate-stock`,
-  ORDER_INVOICE: (accountId: string, orderId: string) => `/api/accounts/${accountId}/sales-orders/${orderId}/invoice`,
   SUBMIT_ORDER: (accountId: string, orderId: string) => `/api/accounts/${accountId}/sales-orders/${orderId}/submit`,
-  SHIP_ORDER: (accountId: string, orderId: string) => `/api/accounts/${accountId}/sales-orders/${orderId}/ship`,
-  DELIVER_ORDER: (accountId: string, orderId: string) => `/api/accounts/${accountId}/sales-orders/${orderId}/deliver`,
-  COMPLETE_ORDER: (accountId: string, orderId: string) => `/api/accounts/${accountId}/sales-orders/${orderId}/complete`,
   CANCEL_ORDER: (accountId: string, orderId: string) => `/api/accounts/${accountId}/sales-orders/${orderId}/cancel-v2`,
   RETURN_ORDER: (accountId: string, orderId: string) => `/api/accounts/${accountId}/sales-orders/${orderId}/return`,
-  TRANSITION_ORDER: (accountId: string, orderId: string) => `/api/accounts/${accountId}/sales-orders/${orderId}/transition`,
+  ORDER_STOREFRONT_STATUS: (accountId: string, orderId: string) => `/api/accounts/${accountId}/sales-orders/${orderId}/storefront-status`,
   STATUS_HISTORY: (accountId: string, orderId: string) => `/api/accounts/${accountId}/sales-orders/${orderId}/status-history`,
   VALID_TRANSITIONS: (accountId: string, orderId: string) => `/api/accounts/${accountId}/sales-orders/${orderId}/valid-transitions`,
 
   // Ecommerce Config (tenant)
   ECOMMERCE_CONFIG: (accountId: string) => `/api/accounts/${accountId}/ecommerce-config`,
   FRONTEND_EVENTS: (accountId: string) => `/api/accounts/${accountId}/frontend-events`,
+
+  // Favoritos del cliente
+  FAVORITES: (accountId: string, businessPartnerId: string) =>
+    `/api/accounts/${accountId}/customers/${businessPartnerId}/favorites`,
+  FAVORITE: (accountId: string, businessPartnerId: string, productId: string) =>
+    `/api/accounts/${accountId}/customers/${businessPartnerId}/favorites/${productId}`,
+
+  // Carrito del cliente (snapshot persistente por business partner)
+  CART: (accountId: string, businessPartnerId: string) =>
+    `/api/accounts/${accountId}/customers/${businessPartnerId}/cart`,
 } as const;
 
 // Configuración de timeouts

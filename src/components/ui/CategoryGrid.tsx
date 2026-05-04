@@ -6,7 +6,6 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { ASSETS } from '@/config/branding';
 import { getCategoriesConfig } from '@/config/runtime';
 import { handleImgError } from '@/utils/imageHelpers';
@@ -34,63 +33,52 @@ export const CategoryGrid: React.FC = () => {
     <section className="py-16">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Explora Nuestras Categorías
+          <p className="eyebrow mb-3">Collections</p>
+          <h2 className="section-title mb-4">
+            Explora nuestras categorías
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Encuentra exactamente lo que necesitas en nuestra amplia selección de productos tecnológicos
+            Encuentra exactamente lo que necesitas en nuestra amplia selección de productos
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
           {categories.map((category) => (
-            <Card
+            <Link
               key={category.id}
-              className="group overflow-hidden hover:shadow-lg transition-all duration-300 border-0 bg-background"
+              to={category.link}
+              aria-label={category.name}
+              className="group relative block aspect-[3/4] overflow-hidden rounded-2xl shadow-md transition-all duration-300 hover:shadow-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             >
-              <div className="relative overflow-hidden">
-                {/* Image Container */}
-                <div className="relative h-64 overflow-hidden bg-gray-100">
-                  <img
-                    src={category.image}
-                    alt={category.name}
-                    className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
-                    onError={(e) => handleImgError(e, ASSETS.PLACEHOLDERS.CATEGORY)}
-                  />
-                  
-                  {/* Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                  
-                  {/* Product Count Badge */}
-                  {category.count && (
-                    <div className="absolute top-4 right-4 bg-primary text-primary-foreground px-2 py-1 rounded-full text-xs font-medium">
-                      {category.count}+ productos
-                    </div>
-                  )}
-                </div>
+              {/* Imagen full bleed */}
+              <img
+                src={category.image}
+                alt={category.name}
+                className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                onError={(e) => handleImgError(e, ASSETS.PLACEHOLDERS.CATEGORY)}
+                loading="lazy"
+              />
 
-                {/* Content */}
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">
-                    {category.name}
-                  </h3>
-                  <p className="text-muted-foreground mb-4 line-clamp-2">
-                    {category.description}
-                  </p>
-                  
-                  <Button
-                    variant="outline"
-                    className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
-                    asChild
-                  >
-                    <Link to={category.link}>
-                      Ver Productos
-                      <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                    </Link>
-                  </Button>
-                </CardContent>
+              {/* Overlay para contraste del texto */}
+              <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/20 to-black/40 transition-opacity duration-300 group-hover:from-black/20 group-hover:to-black/50" />
+
+              {/* Texto centrado */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center text-white">
+                <h3 className="font-serif text-3xl md:text-4xl font-bold leading-tight drop-shadow-md">
+                  {category.name}
+                </h3>
+                <span className="mt-3 text-xs md:text-sm font-medium tracking-[0.35em] uppercase drop-shadow">
+                  Collection
+                </span>
               </div>
-            </Card>
+
+              {/* Badge opcional de cantidad */}
+              {category.count && (
+                <div className="absolute top-4 right-4 rounded-full bg-white/90 px-2 py-1 text-xs font-medium text-gray-900">
+                  {category.count}+ productos
+                </div>
+              )}
+            </Link>
           ))}
         </div>
 

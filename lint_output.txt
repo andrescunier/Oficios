@@ -1,0 +1,583 @@
+
+> diap-ecommerce@1.2.21 lint /home/andis/simpleEcommerce
+> eslint .
+
+
+/home/andis/simpleEcommerce/playwright-report/trace/assets/codeMirrorModule-a5XoALAZ.js
+   1:137     error  'xt' is defined but never used                                                   no-unused-vars
+   1:2051    error  Expected a conditional expression and instead saw an assignment                  no-cond-assign
+   1:2555    error  Empty block statement                                                            no-empty
+   1:2913    error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+   1:2944    error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+   1:4589    error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+   1:6169    error  Unexpected joined character sequence in character class                          no-misleading-character-class
+   1:6175    error  Unexpected combined character in character class                                 no-misleading-character-class
+   1:6518    error  Unexpected combined character in character class                                 no-misleading-character-class
+   4:356     error  Empty block statement                                                            no-empty
+   4:905     error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+   4:970     error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+   4:1100    error  Unnecessary escape character: \-                                                 no-useless-escape
+   4:1109    error  Unnecessary escape character: \-                                                 no-useless-escape
+   4:1186    error  Unnecessary escape character: \-                                                 no-useless-escape
+   4:1195    error  Unnecessary escape character: \-                                                 no-useless-escape
+   4:1391    error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+   4:1449    error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+   4:1471    error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+   4:1678    error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+   4:14596   error  Expected a conditional expression and instead saw an assignment                  no-cond-assign
+   4:14660   error  Expected a conditional expression and instead saw an assignment                  no-cond-assign
+   4:14725   error  Expected a conditional expression and instead saw an assignment                  no-cond-assign
+   4:14927   error  Expected a conditional expression and instead saw an assignment                  no-cond-assign
+   4:15896   error  Expected a conditional expression and instead saw an assignment                  no-cond-assign
+   4:15968   error  Expected a conditional expression and instead saw an assignment                  no-cond-assign
+   5:434     error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+   5:598     error  Spaces are hard to count. Use {2}                                                no-regex-spaces
+   5:6352    error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+   5:10165   error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+   7:1778    error  Expected a conditional expression and instead saw an assignment                  no-cond-assign
+  10:38511   error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  11:874     error  Unexpected control character(s) in regular expression: \x00, \x08, \x0e, \x1f    no-control-regex
+  11:1412    error  Empty block statement                                                            no-empty
+  11:6250    error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  12:997     error  Unnecessary escape character: \'                                                 no-useless-escape
+  12:10185   error  Unexpected control character(s) in regular expression: \x00, \x1f                no-control-regex
+  12:14399   error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  15:1944    error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  15:4000    error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  15:6308    error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  15:8039    error  Expected a conditional expression and instead saw an assignment                  no-cond-assign
+  15:10480   error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  19:1410    error  Empty block statement                                                            no-empty
+  20:698     error  'e' is defined but never used                                                    no-unused-vars
+  20:2199    error  Empty block statement                                                            no-empty
+  24:1844    error  Empty block statement                                                            no-empty
+  24:2998    error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  24:3706    error  'ct' is defined but never used                                                   no-unused-vars
+  24:3709    error  'xt' is defined but never used                                                   no-unused-vars
+  24:4392    error  Unnecessary escape character: \-                                                 no-useless-escape
+  24:4581    error  Unnecessary escape character: \-                                                 no-useless-escape
+  24:4857    error  Unnecessary escape character: \-                                                 no-useless-escape
+  24:4888    error  Unnecessary escape character: \-                                                 no-useless-escape
+  24:5043    error  Unnecessary escape character: \/                                                 no-useless-escape
+  24:5152    error  Unnecessary escape character: \[                                                 no-useless-escape
+  24:5156    error  Unnecessary escape character: \(                                                 no-useless-escape
+  24:5158    error  Unnecessary escape character: \)                                                 no-useless-escape
+  24:5320    error  Unnecessary escape character: \-                                                 no-useless-escape
+  24:5351    error  Unnecessary escape character: \-                                                 no-useless-escape
+  24:5647    error  Unnecessary escape character: \"                                                 no-useless-escape
+  24:5649    error  Unnecessary escape character: \'                                                 no-useless-escape
+  24:6139    error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  24:6170    error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  24:7073    error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  24:7122    error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  24:8242    error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  24:8634    error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  24:8670    error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  24:8705    error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  24:8739    error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  24:8774    error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  24:8824    error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  24:8855    error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  24:9475    error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  24:9552    error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  24:30775   error  Unnecessary escape character: \-                                                 no-useless-escape
+  24:31359   error  'ct' is defined but never used                                                   no-unused-vars
+  24:31362   error  'xt' is defined but never used                                                   no-unused-vars
+  24:32495   error  'Y' is already defined                                                           no-redeclare
+  24:32755   error  Unnecessary escape character: \.                                                 no-useless-escape
+  24:32758   error  Unnecessary escape character: \-                                                 no-useless-escape
+  24:32805   error  Unnecessary escape character: \.                                                 no-useless-escape
+  24:32808   error  Unnecessary escape character: \-                                                 no-useless-escape
+  24:33048   error  Unnecessary escape character: \.                                                 no-useless-escape
+  24:33431   error  Unnecessary escape character: \'                                                 no-useless-escape
+  24:33433   error  Unnecessary escape character: \"                                                 no-useless-escape
+  24:33532   error  Unnecessary escape character: \"                                                 no-useless-escape
+  24:33534   error  Unnecessary escape character: \'                                                 no-useless-escape
+  24:33551   error  Unnecessary escape character: \"                                                 no-useless-escape
+  24:33553   error  Unnecessary escape character: \'                                                 no-useless-escape
+  24:33555   error  Unnecessary escape character: \/                                                 no-useless-escape
+  24:34173   error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  24:34379   error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  24:34426   error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  24:34797   error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  24:35303   error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  24:36428   error  Unnecessary escape character: \.                                                 no-useless-escape
+  24:36525   error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  24:36639   error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  24:37241   error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  24:37403   error  'ct' is defined but never used                                                   no-unused-vars
+  24:37406   error  'xt' is defined but never used                                                   no-unused-vars
+  24:38731   error  Unnecessary escape character: \-                                                 no-useless-escape
+  24:38830   error  Unnecessary escape character: \[                                                 no-useless-escape
+  24:38836   error  Unnecessary escape character: \(                                                 no-useless-escape
+  24:38838   error  Unnecessary escape character: \)                                                 no-useless-escape
+  24:38842   error  Unnecessary escape character: \:                                                 no-useless-escape
+  24:38844   error  Unnecessary escape character: \.                                                 no-useless-escape
+  24:39071   error  Unnecessary escape character: \-                                                 no-useless-escape
+  24:39926   error  Do not access Object.prototype method 'propertyIsEnumerable' from target object  no-prototype-builtins
+  24:40050   error  Unnecessary escape character: \[                                                 no-useless-escape
+  24:40052   error  Unnecessary escape character: \(                                                 no-useless-escape
+  24:40391   error  Expected a conditional expression and instead saw an assignment                  no-cond-assign
+  24:41079   error  Unnecessary escape character: \/                                                 no-useless-escape
+  24:41602   error  'U' is already defined                                                           no-redeclare
+  24:41747   error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  24:45281   error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  24:45631   error  Unnecessary escape character: \}                                                 no-useless-escape
+  24:45633   error  Unnecessary escape character: \)                                                 no-useless-escape
+  24:48854   error  Unnecessary escape character: \}                                                 no-useless-escape
+  24:48856   error  Unnecessary escape character: \)                                                 no-useless-escape
+  24:49147   error  Unnecessary escape character: \}                                                 no-useless-escape
+  24:49149   error  Unnecessary escape character: \)                                                 no-useless-escape
+  24:53238   error  Unnecessary escape character: \[                                                 no-useless-escape
+  24:53242   error  Unnecessary escape character: \(                                                 no-useless-escape
+  24:53651   error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  24:54245   error  Unnecessary escape character: \.                                                 no-useless-escape
+  24:54255   error  Unnecessary escape character: \(                                                 no-useless-escape
+  24:55841   error  'ct' is defined but never used                                                   no-unused-vars
+  24:55844   error  'xt' is defined but never used                                                   no-unused-vars
+  24:57318   error  Unnecessary escape character: \/                                                 no-useless-escape
+  24:57404   error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  24:58635   error  'ct' is defined but never used                                                   no-unused-vars
+  24:58638   error  'xt' is defined but never used                                                   no-unused-vars
+  24:59781   error  Unnecessary escape character: \(                                                 no-useless-escape
+  24:59783   error  Unnecessary escape character: \)                                                 no-useless-escape
+  24:59785   error  Unnecessary escape character: \[                                                 no-useless-escape
+  24:59789   error  Unnecessary escape character: \{                                                 no-useless-escape
+  24:59791   error  Unnecessary escape character: \}                                                 no-useless-escape
+  24:59799   error  Unnecessary escape character: \.                                                 no-useless-escape
+  24:59905   error  Unnecessary escape character: \/                                                 no-useless-escape
+  24:60494   error  'M' is already defined                                                           no-redeclare
+  24:60730   error  'N' is already defined                                                           no-redeclare
+  24:61208   error  Unnecessary escape character: \.                                                 no-useless-escape
+  24:61254   error  Unnecessary escape character: \+                                                 no-useless-escape
+  24:61256   error  Unnecessary escape character: \-                                                 no-useless-escape
+  24:61496   error  Unnecessary escape character: \+                                                 no-useless-escape
+  24:61498   error  Unnecessary escape character: \-                                                 no-useless-escape
+  24:62437   error  Unnecessary escape character: \{                                                 no-useless-escape
+  24:62439   error  Unnecessary escape character: \}                                                 no-useless-escape
+  24:63309   error  Unnecessary escape character: \[                                                 no-useless-escape
+  24:63311   error  Unnecessary escape character: \{                                                 no-useless-escape
+  24:63313   error  Unnecessary escape character: \(                                                 no-useless-escape
+  24:64835   error  Unnecessary escape character: \}                                                 no-useless-escape
+  24:64839   error  Unnecessary escape character: \)                                                 no-useless-escape
+  24:65300   error  'ct' is defined but never used                                                   no-unused-vars
+  24:65303   error  'xt' is defined but never used                                                   no-unused-vars
+  24:66377   error  Unnecessary escape character: \[                                                 no-useless-escape
+  24:66383   error  Unnecessary escape character: \(                                                 no-useless-escape
+  24:66385   error  Unnecessary escape character: \)                                                 no-useless-escape
+  24:66389   error  Unnecessary escape character: \:                                                 no-useless-escape
+  24:66391   error  Unnecessary escape character: \.                                                 no-useless-escape
+  24:66418   error  Unnecessary escape character: \.                                                 no-useless-escape
+  24:66544   error  Unnecessary escape character: \/                                                 no-useless-escape
+  24:66576   error  Unnecessary escape character: \$                                                 no-useless-escape
+  24:67025   error  Unnecessary escape character: \/                                                 no-useless-escape
+  24:67541   error  Expected a conditional expression and instead saw an assignment                  no-cond-assign
+  24:69981   error  Do not access Object.prototype method 'propertyIsEnumerable' from target object  no-prototype-builtins
+  24:71648   error  Expected a conditional expression and instead saw an assignment                  no-cond-assign
+  24:71729   error  Unnecessary escape character: \/                                                 no-useless-escape
+  24:71731   error  Unnecessary escape character: \*                                                 no-useless-escape
+  24:71958   error  Unnecessary escape character: \.                                                 no-useless-escape
+  24:72639   error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  24:73355   error  Unnecessary escape character: \$                                                 no-useless-escape
+  24:74524   error  Unnecessary escape character: \$                                                 no-useless-escape
+  24:75786   error  Unnecessary escape character: \$                                                 no-useless-escape
+  24:75972   error  Expected a conditional expression and instead saw an assignment                  no-cond-assign
+  24:77587   error  Unnecessary escape character: \/                                                 no-useless-escape
+  24:77640   error  Unnecessary escape character: \$                                                 no-useless-escape
+  24:77811   error  Unnecessary escape character: \$                                                 no-useless-escape
+  24:79785   error  Unnecessary escape character: \$                                                 no-useless-escape
+  24:85795   error  Unnecessary escape character: \[                                                 no-useless-escape
+  24:85801   error  Unnecessary escape character: \(                                                 no-useless-escape
+  24:85803   error  Unnecessary escape character: \)                                                 no-useless-escape
+  24:85807   error  Unnecessary escape character: \:                                                 no-useless-escape
+  24:85809   error  Unnecessary escape character: \.                                                 no-useless-escape
+  24:85847   error  Unnecessary escape character: \/                                                 no-useless-escape
+  24:86158   error  Unnecessary escape character: \$                                                 no-useless-escape
+  24:86383   error  Unnecessary escape character: \$                                                 no-useless-escape
+  24:86669   error  'ct' is defined but never used                                                   no-unused-vars
+  24:86672   error  'xt' is defined but never used                                                   no-unused-vars
+  24:99446   error  'ct' is defined but never used                                                   no-unused-vars
+  24:99449   error  'xt' is defined but never used                                                   no-unused-vars
+  24:100570  error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  24:100803  error  Unnecessary escape character: \=                                                 no-useless-escape
+  24:100830  error  Unnecessary escape character: \[                                                 no-useless-escape
+  24:100877  error  Unnecessary escape character: \/                                                 no-useless-escape
+  24:100938  error  Unnecessary escape character: \/                                                 no-useless-escape
+  24:100947  error  Unnecessary escape character: \[                                                 no-useless-escape
+  24:107953  error  Unnecessary escape character: \[                                                 no-useless-escape
+  24:108843  error  'Oe' is already defined                                                          no-redeclare
+  24:109105  error  'Oe' is already defined                                                          no-redeclare
+  24:109315  error  'Oe' is already defined                                                          no-redeclare
+  24:109482  error  'Oe' is already defined                                                          no-redeclare
+  24:109606  error  Unnecessary escape character: \-                                                 no-useless-escape
+  24:110540  error  've' is already defined                                                          no-redeclare
+  24:110813  error  've' is already defined                                                          no-redeclare
+  24:111099  error  Unnecessary escape character: \-                                                 no-useless-escape
+  24:111741  error  Unnecessary escape character: \(                                                 no-useless-escape
+  24:111743  error  Unnecessary escape character: \)                                                 no-useless-escape
+  24:111760  error  Unnecessary escape character: \(                                                 no-useless-escape
+  24:111762  error  Unnecessary escape character: \)                                                 no-useless-escape
+  24:111797  error  Unnecessary escape character: \[                                                 no-useless-escape
+  24:111816  error  Unnecessary escape character: \[                                                 no-useless-escape
+  24:114664  error  'ct' is defined but never used                                                   no-unused-vars
+  24:114667  error  'xt' is defined but never used                                                   no-unused-vars
+  24:116256  error  'ct' is defined but never used                                                   no-unused-vars
+  24:116259  error  'xt' is defined but never used                                                   no-unused-vars
+  24:116481  error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  24:117263  error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  24:117327  error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  24:118150  error  'O' is already defined                                                           no-redeclare
+  24:119084  error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  24:119109  error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  24:119163  error  'V' is already defined                                                           no-redeclare
+  24:119172  error  Do not access Object.prototype method 'hasOwnProperty' from target object        no-prototype-builtins
+  24:120290  error  'ct' is defined but never used                                                   no-unused-vars
+  24:120293  error  'xt' is defined but never used                                                   no-unused-vars
+  24:123379  error  'ct' is defined but never used                                                   no-unused-vars
+  24:123382  error  'xt' is defined but never used                                                   no-unused-vars
+  24:124338  error  'z' is already defined                                                           no-redeclare
+  25:1701    error  'de' is already defined                                                          no-redeclare
+  25:2243    error  'ct' is defined but never used                                                   no-unused-vars
+  25:2246    error  'xt' is defined but never used                                                   no-unused-vars
+  31:767     error  'N' is already defined                                                           no-redeclare
+  31:1542    error  'N' is already defined                                                           no-redeclare
+  31:3700    error  'ct' is defined but never used                                                   no-unused-vars
+  31:3703    error  'xt' is defined but never used                                                   no-unused-vars
+  31:6023    error  'ct' is defined but never used                                                   no-unused-vars
+  31:6026    error  'xt' is defined but never used                                                   no-unused-vars
+  31:6180    error  Unnecessary escape character: \-                                                 no-useless-escape
+  31:6182    error  Unnecessary escape character: \[                                                 no-useless-escape
+  31:6186    error  Unnecessary escape character: \/                                                 no-useless-escape
+  31:6188    error  Unnecessary escape character: \{                                                 no-useless-escape
+  31:6190    error  Unnecessary escape character: \}                                                 no-useless-escape
+  31:6192    error  Unnecessary escape character: \(                                                 no-useless-escape
+  31:6194    error  Unnecessary escape character: \)                                                 no-useless-escape
+  31:6196    error  Unnecessary escape character: \*                                                 no-useless-escape
+  31:6198    error  Unnecessary escape character: \+                                                 no-useless-escape
+  31:6200    error  Unnecessary escape character: \?                                                 no-useless-escape
+  31:6202    error  Unnecessary escape character: \.                                                 no-useless-escape
+  31:6206    error  Unnecessary escape character: \^                                                 no-useless-escape
+  31:6208    error  Unnecessary escape character: \$                                                 no-useless-escape
+  31:6210    error  Unnecessary escape character: \|                                                 no-useless-escape
+  32:155     error  Empty block statement                                                            no-empty
+  32:4652    error  'ct' is defined but never used                                                   no-unused-vars
+  32:4655    error  'xt' is defined but never used                                                   no-unused-vars
+  32:5335    error  Expected a conditional expression and instead saw an assignment                  no-cond-assign
+  32:5344    error  Unnecessary escape character: \+                                                 no-useless-escape
+  32:5346    error  Unnecessary escape character: \-                                                 no-useless-escape
+  32:5357    error  Unnecessary escape character: \:                                                 no-useless-escape
+  32:5428    error  Expected a conditional expression and instead saw an assignment                  no-cond-assign
+  32:5437    error  Unnecessary escape character: \+                                                 no-useless-escape
+  32:5439    error  Unnecessary escape character: \-                                                 no-useless-escape
+  32:5455    error  Unnecessary escape character: \%                                                 no-useless-escape
+  32:5591    error  Unnecessary escape character: \:                                                 no-useless-escape
+  32:5599    error  Unnecessary escape character: \+                                                 no-useless-escape
+  32:5601    error  Unnecessary escape character: \-                                                 no-useless-escape
+
+/home/andis/simpleEcommerce/playwright-report/trace/assets/defaultSettingsView-CJSZINFr.js
+   18:4165    error  'process' is not defined                                                                                                                                                                                                                           no-undef
+   18:4191    error  'process' is not defined                                                                                                                                                                                                                           no-undef
+   18:7834    error  'r' is defined but never used                                                                                                                                                                                                                      no-unused-vars
+   18:8883    error  'r' is defined but never used                                                                                                                                                                                                                      no-unused-vars
+   18:8885    error  'l' is defined but never used                                                                                                                                                                                                                      no-unused-vars
+   18:11317   error  'n' is defined but never used                                                                                                                                                                                                                      no-unused-vars
+   26:1018    error  'setImmediate' is not defined                                                                                                                                                                                                                      no-undef
+   26:1864    error  Unreachable code                                                                                                                                                                                                                                   no-unreachable
+   34:3442    error  '__REACT_DEVTOOLS_GLOBAL_HOOK__' is not defined                                                                                                                                                                                                    no-undef
+   34:3499    error  '__REACT_DEVTOOLS_GLOBAL_HOOK__' is not defined                                                                                                                                                                                                    no-undef
+   42:3258    error  Empty block statement                                                                                                                                                                                                                              no-empty
+   47:202     error  Expected a conditional expression and instead saw an assignment                                                                                                                                                                                    no-cond-assign
+   49:548     error  Empty block statement                                                                                                                                                                                                                              no-empty
+   49:4239    error  Expected a conditional expression and instead saw an assignment                                                                                                                                                                                    no-cond-assign
+   49:4339    error  Expected a conditional expression and instead saw an assignment                                                                                                                                                                                    no-cond-assign
+   49:4422    error  Expected a conditional expression and instead saw an assignment                                                                                                                                                                                    no-cond-assign
+   49:5244    error  Unexpected combined character in character class                                                                                                                                                                                                   no-misleading-character-class
+   49:6394    error  Do not access Object.prototype method 'hasOwnProperty' from target object                                                                                                                                                                          no-prototype-builtins
+   49:8622    error  Do not access Object.prototype method 'hasOwnProperty' from target object                                                                                                                                                                          no-prototype-builtins
+   49:10740   error  Do not access Object.prototype method 'hasOwnProperty' from target object                                                                                                                                                                          no-prototype-builtins
+   49:10770   error  Do not access Object.prototype method 'hasOwnProperty' from target object                                                                                                                                                                          no-prototype-builtins
+   49:10889   error  Do not access Object.prototype method 'hasOwnProperty' from target object                                                                                                                                                                          no-prototype-builtins
+   49:10950   error  Do not access Object.prototype method 'hasOwnProperty' from target object                                                                                                                                                                          no-prototype-builtins
+   49:13913   error  Unexpected control character(s) in regular expression: \x00, \x1f                                                                                                                                                                                  no-control-regex
+   49:15956   error  Expected to return a value in method 'get'                                                                                                                                                                                                         getter-return
+   49:16646   error  Do not access Object.prototype method 'hasOwnProperty' from target object                                                                                                                                                                          no-prototype-builtins
+   49:16988   error  Invalid typeof comparison value                                                                                                                                                                                                                    valid-typeof
+   49:17162   error  Invalid typeof comparison value                                                                                                                                                                                                                    valid-typeof
+   49:19027   error  Expected a conditional expression and instead saw an assignment                                                                                                                                                                                    no-cond-assign
+   49:25346   error  Do not access Object.prototype method 'hasOwnProperty' from target object                                                                                                                                                                          no-prototype-builtins
+   49:26656   error  'process' is not defined                                                                                                                                                                                                                           no-undef
+   49:26682   error  'process' is not defined                                                                                                                                                                                                                           no-undef
+   49:43723   error  Empty block statement                                                                                                                                                                                                                              no-empty
+   49:45819   error  Expected a 'break' statement before 'case'                                                                                                                                                                                                         no-fallthrough
+   49:46284   error  Unexpected constant condition                                                                                                                                                                                                                      no-constant-condition
+   49:59322   error  Empty block statement                                                                                                                                                                                                                              no-empty
+   49:59331   error  Empty block statement                                                                                                                                                                                                                              no-empty
+   49:64885   error  Expected a conditional expression and instead saw an assignment                                                                                                                                                                                    no-cond-assign
+   49:69791   error  Expected a conditional expression and instead saw an assignment                                                                                                                                                                                    no-cond-assign
+   49:72689   error  Expected a conditional expression and instead saw an assignment                                                                                                                                                                                    no-cond-assign
+   49:73797   error  Expected a conditional expression and instead saw an assignment                                                                                                                                                                                    no-cond-assign
+   49:75476   error  Expected a conditional expression and instead saw an assignment                                                                                                                                                                                    no-cond-assign
+   49:82109   error  Expected a conditional expression and instead saw an assignment                                                                                                                                                                                    no-cond-assign
+   49:87097   error  Unnecessary escape character: \/                                                                                                                                                                                                                   no-useless-escape
+   49:97868   error  Expected a 'break' statement before 'case'                                                                                                                                                                                                         no-fallthrough
+   49:98821   error  Empty block statement                                                                                                                                                                                                                              no-empty
+   49:99100   error  Expected a 'break' statement before 'case'                                                                                                                                                                                                         no-fallthrough
+   49:102296  error  Expected a conditional expression and instead saw an assignment                                                                                                                                                                                    no-cond-assign
+   49:104673  error  Do not access Object.prototype method 'hasOwnProperty' from target object                                                                                                                                                                          no-prototype-builtins
+   49:106493  error  Expected a 'break' statement before 'case'                                                                                                                                                                                                         no-fallthrough
+   49:107166  error  Expected a 'break' statement before 'case'                                                                                                                                                                                                         no-fallthrough
+   49:112956  error  Expected a 'break' statement before 'case'                                                                                                                                                                                                         no-fallthrough
+   49:113290  error  Unexpected constant condition                                                                                                                                                                                                                      no-constant-condition
+   49:115914  error  Unexpected constant condition                                                                                                                                                                                                                      no-constant-condition
+   49:116539  error  Expected a 'break' statement before 'case'                                                                                                                                                                                                         no-fallthrough
+   49:116858  error  Unexpected constant condition                                                                                                                                                                                                                      no-constant-condition
+   49:117258  error  Expected a 'break' statement before 'default'                                                                                                                                                                                                      no-fallthrough
+   49:119753  error  Expected a conditional expression and instead saw an assignment                                                                                                                                                                                    no-cond-assign
+   49:120565  error  Empty block statement                                                                                                                                                                                                                              no-empty
+   49:121315  error  Empty block statement                                                                                                                                                                                                                              no-empty
+   49:122792  error  's' is defined but never used                                                                                                                                                                                                                      no-unused-vars
+   49:125184  error  Expected a conditional expression and instead saw an assignment                                                                                                                                                                                    no-cond-assign
+   49:128947  error  Expected a 'break' statement before 'case'                                                                                                                                                                                                         no-fallthrough
+   49:129136  error  Expected a 'break' statement before 'case'                                                                                                                                                                                                         no-fallthrough
+   49:130361  error  Expected a conditional expression and instead saw an assignment                                                                                                                                                                                    no-cond-assign
+   49:131914  error  Expected a 'break' statement before 'case'                                                                                                                                                                                                         no-fallthrough
+   49:133461  error  Unexpected control character(s) in regular expression: \x00                                                                                                                                                                                        no-control-regex
+   50:476     error  Expected a 'break' statement before 'case'                                                                                                                                                                                                         no-fallthrough
+   50:5078    error  Do not access Object.prototype method 'hasOwnProperty' from target object                                                                                                                                                                          no-prototype-builtins
+   50:5650    error  Do not access Object.prototype method 'hasOwnProperty' from target object                                                                                                                                                                          no-prototype-builtins
+   50:5989    error  Do not access Object.prototype method 'hasOwnProperty' from target object                                                                                                                                                                          no-prototype-builtins
+   50:6384    error  Do not access Object.prototype method 'hasOwnProperty' from target object                                                                                                                                                                          no-prototype-builtins
+   50:6500    error  Expected a 'break' statement before 'default'                                                                                                                                                                                                      no-fallthrough
+   50:6662    error  Do not access Object.prototype method 'hasOwnProperty' from target object                                                                                                                                                                          no-prototype-builtins
+   50:6925    error  Do not access Object.prototype method 'hasOwnProperty' from target object                                                                                                                                                                          no-prototype-builtins
+   50:7419    error  Expected a 'break' statement before 'case'                                                                                                                                                                                                         no-fallthrough
+   50:7558    error  Do not access Object.prototype method 'hasOwnProperty' from target object                                                                                                                                                                          no-prototype-builtins
+   50:7736    error  Do not access Object.prototype method 'hasOwnProperty' from target object                                                                                                                                                                          no-prototype-builtins
+   50:7818    error  Do not access Object.prototype method 'hasOwnProperty' from target object                                                                                                                                                                          no-prototype-builtins
+   50:8079    error  Do not access Object.prototype method 'hasOwnProperty' from target object                                                                                                                                                                          no-prototype-builtins
+   50:8177    error  Expected a 'break' statement before 'default'                                                                                                                                                                                                      no-fallthrough
+   50:8187    error  Do not access Object.prototype method 'hasOwnProperty' from target object                                                                                                                                                                          no-prototype-builtins
+   50:8265    error  Do not access Object.prototype method 'hasOwnProperty' from target object                                                                                                                                                                          no-prototype-builtins
+   50:8653    error  Do not access Object.prototype method 'hasOwnProperty' from target object                                                                                                                                                                          no-prototype-builtins
+   50:8727    error  Expected a 'break' statement before 'default'                                                                                                                                                                                                      no-fallthrough
+   50:8737    error  Do not access Object.prototype method 'hasOwnProperty' from target object                                                                                                                                                                          no-prototype-builtins
+   50:8805    error  Do not access Object.prototype method 'hasOwnProperty' from target object                                                                                                                                                                          no-prototype-builtins
+   50:8923    error  Expected a 'break' statement before 'default'                                                                                                                                                                                                      no-fallthrough
+   50:9099    error  Do not access Object.prototype method 'hasOwnProperty' from target object                                                                                                                                                                          no-prototype-builtins
+   50:9130    error  Do not access Object.prototype method 'hasOwnProperty' from target object                                                                                                                                                                          no-prototype-builtins
+   50:9254    error  Do not access Object.prototype method 'hasOwnProperty' from target object                                                                                                                                                                          no-prototype-builtins
+   50:9530    error  Do not access Object.prototype method 'hasOwnProperty' from target object                                                                                                                                                                          no-prototype-builtins
+   50:9562    error  Do not access Object.prototype method 'hasOwnProperty' from target object                                                                                                                                                                          no-prototype-builtins
+   50:9685    error  Do not access Object.prototype method 'hasOwnProperty' from target object                                                                                                                                                                          no-prototype-builtins
+   50:10042   error  Do not access Object.prototype method 'hasOwnProperty' from target object                                                                                                                                                                          no-prototype-builtins
+   50:10074   error  Do not access Object.prototype method 'hasOwnProperty' from target object                                                                                                                                                                          no-prototype-builtins
+   50:10144   error  Do not access Object.prototype method 'hasOwnProperty' from target object                                                                                                                                                                          no-prototype-builtins
+   50:10358   error  Do not access Object.prototype method 'hasOwnProperty' from target object                                                                                                                                                                          no-prototype-builtins
+   50:10393   error  Do not access Object.prototype method 'hasOwnProperty' from target object                                                                                                                                                                          no-prototype-builtins
+   50:10463   error  Do not access Object.prototype method 'hasOwnProperty' from target object                                                                                                                                                                          no-prototype-builtins
+   50:10561   error  Do not access Object.prototype method 'hasOwnProperty' from target object                                                                                                                                                                          no-prototype-builtins
+   50:10592   error  Do not access Object.prototype method 'hasOwnProperty' from target object                                                                                                                                                                          no-prototype-builtins
+   50:10658   error  Do not access Object.prototype method 'hasOwnProperty' from target object                                                                                                                                                                          no-prototype-builtins
+   50:18704   error  Expected a conditional expression and instead saw an assignment                                                                                                                                                                                    no-cond-assign
+   50:19775   error  Expected a conditional expression and instead saw an assignment                                                                                                                                                                                    no-cond-assign
+   50:22308   error  Expected a conditional expression and instead saw an assignment                                                                                                                                                                                    no-cond-assign
+   50:36016   error  '__REACT_DEVTOOLS_GLOBAL_HOOK__' is not defined                                                                                                                                                                                                    no-undef
+   50:36115   error  Empty block statement                                                                                                                                                                                                                              no-empty
+   50:37261   error  '__REACT_DEVTOOLS_GLOBAL_HOOK__' is not defined                                                                                                                                                                                                    no-undef
+   50:37318   error  '__REACT_DEVTOOLS_GLOBAL_HOOK__' is not defined                                                                                                                                                                                                    no-undef
+   51:3411    error  'i' is defined but never used                                                                                                                                                                                                                      no-unused-vars
+   51:7229    error  React Hook "U.useState" is called in function "nc" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"         react-hooks/rules-of-hooks
+   52:17924   error  Unexpected lexical declaration in case block                                                                                                                                                                                                       no-case-declarations
+   52:18184   error  Unexpected lexical declaration in case block                                                                                                                                                                                                       no-case-declarations
+   52:19972   error  Unexpected lexical declaration in case block                                                                                                                                                                                                       no-case-declarations
+   52:20277   error  Unexpected lexical declaration in case block                                                                                                                                                                                                       no-case-declarations
+   52:22338   error  Unexpected lexical declaration in case block                                                                                                                                                                                                       no-case-declarations
+   52:22612   error  Unexpected lexical declaration in case block                                                                                                                                                                                                       no-case-declarations
+   52:24634   error  Unexpected lexical declaration in case block                                                                                                                                                                                                       no-case-declarations
+   52:24901   error  Unexpected lexical declaration in case block                                                                                                                                                                                                       no-case-declarations
+   52:26920   error  React Hook "U.useMemo" is called in function "m_" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"          react-hooks/rules-of-hooks
+   52:26980   error  React Hook "U.useRef" is called in function "m_" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"           react-hooks/rules-of-hooks
+   52:27001   error  React Hook "U.useState" is called in function "m_" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"         react-hooks/rules-of-hooks
+   52:27020   error  React Hook "U.useState" is called in function "m_" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"         react-hooks/rules-of-hooks
+   52:27035   error  React Hook "U.useEffect" is called in function "m_" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"        react-hooks/rules-of-hooks
+   52:27074   error  React Hook "U.useEffect" is called in function "m_" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"        react-hooks/rules-of-hooks
+   52:27253   error  React Hook "U.useEffect" is called in function "m_" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"        react-hooks/rules-of-hooks
+   52:27330   error  React Hook "U.useCallback" is called in function "m_" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"      react-hooks/rules-of-hooks
+   52:27530   error  React Hook "U.useCallback" is called in function "m_" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"      react-hooks/rules-of-hooks
+   52:29124   error  React Hook "U.useId" is called in function "kb" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"            react-hooks/rules-of-hooks
+   52:29136   error  React Hook "U.useRef" is called in function "kb" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"           react-hooks/rules-of-hooks
+   52:29151   error  React Hook "U.useEffect" is called in function "kb" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"        react-hooks/rules-of-hooks
+   52:35351   error  React Hook "U.useState" is called in function "td" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"         react-hooks/rules-of-hooks
+   52:35372   error  React Hook "U.useCallback" is called in function "td" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"      react-hooks/rules-of-hooks
+   52:36187   error  React Hook "U.useMemo" is called in function "w_" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"          react-hooks/rules-of-hooks
+   52:38717   error  'E' is defined but never used                                                                                                                                                                                                                      no-unused-vars
+   52:38757   error  React Hook "U.useRef" is called in function "yc" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"           react-hooks/rules-of-hooks
+   52:38778   error  React Hook "U.useState" is called in function "yc" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"         react-hooks/rules-of-hooks
+   52:38798   error  React Hook "U.useEffect" is called in function "yc" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"        react-hooks/rules-of-hooks
+   52:38837   error  React Hook "U.useEffect" is called in function "yc" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"        react-hooks/rules-of-hooks
+   52:39016   error  React Hook "U.useEffect" is called in function "yc" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"        react-hooks/rules-of-hooks
+   52:41236   error  Unexpected control character(s) in regular expression: \x1b, \x1b                                                                                                                                                                                  no-control-regex
+   52:45623   error  'r' is defined but never used                                                                                                                                                                                                                      no-unused-vars
+   59:104     error  React Hook "U.useState" is called in function "k_" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"         react-hooks/rules-of-hooks
+   59:145     error  React Hook "U.useState" is called in function "k_" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"         react-hooks/rules-of-hooks
+   59:166     error  React Hook "U.useState" is called in function "k_" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"         react-hooks/rules-of-hooks
+   59:189     error  React Hook "U.useState" is called in function "k_" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"         react-hooks/rules-of-hooks
+   59:218     error  React Hook "U.useState" is called in function "k_" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"         react-hooks/rules-of-hooks
+   59:241     error  React Hook "U.useState" is called in function "k_" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"         react-hooks/rules-of-hooks
+   59:269     error  React Hook "U.useEffect" is called in function "k_" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"        react-hooks/rules-of-hooks
+   59:6000    error  Redundant double negation                                                                                                                                                                                                                          no-extra-boolean-cast
+   59:6909    error  React Hook "U.useState" is called in function "xr" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"         react-hooks/rules-of-hooks
+   59:7030    error  React Hook "U.useRef" is called in function "xr" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"           react-hooks/rules-of-hooks
+   59:7051    error  React Hook "U.useState" is called in function "xr" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"         react-hooks/rules-of-hooks
+   59:7071    error  React Hook "U.useEffect" is called in function "xr" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"        react-hooks/rules-of-hooks
+   59:7770    error  React Hook "U.useEffect" is called in function "xr" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"        react-hooks/rules-of-hooks
+   59:7843    error  React Hook "U.useLayoutEffect" is called in function "xr" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"  react-hooks/rules-of-hooks
+   59:11576   error  React Hook "U.useContext" is called in function "ti" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"       react-hooks/rules-of-hooks
+   69:24      error  Unexpected control character(s) in regular expression: \x1b, \x07                                                                                                                                                                                  no-control-regex
+   69:3765    error  React Hook "U.useMemo" is called in function "eT" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"          react-hooks/rules-of-hooks
+   69:4782    error  React Hook "U.useCallback" is called in function "nT" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"      react-hooks/rules-of-hooks
+   72:50      error  React Hook "U.useMemo" is called in function "rT" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"          react-hooks/rules-of-hooks
+   72:1418    error  React Hook "U.useMemo" is called in function "rT" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"          react-hooks/rules-of-hooks
+   72:4534    error  React Hook "U.useId" is called in function "jh" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"            react-hooks/rules-of-hooks
+   72:6718    error  Unnecessary escape character: \/                                                                                                                                                                                                                   no-useless-escape
+   74:117     error  Unexpected control character(s) in regular expression: \x1f                                                                                                                                                                                        no-control-regex
+   74:138     error  Unnecessary escape character: \'                                                                                                                                                                                                                   no-useless-escape
+   74:188     error  Unnecessary escape character: \'                                                                                                                                                                                                                   no-useless-escape
+   74:250     error  Unexpected control character(s) in regular expression: \x1f                                                                                                                                                                                        no-control-regex
+  105:340     error  React Hook "U.useState" is called in function "yT" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"         react-hooks/rules-of-hooks
+  105:2713    error  React Hook "U.useMemo" is called in function "vT" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"          react-hooks/rules-of-hooks
+  105:3814    error  React Hook "U.useState" is called in function "wT" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"         react-hooks/rules-of-hooks
+  105:3838    error  React Hook "U.useEffect" is called in function "wT" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"        react-hooks/rules-of-hooks
+  105:4793    error  React Hook "U.useState" is called in function "xT" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"         react-hooks/rules-of-hooks
+  105:4815    error  React Hook "U.useEffect" is called in function "xT" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"        react-hooks/rules-of-hooks
+  105:10959   error  'e' is defined but never used                                                                                                                                                                                                                      no-unused-vars
+  109:3970    error  Unexpected control character(s) in regular expression: \x00, \x1f                                                                                                                                                                                  no-control-regex
+  110:187     error  Unexpected control character(s) in regular expression: \x00, \x08, \x0b, \x0c, \x0e, \x1f                                                                                                                                                          no-control-regex
+  111:1068    error  Empty block statement                                                                                                                                                                                                                              no-empty
+  112:15604   error  Do not access Object.prototype method 'hasOwnProperty' from target object                                                                                                                                                                          no-prototype-builtins
+  112:25761   error  'r' is defined but never used                                                                                                                                                                                                                      no-unused-vars
+  112:25929   error  'i' is defined but never used                                                                                                                                                                                                                      no-unused-vars
+  112:26394   error  'i' is defined but never used                                                                                                                                                                                                                      no-unused-vars
+  112:26396   error  'r' is defined but never used                                                                                                                                                                                                                      no-unused-vars
+  112:35367   error  Unnecessary escape character: \_                                                                                                                                                                                                                   no-useless-escape
+  112:37813   error  Unnecessary escape character: \.                                                                                                                                                                                                                   no-useless-escape
+  113:700     error  Empty block statement                                                                                                                                                                                                                              no-empty
+  113:1636    error  'g' is assigned to itself                                                                                                                                                                                                                          no-self-assign
+  113:12133   error  Redundant double negation                                                                                                                                                                                                                          no-extra-boolean-cast
+  113:12240   error  Redundant double negation                                                                                                                                                                                                                          no-extra-boolean-cast
+  118:6794    error  Empty block statement                                                                                                                                                                                                                              no-empty
+  124:9912    error  Do not access Object.prototype method 'hasOwnProperty' from target object                                                                                                                                                                          no-prototype-builtins
+  124:18312   error  'e' is defined but never used                                                                                                                                                                                                                      no-unused-vars
+  124:22169   error  'e' is defined but never used                                                                                                                                                                                                                      no-unused-vars
+  124:23742   error  'e' is defined but never used                                                                                                                                                                                                                      no-unused-vars
+  124:31605   error  'e' is defined but never used                                                                                                                                                                                                                      no-unused-vars
+  124:32537   error  'e' is defined but never used                                                                                                                                                                                                                      no-unused-vars
+  124:42799   error  'e' is defined but never used                                                                                                                                                                                                                      no-unused-vars
+  127:8424    error  'f' is defined but never used                                                                                                                                                                                                                      no-unused-vars
+  128:1807    error  Unnecessary escape character: \,                                                                                                                                                                                                                   no-useless-escape
+  128:3184    error  Unnecessary escape character: \,                                                                                                                                                                                                                   no-useless-escape
+  128:4124    error  Empty block statement                                                                                                                                                                                                                              no-empty
+  129:109     error  Unexpected control character(s) in regular expression: \x00, \x19                                                                                                                                                                                  no-control-regex
+  129:3168    error  'i' is defined but never used                                                                                                                                                                                                                      no-unused-vars
+  129:3170    error  'r' is defined but never used                                                                                                                                                                                                                      no-unused-vars
+  132:438     error  Expected a conditional expression and instead saw an assignment                                                                                                                                                                                    no-cond-assign
+  160:391     error  Unexpected control character(s) in regular expression: \x00, \x08, \x0b, \x1f                                                                                                                                                                      no-control-regex
+  171:151     error  'process' is not defined                                                                                                                                                                                                                           no-undef
+  171:171     error  'process' is not defined                                                                                                                                                                                                                           no-undef
+  178:7275    error  'Buffer' is not defined                                                                                                                                                                                                                            no-undef
+  178:7662    error  'Buffer' is not defined                                                                                                                                                                                                                            no-undef
+  178:7690    error  'Buffer' is not defined                                                                                                                                                                                                                            no-undef
+  189:1537    error  Expected a 'break' statement before 'default'                                                                                                                                                                                                      no-fallthrough
+  211:582     error  Expected a 'break' statement before 'case'                                                                                                                                                                                                         no-fallthrough
+  213:147     error  Expected a conditional expression and instead saw an assignment                                                                                                                                                                                    no-cond-assign
+  250:2438    error  Expected a 'break' statement before 'case'                                                                                                                                                                                                         no-fallthrough
+  250:4121    error  Expected a 'break' statement before 'default'                                                                                                                                                                                                      no-fallthrough
+  252:539     error  Expected a conditional expression and instead saw an assignment                                                                                                                                                                                    no-cond-assign
+  254:9       error  Expected a 'break' statement before 'default'                                                                                                                                                                                                      no-fallthrough
+  257:46      error  Unexpected constant condition                                                                                                                                                                                                                      no-constant-condition
+  257:207     error  Expected a conditional expression and instead saw an assignment                                                                                                                                                                                    no-cond-assign
+  266:1464    error  Expected a 'break' statement before 'case'                                                                                                                                                                                                         no-fallthrough
+  266:3657    error  React Hook "U.useState" is called in function "lC" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"         react-hooks/rules-of-hooks
+  266:3728    error  React Hook "U.useMemo" is called in function "lC" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"          react-hooks/rules-of-hooks
+  266:3799    error  React Hook "U.useMemo" is called in function "lC" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"          react-hooks/rules-of-hooks
+  266:3933    error  React Hook "U.useMemo" is called in function "lC" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"          react-hooks/rules-of-hooks
+  266:5082    error  React Hook "U.useRef" is called in function "oC" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"           react-hooks/rules-of-hooks
+  266:5099    error  React Hook "U.useRef" is called in function "oC" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"           react-hooks/rules-of-hooks
+  266:5120    error  React Hook "U.useState" is called in function "oC" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"         react-hooks/rules-of-hooks
+  266:5155    error  React Hook "U.useRef" is called in function "oC" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"           react-hooks/rules-of-hooks
+  266:5202    error  React Hook "U.useEffect" is called in function "oC" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"        react-hooks/rules-of-hooks
+  266:5646    error  Empty block statement                                                                                                                                                                                                                              no-empty
+  266:7679    error  Empty block statement                                                                                                                                                                                                                              no-empty
+  266:8629    error  'WeakRef' is not defined                                                                                                                                                                                                                           no-undef
+  266:10742   error  React Hook "U.useRef" is called in function "mC" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"           react-hooks/rules-of-hooks
+  266:13238   error  React Hook "U.useState" is called in function "bC" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"         react-hooks/rules-of-hooks
+  266:13257   error  React Hook "U.useState" is called in function "bC" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"         react-hooks/rules-of-hooks
+  266:13338   error  React Hook "U.useMemo" is called in function "bC" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"          react-hooks/rules-of-hooks
+  266:13649   error  React Hook "U.useMemo" is called in function "bC" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"          react-hooks/rules-of-hooks
+  266:13708   error  React Hook "U.useMemo" is called in function "bC" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"          react-hooks/rules-of-hooks
+  266:14383   error  React Hook "U.useMemo" is called in function "bC" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"          react-hooks/rules-of-hooks
+  266:14591   error  React Hook "U.useCallback" is called in function "bC" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"      react-hooks/rules-of-hooks
+  266:15058   error  React Hook "U.useCallback" is called in function "bC" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"      react-hooks/rules-of-hooks
+  266:15629   error  React Hook "U.useCallback" is called in function "bC" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"      react-hooks/rules-of-hooks
+  266:15924   error  React Hook "U.useCallback" is called in function "bC" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"      react-hooks/rules-of-hooks
+  266:16154   error  React Hook "U.useCallback" is called in function "bC" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"      react-hooks/rules-of-hooks
+  266:16190   error  React Hook "U.useCallback" is called in function "bC" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"      react-hooks/rules-of-hooks
+  266:21924   error  React Hook "U.useState" is called in function "_C" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"         react-hooks/rules-of-hooks
+  266:21939   error  React Hook "U.useCallback" is called in function "_C" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"      react-hooks/rules-of-hooks
+  266:23397   error  'm' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                  no-unused-vars
+  266:31921   error  React Hook "U.useRef" is called in function "kC" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"           react-hooks/rules-of-hooks
+  266:37332   error  Empty block statement                                                                                                                                                                                                                              no-empty
+
+/home/andis/simpleEcommerce/playwright-report/trace/sw.bundle.js
+  1:4613   error  Unnecessary escape character: \/            no-useless-escape
+  1:6955   error  Empty block statement                       no-empty
+  1:7157   error  Empty block statement                       no-empty
+  3:16764  error  Unexpected constant condition               no-constant-condition
+  3:17235  error  Unexpected constant condition               no-constant-condition
+  3:17901  error  Expected a 'break' statement before 'case'  no-fallthrough
+  3:18673  error  Expected a 'break' statement before 'case'  no-fallthrough
+  3:19370  error  Expected a 'break' statement before 'case'  no-fallthrough
+  3:20420  error  Expected a 'break' statement before 'case'  no-fallthrough
+  3:23856  error  Expected a 'break' statement before 'case'  no-fallthrough
+  3:24318  error  Expected a 'break' statement before 'case'  no-fallthrough
+  3:25453  error  Expected a 'break' statement before 'case'  no-fallthrough
+  3:25732  error  Expected a 'break' statement before 'case'  no-fallthrough
+  3:25954  error  Expected a 'break' statement before 'case'  no-fallthrough
+  3:27434  error  Expected a 'break' statement before 'case'  no-fallthrough
+  3:27664  error  Expected a 'break' statement before 'case'  no-fallthrough
+  3:27798  error  Expected a 'break' statement before 'case'  no-fallthrough
+  3:27931  error  Expected a 'break' statement before 'case'  no-fallthrough
+  3:28060  error  Expected a 'break' statement before 'case'  no-fallthrough
+  3:28375  error  Expected a 'break' statement before 'case'  no-fallthrough
+  3:31347  error  Empty block statement                       no-empty
+  3:48151  error  Empty block statement                       no-empty
+  3:51726  error  Empty block statement                       no-empty
+  3:65525  error  Empty block statement                       no-empty
+  3:68884  error  Empty block statement                       no-empty
+  3:70269  error  Empty block statement                       no-empty
+  3:70576  error  Empty block statement                       no-empty
+  3:72064  error  Empty block statement                       no-empty
+  3:75158  error  's' is defined but never used               no-unused-vars
+  5:2674   error  's' is defined but never used               no-unused-vars
+  5:2676   error  't' is defined but never used               no-unused-vars
+
+/home/andis/simpleEcommerce/playwright-report/trace/uiMode.CQJ9SCIQ.js
+  2:3497   error  'Buffer' is not defined                                                                                                                                                                                                                      no-undef
+  2:3669   error  'Buffer' is not defined                                                                                                                                                                                                                      no-undef
+  2:4957   error  'Buffer' is not defined                                                                                                                                                                                                                      no-undef
+  2:16534  error  React Hook "H.useState" is called in function "fe" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"   react-hooks/rules-of-hooks
+  2:16555  error  React Hook "H.useState" is called in function "fe" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"   react-hooks/rules-of-hooks
+  2:16678  error  React Hook "H.useRef" is called in function "fe" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"     react-hooks/rules-of-hooks
+  2:16700  error  React Hook "H.useEffect" is called in function "fe" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"  react-hooks/rules-of-hooks
+  2:16738  error  React Hook "H.useEffect" is called in function "fe" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"  react-hooks/rules-of-hooks
+  2:17303  error  React Hook "H.useEffect" is called in function "fe" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"  react-hooks/rules-of-hooks
+  2:18658  error  'c' is defined but never used                                                                                                                                                                                                                no-unused-vars
+  2:18727  error  'c' is defined but never used                                                                                                                                                                                                                no-unused-vars
+  3:1053   error  'j' is defined but never used                                                                                                                                                                                                                no-unused-vars
+  3:7178   error  Unexpected empty object pattern                                                                                                                                                                                                              no-empty-pattern
+  4:2166   error  'y' is defined but never used                                                                                                                                                                                                                no-unused-vars
+
+✖ 566 problems (566 errors, 0 warnings)
+  4 errors and 0 warnings potentially fixable with the `--fix` option.
+
+ ELIFECYCLE  Command failed with exit code 1.

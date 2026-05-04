@@ -157,13 +157,6 @@ function adaptTenantConfigPayload(payload: unknown): unknown {
 
   const config = JSON.parse(JSON.stringify(sanitizedPayload)) as Record<string, unknown>;
 
-  if (typeof config.business === 'object' && config.business !== null) {
-    const business = config.business as Record<string, unknown>;
-    if (typeof business.returnPolicyDays === 'number') {
-      business.returnPolicyDays = `${business.returnPolicyDays} dias`;
-    }
-  }
-
   if (typeof config.filters === 'object' && config.filters !== null) {
     const filters = config.filters as Record<string, unknown>;
     filters.capacidadOptions = normalizeFilterOptions(filters.capacidadOptions);

@@ -4,7 +4,7 @@ import { installMockApi } from './support/mockApi';
 const loginAsCustomer = async (page: Page) => {
   await page.goto('/login');
   await page.getByLabel('Email').fill('qa@example.com');
-  await page.getByLabel('Contraseña').fill('123456');
+  await page.getByLabel('Contraseña').fill('12345678');
   await page.getByRole('button', { name: 'Iniciar Sesión' }).click();
   await expect(page).toHaveURL('/');
 };
@@ -15,7 +15,7 @@ const prepareCheckoutReview = async (page: Page) => {
 
   await page.goto('/carrito');
   await expect(page.getByText('Notebook QA')).toBeVisible();
-  await page.getByRole('button', { name: 'Proceder al Checkout' }).click();
+  await page.getByRole('button', { name: 'Proceder al Pago' }).click();
 
   await expect(page.getByRole('heading', { name: 'Finalizar Compra' })).toBeVisible();
   await page.getByPlaceholder('Ej: Av. Corrientes 1234, Piso 5, Depto B').fill('Av. QA 1234');
@@ -23,7 +23,7 @@ const prepareCheckoutReview = async (page: Page) => {
   await page.getByPlaceholder('Ej: 1001').fill('1000');
   await page.getByRole('button', { name: 'Continuar al Pago' }).click();
   await expect(page.getByRole('heading', { name: 'Información de Pago' })).toBeVisible();
-  await page.getByRole('button', { name: 'Revisar Pedido' }).click();
+  await page.getByRole('button', { name: /Revis[aá].*Pedido/i }).click();
 };
 
 test.describe('frontend hardening', () => {
@@ -56,7 +56,7 @@ test.describe('frontend hardening', () => {
 
     await loginAsCustomer(page);
     await prepareCheckoutReview(page);
-    await page.getByRole('button', { name: /Finalizar Compra/i }).click();
+    await page.getByRole('button', { name: /Confirmar Pedido/i }).click();
 
     await expect(page).toHaveURL(/\/pedido-exitoso$/);
     await expect(page.getByRole('heading', { name: /Pedido Recibido/i })).toBeVisible();
@@ -73,7 +73,7 @@ test.describe('frontend hardening', () => {
 
     await loginAsCustomer(page);
     await prepareCheckoutReview(page);
-    await page.getByRole('button', { name: /Finalizar Compra/i }).click();
+    await page.getByRole('button', { name: /Confirmar Pedido/i }).click();
 
     await expect(page).toHaveURL('/checkout');
     await expect(page.getByText('Pago no validado')).toBeVisible();
@@ -90,7 +90,7 @@ test.describe('frontend hardening', () => {
 
     await loginAsCustomer(page);
     await prepareCheckoutReview(page);
-    await page.getByRole('button', { name: /Finalizar Compra/i }).click();
+    await page.getByRole('button', { name: /Confirmar Pedido/i }).click();
 
     await expect(page).toHaveURL('/carrito');
     await expect(page.getByText('Stock insuficiente')).toBeVisible();
@@ -107,10 +107,10 @@ test.describe('frontend hardening', () => {
 
     await loginAsCustomer(page);
     await prepareCheckoutReview(page);
-    await page.getByRole('button', { name: /Finalizar Compra/i }).click();
+    await page.getByRole('button', { name: /Confirmar Pedido/i }).click();
 
     await expect(page).toHaveURL(/\/login\?session=expired$/);
-    await expect(page.getByText('Tu sesión ha expirado').first()).toBeVisible();
+    await expect(page.getByText(/Tu sesión expir/i).first()).toBeVisible();
 
     await page.goto('/carrito');
     await expect(page.getByText('Notebook QA')).toBeVisible();

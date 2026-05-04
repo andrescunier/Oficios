@@ -10,19 +10,18 @@ import {
   ShoppingCart,
   Plus,
   Minus,
-  Truck,
-  Shield,
-  CreditCard,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useStore } from '@/store/useStore';
 import type { Product, ProductVariant, ProductVariantOption } from '@/types/api';
 import { PriceDisplay } from '@/hooks/usePriceVisibility';
 import { handleImgError } from '@/utils/imageHelpers';
-import { getBusinessConfig } from '@/config/runtime';
-import { SHIPPING } from '@/config/branding';
+import { getBusinessConfig, getUIConfig, getShippingConfig } from '@/config/runtime';
+import { getFeatureBenefitIcon } from '@/components/ui/featureBenefitIcons';
 import { productDetailQueryOptions } from '@/features/catalog/queries';
 import { recordAppEvent } from '@/lib/observability';
+import { setProductJsonLd, clearProductJsonLd } from '@/lib/seo';
+import { trackEcommerceEvent } from '@/lib/analytics';
 
 const sortVariantOptions = (options: ProductVariantOption[]) =>
   options
@@ -44,6 +43,8 @@ export const ProductDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const [quantity, setQuantity] = useState(1);
+  const uiConfig = getUIConfig();
+  const shippingCfg = getShippingConfig();
 
   const {
     addToCart,
@@ -61,6 +62,31 @@ export const ProductDetailPage: React.FC = () => {
   const variantOptions = productQuery.data?.variantOptions || [];
   const loading = productQuery.isLoading;
   const error = productQuery.isError ? 'No se pudo cargar el producto' : null;
+
+  useEffect(() => {
+    if (!product) return;
+    const businessCfg = getBusinessConfig();
+    setProductJsonLd({
+      name: product.name,
+      description: product.description || '',
+      sku: product.sku,
+      image: product.image_url || product.gallery_urls?.[0],
+      price: product.unit_price,
+      currency: businessCfg.defaultCurrency,
+      availability:
+        variants.some(isVariantAvailable) || (product.stock_quantity ?? 0) > 0
+          ? 'in_stock'
+          : 'out_of_stock',
+      url: typeof window !== 'undefined' ? window.location.href : undefined,
+    });
+    trackEcommerceEvent('view_item', {
+      item_id: product.id,
+      item_name: product.name,
+      price: product.unit_price,
+      currency: getBusinessConfig().defaultCurrency,
+    });
+    return () => clearProductJsonLd();
+  }, [product, variants]);
 
   const buildDefaultSelection = (options: ProductVariantOption[], availableVariants: ProductVariant[]) => {
     const defaults: Record<string, string> = {};
@@ -84,10 +110,10 @@ export const ProductDetailPage: React.FC = () => {
       addNotification({
         type: 'error',
         title: 'Error',
-        message: 'No se pudo cargar la información del producto',
+        message: uiConfig.productNotFoundBody,
       });
     }
-  }, [addNotification, productQuery.isError]);
+  }, [addNotification, productQuery.isError, uiConfig.productNotFoundBody]);
 
   useEffect(() => {
     if (product?.id) {
@@ -178,7 +204,7 @@ export const ProductDetailPage: React.FC = () => {
     )
   );
   const isProductFavorite = product ? isFavorite(product.id) : false;
-  const variantSelectionIncomplete = Boolean(product?.has_variants) && variantOptions.length > 0 && !selectedVariant;
+  const variantSelectionIncomplete = Boolean(product?.has_variants) && !selectedVariant;
 
   useEffect(() => {
     setQuantity((current) => Math.min(current, maxQuantity));
@@ -195,8 +221,8 @@ export const ProductDetailPage: React.FC = () => {
     if (variantSelectionIncomplete) {
       addNotification({
         type: 'warning',
-        title: 'Elegí una variante',
-        message: 'Seleccioná color, talle u opciones antes de agregar al carrito.',
+        title: uiConfig.productVariantRequiredTitle,
+        message: uiConfig.productVariantRequiredMessage,
       });
       return;
     }
@@ -204,8 +230,8 @@ export const ProductDetailPage: React.FC = () => {
     if (isOutOfStock) {
       addNotification({
         type: 'error',
-        title: 'Sin stock',
-        message: 'La variante elegida no tiene stock disponible.',
+        title: uiConfig.productOutOfStockNotifTitle,
+        message: uiConfig.productVariantOutOfStockMessage,
       });
       return;
     }
@@ -219,8 +245,8 @@ export const ProductDetailPage: React.FC = () => {
     if (!isAuthenticated) {
       addNotification({
         type: 'warning',
-        title: 'Inicia sesión',
-        message: 'Necesitas iniciar sesión para agregar productos a favoritos',
+        title: uiConfig.productLoginForFavoritesTitle,
+        message: uiConfig.productLoginForFavoritesMessage,
       });
       navigate('/login', { state: { from: `/productos/${id}` } });
       return;
@@ -230,15 +256,15 @@ export const ProductDetailPage: React.FC = () => {
       removeFromFavorites(product.id);
       addNotification({
         type: 'info',
-        title: 'Eliminado de favoritos',
-        message: `${product.name} eliminado de favoritos`,
+        title: uiConfig.productRemovedFromFavoritesTitle,
+        message: `${product.name} ${uiConfig.productRemovedFromFavoritesMessage}`,
       });
     } else {
       addToFavorites(product.id);
       addNotification({
         type: 'success',
-        title: 'Agregado a favoritos',
-        message: `${product.name} agregado a tus favoritos`,
+        title: uiConfig.productAddedToFavoritesTitle,
+        message: `${product.name} ${uiConfig.productAddedToFavoritesMessage}`,
       });
     }
   };
@@ -283,16 +309,17 @@ export const ProductDetailPage: React.FC = () => {
   }
 
   if (error || !product) {
+    const uiConfig = getUIConfig();
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-4xl font-bold mb-4">Producto no encontrado</h1>
-          <p className="text-gray-600 mb-8">{error || 'El producto que buscas no existe'}</p>
+          <h1 className="text-4xl font-bold mb-4">{uiConfig.productNotFoundTitle}</h1>
+          <p className="text-gray-600 mb-8">{error || uiConfig.productNotFoundBody}</p>
           <Link
             to="/productos"
             className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
           >
-            Ver todos los productos
+            {uiConfig.productViewAllLabel}
           </Link>
         </div>
       </div>
@@ -303,9 +330,9 @@ export const ProductDetailPage: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
         <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-8">
-          <Link to="/" className="hover:text-blue-600">Inicio</Link>
+          <Link to="/" className="hover:text-blue-600">{uiConfig.productBreadcrumbHome}</Link>
           <span>/</span>
-          <Link to="/productos" className="hover:text-blue-600">Productos</Link>
+          <Link to="/productos" className="hover:text-blue-600">{uiConfig.productBreadcrumbProducts}</Link>
           <span>/</span>
           <span className="text-gray-900">{product.name}</span>
         </nav>
@@ -315,7 +342,7 @@ export const ProductDetailPage: React.FC = () => {
           className="flex items-center text-gray-600 hover:text-gray-900 mb-6 transition-colors"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Volver
+          {uiConfig.productBackLabel}
         </button>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -336,7 +363,7 @@ export const ProductDetailPage: React.FC = () => {
                 <div>
                   <h1 className="text-3xl font-bold text-gray-900">{product.name}</h1>
                   {product.has_variants && (
-                    <p className="text-sm text-blue-600 mt-1">Producto con variantes</p>
+                    <p className="text-sm text-blue-600 mt-1">{uiConfig.productWithVariantsLabel}</p>
                   )}
                 </div>
                 <button
@@ -370,20 +397,20 @@ export const ProductDetailPage: React.FC = () => {
                 className="text-3xl font-bold text-blue-600"
               />
               {selectedVariant && selectedVariant.unit_price !== null && selectedVariant.unit_price !== undefined && (
-                <p className="text-sm text-gray-500">Precio de la variante seleccionada</p>
+                <p className="text-sm text-gray-500">{uiConfig.productSubtotalLabel}</p>
               )}
             </div>
 
             {product.description && (
               <div className="bg-white p-4 rounded-lg shadow-sm">
-                <h3 className="font-semibold mb-2">Descripción</h3>
+                <h3 className="font-semibold mb-2">{uiConfig.productDescriptionLabel}</h3>
                 <p className="text-gray-700 leading-relaxed">{product.description}</p>
               </div>
             )}
 
             {product.has_variants && variantOptions.length > 0 && (
               <div className="bg-white p-4 rounded-lg shadow-sm space-y-4">
-                <h3 className="font-semibold">Elegí tu variante</h3>
+                <h3 className="font-semibold">{uiConfig.productVariantLabel}</h3>
                 {variantOptions.map((option) => {
                   const availableValues = getAvailableValues(option.name);
                   return (
@@ -442,17 +469,23 @@ export const ProductDetailPage: React.FC = () => {
                   </div>
                 ) : (
                   <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-                    No existe una variante para la combinación elegida.
+                    {uiConfig.productNoVariantMessage}
                   </div>
                 )}
               </div>
             )}
 
+            {product.has_variants && variantOptions.length === 0 && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+                {uiConfig.productNoVariantMessage}
+              </div>
+            )}
+
             <div className="bg-white p-4 rounded-lg shadow-sm space-y-4">
               <div className="flex items-center justify-between">
-                <span className="font-medium">Disponibilidad</span>
+                <span className="font-medium">{uiConfig.productAvailabilityLabel}</span>
                 <span className={isOutOfStock ? 'text-red-600 font-medium' : 'text-green-600 font-medium'}>
-                  {isOutOfStock ? 'Sin stock' : `${effectiveStock} disponibles`}
+                  {isOutOfStock ? uiConfig.productOutOfStockLabel : `${effectiveStock} ${uiConfig.productAvailableUnitsLabel}`}
                 </span>
               </div>
 
@@ -482,33 +515,42 @@ export const ProductDetailPage: React.FC = () => {
                 className="w-full bg-blue-600 text-white py-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center"
               >
                 <ShoppingCart className="w-5 h-5 mr-2" />
-                {variantSelectionIncomplete ? 'Elegí una variante' : 'Agregar al Carrito'}
+                {variantSelectionIncomplete ? uiConfig.productSelectVariantLabel : uiConfig.productAddToCartLabel}
               </button>
               </>
               )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-white p-4 rounded-lg shadow-sm text-center">
-                <Truck className="w-6 h-6 text-blue-600 mx-auto mb-2" />
-                <h4 className="font-medium mb-1">{SHIPPING.PRODUCT_BADGE_TITLE}</h4>
-                <p className="text-sm text-gray-600">{SHIPPING.PRODUCT_BADGE_DESCRIPTION}</p>
-              </div>
-              <div className="bg-white p-4 rounded-lg shadow-sm text-center">
-                <Shield className="w-6 h-6 text-green-600 mx-auto mb-2" />
-                <h4 className="font-medium mb-1">Compra Segura</h4>
-                <p className="text-sm text-gray-600">Tus datos están protegidos</p>
-              </div>
-              <div className="bg-white p-4 rounded-lg shadow-sm text-center">
-                <CreditCard className="w-6 h-6 text-purple-600 mx-auto mb-2" />
-                <h4 className="font-medium mb-1">Múltiples Pagos</h4>
-                <p className="text-sm text-gray-600">Transferencia, efectivo y más</p>
-              </div>
+              {(() => {
+                const ShippingIcon = getFeatureBenefitIcon(uiConfig.productShippingBadgeIcon);
+                const SecureIcon = getFeatureBenefitIcon(uiConfig.productBuySecureIcon);
+                const PaymentsIcon = getFeatureBenefitIcon(uiConfig.productMultiplePaymentsIcon);
+                return (
+                  <>
+                    <div className="bg-white p-4 rounded-lg shadow-sm text-center">
+                      <ShippingIcon className="w-6 h-6 text-blue-600 mx-auto mb-2" />
+                      <h4 className="font-medium mb-1">{shippingCfg.productBadgeTitle}</h4>
+                      <p className="text-sm text-gray-600">{shippingCfg.productBadgeDescription}</p>
+                    </div>
+                    <div className="bg-white p-4 rounded-lg shadow-sm text-center">
+                      <SecureIcon className="w-6 h-6 text-green-600 mx-auto mb-2" />
+                      <h4 className="font-medium mb-1">{uiConfig.productBuySecureTitle}</h4>
+                      <p className="text-sm text-gray-600">{uiConfig.productBuySecureDesc}</p>
+                    </div>
+                    <div className="bg-white p-4 rounded-lg shadow-sm text-center">
+                      <PaymentsIcon className="w-6 h-6 text-purple-600 mx-auto mb-2" />
+                      <h4 className="font-medium mb-1">{uiConfig.productMultiplePaymentsTitle}</h4>
+                      <p className="text-sm text-gray-600">{uiConfig.productMultiplePaymentsDesc}</p>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
 
             {selectedVariant && (
               <div className="text-sm text-gray-500">
-                Subtotal actual: {formatPrice(effectivePrice * quantity)}
+                {uiConfig.productSubtotalLabel} {formatPrice(effectivePrice * quantity)}
               </div>
             )}
           </div>

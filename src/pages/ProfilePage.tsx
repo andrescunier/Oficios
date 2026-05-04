@@ -18,11 +18,12 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import { useStore } from '@/store/useStore';
-import { getBusinessConfig } from '@/config/runtime';
+import { getBusinessConfig, getUIConfig } from '@/config/runtime';
 
 export const ProfilePage: React.FC = () => {
   const { auth, logout, addNotification } = useStore();
   const navigate = useNavigate();
+  const uiCfg = getUIConfig();
   
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -39,14 +40,14 @@ export const ProfilePage: React.FC = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <Lock className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-          <h2 className="text-2xl font-bold mb-4">Acceso Requerido</h2>
-          <p className="text-gray-600 mb-6">Necesitas iniciar sesión para ver tu perfil</p>
+          <h2 className="text-2xl font-bold mb-4">{uiCfg.authRequiredTitle}</h2>
+          <p className="text-gray-600 mb-6">{uiCfg.profileAuthMessage}</p>
           <Link 
             to="/login" 
             state={{ from: '/perfil' }}
             className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
           >
-            Iniciar Sesión
+            {uiCfg.authLoginButtonLabel}
           </Link>
         </div>
       </div>
@@ -115,9 +116,9 @@ export const ProfilePage: React.FC = () => {
                 className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Volver
+                {uiCfg.profileBackLabel}
               </Link>
-              <h1 className="text-2xl font-bold">Mi Perfil</h1>
+              <h1 className="text-2xl font-bold">{uiCfg.profilePageTitle}</h1>
             </div>
             
             <div className="flex items-center space-x-2">
@@ -127,7 +128,7 @@ export const ProfilePage: React.FC = () => {
                   className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   <Edit className="w-4 h-4 mr-2" />
-                  Editar Perfil
+                  {uiCfg.profileEditLabel}
                 </button>
               ) : (
                 <div className="flex space-x-2">
@@ -136,7 +137,7 @@ export const ProfilePage: React.FC = () => {
                     className="flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
                   >
                     <X className="w-4 h-4 mr-2" />
-                    Cancelar
+                    {uiCfg.profileCancelLabel}
                   </button>
                   <button
                     onClick={handleSave}
@@ -144,7 +145,7 @@ export const ProfilePage: React.FC = () => {
                     className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-400"
                   >
                     <Save className="w-4 h-4 mr-2" />
-                    {isLoading ? 'Guardando...' : 'Guardar'}
+                    {isLoading ? uiCfg.profileSavingLabel : uiCfg.profileSaveLabel}
                   </button>
                 </div>
               )}
@@ -161,12 +162,12 @@ export const ProfilePage: React.FC = () => {
             <div className="bg-white rounded-lg shadow-sm p-6">
               <div className="flex items-center mb-6">
                 <User className="w-5 h-5 text-blue-600 mr-2" />
-                <h2 className="text-lg font-semibold">Información Personal</h2>
+                <h2 className="text-lg font-semibold">{uiCfg.profilePersonalInfoTitle}</h2>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{uiCfg.profileFirstNameLabel}</label>
                   {isEditing ? (
                     <input
                       type="text"
@@ -176,13 +177,13 @@ export const ProfilePage: React.FC = () => {
                     />
                   ) : (
                     <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
-                      {auth.user?.person?.first_name || 'No especificado'}
+                      {auth.user?.person?.first_name || uiCfg.profileNotSpecified}
                     </p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Apellido</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{uiCfg.profileLastNameLabel}</label>
                   {isEditing ? (
                     <input
                       type="text"
@@ -192,21 +193,21 @@ export const ProfilePage: React.FC = () => {
                     />
                   ) : (
                     <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
-                      {auth.user?.person?.last_name || 'No especificado'}
+                      {auth.user?.person?.last_name || uiCfg.profileNotSpecified}
                     </p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{uiCfg.profileEmailLabel}</label>
                   <p className="text-gray-900 bg-gray-100 px-3 py-2 rounded-lg">
                     {auth.user?.email}
-                    <span className="ml-2 text-xs text-gray-500">(No editable)</span>
+                    <span className="ml-2 text-xs text-gray-500">{uiCfg.profileEmailReadOnly}</span>
                   </p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{uiCfg.profilePhoneLabel}</label>
                   {isEditing ? (
                     <input
                       type="tel"
@@ -216,7 +217,7 @@ export const ProfilePage: React.FC = () => {
                     />
                   ) : (
                     <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
-                      {auth.user?.person?.phone || 'No especificado'}
+                      {auth.user?.person?.phone || uiCfg.profileNotSpecified}
                     </p>
                   )}
                 </div>
@@ -227,22 +228,22 @@ export const ProfilePage: React.FC = () => {
           {/* Sidebar */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-              <h2 className="font-semibold mb-4">Información de Cuenta</h2>
+              <h2 className="font-semibold mb-4">{uiCfg.profileAccountInfoTitle}</h2>
               
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Usuario:</span>
+                  <span className="text-sm text-gray-600">{uiCfg.profileUsernameLabel}</span>
                   <span className="text-sm font-medium">{auth.user?.username}</span>
                 </div>
                 
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Estado:</span>
-                  <span className="text-sm font-medium text-green-600">✓ Activo</span>
+                  <span className="text-sm text-gray-600">{uiCfg.profileStatusLabel}</span>
+                  <span className="text-sm font-medium text-green-600">{uiCfg.profileStatusActive}</span>
                 </div>
                 
                 {auth.user?.created_at && (
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Miembro desde:</span>
+                    <span className="text-sm text-gray-600">{uiCfg.profileMemberSinceLabel}</span>
                     <span className="text-sm font-medium">{formatDate(auth.user.created_at)}</span>
                   </div>
                 )}
@@ -251,7 +252,7 @@ export const ProfilePage: React.FC = () => {
 
             {/* Acciones */}
             <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="font-semibold mb-4">Acciones</h2>
+              <h2 className="font-semibold mb-4">{uiCfg.profileActionsTitle}</h2>
               
               <div className="space-y-3">
                 <Link 
@@ -259,7 +260,7 @@ export const ProfilePage: React.FC = () => {
                   className="flex items-center w-full p-3 text-left bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
                 >
                   <Calendar className="w-4 h-4 mr-3 text-gray-600" />
-                  <span className="text-sm">Ver mis pedidos</span>
+                  <span className="text-sm">{uiCfg.profileViewOrdersLabel}</span>
                 </Link>
                 
                 <Link 
@@ -267,7 +268,7 @@ export const ProfilePage: React.FC = () => {
                   className="flex items-center w-full p-3 text-left bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
                 >
                   <User className="w-4 h-4 mr-3 text-gray-600" />
-                  <span className="text-sm">Mis favoritos</span>
+                  <span className="text-sm">{uiCfg.profileFavoritesLabel}</span>
                 </Link>
                 
                 <button
@@ -275,7 +276,7 @@ export const ProfilePage: React.FC = () => {
                   className="flex items-center w-full p-3 text-left bg-red-50 hover:bg-red-100 rounded-lg transition-colors text-red-700"
                 >
                   <LogOut className="w-4 h-4 mr-3" />
-                  <span className="text-sm">Cerrar sesión</span>
+                  <span className="text-sm">{uiCfg.profileLogoutLabel}</span>
                 </button>
               </div>
             </div>

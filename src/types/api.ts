@@ -85,10 +85,14 @@ export interface Product extends BaseEntity {
   gallery_urls?: string[];
   // Campos adicionales para ecommerce
   image_url?: string;
+  family?: string;
   category?: string;
+  subcategory?: string;
   stock_quantity?: number;
   is_featured?: boolean;
   is_active?: boolean;
+  variants?: ProductVariant[];
+  variant_options?: ProductVariantOption[];
 }
 
 export interface ProductVariantOptionValue {

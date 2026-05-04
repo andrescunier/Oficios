@@ -5,6 +5,7 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { WhatsAppButton } from '@/components/ui/WhatsAppButton';
 import { NotificationToast } from '@/components/ui/NotificationToast';
+import { ConsentBanner } from '@/components/ui/ConsentBanner';
 import { useStore } from '@/store/useStore';
 import log from '@/lib/logger';
 import { queryClient } from '@/lib/queryClient';
@@ -12,6 +13,8 @@ import { RouteLoader } from '@/components/ui/RouteLoader';
 import { recordRouteChange } from '@/lib/observability';
 import { consumePendingRedirect } from '@/features/auth/session';
 import { PENDING_REDIRECT_EVENT } from '@/lib/session';
+import { applySeo } from '@/lib/seo';
+import { bootstrapAnalytics, trackPageView } from '@/lib/analytics';
 import './App.css';
 
 function ScrollToTop() {
@@ -20,6 +23,8 @@ function ScrollToTop() {
   useEffect(() => {
     log.router.debug('Navegación:', pathname);
     recordRouteChange(pathname);
+    applySeo({ pathname });
+    trackPageView(pathname, document.title);
     window.scrollTo(0, 0);
   }, [pathname]);
 
@@ -81,10 +86,15 @@ const CookiesPolicy = lazy(() => import('@/pages/CookiesPolicy').then((module) =
 const OrderTracking = lazy(() => import('@/pages/OrderTracking').then((module) => ({ default: module.OrderTracking })));
 const ReturnsPage = lazy(() => import('@/pages/ReturnsPage').then((module) => ({ default: module.ReturnsPage })));
 const WarrantyPage = lazy(() => import('@/pages/WarrantyPage').then((module) => ({ default: module.WarrantyPage })));
+const NotFound = lazy(() => import('@/pages/NotFound').then((module) => ({ default: module.NotFound })));
 const RegistrationSuccess = lazy(() => import('@/pages/RegistrationSuccess'));
 const OrderSuccessPage = lazy(() => import('@/pages/OrderSuccessPage'));
 
 function App() {
+  useEffect(() => {
+    applySeo({ pathname: typeof window !== 'undefined' ? window.location.pathname : '/' });
+    bootstrapAnalytics();
+  }, []);
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
@@ -120,17 +130,7 @@ function App() {
                 <Route path="/categoria/:category" element={<CategoryPage />} />
                 <Route path="/categoria/:category/:subcategory" element={<CategoryPage />} />
                 <Route path="/categoria/:category/:subcategory/:subsubcategory" element={<CategoryPage />} />
-                <Route path="*" element={
-                  <div className="min-h-screen flex items-center justify-center">
-                    <div className="text-center">
-                      <h1 className="text-4xl font-bold mb-4">404</h1>
-                      <p className="text-gray-600 mb-8">Página no encontrada</p>
-                      <Link to="/" className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
-                        Volver al Inicio
-                      </Link>
-                    </div>
-                  </div>
-                } />
+                <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
           </main>
@@ -141,6 +141,9 @@ function App() {
           
           {/* Notificaciones toast */}
           <NotificationToast />
+
+          {/* GDPR / cookie consent banner */}
+          <ConsentBanner />
         </div>
       </Router>
     </QueryClientProvider>

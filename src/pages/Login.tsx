@@ -1,34 +1,26 @@
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    /**
- * Página de inicio de sesión
- */
-
-import React, { useState } from 'react';
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Eye, EyeOff, LogIn, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, LogIn, Loader2, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { BRANDING, CONTACT } from '@/config/branding';
+import { getUIConfig, getValidationConfig } from '@/config/runtime';
+import { buildEmailSchema, buildPasswordSchema, formatTemplate } from '@/lib/validationMessages';
 import { useStore } from '@/store/useStore';
 import log from '@/lib/logger';
 import { clearAuthSession } from '@/features/auth/session';
 import { useLoginMutation } from '@/features/auth/mutations';
 
-// Schema de validación
+// Schema construido dinámicamente desde validation config (sin reglas de complejidad para login)
 const loginSchema = z.object({
-  email: z
-    .string()
-    .min(1, 'El email es requerido')
-    .email('Formato de email inválido'),
-  password: z
-    .string()
-    .min(1, 'La contraseña es requerida')
-    .min(6, 'La contraseña debe tener al menos 6 caracteres'),
+  email: buildEmailSchema(),
+  password: buildPasswordSchema({ enforceComplexity: false }),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -37,17 +29,25 @@ export const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const uiConfig = getUIConfig();
   
   const navigate = useNavigate();
   const location = useLocation();
   const { login, addNotification, logout } = useStore();
   const loginMutation = useLoginMutation();
   const [sessionExpired, setSessionExpired] = useState(false);
+  const [sessionSuperseded, setSessionSuperseded] = useState(false);
 
-    // Detectar parámetro de sesión expirada
+    // Detectar parámetro de sesión expirada / reemplazada por otro login
     React.useEffect(() => {
       const params = new URLSearchParams(location.search);
-      if (params.get('session') === 'invalid' || params.get('session') === 'expired') {
+      const reason = params.get('session');
+      if (reason === 'superseded') {
+        setSessionSuperseded(true);
+      } else if (
+        reason === 'invalid' ||
+        reason === 'expired'
+      ) {
         setSessionExpired(true);
       }
     }, [location.search]);
@@ -62,10 +62,11 @@ export const Login: React.FC = () => {
     try {
       logout();
       clearAuthSession();
+      const v = getValidationConfig().messages;
       addNotification({
         type: 'success',
-        title: 'Sesión limpiada',
-        message: 'Todos los datos han sido eliminados correctamente',
+        title: v.sessionCleanedTitle,
+        message: v.sessionCleanedMessage,
       });
       navigate('/login', { replace: true });
     } catch (error) {
@@ -95,19 +96,21 @@ export const Login: React.FC = () => {
       // Mostrar notificación de éxito
       addNotification({
         type: 'success',
-        title: 'Bienvenido',
-        message: `Hola ${user.person?.first_name || 'Usuario'}!`,
+        title: uiConfig.loginSuccessTitle,
+        message: formatTemplate(getValidationConfig().messages.loginGreeting, {
+          name: user.person?.first_name || 'Usuario',
+        }),
       });
 
       // Redirigir a la página anterior o al inicio
       log.auth.info('Login exitoso, redirigiendo a:', from);
       navigate(from, { replace: true });
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Error al iniciar sesión';
+      const errorMessage = err instanceof Error ? err.message : getValidationConfig().messages.loginGenericError;
       setError(errorMessage);
       addNotification({
         type: 'error',
-        title: 'Error de autenticación',
+        title: uiConfig.loginErrorTitle,
         message: errorMessage,
       });
     } finally {
@@ -119,17 +122,24 @@ export const Login: React.FC = () => {
     <div className="min-h-screen flex items-center justify-center bg-muted/50 px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Iniciar Sesión</CardTitle>
+          <CardTitle className="text-2xl">{uiConfig.loginTitle}</CardTitle>
           <CardDescription>
-            Ingresa a tu cuenta de {BRANDING.APP_NAME}
+            {uiConfig.loginSubtitle}
           </CardDescription>
         </CardHeader>
         
         <CardContent>
+            {sessionSuperseded && (
+              <Alert variant="warning" className="mb-6">
+                <AlertDescription>
+                  Tu sesión fue cerrada porque iniciaste sesión en otro dispositivo. Volvé a ingresar para continuar acá.
+                </AlertDescription>
+              </Alert>
+            )}
             {sessionExpired && (
               <Alert variant="warning" className="mb-6">
                 <AlertDescription>
-                  Tu sesión ha expirado. Por favor, inicia sesión nuevamente.
+                  {uiConfig.loginSessionExpiredMessage}
                 </AlertDescription>
               </Alert>
             )}
@@ -141,11 +151,11 @@ export const Login: React.FC = () => {
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{uiConfig.loginEmailLabel}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="tu@email.com"
+                placeholder={uiConfig.loginEmailPlaceholder}
                 {...register('email')}
                 className={errors.email ? 'border-destructive' : ''}
               />
@@ -155,12 +165,12 @@ export const Login: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Contraseña</Label>
+              <Label htmlFor="password">{uiConfig.loginPasswordLabel}</Label>
               <div className="relative">
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="Tu contraseña"
+                  placeholder={uiConfig.loginPasswordPlaceholder}
                   {...register('password')}
                   className={errors.password ? 'border-destructive pr-10' : 'pr-10'}
                 />
@@ -183,36 +193,56 @@ export const Login: React.FC = () => {
               )}
             </div>
 
-            <div className="flex items-center justify-between">
-              <a
-                href={`${CONTACT.WHATSAPP_LINK}?text=${encodeURIComponent('Hola, necesito recuperar mi contraseña')}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-primary hover:underline"
-              >
-                ¿Olvidaste tu contraseña?
-              </a>
+            <div className="flex items-center justify-end">
+              <Link to="/registro" className="text-sm text-muted-foreground hover:text-foreground">
+                {uiConfig.loginNoAccountLinkText} →
+              </Link>
             </div>
 
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Iniciando sesión...
+                  {uiConfig.loginLoadingLabel}
                 </>
               ) : (
                 <>
                   <LogIn className="mr-2 h-4 w-4" />
-                  Iniciar Sesión
+                  {uiConfig.loginSubmitLabel}
                 </>
               )}
+            </Button>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">o</span>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full border-green-600 text-green-700 hover:bg-green-50 hover:text-green-800"
+              asChild
+            >
+              <a
+                href={`${CONTACT.WHATSAPP_LINK}?text=${encodeURIComponent(uiConfig.loginForgotPasswordMessage)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <MessageCircle className="mr-2 h-4 w-4" />
+                {uiConfig.loginForgotPasswordLabel}
+              </a>
             </Button>
           </form>
 
           <div className="mt-6 text-center text-sm">
-            <span className="text-muted-foreground">¿No tienes cuenta? </span>
+            <span className="text-muted-foreground">{uiConfig.loginNoAccountText} </span>
             <Link to="/registro" className="text-primary hover:underline">
-              Regístrate aquí
+              {uiConfig.loginNoAccountLinkText}
             </Link>
           </div>
 
@@ -225,7 +255,7 @@ export const Login: React.FC = () => {
               onClick={handleClearSession}
               className="text-xs text-muted-foreground hover:text-foreground"
             >
-              ¿Problemas con la sesión? Limpiar datos
+              {uiConfig.loginClearSessionLabel}
             </Button>
           </div>
         </CardContent>

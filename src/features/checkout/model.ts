@@ -1,5 +1,5 @@
 import { BUSINESS } from '@/config/branding';
-import { getPaymentMethodsConfig, getShippingConfig } from '@/config/runtime';
+import { getBusinessConfig, getPaymentMethodsConfig, getShippingConfig } from '@/config/runtime';
 import type { CartItem } from '@/types/api';
 import type { RegistrationDraft } from '@/features/auth/session';
 
@@ -103,7 +103,7 @@ export const validateShippingInfo = (shippingInfo: ShippingInfo): { valid: boole
   };
 };
 
-function resolveShippingCharge(): {
+function resolveShippingCharge(cartSubtotal?: number): {
   lineItem: ShippingChargeLine;
   metadata: ShippingChargeMetadata;
 } | null {
@@ -116,6 +116,12 @@ function resolveShippingCharge(): {
     chargeAmount <= 0 ||
     !shipping.chargeProductId.trim()
   ) {
+    return null;
+  }
+
+  // Apply free shipping threshold: if cart subtotal meets or exceeds the threshold, no charge
+  const threshold = getBusinessConfig().freeShippingThreshold;
+  if (threshold > 0 && cartSubtotal !== undefined && cartSubtotal >= threshold) {
     return null;
   }
 
@@ -142,8 +148,8 @@ function resolveShippingCharge(): {
   };
 }
 
-export const getCheckoutShippingCharge = (): number => {
-  return resolveShippingCharge()?.lineItem.unit_price || 0;
+export const getCheckoutShippingCharge = (cartSubtotal?: number): number => {
+  return resolveShippingCharge(cartSubtotal)?.lineItem.unit_price || 0;
 };
 
 export const buildCheckoutPayload = (args: {
@@ -153,7 +159,7 @@ export const buildCheckoutPayload = (args: {
   totalAmount: number;
   paymentMethod: PaymentInfo['paymentMethod'];
 }): CheckoutPayload => {
-  const shippingCharge = resolveShippingCharge();
+  const shippingCharge = resolveShippingCharge(args.totalAmount);
   const baseItems = args.items.map((item) => ({
     product_id: item.product.id,
     description: item.variant

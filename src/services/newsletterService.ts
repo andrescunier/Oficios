@@ -1,6 +1,8 @@
 import { getNewsletterConfig } from '@/config/runtime';
 
-export async function subscribeToNewsletter(email: string): Promise<void> {
+type SubscribePayload = { email: string } | { telefono: string };
+
+async function postSubscription(payload: SubscribePayload): Promise<void> {
   const newsletter = getNewsletterConfig();
 
   if (!newsletter.enabled || !newsletter.endpoint.trim()) {
@@ -14,10 +16,18 @@ export async function subscribeToNewsletter(email: string): Promise<void> {
       Accept: 'application/json',
       ...newsletter.headers,
     },
-    body: JSON.stringify({ email }),
+    body: JSON.stringify(payload),
   });
 
   if (!response.ok) {
     throw new Error(`newsletter_request_failed:${response.status}`);
   }
+}
+
+export async function subscribeToNewsletter(email: string): Promise<void> {
+  return postSubscription({ email });
+}
+
+export async function subscribePhoneToNewsletter(telefono: string): Promise<void> {
+  return postSubscription({ telefono });
 }

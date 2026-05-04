@@ -7,7 +7,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CreditCard, MapPin, User, Mail, Phone, Lock } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { PAYMENT_INFO, LEGAL, BUSINESS, SHIPPING } from '@/config/branding';
-import { getPaymentMethodsConfig } from '@/config/runtime';
+import { getPaymentMethodsConfig, getUIConfig, getShippingConfig, getValidationConfig } from '@/config/runtime';
+import { checkoutFieldRequiredMessage } from '@/lib/validationMessages';
 import log from '@/lib/logger';
 import {
   buildCheckoutPayload,
@@ -30,7 +31,7 @@ export const CheckoutPage: React.FC = () => {
   
   const defaultPaymentMethod = useMemo(() => getDefaultPaymentMethod(), []);
   const paymentMethodsConfig = useMemo(() => getPaymentMethodsConfig(), []);
-  const shippingAmount = useMemo(() => getCheckoutShippingCharge(), []);
+  const shippingAmount = useMemo(() => getCheckoutShippingCharge(cart.subtotal), [cart.subtotal]);
   const totalWithShipping = cart.total_amount + shippingAmount;
   
   const [currentStep, setCurrentStep] = useState<'shipping' | 'payment' | 'review'>('shipping');
@@ -67,27 +68,29 @@ export const CheckoutPage: React.FC = () => {
     }).format(price);
   };
 
+  const uiCfg = getUIConfig();
+
   // Redirigir al login si no está autenticado
   if (!auth.isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <Lock className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-          <h2 className="text-2xl font-bold mb-4">Iniciar Sesión Requerido</h2>
-          <p className="text-gray-600 mb-6">Necesitas iniciar sesión para realizar una compra</p>
+          <h2 className="text-2xl font-bold mb-4">{getUIConfig().authRequiredTitle}</h2>
+          <p className="text-gray-600 mb-6">{getValidationConfig().messages.checkoutAuthRequiredMessage}</p>
           <div className="space-x-4">
             <Link 
               to="/login" 
               state={{ from: '/checkout' }}
               className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors inline-block"
             >
-              Iniciar Sesión
+              {getUIConfig().authLoginButtonLabel}
             </Link>
             <Link 
               to="/registro" 
               className="bg-gray-200 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-300 transition-colors inline-block"
             >
-              Registrarse
+              {getUIConfig().authRegisterButtonLabel}
             </Link>
           </div>
         </div>
@@ -112,10 +115,11 @@ export const CheckoutPage: React.FC = () => {
   const validateShipping = () => {
     const result = validateShippingInfo(shippingInfo);
     if (!result.valid) {
+      const v = getValidationConfig().messages;
       addNotification({
         type: 'error',
-        title: 'Campo requerido',
-        message: `Por favor completa el campo ${result.missingField}`,
+        title: v.checkoutFieldRequiredTitle,
+        message: checkoutFieldRequiredMessage(result.missingField || ''),
       });
       return false;
     }
@@ -244,13 +248,13 @@ export const CheckoutPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">Carrito vacío</h2>
-          <p className="text-gray-600 mb-6">No tienes productos en tu carrito para procesar</p>
+          <h2 className="text-2xl font-bold mb-4">{uiCfg.checkoutCartEmptyTitle}</h2>
+          <p className="text-gray-600 mb-6">{uiCfg.checkoutCartEmptyMsg}</p>
           <Link 
             to="/productos" 
             className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
           >
-            Ver Productos
+            {uiCfg.checkoutViewProductsLabel}
           </Link>
         </div>
       </div>
@@ -264,12 +268,13 @@ export const CheckoutPage: React.FC = () => {
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold">Finalizar Compra</h1>
+              <h1 className="text-2xl font-bold">{uiCfg.checkoutTitle}</h1>
               {/* Indicador de usuario logueado */}
               {auth.user && (
                 <div className="flex items-center mt-2 text-sm text-green-600">
                   <User className="w-4 h-4 mr-1" />
-                  <span>Sesión iniciada como: <strong>{auth.user.username}</strong></span>
+                  <span>
+                    Sesión iniciada como: <strong>{auth.user.username}</strong></span>
                   <span className="ml-2 bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">✓ Autenticado</span>
                 </div>
               )}
@@ -290,7 +295,7 @@ export const CheckoutPage: React.FC = () => {
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep === 'shipping' ? 'bg-blue-600 text-white' : currentStep === 'payment' || currentStep === 'review' ? 'bg-green-600 text-white' : 'bg-gray-300'}`}>
                   1
                 </div>
-                <span className="ml-2 font-medium">Envío</span>
+                <span className="ml-2 font-medium">{uiCfg.checkoutStepShipping}</span>
               </div>
               
               <div className={`w-16 h-1 ${currentStep === 'payment' || currentStep === 'review' ? 'bg-green-600' : 'bg-gray-300'}`}></div>
@@ -299,7 +304,7 @@ export const CheckoutPage: React.FC = () => {
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep === 'payment' ? 'bg-blue-600 text-white' : currentStep === 'review' ? 'bg-green-600 text-white' : 'bg-gray-300'}`}>
                   2
                 </div>
-                <span className="ml-2 font-medium">Pago</span>
+                <span className="ml-2 font-medium">{uiCfg.checkoutStepPayment}</span>
               </div>
               
               <div className={`w-16 h-1 ${currentStep === 'review' ? 'bg-green-600' : 'bg-gray-300'}`}></div>
@@ -308,7 +313,7 @@ export const CheckoutPage: React.FC = () => {
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep === 'review' ? 'bg-blue-600 text-white' : 'bg-gray-300'}`}>
                   3
                 </div>
-                <span className="ml-2 font-medium">Revisar</span>
+                <span className="ml-2 font-medium">{uiCfg.checkoutStepReview}</span>
               </div>
             </div>
           </div>
@@ -325,7 +330,7 @@ export const CheckoutPage: React.FC = () => {
               <div className="bg-white rounded-lg shadow-sm p-6">
                 <div className="flex items-center mb-6">
                   <MapPin className="w-5 h-5 text-blue-600 mr-2" />
-                  <h2 className="text-lg font-semibold">Información de Envío</h2>
+                  <h2 className="text-lg font-semibold">{uiCfg.checkoutShippingTitle}</h2>
                 </div>
 
                 {/* Mostrar datos del usuario registrado */}
@@ -333,7 +338,7 @@ export const CheckoutPage: React.FC = () => {
                   <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                     <div className="flex items-center mb-2">
                       <User className="w-4 h-4 text-blue-600 mr-2" />
-                      <h3 className="font-medium text-blue-800">Datos de tu cuenta</h3>
+                      <h3 className="font-medium text-blue-800">{uiCfg.checkoutAccountDataTitle}</h3>
                     </div>
                     <div className="text-sm text-blue-700">
                       <p><strong>Usuario:</strong> {auth.user.username}</p>
@@ -349,7 +354,7 @@ export const CheckoutPage: React.FC = () => {
                 <form onSubmit={handleShippingSubmit} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">{uiCfg.checkoutFieldFirst} *</label>
                       <input
                         type="text"
                         value={shippingInfo.firstName}
@@ -363,7 +368,7 @@ export const CheckoutPage: React.FC = () => {
                       )}
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Apellido *</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">{uiCfg.checkoutFieldLast} *</label>
                       <input
                         type="text"
                         value={shippingInfo.lastName}
@@ -379,7 +384,7 @@ export const CheckoutPage: React.FC = () => {
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{uiCfg.checkoutFieldEmail} *</label>
                     <input
                       type="email"
                       value={shippingInfo.email}
@@ -394,7 +399,7 @@ export const CheckoutPage: React.FC = () => {
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{uiCfg.checkoutFieldPhone} *</label>
                     <input
                       type="tel"
                       value={shippingInfo.phone}
@@ -409,11 +414,11 @@ export const CheckoutPage: React.FC = () => {
                   </div>
                   
                   <div className="border-t pt-4 mt-6">
-                    <h3 className="font-medium text-gray-800 mb-4">📦 Dirección de Entrega</h3>
+                    <h3 className="font-medium text-gray-800 mb-4">📦 {uiCfg.checkoutAddressTitle}</h3>
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Dirección de Entrega *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{uiCfg.checkoutFieldAddress} *</label>
                     <input
                       type="text"
                       value={shippingInfo.address}
@@ -426,7 +431,7 @@ export const CheckoutPage: React.FC = () => {
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Ciudad *</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">{uiCfg.checkoutFieldCity} *</label>
                       <input
                         type="text"
                         value={shippingInfo.city}
@@ -437,7 +442,7 @@ export const CheckoutPage: React.FC = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Provincia</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">{uiCfg.checkoutFieldState}</label>
                       <input
                         type="text"
                         value={shippingInfo.state}
@@ -447,7 +452,7 @@ export const CheckoutPage: React.FC = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Código Postal *</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">{uiCfg.checkoutFieldZip} *</label>
                       <input
                         type="text"
                         value={shippingInfo.zipCode}
@@ -463,7 +468,7 @@ export const CheckoutPage: React.FC = () => {
                     type="submit"
                     className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
                   >
-                    Continuar al Pago
+                    {uiCfg.checkoutContinueToPayment}
                   </button>
                 </form>
               </div>
@@ -474,12 +479,12 @@ export const CheckoutPage: React.FC = () => {
               <div className="bg-white rounded-lg shadow-sm p-6">
                 <div className="flex items-center mb-6">
                   <CreditCard className="w-5 h-5 text-blue-600 mr-2" />
-                  <h2 className="text-lg font-semibold">Información de Pago</h2>
+                  <h2 className="text-lg font-semibold">{uiCfg.checkoutPaymentTitle}</h2>
                 </div>
                 
                 <form onSubmit={handlePaymentSubmit} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Método de Pago</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{uiCfg.checkoutPaymentMethodLabel}</label>
                     <div className="space-y-3">
                       {/* Transferencia Bancaria */}
                       {paymentMethodsConfig.transferencia && (
@@ -500,9 +505,9 @@ export const CheckoutPage: React.FC = () => {
                           className="mr-3 text-blue-600"
                         />
                         <div className="flex-1">
-                          <span className="font-medium text-blue-800">Transferencia Bancaria</span>
+                          <span className="font-medium text-blue-800">{uiCfg.checkoutTransferLabel}</span>
                           <p className="text-sm text-gray-600 mt-1">
-                            💳 Método de pago seguro y directo
+                            💳 {uiCfg.checkoutTransferDesc}
                           </p>
                         </div>
                       </div>
@@ -527,9 +532,9 @@ export const CheckoutPage: React.FC = () => {
                           className="mr-3 text-green-600"
                         />
                         <div className="flex-1">
-                          <span className="font-medium text-green-800">Efectivo</span>
+                          <span className="font-medium text-green-800">{uiCfg.checkoutEfectivoLabel}</span>
                           <p className="text-sm text-gray-600 mt-1">
-                            💵 Pago en efectivo al momento de la entrega o retiro
+                            💵 {uiCfg.checkoutEfectivoDesc}
                           </p>
                         </div>
                       </div>
@@ -540,30 +545,30 @@ export const CheckoutPage: React.FC = () => {
                   {/* Información de transferencia */}
                   {paymentInfo.paymentMethod === 'transferencia' && (
                   <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                    <h3 className="font-medium text-gray-800 mb-3">📋 Datos para la Transferencia</h3>
+                    <h3 className="font-medium text-gray-800 mb-3">📋 {uiCfg.checkoutTransferInfoTitle}</h3>
                     <div className="space-y-2 text-sm">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <span className="font-medium text-gray-700">Banco:</span>
+                          <span className="font-medium text-gray-700">{uiCfg.checkoutBankLabel}:</span>
                           <p className="text-gray-600">{PAYMENT_INFO.BANK_NAME}</p>
                         </div>
                         <div>
-                          <span className="font-medium text-gray-700">Titular:</span>
+                          <span className="font-medium text-gray-700">{uiCfg.checkoutHolderLabel}:</span>
                           <p className="text-gray-600">{PAYMENT_INFO.ACCOUNT_HOLDER}</p>
                         </div>
                         <div>
-                          <span className="font-medium text-gray-700">CBU:</span>
+                          <span className="font-medium text-gray-700">{uiCfg.checkoutCbuLabel}:</span>
                           <p className="text-gray-600 font-mono">{PAYMENT_INFO.CBU}</p>
                         </div>
                         <div>
-                          <span className="font-medium text-gray-700">Alias:</span>
+                          <span className="font-medium text-gray-700">{uiCfg.checkoutAliasLabel}:</span>
                           <p className="text-gray-600">{PAYMENT_INFO.ALIAS}</p>
                         </div>
                       </div>
                     </div>
                     <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded">
                       <p className="text-sm text-yellow-800">
-                        <strong>📝 Importante:</strong> Una vez realizada la transferencia, envía el comprobante por WhatsApp al {PAYMENT_INFO.WA_VERIFICATION} con tu número de orden para acelerar la confirmación.
+                        <strong>📝 Importante:</strong> {uiCfg.checkoutTransferImportantNote.replace('{wa}', PAYMENT_INFO.WA_VERIFICATION)} al {PAYMENT_INFO.WA_VERIFICATION}
                       </p>
                     </div>
                   </div>
@@ -572,7 +577,7 @@ export const CheckoutPage: React.FC = () => {
                   {/* Información de efectivo */}
                   {paymentInfo.paymentMethod === 'efectivo' && (
                   <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <h3 className="font-medium text-gray-800 mb-3">💵 Pago en Efectivo</h3>
+                    <h3 className="font-medium text-gray-800 mb-3">💵 {uiCfg.checkoutEfectivoInfoTitle}</h3>
                     <div className="space-y-2 text-sm text-gray-600">
                       <p>• El pago se realizará al momento de recibir tu pedido</p>
                       <p>• Asegurate de tener el monto exacto disponible</p>
@@ -580,7 +585,7 @@ export const CheckoutPage: React.FC = () => {
                     </div>
                     <div className="mt-3 p-3 bg-green-100 border border-green-300 rounded">
                       <p className="text-sm text-green-800">
-                        <strong>✅ Nota:</strong> Recibirás una confirmación por email con los detalles de tu pedido y coordinación de entrega.
+                        <strong>✅ Nota:</strong> {uiCfg.checkoutEfectivoNote}
                       </p>
                     </div>
                   </div>
@@ -592,13 +597,13 @@ export const CheckoutPage: React.FC = () => {
                       onClick={() => setCurrentStep('shipping')}
                       className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
                     >
-                      Volver
+                      {uiCfg.checkoutBackButton}
                     </button>
                     <button
                       type="submit"
                       className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
                     >
-                      Revisar Pedido
+                      {uiCfg.checkoutReviewTitle}
                     </button>
                   </div>
                 </form>
@@ -608,11 +613,11 @@ export const CheckoutPage: React.FC = () => {
             {/* Order Review */}
             {currentStep === 'review' && (
               <div className="bg-white rounded-lg shadow-sm p-6">
-                <h2 className="text-lg font-semibold mb-6">Revisar tu Pedido</h2>
+                <h2 className="text-lg font-semibold mb-6">{uiCfg.checkoutReviewTitle}</h2>
                 
                 {/* Shipping Info Review */}
                 <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                  <h3 className="font-medium mb-2">Información de Envío</h3>
+                  <h3 className="font-medium mb-2">{uiCfg.checkoutShippingTitle}</h3>
                   <p>{shippingInfo.firstName} {shippingInfo.lastName}</p>
                   <p>{shippingInfo.address}</p>
                   <p>{shippingInfo.city}, {shippingInfo.state} {shippingInfo.zipCode}</p>
@@ -622,12 +627,12 @@ export const CheckoutPage: React.FC = () => {
                 
                 {/* Payment Info Review */}
                 <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                  <h3 className="font-medium mb-2">Método de Pago</h3>
+                  <h3 className="font-medium mb-2">{uiCfg.checkoutPaymentMethodLabel}</h3>
                   <div className="flex items-center">
                     {paymentInfo.paymentMethod === 'transferencia' ? (
-                      <span className="text-blue-600 font-medium">💳 Transferencia Bancaria</span>
+                      <span className="text-blue-600 font-medium">💳 {uiCfg.checkoutTransferLabel}</span>
                     ) : (
-                      <span className="text-green-600 font-medium">💵 Efectivo</span>
+                      <span className="text-green-600 font-medium">💵 {uiCfg.checkoutEfectivoLabel}</span>
                     )}
                   </div>
                   <p className="text-sm text-gray-600 mt-1">
@@ -672,7 +677,7 @@ export const CheckoutPage: React.FC = () => {
                     onClick={() => setCurrentStep('payment')}
                     className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
                   >
-                    Volver
+                    {uiCfg.checkoutBackButton}
                   </button>
                   <button
                     type="button"
@@ -683,10 +688,10 @@ export const CheckoutPage: React.FC = () => {
                     {isProcessing ? (
                       <div className="flex items-center justify-center">
                         <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                        Procesando pago y creando orden...
+                        {uiCfg.checkoutFinalizingLabel}
                       </div>
                     ) : (
-                      '🛒 Finalizar Compra'
+                      `🛒 ${uiCfg.checkoutFinalizeLabel}`
                     )}
                   </button>
                 </div>
@@ -697,7 +702,7 @@ export const CheckoutPage: React.FC = () => {
           {/* Order Summary */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow-sm p-6 sticky top-4">
-              <h2 className="text-lg font-semibold mb-4">Resumen del Pedido</h2>
+              <h2 className="text-lg font-semibold mb-4">{uiCfg.checkoutOrderTitle}</h2>
               
               <div className="space-y-4 mb-6">
                 {cart.items.map((item) => (
@@ -723,22 +728,18 @@ export const CheckoutPage: React.FC = () => {
               
               <div className="space-y-2 mb-6 border-t pt-4">
                 <div className="flex justify-between text-sm">
-                  <span>Subtotal</span>
+                  <span>{uiCfg.checkoutSubtotalLabel}</span>
                   <span>{formatPrice(cart.subtotal, cart.currency)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span>IVA (10,5%)</span>
-                  <span>{formatPrice(cart.tax_amount, cart.currency)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>{SHIPPING.LABEL}</span>
+                  <span>{getShippingConfig().label}</span>
                   <span className={shippingAmount > 0 ? 'text-foreground' : 'text-green-600'}>
-                    {shippingAmount > 0 ? formatPrice(shippingAmount, cart.currency) : SHIPPING.FREE_LABEL}
+                    {shippingAmount > 0 ? formatPrice(shippingAmount, cart.currency) : getShippingConfig().freeLabel}
                   </span>
                 </div>
                 <div className="border-t pt-2">
                   <div className="flex justify-between font-semibold text-lg">
-                    <span>Total</span>
+                    <span>{uiCfg.checkoutTotalLabel}</span>
                     <span className="text-blue-600">{formatPrice(totalWithShipping, cart.currency)}</span>
                   </div>
                 </div>

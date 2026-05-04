@@ -28,6 +28,8 @@ Notas:
 - expone categorías estructuradas y anidadas en `images.categories[]`, con `searchTerms`, `productCategories` y `subcategories`
 - expone `shipping` para textos de envío y cargos flat-rate trazables dentro del checkout
 - expone `newsletter` para endpoint, headers y textos configurables del bloque de suscripción
+- expone `registration` para campos/textos de registro configurables por tenant
+- expone `ui` para textos transversales de navegación, auth, producto, carrito, checkout y footer
 
 ### Observabilidad frontend
 
@@ -90,31 +92,159 @@ GET /api/accounts/{account_id}/products/{product_id}
 Notas:
 - `GET /products/public` debe usarse para storefront anónimo
 - `GET /products` debe usarse cuando existe token y el backend puede devolver información enriquecida
-- no existe contrato activo para `products/{id}/variants`
+- no existe endpoint dedicado `products/{id}/variants`; las variantes se leen embebidas en `GET /products/{id}`
 
 ### Checkout / órdenes
 
 ```http
 POST /api/accounts/{account_id}/sales-orders
+GET /api/accounts/{account_id}/sales-orders
+GET /api/accounts/{account_id}/sales-orders/{order_id}
 POST /api/accounts/{account_id}/sales-orders/validate-stock
 POST /api/accounts/{account_id}/sales-orders/{order_id}/submit
-POST /api/accounts/{account_id}/sales-orders/{order_id}/ship
-POST /api/accounts/{account_id}/sales-orders/{order_id}/deliver
-POST /api/accounts/{account_id}/sales-orders/{order_id}/complete
 POST /api/accounts/{account_id}/sales-orders/{order_id}/cancel-v2
 POST /api/accounts/{account_id}/sales-orders/{order_id}/return
-POST /api/accounts/{account_id}/sales-orders/{order_id}/transition
+GET /api/accounts/{account_id}/sales-orders/{order_id}/storefront-status
 GET /api/accounts/{account_id}/sales-orders/{order_id}/status-history
 GET /api/accounts/{account_id}/sales-orders/{order_id}/valid-transitions
-POST /api/accounts/{account_id}/sales-orders/{order_id}/invoice
 ```
 
 Notas:
 - el storefront crea y envía órdenes, pero no crea pagos ni aprueba pagos
+- el storefront lista/detalla sólo órdenes propias usando el `customer_id` del cliente autenticado
 - el frontend solo informa el método/intención de pago en la metadata de la orden
 - la validación y confirmación del pago quedan del lado backend
+- `/{order_id}/storefront-status` es la lectura aprobada para mostrar estado real de pago/envío sin invocar acciones backoffice
 - `/{order_id}/confirm-payment` puede existir para procesos backend o backoffice, pero no debe invocarse desde este frontend
-- `generate-invoice` ya no forma parte del contrato activo
+- `/{order_id}/ship`, `/{order_id}/deliver`, `/{order_id}/complete`, `/{order_id}/transition` e `/{order_id}/invoice` son backoffice/API interna, no storefront
+
+### Favoritos del cliente
+
+```http
+GET    /api/accounts/{account_id}/customers/{business_partner_id}/favorites
+POST   /api/accounts/{account_id}/customers/{business_partner_id}/favorites
+DELETE /api/accounts/{account_id}/customers/{business_partner_id}/favorites/{product_id}
+```
+
+Reglas operativas:
+- requiere `Authorization: Bearer <token>` y `X-Account-ID` (o `X-Account-Slug`)
+- el backend DEBE validar que `business_partner_id` corresponde al usuario autenticado del token; si no, responder `403 E3002`
+- `POST` es idempotente: si el favorito ya existe, devuelve `200/201` sin error (`UPSERT`)
+- `DELETE` es idempotente: si no existe, responde `204` igualmente
+- el orden de devolución de `GET` debe ser `created_at DESC`
+
+Storage backend:
+- tabla dedicada `customer_favorites(account_id UUID, business_partner_id UUID, product_id UUID, created_at TIMESTAMPTZ)`
+- PK compuesta: `(account_id, business_partner_id, product_id)`
+- índice secundario: `(account_id, business_partner_id, created_at DESC)` para listado
+- elegida sobre `person_metadata.favorites` por escalabilidad, indexabilidad y trazabilidad temporal
+
+Shape:
+- `GET` response:
+  ```json
+  {
+    "success": true,
+    "data": [
+      { "product_id": "uuid", "created_at": "2026-04-26T12:00:00Z" }
+    ]
+  }
+  ```
+- `POST` request: `{ "product_id": "uuid" }` → response `{ "success": true, "data": { "product_id": "uuid", "created_at": "..." } }`
+- `DELETE` response: `204 No Content`
+
+Errores esperados:
+- `401`: token inválido o expirado
+- `403` `E3002`: `business_partner_id` no pertenece al usuario del token
+- `404` `E3000`: tenant no encontrado
+- `404`: `product_id` inexistente en el catálogo del tenant (solo en `POST`)
+- `422`: request inválido por schema
+
+### Carrito del cliente
+
+```http
+GET    /api/accounts/{account_id}/customers/{business_partner_id}/cart
+PUT    /api/accounts/{account_id}/customers/{business_partner_id}/cart
+DELETE /api/accounts/{account_id}/customers/{business_partner_id}/cart
+```
+
+Reglas operativas:
+- requiere `Authorization: Bearer <token>` y `X-Account-ID` (o `X-Account-Slug`)
+- el backend DEBE validar que `business_partner_id` corresponde al usuario autenticado del token; si no, responder `403 E3002`
+- `PUT` reemplaza el snapshot completo (UPSERT por `(account_id, business_partner_id)`); idempotente
+- `DELETE` es idempotente: si no existe, responde `204` igualmente
+- el backend **NO interpreta el JSON** del campo `cart`: lo guarda tal cual y se lo devuelve igual al `GET`. Es responsabilidad del storefront definir el shape y validarlo
+- el snapshot persistido es referencial: stock, precios e inventario se re-validan en `POST /sales-orders` al cerrar la compra
+
+Storage backend:
+- tabla dedicada `simple_customer_carts(account_id UUID, business_partner_id UUID, cart JSONB, updated_at TIMESTAMPTZ)`
+- PK compuesta: `(account_id, business_partner_id)` — un único snapshot por cliente
+- migración: [`exports/backend-create-customer-carts.sql`](../exports/backend-create-customer-carts.sql)
+
+Shape acordado del JSON `cart` (lo escribe el storefront):
+```json
+{
+  "items": [
+    {
+      "line_id": "string",
+      "product_id": "uuid",
+      "variant_id": "uuid|null",
+      "quantity": 2,
+      "unit_price": 1234.56,
+      "selected_options": { "color": "rojo" },
+      "snapshot": {
+        "name": "...",
+        "image_url": "...",
+        "sku": "...",
+        "currency": "ARS"
+      }
+    }
+  ],
+  "currency": "ARS"
+}
+```
+
+- `GET` response: `{ "success": true, "data": { "cart": { ...shape arriba... } } }` (también se acepta `data` plano)
+- `PUT` request: `{ "cart": { ...shape arriba... } }` → response `{ "success": true, "data": { "updated_at": "..." } }`
+- `DELETE` response: `204 No Content`
+
+### Variantes de producto
+
+```http
+GET /api/accounts/{account_id}/products/{product_id}
+```
+
+El detalle de producto puede incluir:
+
+- `has_variants: true`
+- `variant_options[]` con valores `{ value, label, position }`
+- `variants[]` con `id`, `sku`, `name`, `option_values`, `unit_price`, `effective_price`, stock, imagen y estado
+
+El storefront usa `variants[]`/`variant_options[]` para seleccionar combinación y debe enviar `variant_id` en el checkout cuando agrega una variante al carrito.
+
+Errores esperados:
+- `401`: token inválido o expirado
+- `403` `E3002`: `business_partner_id` no pertenece al usuario del token
+- `404` `E3000`: tenant no encontrado
+- `422`: request inválido por schema (`cart` ausente o `items` no es array)
+
+## Sesión activa única por usuario (single-active-session)
+
+Política: para un mismo `user_id`, **sólo el último login emitido es válido**. Cualquier token previo queda revocado en el instante en que se emite uno nuevo.
+
+Reglas operativas:
+- al ejecutar `POST /api/auth/login` con éxito, el backend UPSERT-ea el `jti` del nuevo `access_token` en la tabla `simple_user_active_sessions(user_id PRIMARY KEY, session_id, issued_at, user_agent, ip)`. Cualquier sesión anterior queda implícitamente revocada.
+- en cada request autenticada (middleware), el backend valida que el `jti` del token coincide con el `session_id` vigente para ese `user_id`. Si no coincide, responde `401` con `detail = {"code": "E2005", "message": "..."}` (FastAPI envuelve el dict bajo `detail`).
+- `POST /api/auth/logout` también borra el registro vigente del `user_id` (idempotente).
+- `GET /api/auth/me` aplica la misma validación.
+- `POST /api/auth/switch-account` reemplaza la sesión activa del usuario (genera nuevo `jti` y lo claimea).
+
+Errores esperados:
+- `401` `E2005` (alias histórico `E1010` / `SESSION_REVOKED` / `SESSION_SUPERSEDED`): sesión revocada por un login posterior. El storefront redirige a `/login?session=superseded` con cartel específico ("iniciaste sesión en otro dispositivo").
+- `401` (cualquier otro motivo, p. ej. token expirado por TTL): el storefront redirige a `/login?session=expired`.
+
+Notas de implementación:
+- la tabla `simple_user_active_sessions` se scopea por `user_id` (no por `(account_id, user_id)`): un humano sólo debe estar logueado en un lugar a la vez aún cuando opere varios tenants.
+- el `jti` del JWT es el `session_id`. Sin `jti` (tokens legacy) la política no aplica y el request pasa.
 
 ## Fuera de contrato
 
@@ -122,6 +252,7 @@ No depender de:
 
 - `/api/integrations/*`
 - `/api/integrations/bitrix24/*`
+- acciones operativas de fulfillment o facturación de órdenes: `ship`, `deliver`, `complete`, `transition`, `invoice`
 - rutas legacy no documentadas
 - endpoints de variantes dedicadas
 
@@ -134,3 +265,5 @@ Si un endpoint no está en este archivo, no se considera aprobado para este stor
 - `shipping.mode=flat_rate` con `shipping.chargeAmount>0` y `shipping.chargeProductId` habilita un cargo de envío trazable como línea separada dentro del payload de checkout.
 - `shipping` y `newsletter` forman parte del contrato canónico del tenant; no deben inferirse desde variables de entorno ni hardcodearse en UI.
 - `newsletter.endpoint` puede venir vacío o `null`; el storefront debe manejar esa ausencia sin romper bootstrap.
+- `registration.fields` debe incluir al menos `email` y `password` visibles.
+- `ui` forma parte del contrato canónico; los textos nuevos deben agregarse al backend antes de consumirse desde componentes.

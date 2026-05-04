@@ -27,8 +27,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useStore } from '@/store/useStore';
-import { BRANDING, ASSETS, SHIPPING } from '@/config/branding';
-import { getCategoriesConfig } from '@/config/runtime';
+import { BRANDING, ASSETS } from '@/config/branding';
+import { getCategoriesConfig, getUIConfig } from '@/config/runtime';
 
 export const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -75,11 +75,16 @@ export const Header: React.FC = () => {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="bg-primary text-primary-foreground">
-        <div className="container mx-auto px-4 py-2">
-          <p className="text-center text-sm font-medium">
-            🎉 {BRANDING.APP_SLOGAN} - {SHIPPING.BANNER_TEXT}
-          </p>
+      {/* Marquee promo bar (Ganga style) */}
+      <div className="promo-bar overflow-hidden">
+        <div className="relative flex w-full overflow-hidden py-2">
+          <div className="flex shrink-0 animate-marquee gap-12 whitespace-nowrap px-6">
+            {Array.from({ length: 2 }).flatMap((_, blockIdx) =>
+              getUIConfig().headerPromoMessages.map((msg, idx) => (
+                <span key={`promo-${blockIdx}-${idx}`}>{msg}</span>
+              ))
+            )}
+          </div>
         </div>
       </div>
 
@@ -106,7 +111,7 @@ export const Header: React.FC = () => {
               {categoryGroups.length > 0 ? (
                 <div className="relative group">
                   <button className="flex items-center gap-1 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
-                    Categorias
+                    {getUIConfig().headerCategoriesLabel}
                     <ChevronDown className="h-3.5 w-3.5 transition-transform group-hover:rotate-180" />
                   </button>
                   <div className="absolute left-0 top-full z-50 invisible pt-2 opacity-0 transition-all duration-200 group-hover:visible group-hover:opacity-100">
@@ -170,20 +175,20 @@ export const Header: React.FC = () => {
                 to="/productos"
                 className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
               >
-                Todos los Productos
+                {getUIConfig().headerAllProductsLabel}
               </Link>
             </nav>
           </div>
 
           <div className="hidden md:block flex-1 max-w-md mx-8">
             <form onSubmit={handleSearch} className="relative">
-              <Input
-                type="search"
-                placeholder="Buscar productos..."
-                className="pl-10 pr-4"
-                value={searchQuery}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
-              />
+                  <Input
+                    type="search"
+                    placeholder={getUIConfig().searchPlaceholder}
+                    className="pl-10 pr-4"
+                    value={searchQuery}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+                  />
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             </form>
           </div>
@@ -235,17 +240,17 @@ export const Header: React.FC = () => {
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link to="/perfil">Mi Perfil</Link>
+                    <Link to="/perfil">{getUIConfig().headerMyProfileLabel}</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to="/pedidos">Mis Pedidos</Link>
+                    <Link to="/pedidos">{getUIConfig().headerMyOrdersLabel}</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to="/favoritos">Favoritos</Link>
+                    <Link to="/favoritos">{getUIConfig().headerFavoritesLabel}</Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout}>
-                    Cerrar Sesión
+                    {getUIConfig().headerLogoutLabel}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -254,13 +259,13 @@ export const Header: React.FC = () => {
                 <Button variant="ghost" size="sm" asChild>
                   <Link to="/login">
                     <LogIn className="h-4 w-4 mr-2" />
-                    Ingresar
+                    {getUIConfig().headerLoginLabel}
                   </Link>
                 </Button>
                 <Button size="sm" asChild>
                   <Link to="/registro">
                     <UserPlus className="h-4 w-4 mr-2" />
-                    Registrarse
+                    {getUIConfig().headerRegisterLabel}
                   </Link>
                 </Button>
               </div>
@@ -280,13 +285,13 @@ export const Header: React.FC = () => {
         {isMenuOpen && (
           <div className="md:hidden border-t py-4">
             <form onSubmit={handleSearch} className="relative mb-4">
-              <Input
-                type="search"
-                placeholder="Buscar productos..."
-                className="pl-10 pr-4"
-                value={searchQuery}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
-              />
+                  <Input
+                    type="search"
+                    placeholder={getUIConfig().searchPlaceholder}
+                    className="pl-10 pr-4"
+                    value={searchQuery}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+                  />
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             </form>
 
@@ -343,7 +348,7 @@ export const Header: React.FC = () => {
                 className="block py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Todos los Productos
+                {getUIConfig().headerAllProductsLabel}
               </Link>
             </nav>
 
@@ -361,19 +366,19 @@ export const Header: React.FC = () => {
                   <Button variant="ghost" className="w-full justify-start" asChild>
                     <Link to="/perfil" onClick={() => setIsMenuOpen(false)}>
                       <User className="h-4 w-4 mr-2" />
-                      Mi Perfil
+                      {getUIConfig().headerMyProfileLabel}
                     </Link>
                   </Button>
                   <Button variant="ghost" className="w-full justify-start" asChild>
                     <Link to="/pedidos" onClick={() => setIsMenuOpen(false)}>
                       <ShoppingCart className="h-4 w-4 mr-2" />
-                      Mis Pedidos
+                      {getUIConfig().headerMyOrdersLabel}
                     </Link>
                   </Button>
                   <Button variant="ghost" className="w-full justify-start" asChild>
                     <Link to="/favoritos" onClick={() => setIsMenuOpen(false)}>
                       <Heart className="h-4 w-4 mr-2" />
-                      Favoritos
+                      {getUIConfig().headerFavoritesLabel}
                     </Link>
                   </Button>
                   <Button 
@@ -382,7 +387,7 @@ export const Header: React.FC = () => {
                     onClick={handleLogout}
                   >
                     <LogIn className="h-4 w-4 mr-2" />
-                    Cerrar Sesión
+                    {getUIConfig().headerLogoutLabel}
                   </Button>
                 </>
               ) : (
@@ -390,13 +395,13 @@ export const Header: React.FC = () => {
                   <Button variant="ghost" className="w-full justify-start" asChild>
                     <Link to="/login" onClick={() => setIsMenuOpen(false)}>
                       <LogIn className="h-4 w-4 mr-2" />
-                      Ingresar
+                      {getUIConfig().headerLoginLabel}
                     </Link>
                   </Button>
                   <Button className="w-full justify-start" asChild>
                     <Link to="/registro" onClick={() => setIsMenuOpen(false)}>
                       <UserPlus className="h-4 w-4 mr-2" />
-                      Registrarse
+                      {getUIConfig().headerRegisterLabel}
                     </Link>
                   </Button>
                 </>

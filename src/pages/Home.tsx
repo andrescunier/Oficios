@@ -2,9 +2,10 @@
  * Página principal del ecommerce
  */
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import type { CategoryConfig } from '@/config/runtime';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,7 +13,7 @@ import { ProductCard } from '@/components/product/ProductCard';
 import { useStore } from '@/store/useStore';
 import { useQuery } from '@tanstack/react-query';
 import { ASSETS, BRANDING, BUSINESS, FEATURES, NEWSLETTER } from '@/config/branding';
-import { getImagesConfig } from '@/config/runtime';
+import { getImagesConfig, getUIConfig } from '@/config/runtime';
 import { handleImgError } from '@/utils/imageHelpers';
 import { featuredProductsQueryOptions, productsQueryOptions } from '@/features/catalog/queries';
 import { getFeatureBenefitIcon } from '@/components/ui/featureBenefitIcons';
@@ -76,6 +77,7 @@ export const Home: React.FC = () => {
   // Categories (desde runtime config)
   const runtimeImages = getImagesConfig();
   const categories = runtimeImages.categories;
+  const uiCfg = getUIConfig();
 
   useEffect(() => {
     if (featuredProductsQuery.isError || newProductsQuery.isError || onSaleProductsQuery.isError) {
@@ -241,107 +243,47 @@ export const Home: React.FC = () => {
       )}
 
       {/* Features Section */}
-      <section className="py-16 bg-muted/50">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
-            {benefits.map((feature) => {
-              const Icon = getFeatureBenefitIcon(feature.icon);
-              return (
-                <div key={`${feature.icon}-${feature.title}-${feature.description}`} className="text-center">
-                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                    <Icon className="h-8 w-8 text-primary" />
-                  </div>
-                  <h3 className="mb-2 text-lg font-semibold">{feature.title}</h3>
-                  <p className="text-muted-foreground">{feature.description}</p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Categories Section - solo si la API devolvió categorías */}
-      {categories.length > 0 && (
-        <section className="py-16">
+      {uiCfg.showHomeBenefits !== false && benefits.length > 0 && (
+        <section className="py-16 bg-muted/50">
           <div className="container mx-auto px-4">
-            <div className="mb-12 text-center">
-              <h2 className="mb-4 text-3xl font-bold">Explora por Categorías</h2>
-              <p className="text-lg text-muted-foreground">
-                Encuentra exactamente lo que necesitas
-              </p>
-            </div>
-
-            <div className="mx-auto grid max-w-5xl grid-cols-1 gap-8 md:grid-cols-2">
-              {categories.map((category) => (
-                <div key={category.slug || category.link || category.name} className="space-y-3">
-                  <Link to={category.link}>
-                    <Card className="group overflow-hidden transition-all duration-300 hover:shadow-lg">
-                      <CardContent className="p-0">
-                        <div className="relative h-64 overflow-hidden bg-gray-100">
-                          <img
-                            src={category.image}
-                            alt={category.name}
-                            className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-105"
-                            onError={(e) =>
-                              handleImgError(
-                                e,
-                                runtimeImages.productFallbacks.default || '/images/categories/componentes.jpg',
-                              )
-                            }
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                          <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                            <h3 className="mb-1 text-xl font-bold transition-colors group-hover:text-blue-300">
-                              {category.name}
-                            </h3>
-                            <p className="text-sm text-gray-200">{category.description}</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                  {category.subcategories && category.subcategories.length > 0 && (
-                    <div className="flex flex-wrap gap-2 px-1">
-                      {category.subcategories.map((sub) => (
-                        <div key={sub.slug || sub.link || `${category.name}-${sub.name}`} className="flex items-center gap-1">
-                          <Link
-                            to={sub.link}
-                            className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
-                          >
-                            {sub.name}
-                          </Link>
-                          {sub.subcategories && sub.subcategories.length > 0 &&
-                            sub.subcategories.map((subsub) => (
-                              <Link
-                                key={subsub.slug || subsub.link || `${sub.name}-${subsub.name}`}
-                                to={subsub.link}
-                                className="inline-flex items-center rounded-full border border-dashed border-border bg-muted/50 px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
-                              >
-                                {subsub.name}
-                              </Link>
-                            ))}
-                        </div>
-                      ))}
+            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
+              {benefits.map((feature) => {
+                const Icon = getFeatureBenefitIcon(feature.icon);
+                return (
+                  <div key={`${feature.icon}-${feature.title}-${feature.description}`} className="text-center">
+                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                      <Icon className="h-8 w-8 text-primary" />
                     </div>
-                  )}
-                </div>
-              ))}
+                    <h3 className="mb-2 text-lg font-semibold">{feature.title}</h3>
+                    <p className="text-muted-foreground">{feature.description}</p>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </section>
       )}
 
+      {/* Categories Section - slider horizontal de imágenes rectangulares */}
+      {categories.length > 0 && (
+        <CategoriesSlider
+          categories={categories}
+          fallbackImage={runtimeImages.productFallbacks.default || '/images/categories/componentes.jpg'}
+        />
+      )}
+
       {/* Featured Products */}
-      <section className="py-16 bg-muted/50">
+      <section className="py-16 bg-muted/40">
         <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center mb-8">
+          <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 mb-10">
             <div>
-              <h2 className="text-3xl font-bold mb-2">Productos Destacados</h2>
-              <p className="text-muted-foreground">Los productos más populares de nuestra tienda</p>
+              <p className="eyebrow mb-2">Best sellers</p>
+              <h2 className="section-title">{uiCfg.homeFeaturedTitle}</h2>
+              <p className="text-muted-foreground mt-2">{uiCfg.homeFeaturedSubtitle}</p>
             </div>
-            <Link to="/productos?featured=true">
-              <Button variant="outline">
-                Ver Todos
+            <Link to="/productos?featured=true" className="self-start md:self-end">
+              <Button variant="outline" className="rounded-none uppercase tracking-[0.2em] text-xs">
+                {uiCfg.homeViewAllLabel}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
@@ -378,14 +320,15 @@ export const Home: React.FC = () => {
       {/* New Products */}
       <section className="py-16">
         <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center mb-8">
+          <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 mb-10">
             <div>
-              <h2 className="text-3xl font-bold mb-2">Nuevos Productos</h2>
-              <p className="text-muted-foreground">Las últimas incorporaciones a nuestro catálogo</p>
+              <p className="eyebrow mb-2">New in</p>
+              <h2 className="section-title">{uiCfg.homeNewTitle}</h2>
+              <p className="text-muted-foreground mt-2">{uiCfg.homeNewSubtitle}</p>
             </div>
-            <Link to="/productos?sort=newest">
-              <Button variant="outline">
-                Ver Todos
+            <Link to="/productos?sort=newest" className="self-start md:self-end">
+              <Button variant="outline" className="rounded-none uppercase tracking-[0.2em] text-xs">
+                {uiCfg.homeViewAllLabel}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
@@ -404,19 +347,20 @@ export const Home: React.FC = () => {
 
       {/* Sale Products */}
       {onSaleProducts.length > 0 && (
-        <section className="py-16 bg-muted/50">
+        <section className="py-16 bg-muted/40">
           <div className="container mx-auto px-4">
-            <div className="flex justify-between items-center mb-8">
+            <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 mb-10">
               <div>
-                <h2 className="text-3xl font-bold mb-2">
-                  Ofertas Especiales
-                  <Badge variant="destructive" className="ml-2">HOT</Badge>
+                <p className="eyebrow mb-2">Sale</p>
+                <h2 className="section-title flex items-center gap-3">
+                  {uiCfg.homeSaleTitle}
+                  <Badge variant="destructive" className="rounded-none uppercase tracking-[0.2em] text-[10px] font-medium">Hot</Badge>
                 </h2>
-                <p className="text-muted-foreground">Aprovecha estos descuentos por tiempo limitado</p>
+                <p className="text-muted-foreground mt-2">{uiCfg.homeSaleSubtitle}</p>
               </div>
-              <Link to="/productos">
-                <Button variant="outline">
-                  Ver Todas
+              <Link to="/productos" className="self-start md:self-end">
+                <Button variant="outline" className="rounded-none uppercase tracking-[0.2em] text-xs">
+                  {uiCfg.homeViewAllLabel}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
@@ -448,7 +392,7 @@ export const Home: React.FC = () => {
               placeholder={NEWSLETTER.PLACEHOLDER}
               value={newsletterEmail}
               onChange={(e) => setNewsletterEmail(e.target.value)}
-              className="flex-1 px-4 py-2 rounded-lg text-foreground"
+              className="flex-1 rounded-lg border border-white/40 bg-white px-4 py-2 text-gray-900 shadow-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-white/70 focus:ring-offset-2 focus:ring-offset-primary"
               required
             />
             <Button variant="secondary" type="submit" disabled={isSubmittingNewsletter}>
@@ -459,5 +403,136 @@ export const Home: React.FC = () => {
       </section>
       )}
     </div>
+  );
+};
+
+/* -------------------------------------------------------------------------- */
+/*  Categories slider (full-width, rectangular tiles + arrows)                */
+/* -------------------------------------------------------------------------- */
+
+interface CategoriesSliderProps {
+  categories: CategoryConfig[];
+  fallbackImage: string;
+}
+
+const CategoriesSlider: React.FC<CategoriesSliderProps> = ({ categories, fallbackImage }) => {
+  const uiCfg = getUIConfig();
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const [canScrollPrev, setCanScrollPrev] = useState(false);
+  const [canScrollNext, setCanScrollNext] = useState(false);
+
+  const updateScrollState = useCallback(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const { scrollLeft, scrollWidth, clientWidth } = el;
+    setCanScrollPrev(scrollLeft > 4);
+    setCanScrollNext(scrollLeft + clientWidth < scrollWidth - 4);
+  }, []);
+
+  useEffect(() => {
+    updateScrollState();
+    const el = scrollerRef.current;
+    if (!el) return;
+    const onScroll = () => updateScrollState();
+    el.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', updateScrollState);
+    return () => {
+      el.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', updateScrollState);
+    };
+  }, [updateScrollState, categories.length]);
+
+  const scrollByPage = (direction: 1 | -1) => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    el.scrollBy({ left: direction * el.clientWidth * 0.9, behavior: 'smooth' });
+  };
+
+  // Configurable: cantidad por vista y padding lateral
+  const configuredPerView = Math.max(1, Math.min(uiCfg.homeCategoriesPerView ?? 3, 8));
+  const desktopPerView = Math.min(categories.length, configuredPerView) || 1;
+  const tabletPerView = Math.min(categories.length, Math.max(1, Math.min(2, configuredPerView))) || 1;
+  const showArrows = categories.length > desktopPerView;
+  const sidePadding = Math.max(0, uiCfg.homeCategoriesSidePadding ?? 0);
+
+  return (
+    <section className="py-12 md:py-16">
+      <div
+        className="mx-auto w-full"
+        style={{ paddingLeft: `${sidePadding}px`, paddingRight: `${sidePadding}px` }}
+      >
+        {uiCfg.showHomeCategoriesHeader !== false && (uiCfg.homeCategoriesTitle || uiCfg.homeCategoriesSubtitle) && (
+          <div className="mb-8 text-center md:mb-10">
+            <p className="eyebrow mb-2">Comprá por estilo</p>
+            {uiCfg.homeCategoriesTitle && (
+              <h2 className="section-title">{uiCfg.homeCategoriesTitle}</h2>
+            )}
+            {uiCfg.homeCategoriesSubtitle && (
+              <p className="text-muted-foreground mx-auto mt-2 max-w-2xl">{uiCfg.homeCategoriesSubtitle}</p>
+            )}
+          </div>
+        )}
+
+        <div className="relative">
+          {showArrows && canScrollPrev && (
+            <button
+              type="button"
+              onClick={() => scrollByPage(-1)}
+              aria-label="Anterior"
+              className="absolute left-2 top-1/2 z-10 hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-background/90 text-foreground shadow-lg ring-1 ring-black/10 backdrop-blur transition hover:bg-background md:flex"
+            >
+              <ChevronLeft className="h-6 w-6" />
+            </button>
+          )}
+          {showArrows && canScrollNext && (
+            <button
+              type="button"
+              onClick={() => scrollByPage(1)}
+              aria-label="Siguiente"
+              className="absolute right-2 top-1/2 z-10 hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-background/90 text-foreground shadow-lg ring-1 ring-black/10 backdrop-blur transition hover:bg-background md:flex"
+            >
+              <ChevronRight className="h-6 w-6" />
+            </button>
+          )}
+
+          <div
+            ref={scrollerRef}
+            className="flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth pb-2 md:gap-5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+            style={{
+              ['--cats-desktop' as string]: String(desktopPerView),
+              ['--cats-tablet' as string]: String(tabletPerView),
+            }}
+          >
+            {categories.map((category) => (
+              <Link
+                key={category.slug || category.link || category.name}
+                to={category.link}
+                className="group relative flex w-[88%] shrink-0 snap-start flex-col sm:w-[calc((100%-(var(--cats-tablet)-1)*1.25rem)/var(--cats-tablet))] lg:w-[calc((100%-(var(--cats-desktop)-1)*1.25rem)/var(--cats-desktop))]"
+              >
+                <div className="relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-muted shadow-sm transition-all duration-300 group-hover:shadow-xl">
+                  <img
+                    src={category.image}
+                    alt={category.name}
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    onError={(e) => handleImgError(e, fallbackImage)}
+                  />
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-black/5 to-transparent" />
+                  <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 px-6 text-center text-background">
+                    {category.description && (
+                      <p className="text-sm font-light italic tracking-wide drop-shadow-md md:text-base">
+                        {category.description}
+                      </p>
+                    )}
+                    <h3 className="mt-1 text-2xl font-bold uppercase tracking-[0.15em] drop-shadow-md md:text-3xl">
+                      {category.name}
+                    </h3>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
   );
 };

@@ -12,11 +12,22 @@ import type {
   Cart, 
   Account 
 } from '@/types/api';
-// cartService eliminado — no existe API de carrito en el backend (ver documentacion.md)
 import { httpClient } from '@/services/httpClient';
+import { favoritesService } from '@/services/favoritesService';
+import { cartSyncService, type CartSnapshot } from '@/services/cartSyncService';
 import log from '@/lib/logger';
 import { getBusinessConfig } from '@/config/runtime';
-import { clearAuthSession, getAuthIntegrityIssue, saveAccountSession } from '@/features/auth/session';
+import {
+  clearAuthSession,
+  getAuthIntegrityIssue,
+  getBusinessPartnerId,
+  saveAccountSession,
+} from '@/features/auth/session';
+import {
+  adoptOrClaimSessionFromStorage,
+  claimActiveSession,
+  releaseActiveSession,
+} from '@/features/auth/activeSession';
 import { recordAppEvent } from '@/lib/observability';
 
 // Tipos del store
@@ -140,12 +151,14 @@ const getMaxQuantityPerProduct = () => getBusinessConfig().maxQuantityPerProduct
 const buildCartLineId = (productId: string, variantId?: string) =>
   variantId ? `${productId}::${variantId}` : productId;
 
-// Funciones helper para favoritos por usuario
+// Cache local de favoritos por usuario.
+// Fuente de verdad: backend (customer_favorites). Esto es solo para hidratación inmediata
+// y modo offline; toda mutación se sincroniza vía favoritesService.
 const FAVORITES_STORAGE_KEY = 'diapstore-user-favorites';
 
 const getUserFavoritesKey = (userId: string) => `${FAVORITES_STORAGE_KEY}-${userId}`;
 
-const loadUserFavorites = (userId: string): string[] => {
+const loadCachedFavorites = (userId: string): string[] => {
   try {
     const stored = localStorage.getItem(getUserFavoritesKey(userId));
     return stored ? JSON.parse(stored) : [];
@@ -154,11 +167,114 @@ const loadUserFavorites = (userId: string): string[] => {
   }
 };
 
-const saveUserFavorites = (userId: string, favorites: string[]) => {
+const cacheFavorites = (userId: string, favorites: string[]) => {
   try {
     localStorage.setItem(getUserFavoritesKey(userId), JSON.stringify(favorites));
   } catch (e) {
-    log.store.error('Error saving favorites:', e);
+    log.store.error('Error caching favorites:', e);
+  }
+};
+
+const hydrateFavoritesFromBackend = async (userId: string, businessPartnerId: string | null) => {
+  if (!businessPartnerId) return;
+  try {
+    const remote = await favoritesService.list(businessPartnerId);
+    cacheFavorites(userId, remote);
+    useStore.setState({ favorites: remote });
+  } catch (error) {
+    log.store.error('hydrateFavoritesFromBackend error:', error);
+  }
+};
+
+// =============================================================================
+// Sincronización del carrito con el backend (customer_carts).
+// Estrategia: snapshot completo PUT debounced (700ms) tras cada mutación local.
+// Hidratación en login: si el backend tiene snapshot, reemplaza el carrito local.
+// =============================================================================
+
+let cartSyncTimer: ReturnType<typeof setTimeout> | null = null;
+
+const buildCartSnapshot = (cart: CartState): CartSnapshot => ({
+  items: cart.items.map((item) => ({
+    line_id: item.line_id,
+    product_id: item.product?.id,
+    variant_id: item.variant?.id,
+    quantity: item.quantity,
+    unit_price: item.unit_price,
+    selected_options: item.selected_options,
+    snapshot: {
+      name: item.product?.name,
+      image_url: item.product?.image_url || item.product?.thumbnail_url || null,
+      sku: item.variant?.sku || item.product?.sku,
+      currency: item.product?.currency,
+    },
+  })),
+  currency: cart.currency,
+});
+
+const scheduleCartSync = () => {
+  if (typeof window === 'undefined') return;
+  const bpId = getBusinessPartnerId();
+  if (!bpId) return;
+  if (cartSyncTimer) clearTimeout(cartSyncTimer);
+  cartSyncTimer = setTimeout(() => {
+    cartSyncTimer = null;
+    const state = useStore.getState();
+    if (!state.auth.isAuthenticated) return;
+    const currentBp = getBusinessPartnerId();
+    if (!currentBp) return;
+    if (state.cart.items.length === 0) {
+      void cartSyncService.clear(currentBp);
+    } else {
+      void cartSyncService.save(currentBp, buildCartSnapshot(state.cart));
+    }
+  }, 700);
+};
+
+const hydrateCartFromBackend = async (businessPartnerId: string | null) => {
+  if (!businessPartnerId) return;
+  try {
+    const remote = await cartSyncService.fetch(businessPartnerId);
+    if (!remote || !Array.isArray(remote.items) || remote.items.length === 0) return;
+
+    // Reconstruir CartItem[] desde el snapshot. Usamos los datos embebidos en `snapshot`
+    // como respaldo si el catálogo cambió. Stock/precio se re-validan en checkout.
+    const rebuiltItems: CartItem[] = remote.items
+      .map((raw: any): CartItem | null => {
+        if (!raw?.product_id || typeof raw.quantity !== 'number') return null;
+        const snap = raw.snapshot || {};
+        const product = {
+          id: raw.product_id,
+          sku: snap.sku || raw.product_id,
+          name: snap.name || 'Producto',
+          unit_price: typeof raw.unit_price === 'number' ? raw.unit_price : 0,
+          currency: snap.currency || remote.currency || getBusinessConfig().defaultCurrency,
+          tax_rate: 0,
+          image_url: snap.image_url || undefined,
+        } as unknown as Product;
+        const variant = raw.variant_id
+          ? ({ id: raw.variant_id, sku: snap.sku, name: snap.name, unit_price: raw.unit_price } as unknown as ProductVariant)
+          : undefined;
+        return {
+          line_id: raw.line_id || buildCartLineId(raw.product_id, raw.variant_id),
+          product,
+          variant,
+          selected_options: raw.selected_options,
+          quantity: raw.quantity,
+          unit_price: typeof raw.unit_price === 'number' ? raw.unit_price : 0,
+        };
+      })
+      .filter((x): x is CartItem => x !== null);
+
+    if (rebuiltItems.length === 0) return;
+
+    const merged = calculateTotals(
+      rebuiltItems,
+      remote.currency || getBusinessConfig().defaultCurrency,
+    );
+    useStore.setState({ cart: merged });
+  } catch (error) {
+    log.store.error('hydrateCartFromBackend error:', error);
   }
 };
 
@@ -182,9 +298,9 @@ export const useStore = create<AppStore>()(
           saveAccountSession(resolvedAccount);
         }
         
-        // Cargar favoritos del usuario
-        const userFavorites = loadUserFavorites(user.id);
-        
+        // Hidratación inmediata desde caché local + refresh desde backend
+        const cached = loadCachedFavorites(user.id);
+
         set(() => ({
           auth: {
             user,
@@ -192,9 +308,16 @@ export const useStore = create<AppStore>()(
             isAuthenticated: true,
             token,
           },
-          favorites: userFavorites, // Cargar favoritos del usuario
+          favorites: cached,
         }));
 
+        // Sincronizar con backend (no bloqueante)
+        void hydrateFavoritesFromBackend(user.id, getBusinessPartnerId());
+        void hydrateCartFromBackend(getBusinessPartnerId());
+
+        // Marcar esta como la única sesión activa para este usuario en este browser.
+        // Cualquier otra pestaña/sesión previa recibirá el aviso y hará logout.
+        claimActiveSession();
       },
       
       logout: () => {
@@ -204,9 +327,18 @@ export const useStore = create<AppStore>()(
         
         clearAuthSession({ removeAuthToken: () => httpClient.removeAuthToken() });
         
+        // Cancelar sync pendiente del carrito (no queremos PUT post-logout)
+        if (cartSyncTimer) {
+          clearTimeout(cartSyncTimer);
+          cartSyncTimer = null;
+        }
+
+        releaseActiveSession();
+        
         set({
           auth: initialAuthState,
-          cart: createInitialCartState(), // Limpiar carrito al logout
+          // NO limpiamos el carrito: queda en localStorage para que al volver a loguearse
+          // (mismo dispositivo) lo encuentre. Si entra en otro dispositivo, lo trae el backend.
           favorites: [], // Limpiar favoritos al logout (se mantienen guardados en localStorage por usuario)
         });
       },
@@ -303,57 +435,70 @@ export const useStore = create<AppStore>()(
           return { cart: newCart };
         });
 
-
+        scheduleCartSync();
       },
       
-      removeFromCart: (lineId) => set((state) => {
-        const newItems = state.cart.items.filter(item => item.line_id !== lineId);
-        const newCart = calculateTotals(newItems, state.cart.currency);
-        
-        get().addNotification({
-          type: 'info',
-          title: 'Producto eliminado',
-          message: 'Producto eliminado del carrito',
-          duration: 3000,
-        });
-        
-        return { cart: newCart };
-      }),
-      
-      updateCartQuantity: (lineId, quantity) => set((state) => {
-        if (quantity <= 0) {
-          // Si la cantidad es 0 o menos, eliminar el producto
+      removeFromCart: (lineId) => {
+        set((state) => {
           const newItems = state.cart.items.filter(item => item.line_id !== lineId);
           const newCart = calculateTotals(newItems, state.cart.currency);
-          return { cart: newCart };
-        }
-        
-        const maxQuantityPerProduct = getMaxQuantityPerProduct();
-
-        // Verificar límite de unidades por producto
-        if (quantity > maxQuantityPerProduct) {
+          
           get().addNotification({
-            type: 'warning',
-            title: 'Límite alcanzado',
-            message: `Máximo ${maxQuantityPerProduct} unidades por producto`,
+            type: 'info',
+            title: 'Producto eliminado',
+            message: 'Producto eliminado del carrito',
             duration: 3000,
           });
-          quantity = maxQuantityPerProduct;
-        }
-        
-        const newItems = state.cart.items.map(item =>
-          item.line_id === lineId
-            ? { ...item, quantity }
-            : item
-        );
-        
-        const newCart = calculateTotals(newItems, state.cart.currency);
-        return { cart: newCart };
-      }),
+          
+          return { cart: newCart };
+        });
+        scheduleCartSync();
+      },
       
-      clearCart: () => set({
-        cart: createInitialCartState(),
-      }),
+      updateCartQuantity: (lineId, quantity) => {
+        set((state) => {
+          if (quantity <= 0) {
+            // Si la cantidad es 0 o menos, eliminar el producto
+            const newItems = state.cart.items.filter(item => item.line_id !== lineId);
+            const newCart = calculateTotals(newItems, state.cart.currency);
+            return { cart: newCart };
+          }
+          
+          const maxQuantityPerProduct = getMaxQuantityPerProduct();
+
+          // Verificar límite de unidades por producto
+          if (quantity > maxQuantityPerProduct) {
+            get().addNotification({
+              type: 'warning',
+              title: 'Límite alcanzado',
+              message: `Máximo ${maxQuantityPerProduct} unidades por producto`,
+              duration: 3000,
+            });
+            quantity = maxQuantityPerProduct;
+          }
+          
+          const newItems = state.cart.items.map(item =>
+            item.line_id === lineId
+              ? { ...item, quantity }
+              : item
+          );
+          
+          const newCart = calculateTotals(newItems, state.cart.currency);
+          return { cart: newCart };
+        });
+        scheduleCartSync();
+      },
+      
+      clearCart: () => {
+        set({ cart: createInitialCartState() });
+        // Cancelar PUT pendiente y limpiar el snapshot remoto inmediatamente.
+        if (cartSyncTimer) {
+          clearTimeout(cartSyncTimer);
+          cartSyncTimer = null;
+        }
+        const bpId = getBusinessPartnerId();
+        if (bpId) void cartSyncService.clear(bpId);
+      },
       
       calculateCartTotals: () => set((state) => {
         const newCart = calculateTotals(state.cart.items, state.cart.currency);
@@ -421,39 +566,72 @@ export const useStore = create<AppStore>()(
       // Favorites
       favorites: [],
       
-      addToFavorites: (productId) => set((state) => {
-        if (!state.favorites.includes(productId)) {
-          const newFavorites = [...state.favorites, productId];
-          
-          // Persistir en localStorage por usuario
-          const userId = state.auth.user?.id;
-          if (userId) {
-            saveUserFavorites(userId, newFavorites);
-          }
-          
-          get().addNotification({
-            type: 'success',
-            title: 'Agregado a favoritos',
-            message: 'Producto agregado a tus favoritos',
-            duration: 3000,
-          });
-          
-          return { favorites: newFavorites };
-        }
-        return state;
-      }),
-      
-      removeFromFavorites: (productId) => set((state) => {
-        const newFavorites = state.favorites.filter(id => id !== productId);
-        
-        // Persistir en localStorage por usuario
+      addToFavorites: (productId) => {
+        const state = get();
+        if (state.favorites.includes(productId)) return;
+
+        // Update optimista
+        const newFavorites = [...state.favorites, productId];
+        set({ favorites: newFavorites });
+
         const userId = state.auth.user?.id;
-        if (userId) {
-          saveUserFavorites(userId, newFavorites);
+        if (userId) cacheFavorites(userId, newFavorites);
+
+        get().addNotification({
+          type: 'success',
+          title: 'Agregado a favoritos',
+          message: 'Producto agregado a tus favoritos',
+          duration: 3000,
+        });
+
+        // Sync backend; revertir si falla
+        const bpId = getBusinessPartnerId();
+        if (bpId) {
+          void favoritesService.add(bpId, productId).then((ok) => {
+            if (!ok) {
+              const reverted = get().favorites.filter((id) => id !== productId);
+              set({ favorites: reverted });
+              if (userId) cacheFavorites(userId, reverted);
+              get().addNotification({
+                type: 'error',
+                title: 'No se pudo guardar',
+                message: 'No pudimos sincronizar tu favorito. Intentá de nuevo.',
+                duration: 4000,
+              });
+            }
+          });
         }
-        
-        return { favorites: newFavorites };
-      }),
+      },
+
+      removeFromFavorites: (productId) => {
+        const state = get();
+        if (!state.favorites.includes(productId)) return;
+
+        // Update optimista
+        const newFavorites = state.favorites.filter((id) => id !== productId);
+        set({ favorites: newFavorites });
+
+        const userId = state.auth.user?.id;
+        if (userId) cacheFavorites(userId, newFavorites);
+
+        // Sync backend; revertir si falla
+        const bpId = getBusinessPartnerId();
+        if (bpId) {
+          void favoritesService.remove(bpId, productId).then((ok) => {
+            if (!ok) {
+              const reverted = [...get().favorites, productId];
+              set({ favorites: reverted });
+              if (userId) cacheFavorites(userId, reverted);
+              get().addNotification({
+                type: 'error',
+                title: 'No se pudo eliminar',
+                message: 'No pudimos sincronizar la eliminación. Intentá de nuevo.',
+                duration: 4000,
+              });
+            }
+          });
+        }
+      },
       
       isFavorite: (productId) => get().favorites.includes(productId),
       
@@ -607,6 +785,8 @@ export const initializeAuth = () => {
     if (store.auth.account?.id) {
       httpClient.setAccountId(store.auth.account.id);
     }
+    // Adoptar el id de sesión activa persistido (o registrar uno nuevo si no existía).
+    adoptOrClaimSessionFromStorage();
     log.store.info('Sesión restaurada correctamente', {
       user: store.auth.user?.email,
       tokenLength: store.auth.token.length,

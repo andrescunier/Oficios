@@ -3,6 +3,9 @@ import { initializeTheme } from '@/config/theme';
 import { waitForTenantConfig, type TenantConfigRetryState } from '@/services/tenantConfigService';
 import { installGlobalErrorHandlers, recordAppEvent } from '@/lib/observability';
 import { initializeAuth, useStore } from '@/store/useStore';
+import { subscribeSessionInvalidation } from '@/features/auth/activeSession';
+import { httpClient } from '@/services/httpClient';
+import { clearAuthSession } from '@/features/auth/session';
 import log from '@/lib/logger';
 
 type BootstrapStep = 'tenant_config' | 'theme' | 'runtime_sync' | 'auth';
@@ -119,6 +122,20 @@ export const bootstrapApplication = async (options: BootstrapOptions = {}) => {
       message: 'Inicializando sesion...',
     });
     initializeAuth();
+
+    // Single-active-session: si otra pestaña/dispositivo del mismo browser hace
+    // login con este usuario, esta sesión queda invalidada y se redirige al login.
+    subscribeSessionInvalidation(() => {
+      try {
+        useStore.getState().logout();
+      } catch (err) {
+        log.store.warn('logout en session-invalidated falló:', err);
+      }
+      clearAuthSession({
+        redirect: '/login?session=superseded',
+        removeAuthToken: () => httpClient.removeAuthToken(),
+      });
+    });
   } catch (error) {
     recordBootstrapError('auth', error);
   }

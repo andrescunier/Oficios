@@ -25,8 +25,7 @@ import {
 } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
 import { useStore } from '@/store/useStore';
-import { getBusinessConfig } from '@/config/runtime';
-import { SHIPPING } from '@/config/branding';
+import { getBusinessConfig, getUIConfig, getShippingConfig } from '@/config/runtime';
 import { getCheckoutShippingCharge } from '@/features/checkout/model';
 import log from '@/lib/logger';
 
@@ -45,10 +44,12 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
   } = useStore();
 
   const itemsCount = cart.items.reduce((sum, item) => sum + item.quantity, 0);
-  const shippingAmount = getCheckoutShippingCharge();
+  const shippingAmount = getCheckoutShippingCharge(cart.subtotal);
   const total = cart.total_amount + shippingAmount;
   log.cart.debug('CartDrawer render:', { itemsCount, total, shippingAmount, currency: cart.currency });
   const businessCfg = getBusinessConfig();
+  const uiCfg = getUIConfig();
+  const shippingCfg = getShippingConfig();
 
   const formatPrice = (price: number, currency?: string) => {
     if (typeof price !== 'number' || isNaN(price)) {
@@ -68,8 +69,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
       removeFromCart(lineId);
       addNotification({
         type: 'info',
-        title: 'Producto eliminado',
-        message: 'El producto fue eliminado del carrito',
+        title: uiCfg.cartItemRemovedTitle,
+        message: uiCfg.cartItemRemovedMessage,
       });
     } else {
       updateCartQuantity(lineId, newQuantity);
@@ -80,8 +81,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
     removeFromCart(lineId);
     addNotification({
       type: 'info',
-      title: 'Producto eliminado',
-      message: 'El producto fue eliminado del carrito',
+      title: uiCfg.cartItemRemovedTitle,
+      message: uiCfg.cartItemRemovedMessage,
     });
   };
 
@@ -89,8 +90,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
     clearCart();
     addNotification({
       type: 'info',
-      title: 'Carrito vaciado',
-      message: 'Todos los productos fueron eliminados',
+      title: uiCfg.cartClearedTitle,
+      message: uiCfg.cartClearedMessage,
     });
   };
 
@@ -103,15 +104,15 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
         <SheetHeader>
           <SheetTitle className="flex items-center space-x-2">
             <ShoppingCart className="h-5 w-5" />
-            <span>Carrito de Compras</span>
+            <span>{uiCfg.cartTitle}</span>
             {itemsCount > 0 && (
               <Badge variant="secondary">{itemsCount}</Badge>
             )}
           </SheetTitle>
           <SheetDescription>
             {itemsCount === 0 
-              ? 'Tu carrito está vacío'
-              : `${itemsCount} ${itemsCount === 1 ? 'producto' : 'productos'} en tu carrito`
+              ? uiCfg.cartDrawerEmptyDescription
+              : `${itemsCount} ${itemsCount === 1 ? 'producto' : 'productos'} ${uiCfg.cartDrawerCountSuffix}`
             }
           </SheetDescription>
         </SheetHeader>
@@ -123,7 +124,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
               <div className="flex items-center space-x-2 text-green-600">
                 <Package className="h-4 w-4" />
                 <span className="text-sm font-medium">
-                  {shippingAmount > 0 ? SHIPPING.CHARGED_MESSAGE : SHIPPING.DRAWER_MESSAGE}
+                  {shippingAmount > 0 ? shippingCfg.chargedMessage : shippingCfg.drawerMessage}
                 </span>
               </div>
             </div>
@@ -134,13 +135,13 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
             {cart.items.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center">
                 <ShoppingCart className="h-16 w-16 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium mb-2">Tu carrito está vacío</h3>
+                <h3 className="text-lg font-medium mb-2">{uiCfg.cartEmptyTitle}</h3>
                 <p className="text-muted-foreground mb-4">
-                  Agrega algunos productos para comenzar
+                  {uiCfg.cartEmptyBody}
                 </p>
                 <Link to="/productos">
                   <Button>
-                    Explorar Productos
+                    {uiCfg.cartEmptyExploreLabel}
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
@@ -222,28 +223,28 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
             <div className="border-t pt-4 mt-4">
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Subtotal:</span>
+                  <span className="text-sm text-muted-foreground">{uiCfg.cartDrawerSubtotalLabel}</span>
                   <span className="font-medium">{formatPrice(cart.total_amount)}</span>
                 </div>
                 
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">{SHIPPING.LABEL}:</span>
+                  <span className="text-sm text-muted-foreground">{shippingCfg.label}:</span>
                   <span className="font-medium">
-                    {shippingAmount > 0 ? formatPrice(shippingAmount) : SHIPPING.FREE_LABEL}
+                    {shippingAmount > 0 ? formatPrice(shippingAmount) : shippingCfg.freeLabel}
                   </span>
                 </div>
                 
                 <Separator />
                 
                 <div className="flex justify-between items-center">
-                  <span className="text-lg font-bold">Total:</span>
+                  <span className="text-lg font-bold">{uiCfg.cartDrawerTotalLabel}</span>
                   <span className="text-lg font-bold">{formatPrice(total)}</span>
                 </div>
                 
                 <div className="space-y-2">
                   <Link to={auth.isAuthenticated ? "/checkout" : "/login"} state={!auth.isAuthenticated ? { from: '/checkout' } : undefined} className="w-full">
                     <Button className="w-full" size="lg">
-                      {auth.isAuthenticated ? 'Proceder al Pago' : 'Iniciar Sesión para Comprar'}
+                      {auth.isAuthenticated ? uiCfg.cartProceedAuthLabel : uiCfg.cartProceedGuestLabel}
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </Link>
@@ -253,7 +254,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
                     className="w-full"
                     onClick={handleClearCart}
                   >
-                    Vaciar Carrito
+                    {uiCfg.cartClearLabel}
                   </Button>
                 </div>
               </div>

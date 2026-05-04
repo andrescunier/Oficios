@@ -8,7 +8,7 @@ import { Search, Plus, Minus, Heart } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useStore } from '@/store/useStore';
 import type { Product } from '@/types/api';
-import { getBusinessConfig } from '@/config/runtime';
+import { getBusinessConfig, getUIConfig } from '@/config/runtime';
 import { PriceDisplay } from '@/hooks/usePriceVisibility';
 import { BRANDING, FEATURES } from '@/config/branding';
 import { handleImgError } from '@/utils/imageHelpers';
@@ -18,21 +18,18 @@ import { ProductGroupCard } from '@/components/product/ProductGroupCard';
 import { ProductCard } from '@/components/product/ProductCard';
 
 export const ProductsPageApiReal: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchTerm, setSearchTerm] = useState(() => searchParams.get('buscar') || '');
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
   const perPage = getBusinessConfig().productsPerPage;
 
   // Paginación: leer página actual desde URL
   const currentPage = Number(searchParams.get('page')) || 1;
 
-  // Leer búsqueda desde URL al cargar
+  // Sincronizar searchTerm con el parámetro buscar de la URL (incluyendo cuando se elimina)
   useEffect(() => {
-    const buscarParam = searchParams.get('buscar');
-    if (buscarParam) {
-      setSearchTerm(buscarParam);
-    }
+    setSearchTerm(searchParams.get('buscar') || '');
   }, [searchParams]);
 
   const { addToCart, addNotification, auth, addToFavorites, removeFromFavorites, isFavorite } = useStore();
@@ -41,6 +38,7 @@ export const ProductsPageApiReal: React.FC = () => {
     page: currentPage,
     per_page: perPage,
     is_active: true,
+    search: searchTerm || undefined,
   }));
   const products = productsQuery.data?.data || [];
   const pagination = productsQuery.data?.pagination;
@@ -64,7 +62,7 @@ export const ProductsPageApiReal: React.FC = () => {
       addNotification({
         type: 'info',
         title: 'Información',
-        message: 'No se encontraron productos en la base de datos.',
+        message: getUIConfig().noProductsMessage,
       });
     }
   }, [addNotification, products.length, productsQuery.isSuccess]);
@@ -204,15 +202,15 @@ export const ProductsPageApiReal: React.FC = () => {
             <div className="mb-4">
               <Search className="w-16 h-16 text-gray-300 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-gray-700 mb-2">
-                {error ? 'No se pudieron cargar los productos' : 'No se encontraron productos'}
+                {error ? 'No se pudieron cargar los productos' : getUIConfig().noProductsTitle}
               </h3>
               <p className="text-gray-500">
-                {error 
-                  ? 'Hubo un problema al conectar con el servidor. Por favor, intenta nuevamente.' 
-                  : searchTerm 
-                    ? 'Intenta con otros términos de búsqueda.' 
-                    : 'No hay productos disponibles en este momento.'}
-              </p>
+                  {error 
+                    ? 'Hubo un problema al conectar con el servidor. Por favor, intenta nuevamente.' 
+                    : searchTerm 
+                      ? getUIConfig().noProductsMessage
+                      : getUIConfig().noProductsMessage}
+                </p>
               {error && (
                 <button 
                   onClick={() => productsQuery.refetch()}

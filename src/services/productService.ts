@@ -20,7 +20,11 @@ interface ProductsListEnvelope {
 
 interface ProductEnvelope {
   success?: boolean;
-  data?: Product;
+  data?: Product & {
+    variants?: ProductVariant[];
+    variant_options?: ProductVariantOption[];
+    variantOptions?: ProductVariantOption[];
+  };
 }
 
 const normalizePaginatedProducts = (
@@ -65,10 +69,16 @@ const normalizePaginatedProducts = (
   };
 };
 
-const extractProduct = (response: unknown): Product | null => {
+type ProductWithEmbeddedVariants = Product & {
+  variants?: ProductVariant[];
+  variant_options?: ProductVariantOption[];
+  variantOptions?: ProductVariantOption[];
+};
+
+const extractProduct = (response: unknown): ProductWithEmbeddedVariants | null => {
   if (response && typeof response === 'object') {
     if ('id' in response) {
-      return response as Product;
+      return response as ProductWithEmbeddedVariants;
     }
 
     const envelope = response as ProductEnvelope;
@@ -78,6 +88,31 @@ const extractProduct = (response: unknown): Product | null => {
   }
 
   return null;
+};
+
+const normalizeProductWithVariants = (
+  response: ProductWithEmbeddedVariants,
+): {
+  product: Product;
+  variants: ProductVariant[];
+  variantOptions: ProductVariantOption[];
+} => {
+  const variants = Array.isArray(response.variants) ? response.variants : [];
+  const variantOptions = Array.isArray(response.variant_options)
+    ? response.variant_options
+    : Array.isArray(response.variantOptions)
+      ? response.variantOptions
+      : [];
+  const { variants: _variants, variant_options: _variantOptions, variantOptions: _camelOptions, ...product } = response;
+
+  return {
+    product: {
+      ...product,
+      has_variants: Boolean(product.has_variants || variants.length > 0),
+    },
+    variants,
+    variantOptions,
+  };
 };
 
 export class ProductService {
@@ -96,7 +131,9 @@ export class ProductService {
     page?: number;
     per_page?: number;
     search?: string;
+    family?: string;
     category?: string;
+    subcategory?: string;
     sku?: string;
     name?: string;
     is_active?: boolean;
@@ -124,7 +161,9 @@ export class ProductService {
 
   async getAllProducts(params?: {
     search?: string;
+    family?: string;
     category?: string;
+    subcategory?: string;
     sku?: string;
     name?: string;
     is_active?: boolean;
@@ -174,13 +213,21 @@ export class ProductService {
   }
 
   async getProductVariants(productId: string, params?: { status?: string }): Promise<ProductVariant[]> {
-    log.products.warn('getProductVariants no está soportado por el contrato activo', { productId, params });
-    return [];
+    const product = await this.getProduct(productId) as ProductWithEmbeddedVariants;
+    const variants = Array.isArray(product.variants) ? product.variants : [];
+    if (!params?.status) {
+      return variants;
+    }
+    return variants.filter((variant) => variant.status === params.status);
   }
 
   async getProductVariantOptions(productId: string): Promise<ProductVariantOption[]> {
-    log.products.warn('getProductVariantOptions no está soportado por el contrato activo', { productId });
-    return [];
+    const product = await this.getProduct(productId) as ProductWithEmbeddedVariants;
+    return Array.isArray(product.variant_options)
+      ? product.variant_options
+      : Array.isArray(product.variantOptions)
+        ? product.variantOptions
+        : [];
   }
 
   async getProductWithVariants(productId: string): Promise<{
@@ -188,25 +235,12 @@ export class ProductService {
     variants: ProductVariant[];
     variantOptions: ProductVariantOption[];
   }> {
-    const product = await this.getProduct(productId);
-
-    if (!product.has_variants) {
-      return {
-        product,
-        variants: [],
-        variantOptions: [],
-      };
-    }
-
-    const [variants, variantOptions] = await Promise.all([
-      this.getProductVariants(productId, { status: 'active' }).catch(() => []),
-      this.getProductVariantOptions(productId).catch(() => []),
-    ]);
+    const product = await this.getProduct(productId) as ProductWithEmbeddedVariants;
+    const normalized = normalizeProductWithVariants(product);
 
     return {
-      product,
-      variants,
-      variantOptions,
+      ...normalized,
+      variants: normalized.variants.filter((variant) => variant.status === 'active'),
     };
   }
 

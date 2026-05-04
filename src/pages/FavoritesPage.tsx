@@ -3,7 +3,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { getBusinessConfig } from '@/config/runtime';
+import { getUIConfig, getBusinessConfig } from '@/config/runtime';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   Heart, 
@@ -24,6 +24,7 @@ import type { Product } from '@/types/api';
 export const FavoritesPage: React.FC = () => {
   const navigate = useNavigate();
   const { auth, favorites, removeFromFavorites, addToCart, addNotification } = useStore();
+  const uiCfg = getUIConfig();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
   const [favoriteProducts, setFavoriteProducts] = useState<Product[]>([]);
@@ -41,14 +42,14 @@ export const FavoritesPage: React.FC = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <Lock className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-          <h2 className="text-2xl font-bold mb-4">Acceso Requerido</h2>
-          <p className="text-gray-600 mb-6">Necesitas iniciar sesión para ver tus favoritos</p>
+          <h2 className="text-2xl font-bold mb-4">{uiCfg.authRequiredTitle}</h2>
+          <p className="text-gray-600 mb-6">{uiCfg.favoritesAuthMessage}</p>
           <Link 
             to="/login" 
             state={{ from: '/favoritos' }}
             className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
           >
-            Iniciar Sesión
+            {uiCfg.authLoginButtonLabel}
           </Link>
         </div>
       </div>
@@ -151,12 +152,12 @@ export const FavoritesPage: React.FC = () => {
                 className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Volver a Perfil
+                {uiCfg.favoritesBackLabel}
               </Link>
               <div>
-                <h1 className="text-2xl font-bold">Mis Favoritos</h1>
+                <h1 className="text-2xl font-bold">{uiCfg.favoritesPageTitle}</h1>
                 <p className="text-gray-600">
-                  {favoriteProducts.length} producto{favoriteProducts.length !== 1 ? 's' : ''} guardado{favoriteProducts.length !== 1 ? 's' : ''}
+                  {favoriteProducts.length} {favoriteProducts.length !== 1 ? uiCfg.favoritesCountPlural : uiCfg.favoritesCountSingular}
                 </p>
               </div>
             </div>
@@ -167,7 +168,7 @@ export const FavoritesPage: React.FC = () => {
                 className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
                 <ShoppingCart className="w-4 h-4 mr-2" />
-                Agregar Todo al Carrito
+                {uiCfg.favoritesAddAllLabel}
               </button>
             )}
           </div>
@@ -179,21 +180,21 @@ export const FavoritesPage: React.FC = () => {
           // Estado de carga
           <div className="bg-white rounded-lg shadow-sm p-8 text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Cargando tus favoritos...</p>
+            <p className="text-gray-600">{uiCfg.favoritesLoadingMessage}</p>
           </div>
         ) : favoriteProducts.length === 0 ? (
           // Estado vacío
           <div className="bg-white rounded-lg shadow-sm p-8 text-center">
             <Heart className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No tienes favoritos aún</h3>
+            <h3 className="text-lg font-semibold mb-2">{uiCfg.favoritesEmptyTitle}</h3>
             <p className="text-gray-600 mb-6">
-              Guarda los productos que te gusten para encontrarlos fácilmente más tarde.
+              {uiCfg.favoritesEmptyBody}
             </p>
             <Link 
               to="/productos"
               className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
             >
-              Explorar Productos
+              {uiCfg.favoritesEmptyExploreLabel}
             </Link>
           </div>
         ) : (
@@ -206,7 +207,7 @@ export const FavoritesPage: React.FC = () => {
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input
                       type="text"
-                      placeholder="Buscar en favoritos..."
+                      placeholder={uiCfg.favoritesSearchPlaceholder}
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -241,9 +242,9 @@ export const FavoritesPage: React.FC = () => {
               // No hay resultados de búsqueda
               <div className="bg-white rounded-lg shadow-sm p-8 text-center">
                 <Search className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No se encontraron productos</h3>
+                <h3 className="text-lg font-semibold mb-2">{uiCfg.noProductsTitle}</h3>
                 <p className="text-gray-600">
-                  Intenta con otros términos de búsqueda.
+                  {uiCfg.favoritesNoResultsBody}
                 </p>
               </div>
             ) : (
@@ -287,7 +288,7 @@ export const FavoritesPage: React.FC = () => {
 
                               {product.has_variants ? (
                                 <span className="text-sm px-2 py-1 rounded-full bg-blue-100 text-blue-800">
-                                  Variantes disponibles
+                                  {uiCfg.favoritesVariantsLabel}
                                 </span>
                               ) : product.stock_quantity !== undefined && (
                                 <span className={`text-sm px-2 py-1 rounded-full ${

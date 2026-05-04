@@ -43,12 +43,14 @@ GET /api/accounts/{accountId}/ecommerce-config
 
 Referencia de contrato:
 
+- [docs/BACKEND_ALIGNMENT.md](/home/andis/simpleEcommerce/docs/BACKEND_ALIGNMENT.md)
 - [docs/API_ECOMMERCE_CONFIG.md](/home/andis/simpleEcommerce/docs/API_ECOMMERCE_CONFIG.md)
 - [docs/BACKEND_CONTRACT.md](/home/andis/simpleEcommerce/docs/BACKEND_CONTRACT.md)
+- [/home/andis/simpleFastApi/docs/FRONTEND_STOREFRONT_CONTRACT.md](/home/andis/simpleFastApi/docs/FRONTEND_STOREFRONT_CONTRACT.md)
 
-Export Warpla listo para persistir en plataforma:
+Ejemplos de configuración runtime:
 
-- [exports/warpla-platform-upload/README.md](/home/andis/simpleEcommerce/exports/warpla-platform-upload/README.md)
+- [exports/runtime-config.example.json](/home/andis/simpleEcommerce/exports/runtime-config.example.json)
 
 ## Scripts útiles
 
@@ -70,7 +72,7 @@ pnpm test:e2e:headed
 - `pnpm lint` valida el código del frontend.
 - `pnpm test:run` ejecuta tests unitarios, store, runtime schema y observabilidad.
 - `pnpm test:e2e` ejecuta Playwright con mocks deterministas para bootstrap, catálogo, login y checkout.
-- `.github/workflows/quality.yml` reinstala un quality gate con `lint + unit + build:check + e2e`.
+- `.github/workflows/quality.yml` reinstala un quality gate con `lint + typecheck + unit + build:check + e2e`.
 - `window.__APP_MONITOR__` expone `getEvents()`, `getPending()`, `getSessionId()` y `flush()` en desarrollo.
 
 ## Integración backend
@@ -84,6 +86,8 @@ pnpm test:e2e:headed
 - El catálogo autenticado consume `GET /api/accounts/{accountId}/products`.
 - El checkout storefront crea y envía órdenes, pero no crea ni confirma pagos.
 - El frontend informa el método de pago en metadata y el backend valida el pago después.
+- Favoritos y carrito remoto se sincronizan por `business_partner_id` autenticado.
+- Para agentes/IA, la entrada operativa es [AGENTS.md](/home/andis/simpleEcommerce/AGENTS.md).
 
 ## Observabilidad remota opcional
 

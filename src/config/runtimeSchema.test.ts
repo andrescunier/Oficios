@@ -37,8 +37,31 @@ describe('runtimeSchema', () => {
         endpoint: 'https://hooks.example.com/newsletter',
         buttonLabel: 'Suscribirme',
       },
+      registration: {
+        title: 'Alta mayorista',
+        fields: [
+          {
+            name: 'email',
+            label: 'Correo',
+            required: true,
+            visible: true,
+          },
+          {
+            name: 'password',
+            label: 'Clave',
+            required: true,
+            visible: true,
+            type: 'password',
+          },
+        ],
+      },
+      ui: {
+        loginTitle: 'Ingresar al portal',
+        checkoutFinalizeLabel: 'Enviar pedido',
+      },
       business: {
         defaultCurrency: 'ARS',
+        returnPolicyDays: 10,
       },
       images: {
         heroSlides: [
@@ -66,7 +89,11 @@ describe('runtimeSchema', () => {
       mobileImage: 'https://cdn.example.com/hero-mobile.jpg',
     });
     expect(payload?.shipping?.chargeProductId).toBe('shipping-product');
+    expect(payload?.business?.returnPolicyDays).toBe('10 dias');
     expect(payload?.newsletter?.buttonLabel).toBe('Suscribirme');
+    expect(payload?.registration?.title).toBe('Alta mayorista');
+    expect(payload?.registration?.fields?.[0].name).toBe('email');
+    expect(payload?.ui?.loginTitle).toBe('Ingresar al portal');
   });
 
   it('rechaza payloads inválidos', () => {

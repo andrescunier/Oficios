@@ -84,9 +84,43 @@ interface SalesOrder {
     carrier?: string;
     [key: string]: any;
   };
+  storefront_status?: StorefrontOrderStatus;
   created_at: string;
   updated_at: string;
   status_history?: StatusHistoryEntry[];
+}
+
+interface StorefrontPaymentStatus {
+  status: 'pending_backend_validation' | 'validated' | 'paid' | 'partially_paid' | 'rejected' | 'cancelled' | string;
+  method?: string | null;
+  amount_informed?: number | null;
+  amount_applied: number;
+  currency: string;
+  reference?: string | null;
+  provider?: string | null;
+  updated_at?: string | null;
+}
+
+interface StorefrontDeliveryStatus {
+  status: 'not_created' | 'pending' | 'preparing' | 'in_transit' | 'delivered' | 'cancelled' | string;
+  delivery_count: number;
+  carrier_name?: string | null;
+  tracking_reference?: string | null;
+  tracking_url?: string | null;
+  estimated_arrival?: string | null;
+  shipped_at?: string | null;
+  delivered_at?: string | null;
+}
+
+interface StorefrontOrderStatus {
+  payment: StorefrontPaymentStatus;
+  delivery: StorefrontDeliveryStatus;
+}
+
+interface StorefrontOrderStatusResponse {
+  order: SalesOrder;
+  payment: StorefrontPaymentStatus;
+  delivery: StorefrontDeliveryStatus;
 }
 
 interface GetOrdersParams {
@@ -108,25 +142,6 @@ interface OrdersResponse {
   };
 }
 
-// Interface para generar factura desde orden
-interface GenerateInvoiceRequest {
-  invoice_number: string;
-  due_at?: string;
-  status?: 'draft' | 'sent';
-  metadata?: Record<string, any>;
-}
-
-interface GenerateInvoiceResponse {
-  id: string;
-  invoice_number: string;
-  customer_id: string;
-  sales_order_id: string;
-  currency: string;
-  status: string;
-  total_amount: number;
-  created_at: string;
-}
-
 // Interface para validación de stock
 interface ValidateStockRequest {
   items: Array<{
@@ -139,12 +154,12 @@ interface ValidateStockResponse {
   success: boolean;
   message?: string;
   data?: {
-    valid: boolean;
+    all_available: boolean;
     items: Array<{
       product_id: string;
-      requested: number;
-      available: number;
-      valid: boolean;
+      requested_quantity?: number;
+      available_quantity?: number;
+      available: boolean;
     }>;
   };
 }
@@ -355,15 +370,13 @@ class OrderService {
     try {
       const response = await httpClient.post<ValidateStockResponse>(
         API_ENDPOINTS.VALIDATE_STOCK(this.getAccountId()),
-        {
-          items: items.map(item => ({
-            product_id: item.product_id,
-            description: '',
-            quantity: item.quantity,
-            unit_price: 0,
-            tax_rate: 0
-          }))
-        }
+        items.map(item => ({
+          product_id: item.product_id,
+          description: '',
+          quantity: item.quantity,
+          unit_price: 0,
+          tax_rate: 0
+        }))
       );
       
       return response;
@@ -434,29 +447,6 @@ class OrderService {
       return response;
     } catch (error) {
       log.orders.error('Error enviando orden:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Transición genérica entre estados
-   * POST /accounts/{account_id}/sales-orders/{order_id}/transition?to_status=X
-   */
-  async transitionOrder(orderId: string, toStatus: OrderStatus, reason?: string): Promise<StateTransitionResponse> {
-    try {
-      const eventId = `transition-${toStatus}-${orderId}-${Date.now()}`;
-      
-      const response = await httpClient.post<StateTransitionResponse>(
-        `${API_ENDPOINTS.TRANSITION_ORDER(this.getAccountId(), orderId)}?to_status=${toStatus}`,
-        {
-          reason: reason,
-          event_id: eventId
-        }
-      );
-
-      return response;
-    } catch (error) {
-      log.orders.error('Error en transición de orden:', error);
       throw error;
     }
   }
@@ -584,6 +574,24 @@ class OrderService {
     }
   }
 
+  async getStorefrontOrderStatus(orderId: string): Promise<StorefrontOrderStatusResponse> {
+    const response = await httpClient.get<any>(
+      API_ENDPOINTS.ORDER_STOREFRONT_STATUS(this.getAccountId(), orderId)
+    );
+    const payload = unwrapApiResponse<any>(response);
+    return {
+      order: normalizeSalesOrder(payload.order),
+      payment: {
+        ...payload.payment,
+        amount_applied: Number(payload.payment?.amount_applied || 0),
+      },
+      delivery: {
+        ...payload.delivery,
+        delivery_count: Number(payload.delivery?.delivery_count || 0),
+      },
+    };
+  }
+
   /**
    * Obtiene los pedidos de un usuario específico
    */
@@ -597,13 +605,21 @@ class OrderService {
   }
 
   async getOrderDetail(orderId: string): Promise<SalesOrder> {
-    const [order, statusHistoryResponse] = await Promise.all([
+    const [order, statusHistoryResponse, storefrontStatus] = await Promise.all([
       this.getOrder(orderId),
       this.getStatusHistory(orderId).catch(() => null),
+      this.getStorefrontOrderStatus(orderId).catch(() => null),
     ]);
 
     return {
       ...order,
+      ...(storefrontStatus?.order || {}),
+      storefront_status: storefrontStatus
+        ? {
+            payment: storefrontStatus.payment,
+            delivery: storefrontStatus.delivery,
+          }
+        : undefined,
       status_history: statusHistoryResponse?.data?.history || [],
     };
   }
@@ -689,23 +705,6 @@ class OrderService {
       log.orders.debug('createSalesOrder unwrapped:', { id: order.id, order_number: order.order_number });
       return order;
     } catch (error) {
-      throw error;
-    }
-  }
-
-  /**
-   * Genera una factura desde una orden de venta
-   * POST /accounts/{account_id}/sales-orders/{order_id}/invoice
-   */
-  async generateInvoice(orderId: string, invoiceData: GenerateInvoiceRequest): Promise<GenerateInvoiceResponse> {
-    try {
-      const response = await httpClient.post<any>(
-        API_ENDPOINTS.ORDER_INVOICE(this.getAccountId(), orderId),
-        invoiceData
-      );
-      return unwrapApiResponse<GenerateInvoiceResponse>(response);
-    } catch (error) {
-      log.orders.error('Error generando factura:', error);
       throw error;
     }
   }
@@ -867,6 +866,9 @@ export type {
   CreateSalesOrderResponse, 
   SalesOrderItem,
   SalesOrder,
+  StorefrontDeliveryStatus,
+  StorefrontOrderStatus,
+  StorefrontPaymentStatus,
   GetOrdersParams,
   OrdersResponse,
   CheckoutData,

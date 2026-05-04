@@ -173,8 +173,12 @@ export class AuthService {
         log.auth.info('Business Partner ID guardado desde /auth/login:', businessPartnerId);
       }
 
+      // Enriquecer con /auth/me (incluye `person` + `shipping`/`billing` no presentes en /auth/login).
+      // Mejor esfuerzo: si falla, se devuelve el user básico igualmente.
+      const enrichedUser = await this.enrichUserFromMe(user);
+
       return {
-        user,
+        user: enrichedUser,
         token,
         account
       };
@@ -401,6 +405,60 @@ export class AuthService {
     };
 
     return baseUser;
+  }
+
+  /**
+   * Llama a /auth/me (best-effort) para completar `person` y persistir
+   * dirección de envío/billing en el draft de registro, de modo que el
+   * checkout pueda pre-llenar los campos cuando el usuario ya está logueado.
+   */
+  private async enrichUserFromMe(user: User): Promise<User> {
+    try {
+      const meResponse = await this.getMe();
+      const data = meResponse?.data;
+      if (!data) return user;
+
+      const now = new Date().toISOString();
+      const personFromMe = data.person
+        ? {
+            id: data.person.id,
+            first_name: data.person.first_name,
+            last_name: data.person.last_name,
+            email: data.person.email || data.user?.email || user.email,
+            phone: data.person.phone,
+            created_at: now,
+            updated_at: now,
+          }
+        : user.person;
+
+      // Persistir dirección para pre-llenar el checkout (sin pisar lo que ya escribió el usuario).
+      const shipping = data.shipping;
+      const billingAddress = data.billing?.address;
+      if (shipping || billingAddress || personFromMe) {
+        try {
+          saveRegistrationDraft({
+            first_name: personFromMe?.first_name || '',
+            last_name: personFromMe?.last_name || '',
+            phone: personFromMe?.phone || '',
+            address: shipping?.address || billingAddress?.line1 || '',
+            city: shipping?.city || billingAddress?.city || '',
+            state: shipping?.state || billingAddress?.state || '',
+            zipCode: shipping?.zip_code || billingAddress?.postal_code || '',
+          });
+        } catch (error) {
+          log.auth.warn('No se pudo persistir el draft desde /auth/me:', error);
+        }
+      }
+
+      return {
+        ...user,
+        person_id: data.person?.id || user.person_id,
+        person: personFromMe,
+      };
+    } catch (error) {
+      log.auth.warn('No se pudo enriquecer user con /auth/me:', error);
+      return user;
+    }
   }
 }
 

@@ -30,9 +30,15 @@ export default defineConfig({
             return 'data';
           }
 
+          if (id.includes('lucide-react') || id.includes('framer-motion')) {
+            return 'interaction-vendor';
+          }
+
           if (id.includes('react') || id.includes('react-dom')) {
             return 'react-vendor';
           }
+
+          return 'vendor';
         },
       },
     },

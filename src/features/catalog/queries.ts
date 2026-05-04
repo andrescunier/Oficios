@@ -13,7 +13,15 @@ interface ProductWithVariantsPayload {
 }
 
 interface CategoryListingCriteria {
-  sourceCategory?: string;
+  family?: string;
+  category?: string;
+  subcategory?: string;
+  search?: string;
+  page?: number;
+  perPage?: number;
+  inStock?: boolean;
+  sortBy?: 'name' | 'price' | 'stock' | 'created';
+  sortOrder?: 'asc' | 'desc';
 }
 
 const normalizePaginatedProducts = (response: PaginatedResponse<Product>): PaginatedResponse<Product> => ({
@@ -40,9 +48,17 @@ export const productsQueryOptions = (params?: ProductQueryParams) =>
 export const categoryListingQueryOptions = (criteria: CategoryListingCriteria) =>
   queryOptions({
     queryKey: catalogQueryKeys.categoryListing(criteria),
-    queryFn: async () => withProductImages(await productService.getAllProducts({
-      category: criteria.sourceCategory,
+    queryFn: async () => normalizePaginatedProducts(await productService.getProducts({
+      family: criteria.family,
+      category: criteria.category,
+      subcategory: criteria.subcategory,
+      search: criteria.search,
       is_active: true,
+      in_stock: criteria.inStock,
+      page: criteria.page,
+      per_page: criteria.perPage,
+      sort_by: criteria.sortBy,
+      sort_order: criteria.sortOrder,
     })),
     placeholderData: keepPreviousData,
   });

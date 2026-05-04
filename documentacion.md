@@ -2294,7 +2294,9 @@ Estadísticas de registros de la cuenta.
 | Logistics (Warehouses, Levels, Aliases) | 11 | Sí |
 | Integrations (MeLi, Amazon, Bitrix) | 4 | Sí |
 | Simple Registration | 5 | No (solo X-Account-ID) |
-| **TOTAL** | **137** | — |
+| Customer Favorites (storefront) | 3 | Sí |
+| Customer Cart (storefront) | 3 | Sí |
+| **TOTAL** | **143** | — |
 
 ### Leyenda
 
@@ -2303,6 +2305,107 @@ Estadísticas de registros de la cuenta.
 | 🔐 | Requiere autenticación (`Authorization: Bearer {token}`) |
 | 🔓 | Acceso público (sin autenticación) |
 | (admin/sysadmin) | Requiere rol admin o sysadmin |
+
+---
+
+## 30. Customer Favorites (storefront)
+
+> Implementado para reemplazar el almacenamiento `localStorage`-only del feature "favoritos" del storefront. Sincroniza entre dispositivos para el mismo cliente.
+
+### Modelo
+
+Tabla `customer_favorites`:
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| `account_id` | `UUID` | Tenant. Parte de PK. |
+| `business_partner_id` | `UUID` | Cliente (no `user_id`). Parte de PK. |
+| `product_id` | `UUID` | Parte de PK. Idempotencia natural. |
+| `created_at` | `TIMESTAMPTZ` | Default `NOW()`. Usado para orden. |
+
+PK: `(account_id, business_partner_id, product_id)`. Índice secundario: `(account_id, business_partner_id, created_at DESC)`.
+
+Migración SQL: [`exports/backend-create-customer-favorites.sql`](exports/backend-create-customer-favorites.sql).
+
+### Endpoints
+
+| Método | Ruta | Auth | Descripción |
+|---|---|---|---|
+| `GET` | `/api/accounts/{account_id}/customers/{business_partner_id}/favorites` | 🔐 | Listar favoritos del cliente, ordenados por `created_at DESC`. |
+| `POST` | `/api/accounts/{account_id}/customers/{business_partner_id}/favorites` | 🔐 | Agregar favorito. Idempotente (`UPSERT`). Body `{ "product_id": "<uuid>" }`. |
+| `DELETE` | `/api/accounts/{account_id}/customers/{business_partner_id}/favorites/{product_id}` | 🔐 | Quitar favorito. Idempotente (`204` aunque no exista). |
+
+### Reglas
+
+- El backend DEBE validar que `business_partner_id` corresponde al usuario del JWT. Si no, `403 E3002`.
+- `POST` y `DELETE` son idempotentes para soportar updates optimistas en el frontend.
+- Sin paginación inicial (cardinalidad esperada baja por usuario). Si crece, agregar `limit/offset`.
+
+### Errores
+
+| Código | Significado |
+|---|---|
+| `401` | Token inválido o expirado |
+| `403 E3002` | `business_partner_id` ajeno al usuario |
+| `404 E3000` | Tenant no encontrado |
+| `404` | `product_id` inexistente (solo en `POST`) |
+| `422` | Request inválido por schema |
+
+### Frontend
+
+- Service: [`src/services/favoritesService.ts`](src/services/favoritesService.ts)
+- Endpoints registrados: [`src/config/api.ts`](src/config/api.ts) (`FAVORITES`, `FAVORITE`)
+- Store: [`src/store/useStore.ts`](src/store/useStore.ts) — `addToFavorites` / `removeFromFavorites` con update optimista, revert en error y caché en `localStorage` por usuario para hidratación inmediata.
+- Skill operativa para features similares: [`.github/instructions/user-data-sync-feature/SKILL.md`](.github/instructions/user-data-sync-feature/SKILL.md).
+
+---
+
+## 31. Customer Cart (storefront)
+
+> Snapshot persistente del carrito por cliente. Permite que el carrito sobreviva al cierre de sesión y sincronice entre dispositivos.
+
+### Modelo
+
+Tabla `customer_carts`:
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| `account_id` | `UUID` | Tenant. Parte de PK. |
+| `business_partner_id` | `UUID` | Cliente. Parte de PK. |
+| `cart` | `JSONB` | Snapshot opaco escrito por el storefront. |
+| `updated_at` | `TIMESTAMPTZ` | Default `NOW()`. |
+
+PK: `(account_id, business_partner_id)` — un único snapshot por cliente. Migración: [`exports/backend-create-customer-carts.sql`](exports/backend-create-customer-carts.sql).
+
+### Endpoints
+
+| Método | Ruta | Auth | Descripción |
+|---|---|---|---|
+| `GET` | `/api/accounts/{account_id}/customers/{business_partner_id}/cart` | 🔐 | Devuelve el snapshot guardado o `data: null` si no hay. |
+| `PUT` | `/api/accounts/{account_id}/customers/{business_partner_id}/cart` | 🔐 | Reemplaza el snapshot completo (UPSERT). Body `{ "cart": { ... } }`. |
+| `DELETE` | `/api/accounts/{account_id}/customers/{business_partner_id}/cart` | 🔐 | Limpia el snapshot. Idempotente (`204` aunque no exista). |
+
+### Reglas
+
+- El backend DEBE validar que `business_partner_id` corresponde al usuario del JWT. Si no, `403 E3002`.
+- El backend **NO interpreta el JSON** del campo `cart`: lo guarda como `JSONB` opaco. El shape lo define el storefront (ver `BACKEND_CONTRACT.md`).
+- El snapshot es **referencial**: stock, precios e inventario se re-validan al confirmar la compra (`POST /sales-orders`).
+- `PUT` y `DELETE` son idempotentes para soportar el flujo optimista del frontend.
+
+### Errores
+
+| Código | Significado |
+|---|---|
+| `401` | Token inválido o expirado |
+| `403 E3002` | `business_partner_id` ajeno al usuario |
+| `404 E3000` | Tenant no encontrado |
+| `422` | `cart` ausente o `items` no es array |
+
+### Frontend
+
+- Service: [`src/services/cartSyncService.ts`](src/services/cartSyncService.ts)
+- Endpoints registrados: [`src/config/api.ts`](src/config/api.ts) (`CART`)
+- Store: [`src/store/useStore.ts`](src/store/useStore.ts) — `scheduleCartSync` (debounce 700ms tras cada mutación) + `hydrateCartFromBackend` en login. `clearCart` también limpia el snapshot remoto.
 
 ---
 

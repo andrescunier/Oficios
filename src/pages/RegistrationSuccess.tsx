@@ -2,10 +2,11 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, ShoppingBag, Home } from 'lucide-react';
-import { BRANDING } from '@/config/branding';
+import { getUIConfig } from '@/config/runtime';
 
 export const RegistrationSuccess = () => {
   const navigate = useNavigate();
+  const uiCfg = getUIConfig();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center p-4">
@@ -15,21 +16,21 @@ export const RegistrationSuccess = () => {
             <CheckCircle2 className="h-16 w-16 text-green-500" />
           </div>
           <CardTitle className="text-2xl font-bold text-green-700">
-            ¡Bienvenido a {BRANDING.APP_NAME}!
+            {uiCfg.registrationSuccessTitle}
           </CardTitle>
           <CardDescription className="text-gray-600">
-            Tu cuenta ha sido creada y ya estás conectado
+            {uiCfg.registrationSuccessSubtitle}
           </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-6">
           <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-            <h3 className="font-semibold text-green-800 mb-2">¡Todo listo!</h3>
+            <h3 className="font-semibold text-green-800 mb-2">{uiCfg.registrationSuccessReadyTitle}</h3>
             <ul className="text-sm text-gray-600 space-y-1">
-              <li>✓ Tu cuenta empresarial está activa</li>
-              <li>✓ Ya puedes ver precios exclusivos B2B</li>
-              <li>✓ Explora nuestro catálogo de productos</li>
-              <li>✓ Realiza pedidos cuando quieras</li>
+              <li>✓ {uiCfg.registrationSuccessBullet1}</li>
+              <li>✓ {uiCfg.registrationSuccessBullet2}</li>
+              <li>✓ {uiCfg.registrationSuccessBullet3}</li>
+              <li>✓ {uiCfg.registrationSuccessBullet4}</li>
             </ul>
           </div>
 
@@ -39,7 +40,7 @@ export const RegistrationSuccess = () => {
               className="flex-1 bg-blue-600 hover:bg-blue-700"
             >
               <ShoppingBag className="w-4 h-4 mr-2" />
-              Ver Productos
+              {uiCfg.registrationSuccessViewProductsLabel}
             </Button>
             <Button 
               onClick={() => navigate('/')}
@@ -47,7 +48,7 @@ export const RegistrationSuccess = () => {
               className="flex-1"
             >
               <Home className="w-4 h-4 mr-2" />
-              Ir al Inicio
+              {uiCfg.registrationSuccessHomeLabel}
             </Button>
           </div>
         </CardContent>

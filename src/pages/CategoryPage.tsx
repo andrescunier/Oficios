@@ -1,8 +1,9 @@
 /**
- * Página de categoría con filtros y paginación sobre dataset completo.
+ * Página de categoría con filtros contractuales paginados desde backend.
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { getUIConfig } from '@/config/runtime';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import type { Product } from '@/types/api';
@@ -27,52 +28,18 @@ interface ActiveFilters {
 
 type FilterSectionsMap = Record<string, { label: string; options: FilterOption[] }>;
 
-const normalizeToken = (value: string) =>
-  value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
-
-const uniqueNormalized = (values: string[]) => [...new Set(values.map(normalizeToken).filter(Boolean))];
-
-const getProductCategoryValues = (product: Product) => {
-  const metadata = product.metadata && typeof product.metadata === 'object'
-    ? product.metadata as Record<string, unknown>
-    : undefined;
-
-  return uniqueNormalized([
-    typeof product.category === 'string' ? product.category : '',
-    typeof metadata?.category === 'string' ? metadata.category : '',
-  ]);
-};
-
-const matchesStructuredCategories = (product: Product, categories: string[]) => {
-  if (categories.length === 0) {
-    return true;
+const mapSortToBackend = (sort: string): { sortBy: 'name' | 'price'; sortOrder: 'asc' | 'desc' } => {
+  switch (sort) {
+    case 'nombre-desc':
+      return { sortBy: 'name', sortOrder: 'desc' };
+    case 'precio-asc':
+      return { sortBy: 'price', sortOrder: 'asc' };
+    case 'precio-desc':
+      return { sortBy: 'price', sortOrder: 'desc' };
+    case 'nombre-asc':
+    default:
+      return { sortBy: 'name', sortOrder: 'asc' };
   }
-
-  const productCategories = getProductCategoryValues(product);
-  return productCategories.some((productCategory) =>
-    categories.some((categoryToken) => (
-      productCategory === categoryToken
-      || productCategory.includes(categoryToken)
-      || categoryToken.includes(productCategory)
-    )),
-  );
-};
-
-const matchesTextTerms = (product: Product, terms: string[]) => {
-  if (terms.length === 0) {
-    return true;
-  }
-
-  const metadata = product.metadata && typeof product.metadata === 'object'
-    ? product.metadata as Record<string, unknown>
-    : undefined;
-  const searchable = normalizeToken([
-    product.name || '',
-    product.description || '',
-    typeof metadata?.category === 'string' ? metadata.category : '',
-  ].join(' '));
-
-  return terms.some((term) => searchable.includes(term));
 };
 
 export const CategoryPage: React.FC = () => {
@@ -102,16 +69,9 @@ export const CategoryPage: React.FC = () => {
 
   const categoryConfig = level3Config || level2Config || rootConfig;
   const categoryName = categoryConfig?.name || category || 'Productos';
-  const hierarchyNodes = [rootConfig, level2Config, level3Config].filter(Boolean) as CategoryConfig[];
   const navSubcategories: CategoryConfig[] = (level3Config ? undefined : (level2Config || rootConfig))?.subcategories || [];
 
-  const structuredCategories = uniqueNormalized(
-    hierarchyNodes.flatMap((node) => node.productCategories || []),
-  );
-  const textTerms = uniqueNormalized(
-    hierarchyNodes.flatMap((node) => node.searchTerms || []),
-  );
-  const sourceCategory = rootConfig?.productCategories?.[0] || categoryConfig?.productCategories?.[0];
+  const buscarQuery = searchParams.get('buscar') || undefined;
 
   const filterConfig = useMemo<FilterSectionsMap>(() => {
     if (!showFilters) {
@@ -165,8 +125,19 @@ export const CategoryPage: React.FC = () => {
     return config;
   }, [filtersConfig, showFilters]);
 
-  const categoryDatasetQuery = useQuery(categoryListingQueryOptions({ sourceCategory }));
-  const products = categoryDatasetQuery.data || [];
+  const backendSort = mapSortToBackend(sortBy);
+  const backendCategory = categoryConfig?.productCategories?.[0] || rootConfig?.productCategories?.[0];
+  const categoryDatasetQuery = useQuery(categoryListingQueryOptions({
+    category: backendCategory,
+    search: buscarQuery,
+    page: currentPage,
+    perPage: productsPerPage,
+    inStock: activeFilters.enStock || undefined,
+    sortBy: backendSort.sortBy,
+    sortOrder: backendSort.sortOrder,
+  }));
+  const products = categoryDatasetQuery.data?.data || [];
+  const pagination = categoryDatasetQuery.data?.pagination;
   const loading = categoryDatasetQuery.isLoading;
   const error = categoryDatasetQuery.isError ? 'Error al cargar los productos' : null;
 
@@ -182,6 +153,10 @@ export const CategoryPage: React.FC = () => {
 
   const syncUrlState = (nextFilters: ActiveFilters, nextSort: string, nextPage: number) => {
     const params = new URLSearchParams();
+
+    if (buscarQuery) {
+      params.set('buscar', buscarQuery);
+    }
 
     Object.entries(nextFilters).forEach(([key, val]) => {
       if (key === 'enStock' && val) {
@@ -202,12 +177,7 @@ export const CategoryPage: React.FC = () => {
   };
 
   const filteredProducts = useMemo(() => {
-    let result = products.filter((product) => {
-      if (!matchesStructuredCategories(product, structuredCategories)) {
-        return false;
-      }
-      return matchesTextTerms(product, textTerms);
-    });
+    let result = [...products];
 
     if (activeFilters.capacidad && activeFilters.capacidad.length > 0) {
       result = result.filter((product) => {
@@ -230,34 +200,13 @@ export const CategoryPage: React.FC = () => {
       });
     }
 
-    if (activeFilters.enStock) {
-      result = result.filter((product) => (product.stock_quantity || 0) > 0);
-    }
-
-    result.sort((a, b) => {
-      switch (sortBy) {
-        case 'nombre-asc':
-          return (a.name || '').localeCompare(b.name || '');
-        case 'nombre-desc':
-          return (b.name || '').localeCompare(a.name || '');
-        case 'precio-asc':
-          return (a.unit_price || 0) - (b.unit_price || 0);
-        case 'precio-desc':
-          return (b.unit_price || 0) - (a.unit_price || 0);
-        default:
-          return 0;
-      }
-    });
-
     return result;
-  }, [activeFilters, products, sortBy, structuredCategories, textTerms]);
+  }, [activeFilters.capacidad, activeFilters.velocidad, products]);
 
-  const totalPages = Math.max(Math.ceil(filteredProducts.length / productsPerPage), 1);
+  const totalProducts = pagination?.total ?? filteredProducts.length;
+  const totalPages = Math.max(pagination?.total_pages ?? 1, 1);
   const safeCurrentPage = Math.min(currentPage, totalPages);
-  const paginatedProducts = useMemo(() => {
-    const startIndex = (safeCurrentPage - 1) * productsPerPage;
-    return filteredProducts.slice(startIndex, startIndex + productsPerPage);
-  }, [filteredProducts, productsPerPage, safeCurrentPage]);
+  const paginatedProducts = filteredProducts;
   const groupedProducts = useMemo(() => groupProductsBySku(paginatedProducts), [paginatedProducts]);
 
   const updateFilters = (filterKey: keyof ActiveFilters, value: string | boolean) => {
@@ -347,8 +296,17 @@ export const CategoryPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <section className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-12">
-        <div className="container mx-auto px-4">
+      <section
+        className="text-white py-12 relative overflow-hidden"
+        style={{ background: 'linear-gradient(to right, var(--runtime-color-primary), var(--runtime-color-primary-hover))' }}
+      >
+        {categoryConfig?.image && (
+          <div
+            className="absolute inset-0 opacity-20 bg-cover bg-center"
+            style={{ backgroundImage: `url(${categoryConfig.image})` }}
+          />
+        )}
+        <div className="container mx-auto px-4 relative z-10">
           <div className="mb-2 flex items-center gap-1 text-sm text-white/70">
             <Link to="/" className="hover:text-white">Inicio</Link>
             <span>/</span>
@@ -379,7 +337,10 @@ export const CategoryPage: React.FC = () => {
           {navSubcategories.length > 0 && (
             <div className="mt-4 flex flex-wrap gap-2">
               <Link
-                to={(level2Config || rootConfig)?.link || `/categoria/${category}`}
+                to={{
+                  pathname: (level2Config || rootConfig)?.link || `/categoria/${category}`,
+                  search: buscarQuery ? `?buscar=${encodeURIComponent(buscarQuery)}` : undefined,
+                }}
                 className={`inline-flex items-center rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
                   (!subcategory || (subcategory && !subsubcategory && !level3Config && level2Config === categoryConfig))
                     ? 'bg-white text-blue-700'
@@ -398,7 +359,10 @@ export const CategoryPage: React.FC = () => {
                 return (
                   <Link
                     key={sub.slug}
-                    to={sub.link}
+                    to={{
+                      pathname: sub.link,
+                      search: buscarQuery ? `?buscar=${encodeURIComponent(buscarQuery)}` : undefined,
+                    }}
                     className={`inline-flex items-center rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
                       isActive
                         ? 'bg-white text-blue-700'
@@ -521,7 +485,7 @@ export const CategoryPage: React.FC = () => {
                       onClick={() => setShowMobileFilters(false)}
                       className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold"
                     >
-                      Ver {filteredProducts.length} productos
+                      Ver {totalProducts} productos
                     </button>
                   </div>
                 </div>
@@ -531,7 +495,7 @@ export const CategoryPage: React.FC = () => {
             <div className="flex-1">
               <div className="hidden lg:flex items-center justify-between mb-6">
                 <p className="text-gray-600">
-                  Mostrando {paginatedProducts.length} de {filteredProducts.length} producto{filteredProducts.length !== 1 ? 's' : ''}
+                  Mostrando {paginatedProducts.length} de {totalProducts} producto{totalProducts !== 1 ? 's' : ''}
                 </p>
 
                 <div className="flex items-center gap-2">
@@ -601,7 +565,7 @@ export const CategoryPage: React.FC = () => {
               {!loading && !error && filteredProducts.length === 0 && (
                 <div className="text-center py-16 bg-white rounded-lg shadow-sm">
                   <Filter className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-                  <h2 className="text-xl font-bold mb-2">No se encontraron productos</h2>
+                      <h2 className="text-xl font-bold mb-2">{getUIConfig().noProductsTitle}</h2>
                   <p className="text-gray-600 mb-6">
                     {activeFilterCount > 0
                       ? 'Intenta ajustar los filtros para ver más resultados'

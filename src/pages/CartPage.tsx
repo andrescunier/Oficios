@@ -6,7 +6,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Minus, Plus, Trash2, ShoppingCart, ArrowLeft } from 'lucide-react';
 import { useStore } from '@/store/useStore';
-import { getBusinessConfig } from '@/config/runtime';
+import { getBusinessConfig, getUIConfig, getShippingConfig } from '@/config/runtime';
 import { SHIPPING } from '@/config/branding';
 import { getCheckoutShippingCharge } from '@/features/checkout/model';
 
@@ -20,7 +20,7 @@ export const CartPage: React.FC = () => {
     auth,
   } = useStore();
   const navigate = useNavigate();
-  const shippingAmount = getCheckoutShippingCharge();
+  const shippingAmount = getCheckoutShippingCharge(cart.subtotal);
   const totalWithShipping = cart.total_amount + shippingAmount;
 
 
@@ -73,6 +73,9 @@ export const CartPage: React.FC = () => {
     }).format(price);
   };
 
+  const uiCfg = getUIConfig();
+  const shippingCfg = getShippingConfig();
+
   if (cart.items.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -80,13 +83,13 @@ export const CartPage: React.FC = () => {
         <section className="bg-white border-b">
           <div className="container mx-auto px-4 py-6">
             <div className="flex items-center justify-between">
-              <h1 className="text-2xl font-bold">Carrito de Compras</h1>
+              <h1 className="text-2xl font-bold">{uiCfg.cartPageTitle}</h1>
               <Link 
                 to="/" 
                 className="flex items-center text-blue-600 hover:text-blue-700 transition-colors"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Seguir Comprando
+                {uiCfg.cartPageContinueShopping}
               </Link>
             </div>
           </div>
@@ -99,15 +102,15 @@ export const CartPage: React.FC = () => {
               <div className="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
                 <ShoppingCart className="w-12 h-12 text-gray-400" />
               </div>
-              <h2 className="text-2xl font-bold mb-4">Tu carrito está vacío</h2>
+              <h2 className="text-2xl font-bold mb-4">{uiCfg.cartEmptyTitle}</h2>
               <p className="text-gray-600 mb-8">
-                Agrega algunos productos increíbles para comenzar tu compra
+                {uiCfg.cartEmptyBody}
               </p>
               <Link 
                 to="/productos" 
                 className="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
               >
-                Explorar Productos
+                {uiCfg.cartEmptyExploreLabel}
               </Link>
             </div>
           </div>
@@ -123,14 +126,14 @@ export const CartPage: React.FC = () => {
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold">
-              Carrito de Compras ({cart.items.length} {cart.items.length === 1 ? 'producto' : 'productos'})
+              {uiCfg.cartPageTitle} ({cart.items.length} {cart.items.length === 1 ? uiCfg.cartPageProductSingular : uiCfg.cartPageProductPlural})
             </h1>
             <Link 
               to="/" 
               className="flex items-center text-blue-600 hover:text-blue-700 transition-colors"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Seguir Comprando
+              {uiCfg.cartPageContinueShopping}
             </Link>
           </div>
         </div>
@@ -143,12 +146,12 @@ export const CartPage: React.FC = () => {
             <div className="bg-white rounded-lg shadow-sm">
               <div className="p-6 border-b">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold">Productos en tu carrito</h2>
+                  <h2 className="text-lg font-semibold">{uiCfg.cartPageItemsLabel}</h2>
                   <button
                     onClick={clearCart}
                     className="text-red-600 hover:text-red-700 text-sm transition-colors"
                   >
-                    Vaciar carrito
+                    {uiCfg.cartPageClearCartLabel}
                   </button>
                 </div>
               </div>
@@ -230,26 +233,22 @@ export const CartPage: React.FC = () => {
           {/* Order Summary */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow-sm p-6 sticky top-4">
-              <h2 className="text-lg font-semibold mb-4">Resumen del pedido</h2>
+              <h2 className="text-lg font-semibold mb-4">{uiCfg.checkoutOrderTitle}</h2>
               
               <div className="space-y-3 mb-6">
                 <div className="flex justify-between text-sm">
-                  <span>Subtotal</span>
+                  <span>{uiCfg.cartPageSubtotalLabel}</span>
                   <span>{formatPrice(cart.subtotal, cart.currency)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span>IVA (10,5%)</span>
-                  <span>{formatPrice(cart.tax_amount, cart.currency)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>{SHIPPING.LABEL}</span>
+                  <span>{shippingCfg.label}</span>
                   <span className={shippingAmount > 0 ? 'text-foreground' : 'text-green-600'}>
-                    {shippingAmount > 0 ? formatPrice(shippingAmount, cart.currency) : SHIPPING.FREE_LABEL}
+                    {shippingAmount > 0 ? formatPrice(shippingAmount, cart.currency) : shippingCfg.freeLabel}
                   </span>
                 </div>
                 <div className="border-t pt-3">
                   <div className="flex justify-between font-semibold text-lg">
-                    <span>Total</span>
+                    <span>{uiCfg.cartPageTotalLabel}</span>
                     <span className="text-blue-600">{formatPrice(totalWithShipping, cart.currency)}</span>
                   </div>
                 </div>
@@ -260,7 +259,7 @@ export const CartPage: React.FC = () => {
                 onClick={handleCheckout}
                 className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors mb-3"
               >
-                Proceder al Checkout
+                {uiCfg.cartPageCheckoutLabel}
               </button>
               
 
@@ -269,10 +268,10 @@ export const CartPage: React.FC = () => {
               <div className="mt-6 pt-6 border-t">
                 <div className="text-center text-sm text-gray-500">
                   <div className="flex items-center justify-center space-x-4 mb-2">
-                    <span>🔒 Pago seguro</span>
-                    <span>🚚 {shippingAmount > 0 ? SHIPPING.CHARGED_MESSAGE : SHIPPING.DRAWER_MESSAGE}</span>
+                    <span>🔒 {uiCfg.cartPageSSLBadge}</span>
+                    <span>🚚 {uiCfg.cartPageShippingBadge}</span>
                   </div>
-                  <p>Compra protegida por SSL</p>
+                  <p>{uiCfg.cartPageSSLDesc}</p>
                   <p className="mt-2 text-xs">
                     Al continuar aceptas nuestros{' '}
                     <Link to="/terminos" className="text-blue-600 hover:underline">

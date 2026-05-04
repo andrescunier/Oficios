@@ -96,7 +96,7 @@ class HttpClient {
           const url = error.config?.url || '';
           const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/me') || url.includes('/auth/token');
           if (!isAuthEndpoint) {
-            this.handleUnauthorized();
+            this.handleUnauthorized(error.response?.data);
           }
         }
 
@@ -168,10 +168,27 @@ class HttpClient {
   }
 
   // Método para manejar errores de autorización (401)
-  private handleUnauthorized(): void {
+  private handleUnauthorized(errorData?: any): void {
     try {
+      // Distinguir "sesión revocada por otro login" (single-active-session backend)
+      // de "sesión expirada por TTL". El backend marca el primero con código
+      // `E2005` (FastAPI: detail.code) — ver BACKEND_CONTRACT.md › "Sesión activa única".
+      const code = (
+        errorData?.code ||
+        errorData?.error?.code ||
+        errorData?.detail?.code ||
+        ''
+      ).toString().toUpperCase();
+      const reason =
+        code === 'E2005' ||
+        code === 'E1010' ||
+        code === 'SESSION_REVOKED' ||
+        code === 'SESSION_SUPERSEDED'
+          ? 'superseded'
+          : 'expired';
+
       clearAuthSession({
-        redirect: '/login?session=expired',
+        redirect: `/login?session=${reason}`,
         removeAuthToken: () => this.removeAuthToken(),
         preserveCart: true,
       });

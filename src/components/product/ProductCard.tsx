@@ -27,7 +27,7 @@ import { useStore } from '@/store/useStore';
 import type { Product } from '@/types/api';
 import { PriceDisplay, usePriceVisibility } from '@/hooks/usePriceVisibility';
 import { FEATURES } from '@/config/branding';
-import { getImagesConfig, getBusinessConfig } from '@/config/runtime';
+import { getImagesConfig, getBusinessConfig, getUIConfig } from '@/config/runtime';
 import { recordAppEvent } from '@/lib/observability';
 
 interface ProductCardProps {
@@ -58,6 +58,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   const { canViewPrices } = usePriceVisibility();
   const isAuthenticated = auth.isAuthenticated;
+  const uiCfg = getUIConfig();
 
   const isProductFavorite = isFavorite(product.id);
   const isOutOfStock = (product.stock_quantity || 0) <= 0;
@@ -97,8 +98,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     if (!product.stock_quantity || product.stock_quantity <= 0) {
       addNotification({
         type: 'error',
-        title: 'Sin stock',
-        message: 'Este producto no tiene stock disponible',
+        title: uiCfg.productOutOfStockNotifTitle,
+        message: uiCfg.productOutOfStockNotifMessage,
       });
       return;
     }
@@ -114,8 +115,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     if (!isAuthenticated) {
       addNotification({
         type: 'warning',
-        title: 'Inicia sesión',
-        message: 'Necesitas iniciar sesión para agregar productos a favoritos',
+        title: uiCfg.productLoginForFavoritesTitle,
+        message: uiCfg.productLoginForFavoritesMessage,
       });
       navigate('/login', {
         state: {
@@ -132,15 +133,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       removeFromFavorites(product.id);
       addNotification({
         type: 'info',
-        title: 'Eliminado de favoritos',
-        message: `${product.name} eliminado de favoritos`,
+        title: uiCfg.productRemovedFromFavoritesTitle,
+        message: `${product.name} ${uiCfg.productRemovedFromFavoritesMessage}`,
       });
     } else {
       addToFavorites(product.id);
       addNotification({
         type: 'success',
-        title: 'Agregado a favoritos',
-        message: `${product.name} agregado a tus favoritos`,
+        title: uiCfg.productAddedToFavoritesTitle,
+        message: `${product.name} ${uiCfg.productAddedToFavoritesMessage}`,
       });
     }
   };
@@ -187,9 +188,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   const reviewCount = product.metadata?.review_count || 0;
 
   const cardClasses = {
-    default: "group relative overflow-hidden transition-all duration-300 hover:shadow-lg",
-    compact: "group relative overflow-hidden transition-all duration-300 hover:shadow-md",
-    featured: "group relative overflow-hidden transition-all duration-300 hover:shadow-xl border-2 border-primary/20"
+    default: "group relative overflow-hidden border-0 bg-transparent shadow-none rounded-none transition-all duration-300",
+    compact: "group relative overflow-hidden border-0 bg-transparent shadow-none rounded-none transition-all duration-300",
+    featured: "group relative overflow-hidden border-0 bg-transparent shadow-none rounded-none transition-all duration-300"
   };
 
   return (
@@ -207,42 +208,40 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               loading="lazy"
             />
 
-            {/* Badges */}
-            <div className="absolute top-2 left-2 flex flex-col space-y-1">
-              {product.is_featured && (
-                <Badge variant="secondary" className="text-xs">
-                  Destacado
-                </Badge>
-              )}
-              {hasDiscount && (
-                <Badge variant="destructive" className="text-xs">
-                  -{discountPercentage}%
-                </Badge>
-              )}
-              {isOutOfStock && (
-                <Badge variant="outline" className="text-xs bg-background">
-                  Sin Stock
-                </Badge>
-              )}
-            </div>
+            {/* Editorial badges */}
+            {product.is_featured && (
+              <span className="absolute top-3 left-3 z-10 inline-flex items-center bg-foreground/90 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.25em] text-background">
+                Destacado
+              </span>
+            )}
+            {isOutOfStock && (
+              <span className="absolute top-3 left-3 z-10 inline-flex items-center bg-background/90 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.25em] text-foreground">
+                Sin stock
+              </span>
+            )}
+            {hasDiscount && (
+              <span className="absolute top-3 right-3 z-10 flex h-12 w-12 items-center justify-center bg-red-600 text-[11px] font-semibold uppercase tracking-wider text-white shadow-sm">
+                -{discountPercentage}%
+              </span>
+            )}
 
             {/* Action buttons */}
-            <div className="absolute top-2 right-2 flex flex-col space-y-1 opacity-80 group-hover:opacity-100 transition-opacity duration-300">
+            <div className={`absolute ${hasDiscount ? 'top-16' : 'top-3'} right-3 flex flex-col space-y-2 transition-opacity duration-300 ${isProductFavorite ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
               <Button
                 variant="secondary"
                 size="icon"
-                className={`w-9 h-9 rounded-full shadow-md ${isProductFavorite 
-                  ? 'bg-red-50 border-red-200 hover:bg-red-100' 
-                  : 'bg-white/90 hover:bg-white'
+                className={`w-9 h-9 rounded-full shadow-sm border ${isProductFavorite
+                  ? 'bg-white border-red-200 hover:bg-red-50'
+                  : 'bg-white/90 border-transparent hover:bg-white'
                 }`}
                 onClick={handleToggleFavorite}
                 title={isProductFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos'}
               >
-                <Heart 
-                  className={`w-5 h-5 ${isProductFavorite 
-                    ? 'fill-red-500 text-red-500' 
+                <Heart
+                  className={`w-5 h-5 ${isProductFavorite
+                    ? 'fill-red-500 text-red-500'
                     : 'text-gray-600 hover:text-red-400'
-                  }`} 
+                  }`}
                 />
               </Button>
               
@@ -341,10 +340,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
             {/* Quick add to cart overlay */}
             {canAddToCart && (
-            <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <Button 
-                size="sm" 
-                className="w-full" 
+            <div className="absolute bottom-3 left-3 right-3 opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0 transition-all duration-300">
+              <Button
+                size="sm"
+                className="w-full rounded-none bg-foreground text-background hover:bg-foreground/90 uppercase text-[11px] tracking-[0.25em] font-medium"
                 onClick={handleAddToCart}
               >
                 <ShoppingCart className="w-4 h-4 mr-2" />
@@ -356,22 +355,26 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         </Link>
 
         {/* Product info */}
-        <div className="p-4">
+        <div className="pt-4 px-1 pb-2 space-y-1.5 text-left">
+          {product.category && (
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              {product.category}
+            </p>
+          )}
+
           <Link to={`/productos/${product.id}`} onClick={handleProductClick}>
-            <h3 className="font-medium text-sm mb-2 line-clamp-2 hover:text-primary transition-colors">
+            <h3 className="text-sm font-medium leading-snug text-foreground line-clamp-2 hover:text-foreground/70 transition-colors">
               {product.name}
             </h3>
           </Link>
 
           {/* Rating */}
           {rating > 0 && (
-            <div className="flex items-center space-x-1 mb-2">
+            <div className="flex items-center gap-1">
               <div className="flex items-center">
                 {renderStars(rating)}
               </div>
-              <span className="text-xs text-muted-foreground">
-                ({reviewCount})
-              </span>
+              <span className="text-xs text-muted-foreground">({reviewCount})</span>
             </div>
           )}
 
@@ -384,27 +387,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
           {/* Stock info */}
           {product.stock_quantity != null && product.stock_quantity > 0 && product.stock_quantity <= 5 && (
-            <p className="text-xs text-orange-600 mb-2">
+            <p className="text-xs font-medium text-orange-600">
               ¡Solo quedan {product.stock_quantity} unidades!
             </p>
           )}
 
           {/* Talle from SKU */}
           {talle && (
-            <p className="text-xs text-muted-foreground mb-1">
-              Talle: <span className="font-medium">{talle}</span>
-            </p>
-          )}
-
-          {/* Category */}
-          {product.category && (
             <p className="text-xs text-muted-foreground">
-              {product.category}
+              Talle: <span className="font-medium text-foreground">{talle}</span>
             </p>
           )}
 
           {product.has_variants && (
-            <p className="text-xs text-blue-600 mt-1">
+            <p className="text-xs text-blue-600">
               Colores, talles u opciones disponibles
             </p>
           )}

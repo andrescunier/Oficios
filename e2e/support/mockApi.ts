@@ -167,6 +167,21 @@ export async function installMockApi(
 ) {
   const runtimePayload = options?.runtimePayload ?? validRuntimeConfig;
 
+  await page.route('**/config.js', async (route) => {
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/javascript',
+      body: `window.__APP_CONFIG__ = ${JSON.stringify({
+        api: {
+          url: 'http://127.0.0.1:4010',
+          accountId,
+          accountSlug: 'qa-store',
+          channel: 'ecommerce',
+        },
+      })};`,
+    });
+  });
+
   await page.route('http://127.0.0.1:4010/**', async (route) => {
     const request = route.request();
     const url = new URL(request.url());

@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { CheckCircle, Package, CreditCard, Mail, ArrowRight, ShoppingBag, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { getBusinessConfig } from '@/config/runtime';
+import { getBusinessConfig, getUIConfig } from '@/config/runtime';
 import { Separator } from '@/components/ui/separator';
 
 interface OrderSuccessState {
@@ -18,6 +18,7 @@ export default function OrderSuccessPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const state = location.state as OrderSuccessState | null;
+  const uiCfg = getUIConfig();
 
   // Si no hay state válido, redirigir al home
   useEffect(() => {
@@ -43,19 +44,19 @@ export default function OrderSuccessPage() {
 
   const getPaymentMethodLabel = (method?: string) => {
     const methodMap: Record<string, string> = {
-      cash: 'Efectivo',
-      transfer: 'Transferencia',
-      transferencia: 'Transferencia',
-      credit_card: 'Tarjeta de credito',
-      debit_card: 'Tarjeta de debito',
-      mercadopago: 'Mercado Pago',
-      stripe: 'Stripe',
-      card: 'Tarjeta',
-      check: 'Cheque',
-      other: 'Otro',
+      cash: uiCfg.paymentMethodCash,
+      transfer: uiCfg.paymentMethodTransfer,
+      transferencia: uiCfg.paymentMethodTransfer,
+      credit_card: uiCfg.paymentMethodCreditCard,
+      debit_card: uiCfg.paymentMethodDebitCard,
+      mercadopago: uiCfg.paymentMethodMercadopago,
+      stripe: uiCfg.paymentMethodCard,
+      card: uiCfg.paymentMethodCard,
+      check: uiCfg.paymentMethodCheck,
+      other: uiCfg.paymentMethodOther,
     };
 
-    return methodMap[method || 'other'] || method || 'Pendiente';
+    return methodMap[method || 'other'] || method || uiCfg.paymentMethodPending;
   };
 
   return (
@@ -67,10 +68,10 @@ export default function OrderSuccessPage() {
             <CheckCircle className="w-16 h-16 text-green-600" />
           </div>
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
-            Pedido Recibido
+            {uiCfg.orderSuccessTitle}
           </h1>
           <p className="text-lg text-gray-600">
-            Gracias por tu compra. El backend va a validar el pago antes de confirmar el pedido.
+            {uiCfg.orderSuccessSubtitle}
           </p>
         </div>
 
@@ -83,7 +84,7 @@ export default function OrderSuccessPage() {
                 <Package className="w-6 h-6 text-blue-600" />
               </div>
               <div className="flex-1">
-                <p className="text-sm text-gray-500">Número de Orden</p>
+                <p className="text-sm text-gray-500">{uiCfg.orderSuccessOrderNumberLabel}</p>
                 <p className="text-xl font-bold text-gray-900">{state.orderNumber}</p>
               </div>
             </div>
@@ -96,9 +97,9 @@ export default function OrderSuccessPage() {
                 <CreditCard className="w-6 h-6 text-purple-600" />
               </div>
               <div className="flex-1">
-                <p className="text-sm text-gray-500">Medio de pago informado</p>
+                <p className="text-sm text-gray-500">{uiCfg.orderSuccessPaymentMethodLabel}</p>
                 <p className="text-xl font-bold text-gray-900">{getPaymentMethodLabel(state.paymentMethod)}</p>
-                <p className="text-sm text-amber-700">Estado: pendiente de validación por el backend</p>
+                <p className="text-sm text-amber-700">{uiCfg.orderSuccessPaymentPendingLabel}</p>
               </div>
             </div>
 
@@ -110,7 +111,7 @@ export default function OrderSuccessPage() {
                 <Mail className="w-6 h-6 text-orange-600" />
               </div>
               <div className="flex-1">
-                <p className="text-sm text-gray-500">Confirmación enviada a</p>
+                <p className="text-sm text-gray-500">{uiCfg.orderSuccessEmailLabel}</p>
                 <p className="text-lg font-semibold text-gray-900">{state.customerEmail}</p>
               </div>
             </div>
@@ -119,7 +120,7 @@ export default function OrderSuccessPage() {
 
             {/* Total */}
             <div className="flex items-center justify-between py-4 bg-gray-50 rounded-lg px-4 mt-4">
-              <span className="text-lg text-gray-600">Total del Pedido</span>
+              <span className="text-lg text-gray-600">{uiCfg.orderSuccessTotalLabel}</span>
               <span className="text-2xl font-bold text-green-600">
                 {formatPrice(state.totalAmount)}
               </span>
@@ -136,11 +137,11 @@ export default function OrderSuccessPage() {
               </svg>
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-blue-800">¿Qué sigue?</h3>
+              <h3 className="text-sm font-semibold text-blue-800">{uiCfg.orderSuccessNextTitle}</h3>
               <ul className="mt-2 text-sm text-blue-700 space-y-1">
-                <li>• Recibirás un email con los detalles de tu pedido</li>
-                <li>• El backend validará el pago informado y actualizará el estado del pedido</li>
-                <li>• Cuando la orden avance de estado, la verás reflejada en Mis Pedidos</li>
+                <li>• {uiCfg.orderSuccessNextBullet1}</li>
+                <li>• {uiCfg.orderSuccessNextBullet2}</li>
+                <li>• {uiCfg.orderSuccessNextBullet3}</li>
               </ul>
             </div>
           </div>
@@ -151,13 +152,13 @@ export default function OrderSuccessPage() {
           <Button asChild className="flex-1" size="lg">
             <Link to="/pedidos">
               <FileText className="w-5 h-5 mr-2" />
-              Ver Mis Pedidos
+              {uiCfg.orderSuccessViewOrdersLabel}
             </Link>
           </Button>
           <Button asChild variant="outline" className="flex-1" size="lg">
             <Link to="/productos">
               <ShoppingBag className="w-5 h-5 mr-2" />
-              Seguir Comprando
+              {uiCfg.orderSuccessContinueLabel}
               <ArrowRight className="w-5 h-5 ml-2" />
             </Link>
           </Button>
@@ -166,7 +167,7 @@ export default function OrderSuccessPage() {
         {/* Link al home */}
         <div className="text-center mt-8">
           <Link to="/" className="text-sm text-gray-500 hover:text-gray-700 underline">
-            Volver al inicio
+            {uiCfg.orderSuccessBackHomeLabel}
           </Link>
         </div>
       </div>

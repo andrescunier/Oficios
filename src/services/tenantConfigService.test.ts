@@ -35,6 +35,31 @@ describe('tenantConfigService', () => {
     expect(localStorage.getItem(CACHE_KEY)).toContain('Tenant Store');
   });
 
+  it('accepts API page placeholders returned as strings', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        data: {
+          app: { name: 'Tenant Store' },
+          pages: {
+            about: '',
+            contact: 'Contactanos por WhatsApp',
+            privacy: '',
+          },
+        },
+      }),
+    }));
+
+    const config = await loadTenantConfig('http://127.0.0.1:8000', 'tenant-1');
+
+    expect(config?.app?.name).toBe('Tenant Store');
+    expect(config?.pages?.about).toBeUndefined();
+    expect(config?.pages?.contact?.blocks?.[0]).toMatchObject({
+      type: 'text',
+      body: 'Contactanos por WhatsApp',
+    });
+  });
+
   it('falls back to null and records invalid payload event', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: true,

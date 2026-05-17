@@ -1,0 +1,210 @@
+{
+  "api": {
+    "assetsBaseUrl": "https://www.cumar.com.ar/CDN/diapstore",
+    "supportBaseUrl": null,
+    "storefrontBaseUrl": "https://diapstore.com",
+    "extraHeaders": {}
+  },
+  "features": {
+    "notifications": false,
+    "analytics": false,
+    "realPayments": false,
+    "benefits": [
+      {
+        "icon": "Truck",
+        "title": "Envio Gratis",
+        "description": "En compras seleccionadas"
+      },
+      {
+        "icon": "RotateCcw",
+        "title": "Devolucion Facil",
+        "description": "Cambios y devoluciones simples"
+      },
+      {
+        "icon": "Shield",
+        "title": "Compra Segura",
+        "description": "Protegemos tus datos"
+      },
+      {
+        "icon": "CreditCard",
+        "title": "Multiples Pagos",
+        "description": "Transferencia y medios seleccionados"
+      }
+    ]
+  },
+  "header": {
+    "navItems": [],
+    "showCart": true,
+    "showOrders": true,
+    "showSearch": true,
+    "topBarHref": "/envios",
+    "showAccount": true,
+    "promoBarText": "Tecnología Profesional para Empresas - ¡Envío gratis en compras superiores a $50.000!",
+    "showFavorites": true,
+    "topBarMessage": "Tecnología Profesional para Empresas - ¡Envío gratis en compras superiores a $50.000!",
+    "promoBarEnabled": true,
+    "showCategoriesMenu": true
+  },
+  "ui": {
+    "headerPromoMessages": [
+      "Tecnología Profesional para Empresas",
+      "¡Envío gratis en todas tus compras!",
+      "Hasta 12 cuotas sin interés",
+      "Envíos a todo el país"
+    ],
+    "showHomeBenefits": true,
+    "homeFeaturedTitle": "Productos Destacados",
+    "homeFeaturedSubtitle": "Los productos más populares de nuestra tienda",
+    "homeViewAllLabel": "Ver Todos",
+    "headerAllProductsLabel": "Todos los Productos",
+    "headerLoginLabel": "Ingresar",
+    "headerRegisterLabel": "Registrarse",
+    "headerCategoriesLabel": "Categorías",
+    "headerFavoritesLabel": "Favoritos",
+    "headerMyProfileLabel": "Mi Perfil",
+    "headerMyOrdersLabel": "Mis Pedidos",
+    "headerLogoutLabel": "Cerrar Sesión"
+  },
+  "images": {
+    "heroSlides": [
+      {
+        "image": "https://www.cumar.com.ar/CDN/diapstore/heroes/slide-1.jpg",
+        "mobileImage": "https://www.cumar.com.ar/CDN/diapstore/heroes/slide-1.jpg",
+        "title": "Tecnología Profesional para Empresas",
+        "subtitle": "Soluciones B2B en componentes, almacenamiento y memorias para tu negocio",
+        "cta": "Ver Catálogo",
+        "link": "/productos"
+      },
+      {
+        "image": "https://www.cumar.com.ar/CDN/diapstore/heroes/slide-2.jpg",
+        "mobileImage": "https://www.cumar.com.ar/CDN/diapstore/heroes/slide-2.jpg",
+        "title": "SSDs de Alto Rendimiento",
+        "subtitle": "Almacenamiento confiable para equipos profesionales",
+        "cta": "Explorar SSDs",
+        "link": "/productos?buscar=ssd"
+      },
+      {
+        "image": "https://www.cumar.com.ar/CDN/diapstore/heroes/slide-3.jpg",
+        "mobileImage": "https://www.cumar.com.ar/CDN/diapstore/heroes/slide-3.jpg",
+        "title": "Memorias RAM DDR4 y DDR5",
+        "subtitle": "Rendimiento estable para notebooks, PCs y estaciones de trabajo",
+        "cta": "Ver Memorias",
+        "link": "/productos?buscar=memoria"
+      }
+    ],
+    "categories": [
+      {
+        "name": "Componentes",
+        "image": "https://www.cumar.com.ar/CDN/diapstore/categories/componentes.jpg",
+        "link": "/productos?categoria=componentes",
+        "slug": "componentes",
+        "group": "Componentes",
+        "description": "Componentes para equipos profesionales",
+        "searchTerms": ["componentes", "hardware"],
+        "productCategories": ["Componentes"],
+        "subcategories": []
+      },
+      {
+        "name": "DDR4",
+        "image": "https://www.cumar.com.ar/CDN/diapstore/categories/ddr4.jpg",
+        "link": "/productos?buscar=ddr4",
+        "slug": "ddr4",
+        "group": "Memorias RAM",
+        "description": "Memorias DDR4 para notebooks y PCs",
+        "searchTerms": ["ddr4", "memoria", "ram"],
+        "productCategories": ["Memorias RAM"],
+        "subcategories": []
+      },
+      {
+        "name": "DDR5",
+        "image": "https://www.cumar.com.ar/CDN/diapstore/categories/ddr5.jpg",
+        "link": "/productos?buscar=ddr5",
+        "slug": "ddr5",
+        "group": "Memorias RAM",
+        "description": "Memorias DDR5 de alto rendimiento",
+        "searchTerms": ["ddr5", "memoria", "ram"],
+        "productCategories": ["Memorias RAM"],
+        "subcategories": []
+      },
+      {
+        "name": "Gaming",
+        "image": "https://www.cumar.com.ar/CDN/diapstore/categories/gaming.jpg",
+        "link": "/productos?buscar=gaming",
+        "slug": "gaming",
+        "group": "Equipos",
+        "description": "Productos orientados a gaming y alto rendimiento",
+        "searchTerms": ["gaming", "alto rendimiento"],
+        "productCategories": [],
+        "subcategories": []
+      },
+      {
+        "name": "SSD M.2",
+        "image": "https://www.cumar.com.ar/CDN/diapstore/categories/ssd-m2.jpg",
+        "link": "/productos?buscar=ssd%20m.2",
+        "slug": "ssd-m2",
+        "group": "Almacenamiento",
+        "description": "Discos SSD M.2 para máxima velocidad",
+        "searchTerms": ["ssd", "m.2", "nvme", "almacenamiento"],
+        "productCategories": ["SSD"],
+        "subcategories": []
+      },
+      {
+        "name": "SSD SATA",
+        "image": "https://www.cumar.com.ar/CDN/diapstore/categories/ssd-sata.jpg",
+        "link": "/productos?buscar=ssd%20sata",
+        "slug": "ssd-sata",
+        "group": "Almacenamiento",
+        "description": "Discos SSD SATA para upgrades confiables",
+        "searchTerms": ["ssd", "sata", "almacenamiento"],
+        "productCategories": ["SSD"],
+        "subcategories": []
+      }
+    ],
+    "placeholders": {
+      "product": "",
+      "category": "",
+      "user": ""
+    },
+    "backgrounds": {
+      "hero": "",
+      "features": "",
+      "testimonials": ""
+    },
+    "banners": {
+      "main": "",
+      "secondary": "",
+      "seasonal": "",
+      "sale": ""
+    },
+    "productFallbacks": {}
+  },
+  "pages": {
+    "about": {
+      "enabled": false
+    },
+    "terms": {
+      "enabled": false
+    },
+    "contact": {
+      "enabled": false
+    },
+    "cookies": {
+      "enabled": false
+    },
+    "privacy": {
+      "enabled": false
+    },
+    "returns": {
+      "enabled": false
+    },
+    "shipping": {
+      "enabled": false
+    },
+    "warranty": {
+      "enabled": false
+    },
+    "legalNotice": {
+      "enabled": false
+    }
+  }
+}

@@ -64,6 +64,14 @@ export interface ApplySeoOptions {
   override?: SeoMeta;
 }
 
+function applyTitleTemplate(template: string | undefined, title: string): string {
+  const safeTemplate = template || '%s';
+  if (safeTemplate.includes('{title}')) {
+    return safeTemplate.replaceAll('{title}', title);
+  }
+  return safeTemplate.replace('%s', title);
+}
+
 export function applySeo({ pathname = '/', override }: ApplySeoOptions = {}): void {
   if (typeof document === 'undefined') return;
   const seo = getSeoConfig();
@@ -72,7 +80,7 @@ export function applySeo({ pathname = '/', override }: ApplySeoOptions = {}): vo
   const routeMeta = seo.routes[pathname] || seo.routes['*'] || {};
 
   const title = override?.title || routeMeta.title || seo.defaultTitle || app.name;
-  const finalTitle = (seo.titleTemplate || '%s').replace('%s', title);
+  const finalTitle = applyTitleTemplate(seo.titleTemplate, title);
   document.title = finalTitle;
 
   const description = override?.description || routeMeta.description || seo.defaultDescription || app.description;

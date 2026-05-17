@@ -149,6 +149,28 @@ function normalizeProductFallbacks(raw: unknown) {
   }, {});
 }
 
+function normalizePages(raw: unknown) {
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
+    return raw;
+  }
+
+  return Object.entries(raw as Record<string, unknown>).reduce<Record<string, unknown>>((acc, [key, value]) => {
+    if (typeof value === 'string') {
+      const content = value.trim();
+      if (content) {
+        acc[key] = {
+          enabled: true,
+          blocks: [{ type: 'text', body: content }],
+        };
+      }
+      return acc;
+    }
+
+    acc[key] = value;
+    return acc;
+  }, {});
+}
+
 function adaptTenantConfigPayload(payload: unknown): unknown {
   const sanitizedPayload = stripNullValues(payload);
   if (typeof sanitizedPayload !== 'object' || sanitizedPayload === null) {
@@ -175,6 +197,8 @@ function adaptTenantConfigPayload(payload: unknown): unknown {
     images.banners = normalizeNamedImages(images.banners, ['main', 'secondary', 'seasonal', 'sale']);
     images.productFallbacks = normalizeProductFallbacks(images.productFallbacks);
   }
+
+  config.pages = normalizePages(config.pages);
 
   return config;
 }

@@ -5,11 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { getBusinessConfig, getUIConfig } from '@/config/runtime';
 import { Separator } from '@/components/ui/separator';
+import type { LoanResponse } from '@/services/orderService';
 
 interface OrderSuccessState {
   orderSuccess: boolean;
   orderNumber: string;
   paymentMethod?: string;
+  loan?: LoanResponse | null;
   customerEmail: string;
   totalAmount: number;
 }
@@ -50,6 +52,7 @@ export default function OrderSuccessPage() {
       credit_card: uiCfg.paymentMethodCreditCard,
       debit_card: uiCfg.paymentMethodDebitCard,
       mercadopago: uiCfg.paymentMethodMercadopago,
+      prestamo: uiCfg.paymentMethodLoan,
       stripe: uiCfg.paymentMethodCard,
       card: uiCfg.paymentMethodCard,
       check: uiCfg.paymentMethodCheck,
@@ -104,6 +107,25 @@ export default function OrderSuccessPage() {
             </div>
 
             <Separator />
+
+            {state.paymentMethod === 'prestamo' && state.loan && (
+              <>
+                <div className="flex items-center gap-4 py-4">
+                  <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full">
+                    <CreditCard className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-500">{uiCfg.ordersDetailLoanNumberLabel}</p>
+                    <p className="text-xl font-bold text-gray-900">{state.loan.loan_number}</p>
+                    <p className="text-sm text-blue-700">
+                      {uiCfg.ordersDetailLoanOutstandingLabel}: {formatPrice(state.loan.outstanding_balance)}
+                    </p>
+                  </div>
+                </div>
+
+                <Separator />
+              </>
+            )}
 
             {/* Email de confirmación */}
             <div className="flex items-center gap-4 py-4">

@@ -67,7 +67,7 @@ export interface ApplySeoOptions {
 function applyTitleTemplate(template: string | undefined, title: string): string {
   const safeTemplate = template || '%s';
   if (safeTemplate.includes('{title}')) {
-    return safeTemplate.replaceAll('{title}', title);
+    return safeTemplate.split('{title}').join(title);
   }
   return safeTemplate.replace('%s', title);
 }

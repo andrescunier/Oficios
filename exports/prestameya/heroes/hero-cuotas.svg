@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="760" viewBox="0 0 1920 760" role="img" aria-labelledby="title desc">
+  <title id="title">Cuotas Prestameya</title>
+  <desc id="desc">Panel de cuotas de prestamo</desc>
+  <rect width="1920" height="760" fill="#ecfeff"/>
+  <rect x="310" y="110" width="1300" height="540" rx="38" fill="#ffffff" stroke="#99f6e4"/>
+  <text x="420" y="225" font-family="Inter, Arial, sans-serif" font-size="56" font-weight="850" fill="#0f172a">Prestamo como unico medio de pago</text>
+  <text x="420" y="292" font-family="Inter, Arial, sans-serif" font-size="30" fill="#475569">Cada producto muestra cuotas estimadas antes del checkout.</text>
+  <g font-family="Inter, Arial, sans-serif" font-size="28" font-weight="750">
+    <rect x="420" y="380" width="280" height="120" rx="24" fill="#0f766e"/>
+    <text x="492" y="452" fill="#fff">3 cuotas</text>
+    <rect x="760" y="380" width="280" height="120" rx="24" fill="#f97316"/>
+    <text x="832" y="452" fill="#fff">6 cuotas</text>
+    <rect x="1100" y="380" width="280" height="120" rx="24" fill="#0f172a"/>
+    <text x="1164" y="452" fill="#fff">12 cuotas</text>
+  </g>
+</svg>

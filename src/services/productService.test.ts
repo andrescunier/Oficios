@@ -75,4 +75,37 @@ describe('productService variants contract', () => {
     expect(result.variants[0].sku).toBe('PARENT-RED');
     expect(result.variantOptions[0].name).toBe('Color');
   });
+
+  it('filters featured products from metadata when the public API ignores is_featured', async () => {
+    vi.mocked(httpClient.get).mockResolvedValue({
+      data: [
+        {
+          id: 'product-1',
+          sku: 'FEATURED',
+          name: 'Featured product',
+          unit_price: 100,
+          currency: 'ARS',
+          tax_rate: 21,
+          status: 'active',
+          metadata: { is_featured: true },
+        },
+        {
+          id: 'product-2',
+          sku: 'NORMAL',
+          name: 'Normal product',
+          unit_price: 100,
+          currency: 'ARS',
+          tax_rate: 21,
+          status: 'active',
+          metadata: { is_featured: false },
+        },
+      ],
+      pagination: { page: 1, per_page: 2, total: 2, total_pages: 1 },
+    });
+
+    const result = await productService.getFeaturedProducts(6);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].sku).toBe('FEATURED');
+  });
 });

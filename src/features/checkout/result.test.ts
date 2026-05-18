@@ -65,4 +65,22 @@ describe('checkout result', () => {
     expect(failure.message).toContain('backend');
     expect(failure.message).toContain('SO-1');
   });
+
+  it('normalizes loan creation failures after order submit', () => {
+    const failure = normalizeCheckoutFailure({
+      success: false,
+      message: 'La orden fue creada y enviada, pero no se pudo generar el préstamo asociado.',
+      salesOrder: { id: 'so-1', order_number: 'SO-1' },
+      orderNumber: 'SO-1',
+      error: {
+        step: 'loan',
+        orderNumber: 'SO-1',
+      },
+    } as unknown as CheckoutProcessResult);
+
+    expect(failure.code).toBe('payment_failed');
+    expect(failure.title).toBe('Préstamo no generado');
+    expect(failure.action).toBe('contact_support');
+    expect(failure.orderNumber).toBe('SO-1');
+  });
 });

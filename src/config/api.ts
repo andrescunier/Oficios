@@ -63,6 +63,11 @@ export const API_ENDPOINTS = {
   STATUS_HISTORY: (accountId: string, orderId: string) => `/api/accounts/${accountId}/sales-orders/${orderId}/status-history`,
   VALID_TRANSITIONS: (accountId: string, orderId: string) => `/api/accounts/${accountId}/sales-orders/${orderId}/valid-transitions`,
 
+  // Préstamos storefront
+  LOANS: (accountId: string) => `/api/accounts/${accountId}/loans`,
+  LOAN: (accountId: string, loanId: string) => `/api/accounts/${accountId}/loans/${loanId}`,
+  LOAN_PAYMENTS: (accountId: string, loanId: string) => `/api/accounts/${accountId}/loans/${loanId}/payments`,
+
   // Ecommerce Config (tenant)
   ECOMMERCE_CONFIG: (accountId: string) => `/api/accounts/${accountId}/ecommerce-config`,
   FRONTEND_EVENTS: (accountId: string) => `/api/accounts/${accountId}/frontend-events`,

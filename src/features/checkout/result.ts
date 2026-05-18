@@ -141,6 +141,20 @@ export const normalizeCheckoutFailure = (source: CheckoutProcessResult | ApiErro
     };
   }
 
+  if (step === 'loan') {
+    return {
+      code: 'payment_failed',
+      title: 'Préstamo no generado',
+      message: orderNumber
+        ? `La orden ${orderNumber} fue creada, pero no se pudo generar el préstamo asociado. No repitas la compra y contactá a soporte para revisar el crédito.`
+        : 'No se pudo generar el préstamo asociado. No repitas la compra hasta verificar el estado de la orden.',
+      action: 'contact_support',
+      status,
+      orderNumber,
+      supportCode,
+    };
+  }
+
   if (step === 'payment' || status === 402) {
     return {
       code: 'payment_failed',

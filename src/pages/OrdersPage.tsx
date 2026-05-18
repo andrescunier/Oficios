@@ -17,13 +17,14 @@ import {
   Package,
   Search,
   Truck,
+  WalletCards,
   XCircle,
 } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { orderService } from '@/services/orderService';
 import { getBusinessConfig, getUIConfig } from '@/config/runtime';
 import { getBusinessPartnerId } from '@/features/auth/session';
-import type { SalesOrder } from '@/services/orderService';
+import type { LoanResponse, SalesOrder } from '@/services/orderService';
 
 /** Resolve SKU from item.sku or order metadata fallback */
 function getItemSku(order: SalesOrder, item: SalesOrder['items'][number], index: number): string | undefined {
@@ -40,6 +41,7 @@ export const OrdersPage: React.FC = () => {
   const { auth, addNotification } = useStore();
   const uiCfg = getUIConfig();
   const [orders, setOrders] = useState<SalesOrder[]>([]);
+  const [loansByOrder, setLoansByOrder] = useState<Record<string, LoanResponse>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isDetailLoading, setIsDetailLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -87,6 +89,18 @@ export const OrdersPage: React.FC = () => {
       });
 
       setOrders(response.data);
+      const loansResponse = await orderService.getLoansByBorrower(businessPartnerId).catch(() => null);
+      const nextLoansByOrder: Record<string, LoanResponse> = {};
+      loansResponse?.data.forEach((loan) => {
+        const metadata = loan.metadata || {};
+        const orderId = typeof metadata.sales_order_id === 'string' ? metadata.sales_order_id : '';
+        const orderNumber = typeof metadata.sales_order_number === 'string' ? metadata.sales_order_number : '';
+        const relatedOrder = response.data.find((order) => order.id === orderId || order.order_number === orderNumber);
+        if (relatedOrder) {
+          nextLoansByOrder[relatedOrder.id] = loan;
+        }
+      });
+      setLoansByOrder(nextLoansByOrder);
     } catch (error: any) {
       addNotification({
         type: 'error',
@@ -94,6 +108,7 @@ export const OrdersPage: React.FC = () => {
         message: error.message || 'No se pudieron cargar tus pedidos. Intenta nuevamente.',
       });
       setOrders([]);
+      setLoansByOrder({});
     } finally {
       setIsLoading(false);
     }
@@ -188,6 +203,7 @@ export const OrdersPage: React.FC = () => {
       credit_card: uiCfg.paymentMethodCreditCard,
       debit_card: uiCfg.paymentMethodDebitCard,
       mercadopago: uiCfg.paymentMethodMercadopago,
+      prestamo: uiCfg.paymentMethodLoan,
       stripe: uiCfg.paymentMethodCard,
       card: uiCfg.paymentMethodCard,
       check: uiCfg.paymentMethodCheck,
@@ -195,6 +211,22 @@ export const OrdersPage: React.FC = () => {
     };
 
     return methodMap[method || 'other'] || method || uiCfg.paymentMethodOther;
+  };
+
+  const getLoanStatusInfo = (loan?: LoanResponse | null) => {
+    const status = loan?.status || 'pending';
+    const statusConfig: Record<string, { label: string; color: string }> = {
+      active: { label: uiCfg.loanStatusActive, color: 'text-blue-700 bg-blue-100' },
+      paid: { label: uiCfg.loanStatusPaid, color: 'text-green-700 bg-green-100' },
+      pending: { label: uiCfg.loanStatusPending, color: 'text-yellow-700 bg-yellow-100' },
+      cancelled: { label: uiCfg.loanStatusCancelled, color: 'text-red-700 bg-red-100' },
+    };
+    return statusConfig[status] || { label: status, color: 'text-gray-700 bg-gray-100' };
+  };
+
+  const getLoanPaidAmount = (loan?: LoanResponse | null): number => {
+    if (!loan) return 0;
+    return Math.max(loan.principal_amount - loan.outstanding_balance, 0);
   };
 
   const formatPrice = (price: number, currency?: string) => {
@@ -394,6 +426,9 @@ export const OrdersPage: React.FC = () => {
               const statusInfo = getStatusInfo(order.status);
               const StatusIcon = statusInfo.icon;
               const paymentReview = getPaymentReviewInfo(order);
+              const relatedLoan = loansByOrder[order.id];
+              const loanStatus = getLoanStatusInfo(relatedLoan);
+              const isLoanOrder = order.metadata?.payment_method === 'prestamo';
 
               return (
                 <div key={order.id} className="bg-white rounded-lg shadow-sm p-6">
@@ -487,6 +522,27 @@ export const OrdersPage: React.FC = () => {
                         <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${paymentReview.color}`}>
                           {paymentReview.label}
                         </span>
+                        {isLoanOrder && (
+                          <div className="mt-3 border-t border-gray-200 pt-3">
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="flex items-center text-gray-700">
+                                <WalletCards className="w-4 h-4 mr-2" />
+                                <span className="font-medium">{uiCfg.ordersDetailLoanStatusLabel}</span>
+                              </div>
+                              <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${loanStatus.color}`}>
+                                {loanStatus.label}
+                              </span>
+                            </div>
+                            {relatedLoan ? (
+                              <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-gray-600">
+                                <span>{uiCfg.ordersDetailLoanPaidLabel}: {formatPrice(getLoanPaidAmount(relatedLoan), relatedLoan.currency)}</span>
+                                <span>{uiCfg.ordersDetailLoanOutstandingLabel}: {formatPrice(relatedLoan.outstanding_balance, relatedLoan.currency)}</span>
+                              </div>
+                            ) : (
+                              <p className="mt-2 text-xs text-gray-500">{uiCfg.loanStatusPending}</p>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -627,6 +683,82 @@ export const OrdersPage: React.FC = () => {
                       </div>
                     </div>
                   </div>
+
+                  {selectedOrder.metadata?.payment_method === 'prestamo' && (
+                    <div className="mb-6 rounded-lg border border-blue-100 bg-blue-50 p-4">
+                      {(() => {
+                        const loan = selectedOrder.related_loan;
+                        const loanStatus = getLoanStatusInfo(loan);
+                        const paidAmount = getLoanPaidAmount(loan);
+                        return (
+                          <>
+                            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                              <div className="flex items-center text-blue-950">
+                                <WalletCards className="mr-2 h-5 w-5" />
+                                <div>
+                                  <p className="text-sm font-semibold">{uiCfg.ordersDetailLoanStatusLabel}</p>
+                                  <p className="text-xs text-blue-700">{loan?.loan_number || uiCfg.loanStatusPending}</p>
+                                </div>
+                              </div>
+                              <span className={`inline-flex w-fit rounded-full px-3 py-1 text-xs font-medium ${loanStatus.color}`}>
+                                {loanStatus.label}
+                              </span>
+                            </div>
+
+                            {loan ? (
+                              <>
+                                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                                  <div className="rounded-md bg-white p-3">
+                                    <p className="text-xs text-gray-500">{uiCfg.ordersDetailLoanPrincipalLabel}</p>
+                                    <p className="text-sm font-semibold text-gray-900">{formatPrice(loan.principal_amount, loan.currency)}</p>
+                                  </div>
+                                  <div className="rounded-md bg-white p-3">
+                                    <p className="text-xs text-gray-500">{uiCfg.ordersDetailLoanPaidLabel}</p>
+                                    <p className="text-sm font-semibold text-green-700">{formatPrice(paidAmount, loan.currency)}</p>
+                                  </div>
+                                  <div className="rounded-md bg-white p-3">
+                                    <p className="text-xs text-gray-500">{uiCfg.ordersDetailLoanOutstandingLabel}</p>
+                                    <p className="text-sm font-semibold text-blue-800">{formatPrice(loan.outstanding_balance, loan.currency)}</p>
+                                  </div>
+                                  <div className="rounded-md bg-white p-3">
+                                    <p className="text-xs text-gray-500">{uiCfg.ordersDetailLoanDueDateLabel}</p>
+                                    <p className="text-sm font-semibold text-gray-900">{formatDate(loan.due_at)}</p>
+                                  </div>
+                                </div>
+
+                                <div className="mt-4">
+                                  <p className="mb-2 text-sm font-semibold text-blue-950">{uiCfg.ordersDetailLoanPaymentsTitle}</p>
+                                  {(selectedOrder.related_loan_payments || []).length === 0 ? (
+                                    <div className="rounded-md bg-white p-3 text-sm text-gray-500">
+                                      {uiCfg.ordersDetailLoanNoPaymentsMessage}
+                                    </div>
+                                  ) : (
+                                    <div className="space-y-2">
+                                      {selectedOrder.related_loan_payments?.map((payment) => (
+                                        <div key={payment.id} className="flex flex-col justify-between gap-1 rounded-md bg-white p-3 text-sm sm:flex-row sm:items-center">
+                                          <div>
+                                            <p className="font-medium text-gray-900">{formatPrice(payment.amount, loan.currency)}</p>
+                                            <p className="text-xs text-gray-500">{formatDate(payment.paid_at)}</p>
+                                          </div>
+                                          <p className="text-xs text-gray-600">
+                                            {uiCfg.ordersDetailLoanOutstandingLabel}: {formatPrice(payment.balance_after, loan.currency)}
+                                          </p>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              </>
+                            ) : (
+                              <div className="rounded-md bg-white p-3 text-sm text-gray-500">
+                                {uiCfg.loanStatusPending}
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </div>
+                  )}
 
                   {(selectedOrder.storefront_status?.delivery?.tracking_reference || selectedOrder.metadata?.tracking_number) && (
                     <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg mb-6">

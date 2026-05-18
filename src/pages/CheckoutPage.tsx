@@ -4,10 +4,10 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CreditCard, MapPin, User, Mail, Phone, Lock } from 'lucide-react';
+import { ArrowLeft, Calculator, CreditCard, Landmark, MapPin, User, Mail, Phone, Lock } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { PAYMENT_INFO, LEGAL, BUSINESS, SHIPPING } from '@/config/branding';
-import { getPaymentMethodsConfig, getUIConfig, getShippingConfig, getValidationConfig } from '@/config/runtime';
+import { getLoanConfig, getPaymentMethodsConfig, getUIConfig, getShippingConfig, getValidationConfig } from '@/config/runtime';
 import { checkoutFieldRequiredMessage } from '@/lib/validationMessages';
 import log from '@/lib/logger';
 import {
@@ -19,6 +19,7 @@ import {
   type ShippingInfo,
   validateShippingInfo,
 } from '@/features/checkout/model';
+import { buildLoanPaymentPlans, getPrimaryLoanPaymentPlan } from '@/features/checkout/loan';
 import { useCheckoutMutation } from '@/features/checkout/mutations';
 import { isCheckoutSuccess, normalizeCheckoutFailure } from '@/features/checkout/result';
 import { clearAuthSession, getBusinessPartnerId, getPersistedRegistrationDraft, saveRegistrationDraft } from '@/features/auth/session';
@@ -31,8 +32,14 @@ export const CheckoutPage: React.FC = () => {
   
   const defaultPaymentMethod = useMemo(() => getDefaultPaymentMethod(), []);
   const paymentMethodsConfig = useMemo(() => getPaymentMethodsConfig(), []);
+  const loanCfg = useMemo(() => getLoanConfig(), []);
   const shippingAmount = useMemo(() => getCheckoutShippingCharge(cart.subtotal), [cart.subtotal]);
   const totalWithShipping = cart.total_amount + shippingAmount;
+  const loanPlans = useMemo(() => buildLoanPaymentPlans(totalWithShipping, loanCfg), [totalWithShipping, loanCfg]);
+  const primaryLoanPlan = useMemo(() => getPrimaryLoanPaymentPlan(totalWithShipping, loanCfg), [totalWithShipping, loanCfg]);
+  const loanCreditLimit = Math.max(loanCfg.maxAmount, totalWithShipping);
+  const loanCreditBalance = Math.max(loanCreditLimit - totalWithShipping, 0);
+  const loanCreditUsagePct = loanCreditLimit > 0 ? Math.min((totalWithShipping / loanCreditLimit) * 100, 100) : 0;
   
   const [currentStep, setCurrentStep] = useState<'shipping' | 'payment' | 'review'>('shipping');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -69,6 +76,32 @@ export const CheckoutPage: React.FC = () => {
   };
 
   const uiCfg = getUIConfig();
+
+  const loanPaymentEnabled = paymentMethodsConfig.prestamo && loanCfg.enabled;
+
+  const getPaymentReview = () => {
+    if (paymentInfo.paymentMethod === 'prestamo') {
+      return {
+        label: uiCfg.paymentMethodLoan,
+        className: 'text-primary font-medium',
+        description: loanCfg.legalText,
+      };
+    }
+
+    if (paymentInfo.paymentMethod === 'transferencia') {
+      return {
+        label: uiCfg.checkoutTransferLabel,
+        className: 'text-blue-600 font-medium',
+        description: 'Se te proporcionarán los datos bancarios para realizar la transferencia.',
+      };
+    }
+
+    return {
+      label: uiCfg.checkoutEfectivoLabel,
+      className: 'text-green-600 font-medium',
+      description: 'El pago se realizará en efectivo al momento de la entrega o retiro.',
+    };
+  };
 
   // Redirigir al login si no está autenticado
   if (!auth.isAuthenticated) {
@@ -228,6 +261,7 @@ export const CheckoutPage: React.FC = () => {
             orderSuccess: true, 
             orderNumber: result.orderNumber,
             paymentMethod: result.paymentMethod || paymentInfo.paymentMethod,
+            loan: result.loan || null,
             customerEmail: shippingInfo.email,
             totalAmount: totalAmount
           } 
@@ -486,6 +520,31 @@ export const CheckoutPage: React.FC = () => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">{uiCfg.checkoutPaymentMethodLabel}</label>
                     <div className="space-y-3">
+                      {/* Prestamo */}
+                      {loanPaymentEnabled && (
+                      <div 
+                        className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-colors ${
+                          paymentInfo.paymentMethod === 'prestamo' 
+                            ? 'border-primary bg-primary/5' 
+                            : 'border-gray-200 hover:border-primary/40'
+                        }`}
+                        onClick={() => setPaymentInfo({...paymentInfo, paymentMethod: 'prestamo'})}
+                      >
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="prestamo"
+                          checked={paymentInfo.paymentMethod === 'prestamo'}
+                          onChange={() => setPaymentInfo({...paymentInfo, paymentMethod: 'prestamo'})}
+                          className="mr-3 text-primary"
+                        />
+                        <div className="flex-1">
+                          <span className="font-medium text-primary">{uiCfg.paymentMethodLoan}</span>
+                          <p className="text-sm text-gray-600 mt-1">{loanCfg.subtitle}</p>
+                        </div>
+                      </div>
+                      )}
+
                       {/* Transferencia Bancaria */}
                       {paymentMethodsConfig.transferencia && (
                       <div 
@@ -541,6 +600,55 @@ export const CheckoutPage: React.FC = () => {
                       )}
                     </div>
                   </div>
+
+                  {/* Información de préstamo */}
+                  {paymentInfo.paymentMethod === 'prestamo' && loanPaymentEnabled && (
+                  <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+                    <div className="flex items-start gap-3 mb-4">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <Calculator className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-gray-900">{loanCfg.title}</h3>
+                        <p className="text-sm text-gray-600">{loanCfg.subtitle}</p>
+                      </div>
+                    </div>
+                    <div className="mb-4 rounded-lg border border-primary/10 bg-white p-4">
+                      <div className="mb-3 flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-xs uppercase tracking-wide text-gray-500">Crédito disponible</p>
+                          <p className="text-2xl font-semibold text-gray-900">{formatPrice(loanCreditLimit, cart.currency)}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs uppercase tracking-wide text-gray-500">Saldo luego de comprar</p>
+                          <p className="text-lg font-semibold text-primary">{formatPrice(loanCreditBalance, cart.currency)}</p>
+                        </div>
+                      </div>
+                      <div className="h-2 overflow-hidden rounded-full bg-gray-100">
+                        <div className="h-full rounded-full bg-primary" style={{ width: `${loanCreditUsagePct}%` }} />
+                      </div>
+                      <div className="mt-2 flex justify-between text-xs text-gray-500">
+                        <span>Monto usado: {formatPrice(totalWithShipping, cart.currency)}</span>
+                        <span>{loanCreditUsagePct.toFixed(0)}% del crédito</span>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-gray-800">{loanCfg.termsTitle}</p>
+                      {loanPlans.map((plan) => (
+                        <div key={plan.months} className="grid grid-cols-3 gap-2 rounded-md border border-primary/10 bg-white px-3 py-2 text-sm">
+                          <span className="font-medium text-gray-800">{plan.label}</span>
+                          <span className="text-right text-gray-600">
+                            {loanCfg.amountLabel}: <strong className="text-primary">{formatPrice(plan.monthlyPayment, cart.currency)}</strong>
+                          </span>
+                          <span className="text-right text-gray-600">
+                            {loanCfg.totalLabel}: <strong>{formatPrice(plan.totalFinanced, cart.currency)}</strong>
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="mt-3 text-xs text-gray-500">{loanCfg.legalText}</p>
+                  </div>
+                  )}
                   
                   {/* Información de transferencia */}
                   {paymentInfo.paymentMethod === 'transferencia' && (
@@ -629,17 +737,30 @@ export const CheckoutPage: React.FC = () => {
                 <div className="mb-6 p-4 bg-gray-50 rounded-lg">
                   <h3 className="font-medium mb-2">{uiCfg.checkoutPaymentMethodLabel}</h3>
                   <div className="flex items-center">
-                    {paymentInfo.paymentMethod === 'transferencia' ? (
-                      <span className="text-blue-600 font-medium">💳 {uiCfg.checkoutTransferLabel}</span>
-                    ) : (
-                      <span className="text-green-600 font-medium">💵 {uiCfg.checkoutEfectivoLabel}</span>
-                    )}
+                    <span className={getPaymentReview().className}>{getPaymentReview().label}</span>
                   </div>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {paymentInfo.paymentMethod === 'transferencia' 
-                      ? 'Se te proporcionarán los datos bancarios para realizar la transferencia.'
-                      : 'El pago se realizará en efectivo al momento de la entrega o retiro.'}
-                  </p>
+                  <p className="text-sm text-gray-600 mt-1">{getPaymentReview().description}</p>
+                  {paymentInfo.paymentMethod === 'prestamo' && loanPaymentEnabled && primaryLoanPlan && (
+                    <div className="mt-4 rounded-lg border border-primary/20 bg-primary/5 p-4">
+                      <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
+                        <div>
+                          <p className="text-gray-500">Crédito disponible</p>
+                          <p className="font-semibold text-gray-900">{formatPrice(loanCreditLimit, cart.currency)}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-500">Monto a financiar</p>
+                          <p className="font-semibold text-gray-900">{formatPrice(totalWithShipping, cart.currency)}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-500">Saldo restante</p>
+                          <p className="font-semibold text-primary">{formatPrice(loanCreditBalance, cart.currency)}</p>
+                        </div>
+                      </div>
+                      <p className="mt-3 text-sm text-gray-700">
+                        Plan elegido por defecto: <strong>{primaryLoanPlan.label}</strong> de <strong>{formatPrice(primaryLoanPlan.monthlyPayment, cart.currency)}</strong>. Total financiado: <strong>{formatPrice(primaryLoanPlan.totalFinanced, cart.currency)}</strong>.
+                      </p>
+                    </div>
+                  )}
                 </div>
                 
                 {/* Products Review */}
@@ -744,6 +865,37 @@ export const CheckoutPage: React.FC = () => {
                   </div>
                 </div>
               </div>
+
+              {loanPaymentEnabled && primaryLoanPlan && (
+                <div className="mb-6 rounded-lg border border-primary/20 bg-primary/5 p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10 text-primary">
+                      <Landmark className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-gray-900">{loanCfg.badgeLabel}</p>
+                      <p className="text-sm text-gray-600">
+                        {primaryLoanPlan.label} de <span className="font-semibold text-primary">{formatPrice(primaryLoanPlan.monthlyPayment, cart.currency)}</span>
+                      </p>
+                      <div className="mt-3 space-y-1 text-xs text-gray-600">
+                        <div className="flex justify-between gap-3">
+                          <span>Crédito disponible</span>
+                          <strong>{formatPrice(loanCreditLimit, cart.currency)}</strong>
+                        </div>
+                        <div className="flex justify-between gap-3">
+                          <span>Monto usado</span>
+                          <strong>{formatPrice(totalWithShipping, cart.currency)}</strong>
+                        </div>
+                        <div className="flex justify-between gap-3 text-primary">
+                          <span>Saldo restante</span>
+                          <strong>{formatPrice(loanCreditBalance, cart.currency)}</strong>
+                        </div>
+                      </div>
+                      <p className="mt-1 text-xs text-gray-500">{loanCfg.legalText}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
               
               <div className="text-center text-sm text-gray-500">
                 <div className="flex items-center justify-center space-x-4 mb-2">

@@ -253,7 +253,11 @@ export class ProductService {
       is_active: true,
       per_page: limit
     });
-    return response.data;
+    const featuredProducts = response.data.filter((product) => (
+      product.is_featured === true || product.metadata?.is_featured === true
+    ));
+
+    return (featuredProducts.length > 0 ? featuredProducts : response.data).slice(0, limit);
   }
 
   /**

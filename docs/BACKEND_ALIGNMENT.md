@@ -34,13 +34,14 @@ Si un helper contradice el contrato backend real, el helper esta mal.
 | Ordenes | `POST/GET /api/accounts/{account_id}/sales-orders` | Bearer | bearer + path account | `orderService` | `tests/test_sales_orders.py` | checkout/order tests |
 | Stock | `POST /api/accounts/{account_id}/sales-orders/validate-stock` | Bearer | bearer + path account | `orderService.validateStock` | `tests/test_sales_orders.py` | checkout model tests |
 | Submit orden | `POST /api/accounts/{account_id}/sales-orders/{order_id}/submit` | Bearer | bearer + path account | `orderService.submitOrder` | `tests/test_order_state_machine.py` | checkout/order tests |
+| Prestamos | `POST/GET /api/accounts/{account_id}/loans` | Bearer | bearer + path account | `orderService.createLoan` | `tests/test_loans.py` | `src/services/orderService.test.ts` |
 | Favoritos | `GET/POST/DELETE /api/accounts/{account_id}/customers/{business_partner_id}/favorites` | Bearer | bearer + `X-Account-ID`/slug | `favoritesService` | `tests/test_customer_favorites.py` | store/favorites tests |
 | Carrito remoto | `GET/PUT/DELETE /api/accounts/{account_id}/customers/{business_partner_id}/cart` | Bearer | bearer + `X-Account-ID`/slug | `cartSyncService` | `tests/test_customer_carts.py` | `src/store/useStore.test.ts` |
 | Newsletter | endpoint configurado en `newsletter.endpoint` | Segun integracion | `newsletter.headers` | `newsletterService` | fuera del core API | tests de servicio si se cambia |
 
 ## Decisiones de Contrato
 
-- El storefront crea y envia ordenes, pero no crea pagos ni confirma pagos.
+- El storefront crea y envia ordenes, pero no crea pagos ni confirma pagos. Si `checkout.loan.enabled` esta activo y el metodo es `prestamo`, crea el prestamo asociado a la orden luego del submit.
 - `confirm-payment`, `ship`, `deliver`, `complete`, `transition` e `invoice` son backoffice/API interna.
 - Favoritos y carrito son estado remoto por `business_partner_id`; el backend debe validar ownership por token.
 - El carrito es JSON opaco para backend. Stock, precios e inventario se revalidan al cerrar compra.

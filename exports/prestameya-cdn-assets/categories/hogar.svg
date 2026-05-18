@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="620" viewBox="0 0 900 620" role="img" aria-label="Hogar">
+  <rect width="900" height="620" rx="34" fill="#fff7ed"/>
+  <path d="M180 330 450 140l270 190v190H180V330Z" fill="#0f766e"/>
+  <path d="M270 300h360v220H270z" fill="#ffffff"/>
+  <rect x="405" y="385" width="90" height="135" rx="12" fill="#f97316"/>
+  <text x="450" y="565" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="38" font-weight="850" fill="#0f172a">Hogar</text>
+</svg>

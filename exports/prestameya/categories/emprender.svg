@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="620" viewBox="0 0 900 620" role="img" aria-label="Emprender">
+  <rect width="900" height="620" rx="34" fill="#f0fdf4"/>
+  <rect x="240" y="180" width="420" height="280" rx="28" fill="#ffffff" stroke="#86efac" stroke-width="8"/>
+  <rect x="315" y="135" width="270" height="110" rx="24" fill="#0f766e"/>
+  <path d="M340 340h220" stroke="#f97316" stroke-width="28" stroke-linecap="round"/>
+  <path d="M340 390h140" stroke="#0f766e" stroke-width="28" stroke-linecap="round"/>
+  <text x="450" y="555" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="38" font-weight="850" fill="#0f172a">Emprender</text>
+</svg>

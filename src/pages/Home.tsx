@@ -13,7 +13,7 @@ import { ProductCard } from '@/components/product/ProductCard';
 import { useStore } from '@/store/useStore';
 import { useQuery } from '@tanstack/react-query';
 import { ASSETS, BRANDING, BUSINESS, FEATURES, NEWSLETTER } from '@/config/branding';
-import { getImagesConfig, getUIConfig } from '@/config/runtime';
+import { getImagesConfig, getLoanConfig, getUIConfig } from '@/config/runtime';
 import { handleImgError } from '@/utils/imageHelpers';
 import { featuredProductsQueryOptions, productsQueryOptions } from '@/features/catalog/queries';
 import { getFeatureBenefitIcon } from '@/components/ui/featureBenefitIcons';
@@ -78,6 +78,8 @@ export const Home: React.FC = () => {
   const runtimeImages = getImagesConfig();
   const categories = runtimeImages.categories;
   const uiCfg = getUIConfig();
+  const loanCfg = getLoanConfig();
+  const featuredEyebrow = loanCfg.enabled ? loanCfg.badgeLabel : 'Best sellers';
 
   useEffect(() => {
     if (featuredProductsQuery.isError || newProductsQuery.isError || onSaleProductsQuery.isError) {
@@ -277,7 +279,7 @@ export const Home: React.FC = () => {
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 mb-10">
             <div>
-              <p className="eyebrow mb-2">Best sellers</p>
+              <p className="eyebrow mb-2">{featuredEyebrow}</p>
               <h2 className="section-title">{uiCfg.homeFeaturedTitle}</h2>
               <p className="text-muted-foreground mt-2">{uiCfg.homeFeaturedSubtitle}</p>
             </div>
@@ -454,6 +456,8 @@ const CategoriesSlider: React.FC<CategoriesSliderProps> = ({ categories, fallbac
   const tabletPerView = Math.min(categories.length, Math.max(1, Math.min(2, configuredPerView))) || 1;
   const showArrows = categories.length > desktopPerView;
   const sidePadding = Math.max(0, uiCfg.homeCategoriesSidePadding ?? 0);
+  const loanCfg = getLoanConfig();
+  const categoriesEyebrow = loanCfg.enabled ? loanCfg.providerName : 'Comprá por estilo';
 
   return (
     <section className="py-12 md:py-16">
@@ -463,7 +467,7 @@ const CategoriesSlider: React.FC<CategoriesSliderProps> = ({ categories, fallbac
       >
         {uiCfg.showHomeCategoriesHeader !== false && (uiCfg.homeCategoriesTitle || uiCfg.homeCategoriesSubtitle) && (
           <div className="mb-8 text-center md:mb-10">
-            <p className="eyebrow mb-2">Comprá por estilo</p>
+            <p className="eyebrow mb-2">{categoriesEyebrow}</p>
             {uiCfg.homeCategoriesTitle && (
               <h2 className="section-title">{uiCfg.homeCategoriesTitle}</h2>
             )}

@@ -1,5 +1,5 @@
 import { BUSINESS } from '@/config/branding';
-import { getBusinessConfig, getPaymentMethodsConfig, getShippingConfig } from '@/config/runtime';
+import { getBusinessConfig, getLoanConfig, getPaymentMethodsConfig, getShippingConfig } from '@/config/runtime';
 import type { CartItem } from '@/types/api';
 import type { RegistrationDraft } from '@/features/auth/session';
 
@@ -20,7 +20,7 @@ export interface PaymentInfo {
   expiryDate: string;
   cvv: string;
   cardName: string;
-  paymentMethod: 'credit' | 'debit' | 'mercadopago' | 'transferencia' | 'efectivo';
+  paymentMethod: 'credit' | 'debit' | 'mercadopago' | 'transferencia' | 'efectivo' | 'prestamo';
 }
 
 export interface CheckoutPayload {
@@ -31,7 +31,6 @@ export interface CheckoutPayload {
     quantity: number;
     unit_price: number;
     tax_rate: number;
-    sku?: string;
   }>;
   lineItemsMetadata: Array<{
     product_id: string;
@@ -57,7 +56,6 @@ interface ShippingChargeLine {
   quantity: number;
   unit_price: number;
   tax_rate: number;
-  sku?: string;
 }
 
 interface ShippingChargeMetadata {
@@ -72,6 +70,8 @@ interface ShippingChargeMetadata {
 
 export const getDefaultPaymentMethod = (): PaymentInfo['paymentMethod'] => {
   const paymentMethods = getPaymentMethodsConfig();
+  const loan = getLoanConfig();
+  if (paymentMethods.prestamo && loan.enabled) return 'prestamo';
   if (paymentMethods.transferencia) return 'transferencia';
   if (paymentMethods.efectivo) return 'efectivo';
   if (paymentMethods.mercadopago) return 'mercadopago';
@@ -134,7 +134,6 @@ function resolveShippingCharge(cartSubtotal?: number): {
       quantity: 1,
       unit_price: chargeAmount,
       tax_rate: normalizedTaxRate,
-      sku: shipping.chargeProductSku || undefined,
     },
     metadata: {
       product_id: shipping.chargeProductId,
@@ -170,7 +169,6 @@ export const buildCheckoutPayload = (args: {
     tax_rate: item.product.tax_rate && item.product.tax_rate > 1
       ? item.product.tax_rate / 100
       : (item.product.tax_rate || BUSINESS.DEFAULT_TAX_RATE),
-    sku: item.variant?.sku || item.product.sku,
   }));
   const baseMetadata = args.items.map((item) => ({
     product_id: item.product.id,

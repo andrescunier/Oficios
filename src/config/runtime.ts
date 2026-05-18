@@ -44,6 +44,30 @@ export interface FeatureBenefitConfig {
   description: string;
 }
 
+export interface LoanTermConfig {
+  months: number;
+  label: string;
+  monthlyRate?: number;
+}
+
+export interface LoanConfig {
+  enabled: boolean;
+  providerName: string;
+  title: string;
+  subtitle: string;
+  badgeLabel: string;
+  termsTitle: string;
+  amountLabel: string;
+  totalLabel: string;
+  legalText: string;
+  minAmount: number;
+  maxAmount: number;
+  defaultTermMonths: number;
+  monthlyRate: number;
+  originationFeeRate: number;
+  terms: LoanTermConfig[];
+}
+
 export interface ShippingConfig {
   enabled: boolean;
   mode: 'free' | 'flat_rate';
@@ -424,6 +448,7 @@ export interface RuntimeConfig {
     efectivo: boolean;
     mercadopago: boolean;
     tarjeta: boolean;
+    prestamo: boolean;
   };
   payment: {
     bankName: string;
@@ -432,6 +457,7 @@ export interface RuntimeConfig {
     alias: string;
     whatsappVerification: string;
   };
+  loan: LoanConfig;
   registration: {
     title: string;
     subtitle: string;
@@ -669,6 +695,7 @@ export interface RuntimeConfig {
     paymentMethodCreditCard: string;
     paymentMethodDebitCard: string;
     paymentMethodMercadopago: string;
+    paymentMethodLoan: string;
     paymentMethodCard: string;
     paymentMethodCheck: string;
     paymentMethodOther: string;
@@ -738,6 +765,18 @@ export interface RuntimeConfig {
     ordersDetailQuantityLabel: string;
     ordersDetailEachLabel: string;
     ordersDetailPaymentStatusLabel: string;
+    ordersDetailLoanStatusLabel: string;
+    ordersDetailLoanNumberLabel: string;
+    ordersDetailLoanPrincipalLabel: string;
+    ordersDetailLoanPaidLabel: string;
+    ordersDetailLoanOutstandingLabel: string;
+    ordersDetailLoanDueDateLabel: string;
+    ordersDetailLoanPaymentsTitle: string;
+    ordersDetailLoanNoPaymentsMessage: string;
+    loanStatusActive: string;
+    loanStatusPaid: string;
+    loanStatusPending: string;
+    loanStatusCancelled: string;
     ordersDetailStatusHistoryLabel: string;
     ordersDetailNoHistoryMessage: string;
     ordersDetailStorefrontNote: string;
@@ -1016,6 +1055,7 @@ const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
     efectivo: true,
     mercadopago: false,
     tarjeta: false,
+    prestamo: false,
   },
   payment: {
     bankName: '',
@@ -1023,6 +1063,27 @@ const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
     cbu: '',
     alias: '',
     whatsappVerification: '',
+  },
+  loan: {
+    enabled: false,
+    providerName: 'Prestamo',
+    title: 'Pagá con préstamo',
+    subtitle: 'Elegí una financiación disponible para completar tu compra.',
+    badgeLabel: 'Disponible con préstamo',
+    termsTitle: 'Opciones de financiación',
+    amountLabel: 'Cuota estimada',
+    totalLabel: 'Total financiado',
+    legalText: 'Cuotas y aprobación sujetas a evaluación crediticia.',
+    minAmount: 0,
+    maxAmount: 0,
+    defaultTermMonths: 6,
+    monthlyRate: 0,
+    originationFeeRate: 0,
+    terms: [
+      { months: 3, label: '3 cuotas' },
+      { months: 6, label: '6 cuotas' },
+      { months: 12, label: '12 cuotas' },
+    ],
   },
   observability: {
     enabled: false,
@@ -1380,6 +1441,7 @@ const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
       paymentMethodCreditCard: 'Tarjeta de crédito',
       paymentMethodDebitCard: 'Tarjeta de débito',
       paymentMethodMercadopago: 'Mercado Pago',
+      paymentMethodLoan: 'Préstamo',
       paymentMethodCard: 'Tarjeta',
       paymentMethodCheck: 'Cheque',
       paymentMethodOther: 'Otro',
@@ -1446,6 +1508,18 @@ const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
       ordersDetailQuantityLabel: 'Cantidad',
       ordersDetailEachLabel: 'c/u',
       ordersDetailPaymentStatusLabel: 'Estado de pago',
+      ordersDetailLoanStatusLabel: 'Estado del préstamo',
+      ordersDetailLoanNumberLabel: 'Préstamo',
+      ordersDetailLoanPrincipalLabel: 'Monto financiado',
+      ordersDetailLoanPaidLabel: 'Pagado',
+      ordersDetailLoanOutstandingLabel: 'Saldo pendiente',
+      ordersDetailLoanDueDateLabel: 'Vencimiento estimado',
+      ordersDetailLoanPaymentsTitle: 'Pagos del préstamo',
+      ordersDetailLoanNoPaymentsMessage: 'Todavía no se registraron pagos para este préstamo.',
+      loanStatusActive: 'Activo',
+      loanStatusPaid: 'Pagado',
+      loanStatusPending: 'Pendiente',
+      loanStatusCancelled: 'Cancelado',
       ordersDetailStatusHistoryLabel: 'Historial de estados',
       ordersDetailNoHistoryMessage: 'No hay historial detallado disponible para este pedido.',
       ordersDetailStorefrontNote: 'El frontend informó el medio de pago y el backend controla la validación.',
@@ -1871,6 +1945,38 @@ export const getPaymentConfig = () => {
   };
 };
 
+export const getLoanConfig = (): LoanConfig => {
+  const root = getConfigRoot() as any;
+  const loan = root.loan || root.checkout?.loan;
+  const defaults = DEFAULT_RUNTIME_CONFIG.loan;
+  const rawTerms = Array.isArray(loan?.terms) ? loan.terms : defaults.terms;
+  const terms = rawTerms
+    .filter((term: any) => typeof term?.months === 'number' && term.months > 0)
+    .map((term: any) => ({
+      months: term.months,
+      label: readString(term.label, `${term.months} cuotas`),
+      monthlyRate: typeof term.monthlyRate === 'number' ? term.monthlyRate : undefined,
+    }));
+
+  return {
+    enabled: readBoolean(loan?.enabled, defaults.enabled),
+    providerName: readString(loan?.providerName, defaults.providerName),
+    title: readString(loan?.title, defaults.title),
+    subtitle: readString(loan?.subtitle, defaults.subtitle),
+    badgeLabel: readString(loan?.badgeLabel, defaults.badgeLabel),
+    termsTitle: readString(loan?.termsTitle, defaults.termsTitle),
+    amountLabel: readString(loan?.amountLabel, defaults.amountLabel),
+    totalLabel: readString(loan?.totalLabel, defaults.totalLabel),
+    legalText: readString(loan?.legalText, defaults.legalText),
+    minAmount: readNumber(loan?.minAmount, defaults.minAmount),
+    maxAmount: readNumber(loan?.maxAmount, defaults.maxAmount),
+    defaultTermMonths: readNumber(loan?.defaultTermMonths, defaults.defaultTermMonths),
+    monthlyRate: readNumber(loan?.monthlyRate, defaults.monthlyRate),
+    originationFeeRate: readNumber(loan?.originationFeeRate, defaults.originationFeeRate),
+    terms: terms.length > 0 ? terms : defaults.terms,
+  };
+};
+
 export const getObservabilityConfig = (): ObservabilityConfig => {
   const observability = getConfigRoot().observability;
   return {
@@ -1979,6 +2085,13 @@ export const getNewsletterConfig = (): NewsletterConfig => {
 export const getUIConfig = (): RuntimeConfig['ui'] => {
   const ui = getConfigRoot().ui;
   const defaults = DEFAULT_RUNTIME_CONFIG.ui;
+  const loan = getLoanConfig();
+  const loanPromoMessages = [
+    `${loan.providerName}: productos pagables con préstamo`,
+    loan.badgeLabel,
+    loan.termsTitle,
+    loan.legalText,
+  ].filter((message) => typeof message === 'string' && message.trim().length > 0);
   return {
     // Search & product listing
     searchPlaceholder: readString(ui?.searchPlaceholder, defaults.searchPlaceholder),
@@ -2083,6 +2196,8 @@ export const getUIConfig = (): RuntimeConfig['ui'] => {
     productMultiplePaymentsIcon: readString(ui?.productMultiplePaymentsIcon, defaults.productMultiplePaymentsIcon),
     headerPromoMessages: Array.isArray(ui?.headerPromoMessages)
       ? ui!.headerPromoMessages.filter((m: any) => typeof m === 'string' && m.trim().length > 0)
+      : loan.enabled && loanPromoMessages.length > 0
+        ? loanPromoMessages
       : [...defaults.headerPromoMessages],
 
     // Cart page (full page)
@@ -2191,6 +2306,7 @@ export const getUIConfig = (): RuntimeConfig['ui'] => {
     paymentMethodCreditCard: readString(ui?.paymentMethodCreditCard, defaults.paymentMethodCreditCard),
     paymentMethodDebitCard: readString(ui?.paymentMethodDebitCard, defaults.paymentMethodDebitCard),
     paymentMethodMercadopago: readString(ui?.paymentMethodMercadopago, defaults.paymentMethodMercadopago),
+    paymentMethodLoan: readString(ui?.paymentMethodLoan, defaults.paymentMethodLoan),
     paymentMethodCard: readString(ui?.paymentMethodCard, defaults.paymentMethodCard),
     paymentMethodCheck: readString(ui?.paymentMethodCheck, defaults.paymentMethodCheck),
     paymentMethodOther: readString(ui?.paymentMethodOther, defaults.paymentMethodOther),
@@ -2257,6 +2373,18 @@ export const getUIConfig = (): RuntimeConfig['ui'] => {
     ordersDetailQuantityLabel: readString(ui?.ordersDetailQuantityLabel, defaults.ordersDetailQuantityLabel),
     ordersDetailEachLabel: readString(ui?.ordersDetailEachLabel, defaults.ordersDetailEachLabel),
     ordersDetailPaymentStatusLabel: readString(ui?.ordersDetailPaymentStatusLabel, defaults.ordersDetailPaymentStatusLabel),
+    ordersDetailLoanStatusLabel: readString(ui?.ordersDetailLoanStatusLabel, defaults.ordersDetailLoanStatusLabel),
+    ordersDetailLoanNumberLabel: readString(ui?.ordersDetailLoanNumberLabel, defaults.ordersDetailLoanNumberLabel),
+    ordersDetailLoanPrincipalLabel: readString(ui?.ordersDetailLoanPrincipalLabel, defaults.ordersDetailLoanPrincipalLabel),
+    ordersDetailLoanPaidLabel: readString(ui?.ordersDetailLoanPaidLabel, defaults.ordersDetailLoanPaidLabel),
+    ordersDetailLoanOutstandingLabel: readString(ui?.ordersDetailLoanOutstandingLabel, defaults.ordersDetailLoanOutstandingLabel),
+    ordersDetailLoanDueDateLabel: readString(ui?.ordersDetailLoanDueDateLabel, defaults.ordersDetailLoanDueDateLabel),
+    ordersDetailLoanPaymentsTitle: readString(ui?.ordersDetailLoanPaymentsTitle, defaults.ordersDetailLoanPaymentsTitle),
+    ordersDetailLoanNoPaymentsMessage: readString(ui?.ordersDetailLoanNoPaymentsMessage, defaults.ordersDetailLoanNoPaymentsMessage),
+    loanStatusActive: readString(ui?.loanStatusActive, defaults.loanStatusActive),
+    loanStatusPaid: readString(ui?.loanStatusPaid, defaults.loanStatusPaid),
+    loanStatusPending: readString(ui?.loanStatusPending, defaults.loanStatusPending),
+    loanStatusCancelled: readString(ui?.loanStatusCancelled, defaults.loanStatusCancelled),
     ordersDetailStatusHistoryLabel: readString(ui?.ordersDetailStatusHistoryLabel, defaults.ordersDetailStatusHistoryLabel),
     ordersDetailNoHistoryMessage: readString(ui?.ordersDetailNoHistoryMessage, defaults.ordersDetailNoHistoryMessage),
     ordersDetailStorefrontNote: readString(ui?.ordersDetailStorefrontNote, defaults.ordersDetailStorefrontNote),
@@ -2410,11 +2538,13 @@ export const getImagesConfig = (): ImagesConfig => {
 
 export const getPaymentMethodsConfig = () => {
   const paymentMethods = getConfigRoot().paymentMethods;
+  const loan = getLoanConfig();
   return {
     transferencia: readBoolean(paymentMethods?.transferencia, DEFAULT_RUNTIME_CONFIG.paymentMethods.transferencia),
     efectivo: readBoolean(paymentMethods?.efectivo, DEFAULT_RUNTIME_CONFIG.paymentMethods.efectivo),
     mercadopago: readBoolean(paymentMethods?.mercadopago, DEFAULT_RUNTIME_CONFIG.paymentMethods.mercadopago),
     tarjeta: readBoolean(paymentMethods?.tarjeta, DEFAULT_RUNTIME_CONFIG.paymentMethods.tarjeta),
+    prestamo: readBoolean(paymentMethods?.prestamo, loan.enabled),
   };
 };
 
@@ -2701,6 +2831,7 @@ export const getRuntimeConfig = (): RuntimeConfig => {
     filters: getFiltersConfig(),
     paymentMethods: getPaymentMethodsConfig(),
     payment: getPaymentConfig(),
+    loan: getLoanConfig(),
     registration: getRegistrationConfig(),
     observability: getObservabilityConfig(),
     validation: getValidationConfig(),

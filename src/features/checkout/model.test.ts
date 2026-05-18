@@ -89,6 +89,12 @@ describe('checkout model', () => {
     });
 
     expect(payload.items[0].product_id).toBe('prod-1');
+    expect(payload.items[0]).not.toHaveProperty('sku');
+    expect(payload.lineItemsMetadata[0]).toMatchObject({
+      product_id: 'prod-1',
+      product_sku: 'sku',
+      kind: 'product',
+    });
     expect(payload.totalAmount).toBe(242);
   });
 });

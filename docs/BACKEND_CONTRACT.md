@@ -29,6 +29,7 @@ Notas:
 - expone `shipping` para textos de envío y cargos flat-rate trazables dentro del checkout
 - expone `newsletter` para endpoint, headers y textos configurables del bloque de suscripción
 - expone `registration` para campos/textos de registro configurables por tenant
+- expone `loan` para habilitar préstamo como medio de pago y mostrar cuotas estimadas
 - expone `ui` para textos transversales de navegación, auth, producto, carrito, checkout y footer
 
 ### Observabilidad frontend
@@ -107,12 +108,19 @@ POST /api/accounts/{account_id}/sales-orders/{order_id}/return
 GET /api/accounts/{account_id}/sales-orders/{order_id}/storefront-status
 GET /api/accounts/{account_id}/sales-orders/{order_id}/status-history
 GET /api/accounts/{account_id}/sales-orders/{order_id}/valid-transitions
+POST /api/accounts/{account_id}/loans
+GET /api/accounts/{account_id}/loans
+GET /api/accounts/{account_id}/loans/{loan_id}
+POST /api/accounts/{account_id}/loans/{loan_id}/payments
 ```
 
 Notas:
 - el storefront crea y envía órdenes, pero no crea pagos ni aprueba pagos
+- si el método informado es `prestamo`, el storefront debe crear un préstamo en `/loans` luego de enviar la orden; `borrower_id` es el `business_partner_id`, `principal_amount` es el total de la orden y la metadata debe incluir `sales_order_id`, `sales_order_number` y plan estimado
+- para mostrar estado de pago de préstamos, el storefront lista `/loans?borrower_id={business_partner_id}` y cruza por metadata de orden; en el detalle usa `/loans/{loan_id}/payments` para mostrar pagos y saldo pendiente
 - el storefront lista/detalla sólo órdenes propias usando el `customer_id` del cliente autenticado
 - el frontend solo informa el método/intención de pago en la metadata de la orden
+- si `paymentMethods.prestamo=true` y `loan.enabled=true`, el storefront muestra préstamo como método de pago y calcula cuotas estimadas desde `loan.terms`
 - la validación y confirmación del pago quedan del lado backend
 - `/{order_id}/storefront-status` es la lectura aprobada para mostrar estado real de pago/envío sin invocar acciones backoffice
 - `/{order_id}/confirm-payment` puede existir para procesos backend o backoffice, pero no debe invocarse desde este frontend

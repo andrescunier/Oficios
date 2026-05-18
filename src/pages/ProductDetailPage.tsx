@@ -6,7 +6,9 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   ArrowLeft,
+  Calculator,
   Heart,
+  Landmark,
   ShoppingCart,
   Plus,
   Minus,
@@ -16,9 +18,10 @@ import { useStore } from '@/store/useStore';
 import type { Product, ProductVariant, ProductVariantOption } from '@/types/api';
 import { PriceDisplay } from '@/hooks/usePriceVisibility';
 import { handleImgError } from '@/utils/imageHelpers';
-import { getBusinessConfig, getUIConfig, getShippingConfig } from '@/config/runtime';
+import { getBusinessConfig, getLoanConfig, getPaymentMethodsConfig, getUIConfig, getShippingConfig } from '@/config/runtime';
 import { getFeatureBenefitIcon } from '@/components/ui/featureBenefitIcons';
 import { productDetailQueryOptions } from '@/features/catalog/queries';
+import { buildLoanPaymentPlans, getPrimaryLoanPaymentPlan } from '@/features/checkout/loan';
 import { recordAppEvent } from '@/lib/observability';
 import { setProductJsonLd, clearProductJsonLd } from '@/lib/seo';
 import { trackEcommerceEvent } from '@/lib/analytics';
@@ -45,6 +48,8 @@ export const ProductDetailPage: React.FC = () => {
   const [quantity, setQuantity] = useState(1);
   const uiConfig = getUIConfig();
   const shippingCfg = getShippingConfig();
+  const loanCfg = getLoanConfig();
+  const paymentMethodsCfg = getPaymentMethodsConfig();
 
   const {
     addToCart,
@@ -205,6 +210,13 @@ export const ProductDetailPage: React.FC = () => {
   );
   const isProductFavorite = product ? isFavorite(product.id) : false;
   const variantSelectionIncomplete = Boolean(product?.has_variants) && !selectedVariant;
+  const loanPaymentEnabled = paymentMethodsCfg.prestamo && loanCfg.enabled;
+  const loanAmount = effectivePrice * quantity;
+  const primaryLoanPlan = getPrimaryLoanPaymentPlan(loanAmount, loanCfg);
+  const loanPlans = useMemo(() => buildLoanPaymentPlans(loanAmount, loanCfg), [loanAmount, loanCfg]);
+  const loanCreditLimit = Math.max(loanCfg.maxAmount, loanAmount);
+  const loanCreditBalance = Math.max(loanCreditLimit - loanAmount, 0);
+  const loanCreditUsagePct = loanCreditLimit > 0 ? Math.min((loanAmount / loanCreditLimit) * 100, 100) : 0;
 
   useEffect(() => {
     setQuantity((current) => Math.min(current, maxQuantity));
@@ -408,6 +420,58 @@ export const ProductDetailPage: React.FC = () => {
               </div>
             )}
 
+            {loanPaymentEnabled && primaryLoanPlan && (
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 shadow-sm">
+                <div className="mb-4 flex items-start gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <Landmark className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-primary">{loanCfg.badgeLabel}</p>
+                    <h3 className="text-lg font-semibold text-gray-900">Crédito Prestameya</h3>
+                    <p className="text-sm text-gray-600">Simulación para {quantity} unidad{quantity === 1 ? '' : 'es'} de este producto.</p>
+                  </div>
+                </div>
+                <div className="mb-4 rounded-lg bg-white p-4">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-gray-500">Crédito disponible</p>
+                      <p className="text-2xl font-semibold text-gray-900">{formatPrice(loanCreditLimit)}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs uppercase tracking-wide text-gray-500">Saldo luego de comprar</p>
+                      <p className="text-lg font-semibold text-primary">{formatPrice(loanCreditBalance)}</p>
+                    </div>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-gray-100">
+                    <div className="h-full rounded-full bg-primary" style={{ width: `${loanCreditUsagePct}%` }} />
+                  </div>
+                  <div className="mt-2 flex justify-between text-xs text-gray-500">
+                    <span>Monto usado: {formatPrice(loanAmount)}</span>
+                    <span>{loanCreditUsagePct.toFixed(0)}% del crédito</span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-medium text-gray-800">
+                    <Calculator className="h-4 w-4 text-primary" />
+                    {loanCfg.termsTitle}
+                  </div>
+                  {loanPlans.map((plan) => (
+                    <div key={plan.months} className="grid grid-cols-3 gap-2 rounded-md border border-primary/10 bg-white px-3 py-2 text-sm">
+                      <span className="font-medium text-gray-800">{plan.label}</span>
+                      <span className="text-right text-gray-600">
+                        Cuota: <strong className="text-primary">{formatPrice(plan.monthlyPayment)}</strong>
+                      </span>
+                      <span className="text-right text-gray-600">
+                        Total: <strong>{formatPrice(plan.totalFinanced)}</strong>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-3 text-xs text-gray-500">{loanCfg.legalText}</p>
+              </div>
+            )}
+
             {product.has_variants && variantOptions.length > 0 && (
               <div className="bg-white p-4 rounded-lg shadow-sm space-y-4">
                 <h3 className="font-semibold">{uiConfig.productVariantLabel}</h3>
@@ -540,8 +604,14 @@ export const ProductDetailPage: React.FC = () => {
                     </div>
                     <div className="bg-white p-4 rounded-lg shadow-sm text-center">
                       <PaymentsIcon className="w-6 h-6 text-purple-600 mx-auto mb-2" />
-                      <h4 className="font-medium mb-1">{uiConfig.productMultiplePaymentsTitle}</h4>
-                      <p className="text-sm text-gray-600">{uiConfig.productMultiplePaymentsDesc}</p>
+                      <h4 className="font-medium mb-1">
+                        {loanPaymentEnabled ? loanCfg.badgeLabel : uiConfig.productMultiplePaymentsTitle}
+                      </h4>
+                      <p className="text-sm text-gray-600">
+                        {loanPaymentEnabled && primaryLoanPlan
+                          ? `${primaryLoanPlan.label} de ${formatPrice(primaryLoanPlan.monthlyPayment)}`
+                          : uiConfig.productMultiplePaymentsDesc}
+                      </p>
                     </div>
                   </>
                 );

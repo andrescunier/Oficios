@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Prestameya</title>
+  <desc id="desc">Imagen social de Prestameya</desc>
+  <rect width="1200" height="630" fill="#f8fafc"/>
+  <rect x="72" y="72" width="1056" height="486" rx="36" fill="#ffffff" stroke="#dbeafe"/>
+  <circle cx="220" cy="230" r="86" fill="#0f766e"/>
+  <path d="M185 235h74c18 0 32-14 32-32s-14-32-32-32h-74v126" fill="none" stroke="#fff" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M185 238h70c20 0 36 16 36 36s-16 36-36 36h-70" fill="none" stroke="#f97316" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="350" y="245" font-family="Inter, Arial, sans-serif" font-size="82" font-weight="850" fill="#0f172a">Prestameya</text>
+  <text x="356" y="318" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="650" fill="#0f766e">Productos pagables con prestamo</text>
+  <text x="356" y="384" font-family="Inter, Arial, sans-serif" font-size="28" fill="#475569">Cuotas claras, simulacion visible y checkout con prestamo como unico medio de pago.</text>
+</svg>

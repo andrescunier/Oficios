@@ -5,6 +5,8 @@
 
 import { httpClient } from './httpClient';
 import { API_ENDPOINTS, getActiveAccountId, getActiveChannel } from '@/config/api';
+import { getLoanConfig } from '@/config/runtime';
+import { getPrimaryLoanPaymentPlan } from '@/features/checkout/loan';
 import log from '@/lib/logger';
 import { extractCustomerIdFromPersistedSession } from '@/features/auth/session';
 
@@ -16,6 +18,8 @@ interface SalesOrderItem {
   tax_rate: number;
   sku?: string;
 }
+
+type SalesOrderCreateItem = Omit<SalesOrderItem, 'sku'>;
 
 // Estado completo de la máquina de estados (Order State Machine v2)
 export type OrderStatus =
@@ -42,7 +46,7 @@ interface CreateSalesOrderRequest {
   order_number: string;
   customer_id: string;
   currency: string;
-  items: SalesOrderItem[];
+  items: SalesOrderCreateItem[];
   notes?: string;
   metadata?: {
     channel: string;
@@ -65,6 +69,70 @@ interface CreateSalesOrderResponse {
   updated_at: string;
 }
 
+interface CreateLoanRequest {
+  borrower_id: string;
+  loan_number: string;
+  currency: string;
+  principal_amount: number;
+  interest_rate: number;
+  issued_at: string;
+  due_at?: string;
+  status: 'active' | 'pending' | string;
+  notes?: string;
+  metadata?: Record<string, any>;
+}
+
+interface LoanResponse {
+  id: string;
+  account_id: string;
+  borrower_id: string;
+  loan_number: string;
+  currency: string;
+  principal_amount: number;
+  outstanding_balance: number;
+  interest_rate: number;
+  issued_at: string;
+  due_at?: string | null;
+  status: string;
+  notes?: string | null;
+  metadata?: Record<string, any>;
+  created_at: string;
+  updated_at: string;
+}
+
+interface LoanPaymentResponse {
+  id: string;
+  loan_id: string;
+  amount: number;
+  paid_at: string;
+  reference?: string | null;
+  notes?: string | null;
+  balance_before: number;
+  balance_after: number;
+  metadata?: Record<string, any>;
+  created_at: string;
+}
+
+interface LoansResponse {
+  data: LoanResponse[];
+  pagination?: {
+    page: number;
+    per_page: number;
+    total: number;
+    total_pages: number;
+  };
+}
+
+interface LoanPaymentsResponse {
+  data: LoanPaymentResponse[];
+  pagination?: {
+    page: number;
+    per_page: number;
+    total: number;
+    total_pages: number;
+  };
+}
+
 interface SalesOrder {
   id: string;
   order_number: string;
@@ -85,6 +153,8 @@ interface SalesOrder {
     [key: string]: any;
   };
   storefront_status?: StorefrontOrderStatus;
+  related_loan?: LoanResponse | null;
+  related_loan_payments?: LoanPaymentResponse[];
   created_at: string;
   updated_at: string;
   status_history?: StatusHistoryEntry[];
@@ -130,6 +200,13 @@ interface GetOrdersParams {
   per_page?: number;
   order_by?: string;
   direction?: 'asc' | 'desc';
+}
+
+interface GetLoansParams {
+  borrower_id?: string;
+  status?: string;
+  page?: number;
+  per_page?: number;
 }
 
 interface OrdersResponse {
@@ -306,7 +383,7 @@ interface CheckoutData {
 }
 
 interface CheckoutProcessError {
-  step: 'authentication' | 'order' | 'submit' | 'payment' | 'business_partner' | 'stock_validation' | 'unknown';
+  step: 'authentication' | 'order' | 'submit' | 'loan' | 'payment' | 'business_partner' | 'stock_validation' | 'unknown';
   details?: unknown;
   orderNumber?: string;
 }
@@ -314,6 +391,7 @@ interface CheckoutProcessError {
 interface CheckoutProcessResult {
   customerId?: string;
   salesOrder: CreateSalesOrderResponse | null;
+  loan?: LoanResponse | null;
   success: boolean;
   message: string;
   orderNumber?: string;
@@ -356,6 +434,60 @@ function normalizeSalesOrder(raw: any): SalesOrder {
     updated_at: raw?.updated_at || raw?.created_at || raw?.issued_at || new Date().toISOString(),
   };
 }
+
+function normalizeLoan(raw: any): LoanResponse {
+  return {
+    ...raw,
+    principal_amount: Number(raw?.principal_amount || 0),
+    outstanding_balance: Number(raw?.outstanding_balance || 0),
+    interest_rate: Number(raw?.interest_rate || 0),
+    metadata: raw?.metadata && typeof raw.metadata === 'object' ? raw.metadata : {},
+  };
+}
+
+function normalizeLoanPayment(raw: any): LoanPaymentResponse {
+  return {
+    ...raw,
+    amount: Number(raw?.amount || 0),
+    balance_before: Number(raw?.balance_before || 0),
+    balance_after: Number(raw?.balance_after || 0),
+    metadata: raw?.metadata && typeof raw.metadata === 'object' ? raw.metadata : {},
+  };
+}
+
+function normalizePaginated<T>(response: any, itemNormalizer: (raw: any) => T): { data: T[]; pagination?: any } {
+  const payload = response && typeof response === 'object' && 'data' in response ? response : unwrapApiResponse<any>(response);
+  const items = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : [];
+  return {
+    data: items.map(itemNormalizer),
+    pagination: payload?.pagination || (payload?.page ? {
+      page: payload.page,
+      per_page: payload.per_page ?? items.length,
+      total: payload.total ?? items.length,
+      total_pages: payload.total_pages ?? 1,
+    } : undefined),
+  };
+}
+
+function findLoanForOrder(order: SalesOrder, loans: LoanResponse[]): LoanResponse | null {
+  return loans.find((loan) => {
+    const metadata = loan.metadata || {};
+    return metadata.sales_order_id === order.id || metadata.sales_order_number === order.order_number;
+  }) || null;
+}
+
+const toDateOnly = (date: Date): string => date.toISOString().slice(0, 10);
+
+const addMonths = (date: Date, months: number): Date => {
+  const next = new Date(date.getTime());
+  next.setMonth(next.getMonth() + months);
+  return next;
+};
+
+const normalizeRatePercent = (rate: number): number => {
+  if (!Number.isFinite(rate) || rate <= 0) return 0;
+  return rate > 1 ? rate : rate * 100;
+};
 
 class OrderService {
   private getAccountId() {
@@ -592,6 +724,26 @@ class OrderService {
     };
   }
 
+  async getLoans(params?: GetLoansParams): Promise<LoansResponse> {
+    const response = await httpClient.get<any>(
+      API_ENDPOINTS.LOANS(this.getAccountId()),
+      { params }
+    );
+    return normalizePaginated(response, normalizeLoan);
+  }
+
+  async getLoansByBorrower(borrowerId: string): Promise<LoansResponse> {
+    return this.getLoans({ borrower_id: borrowerId, per_page: 100 });
+  }
+
+  async getLoanPayments(loanId: string): Promise<LoanPaymentsResponse> {
+    const response = await httpClient.get<any>(
+      API_ENDPOINTS.LOAN_PAYMENTS(this.getAccountId(), loanId),
+      { params: { per_page: 100 } }
+    );
+    return normalizePaginated(response, normalizeLoanPayment);
+  }
+
   /**
    * Obtiene los pedidos de un usuario específico
    */
@@ -611,7 +763,7 @@ class OrderService {
       this.getStorefrontOrderStatus(orderId).catch(() => null),
     ]);
 
-    return {
+    const normalizedOrder = {
       ...order,
       ...(storefrontStatus?.order || {}),
       storefront_status: storefrontStatus
@@ -621,6 +773,22 @@ class OrderService {
           }
         : undefined,
       status_history: statusHistoryResponse?.data?.history || [],
+    };
+
+    if (normalizedOrder.metadata?.payment_method !== 'prestamo') {
+      return normalizedOrder;
+    }
+
+    const loansResponse = await this.getLoansByBorrower(normalizedOrder.customer_id).catch(() => null);
+    const relatedLoan = loansResponse ? findLoanForOrder(normalizedOrder, loansResponse.data) : null;
+    const loanPayments = relatedLoan
+      ? await this.getLoanPayments(relatedLoan.id).then((response) => response.data).catch(() => [])
+      : [];
+
+    return {
+      ...normalizedOrder,
+      related_loan: relatedLoan,
+      related_loan_payments: loanPayments,
     };
   }
 
@@ -695,9 +863,20 @@ class OrderService {
    */
   async createSalesOrder(orderData: CreateSalesOrderRequest): Promise<CreateSalesOrderResponse> {
     try {
+      const sanitizedOrderData: CreateSalesOrderRequest = {
+        ...orderData,
+        items: orderData.items.map(({ product_id, description, quantity, unit_price, tax_rate }) => ({
+          product_id,
+          description,
+          quantity,
+          unit_price,
+          tax_rate,
+        })),
+      };
+
       const response = await httpClient.post<any>(
         API_ENDPOINTS.SALES_ORDERS(this.getAccountId()),
-        orderData
+        sanitizedOrderData
       );
 
       // La API devuelve { success, data: { id, order_number, ... } }
@@ -707,6 +886,15 @@ class OrderService {
     } catch (error) {
       throw error;
     }
+  }
+
+  async createLoan(loanData: CreateLoanRequest): Promise<LoanResponse> {
+    const response = await httpClient.post<any>(
+      API_ENDPOINTS.LOANS(this.getAccountId()),
+      loanData,
+    );
+
+    return unwrapApiResponse<LoanResponse>(response);
   }
 
   /**
@@ -802,14 +990,72 @@ class OrderService {
       
       submitted = true;
       log.checkout.info('Pedido enviado - stock reservado');
-      
-      log.checkout.info('Paso 3: Pago informado al backend. La validación y aprobación quedan del lado backend.');
+
+      let loan: LoanResponse | null = null;
+      if (paymentMethod === 'prestamo') {
+        const loanCfg = getLoanConfig();
+        const primaryPlan = getPrimaryLoanPaymentPlan(totalAmount, loanCfg);
+        const issuedAt = new Date();
+        const dueAt = primaryPlan ? addMonths(issuedAt, primaryPlan.months) : undefined;
+
+        log.checkout.info('Paso 3: Creando préstamo asociado a la orden...');
+        try {
+          loan = await this.createLoan({
+            borrower_id: customerId,
+            loan_number: `LN-${salesOrder.order_number}`.slice(0, 50),
+            currency,
+            principal_amount: totalAmount,
+            interest_rate: normalizeRatePercent(primaryPlan ? (primaryPlan.totalFinanced / totalAmount - 1) : loanCfg.monthlyRate),
+            issued_at: toDateOnly(issuedAt),
+            due_at: dueAt ? toDateOnly(dueAt) : undefined,
+            status: 'active',
+            notes: `Préstamo generado desde storefront para orden ${salesOrder.order_number}`,
+            metadata: {
+              source: 'storefront_checkout',
+              channel: activeChannel,
+              provider: loanCfg.providerName,
+              sales_order_id: salesOrder.id,
+              sales_order_number: salesOrder.order_number,
+              payment_method: paymentMethod,
+              order_amount: totalAmount,
+              currency,
+              plan: primaryPlan ? {
+                months: primaryPlan.months,
+                label: primaryPlan.label,
+                monthly_payment: primaryPlan.monthlyPayment,
+                total_financed: primaryPlan.totalFinanced,
+              } : null,
+              terms: loanCfg.terms,
+            },
+          });
+          log.checkout.info('Préstamo creado:', loan.loan_number);
+        } catch (loanError) {
+          return {
+            salesOrder,
+            loan: null,
+            success: false,
+            message: 'La orden fue creada y enviada, pero no se pudo generar el préstamo asociado. No repitas la compra hasta revisar el estado.',
+            orderNumber: salesOrder.order_number,
+            paymentMethod,
+            error: {
+              step: 'loan',
+              details: loanError,
+              orderNumber: salesOrder.order_number,
+            },
+          };
+        }
+      }
+
+      log.checkout.info('Paso 4: Pago informado al backend. La validación y aprobación quedan del lado backend.');
 
       return {
         customerId: customerId,
         salesOrder,
+        loan,
         success: true,
-        message: 'Pedido creado y enviado. El pago queda pendiente de validación por el backend.',
+        message: paymentMethod === 'prestamo'
+          ? 'Pedido creado, enviado y préstamo generado. La validación queda pendiente por el backend.'
+          : 'Pedido creado y enviado. El pago queda pendiente de validación por el backend.',
         orderNumber: salesOrder.order_number,
         paymentMethod,
       };
@@ -869,6 +1115,11 @@ export type {
   StorefrontDeliveryStatus,
   StorefrontOrderStatus,
   StorefrontPaymentStatus,
+  LoanResponse,
+  LoanPaymentResponse,
+  LoansResponse,
+  LoanPaymentsResponse,
+  GetLoansParams,
   GetOrdersParams,
   OrdersResponse,
   CheckoutData,

@@ -216,7 +216,8 @@ GET /api/accounts/{account_id}/ecommerce-config
       "transferencia": true,
       "efectivo": true,
       "mercadopago": false,
-      "tarjeta": false
+      "tarjeta": false,
+      "prestamo": false
     },
     "payment": {
       "bankName": "",
@@ -224,6 +225,26 @@ GET /api/accounts/{account_id}/ecommerce-config
       "cbu": "",
       "alias": "",
       "whatsappVerification": ""
+    },
+    "loan": {
+      "enabled": false,
+      "providerName": "Prestameya",
+      "title": "Pagá con préstamo",
+      "subtitle": "Revisá las cuotas estimadas antes de finalizar.",
+      "badgeLabel": "Disponible con préstamo",
+      "termsTitle": "Pagos estimados del préstamo",
+      "amountLabel": "Cuota estimada",
+      "totalLabel": "Total financiado",
+      "legalText": "Cuotas sujetas a evaluación crediticia.",
+      "minAmount": 1000,
+      "maxAmount": 5000000,
+      "defaultTermMonths": 6,
+      "monthlyRate": 0.035,
+      "originationFeeRate": 0.02,
+      "terms": [
+        { "months": 3, "label": "3 pagos", "monthlyRate": 0.03 },
+        { "months": 6, "label": "6 pagos", "monthlyRate": 0.035 }
+      ]
     },
     "images": {
       "heroSlides": [

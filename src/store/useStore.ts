@@ -311,6 +311,7 @@ export const useStore = create<AppStore>()(
             token,
           },
           favorites: cached,
+          cart: createInitialCartState(), // Limpiar carrito previo antes de hidratar del backend
         }));
 
         // Sincronizar con backend (no bloqueante)
@@ -339,9 +340,8 @@ export const useStore = create<AppStore>()(
         
         set({
           auth: initialAuthState,
-          // NO limpiamos el carrito: queda en localStorage para que al volver a loguearse
-          // (mismo dispositivo) lo encuentre. Si entra en otro dispositivo, lo trae el backend.
-          favorites: [], // Limpiar favoritos al logout (se mantienen guardados en localStorage por usuario)
+          cart: createInitialCartState(), // Limpiar carrito al logout; el backend lo conserva para la próxima sesión.
+          favorites: [],
         });
       },
       

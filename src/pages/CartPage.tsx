@@ -180,7 +180,7 @@ export const CartPage: React.FC = () => {
                             {Object.entries(item.selected_options).map(([key, value]) => `${key}: ${value}`).join(' • ')}
                           </p>
                         )}
-                        <p className="text-sm text-gray-500 mt-1">
+                        <p className="text-sm text-gray-500 mt-1 line-clamp-2">
                           {item.product.description}
                         </p>
                         <p className="text-sm text-gray-400 mt-1">

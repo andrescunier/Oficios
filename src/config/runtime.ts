@@ -2084,8 +2084,10 @@ export const getNewsletterConfig = (): NewsletterConfig => {
 
 export const getUIConfig = (): RuntimeConfig['ui'] => {
   const ui = getConfigRoot().ui;
+  const header = getConfigRoot().header as { topBarMessage?: unknown; promoBarText?: unknown } | undefined;
   const defaults = DEFAULT_RUNTIME_CONFIG.ui;
   const loan = getLoanConfig();
+  const headerPromoMessage = readString(header?.topBarMessage, readString(header?.promoBarText, '')).trim();
   const loanPromoMessages = [
     `${loan.providerName}: productos pagables con préstamo`,
     loan.badgeLabel,
@@ -2196,6 +2198,8 @@ export const getUIConfig = (): RuntimeConfig['ui'] => {
     productMultiplePaymentsIcon: readString(ui?.productMultiplePaymentsIcon, defaults.productMultiplePaymentsIcon),
     headerPromoMessages: Array.isArray(ui?.headerPromoMessages)
       ? ui!.headerPromoMessages.filter((m: any) => typeof m === 'string' && m.trim().length > 0)
+      : headerPromoMessage
+        ? [headerPromoMessage]
       : loan.enabled && loanPromoMessages.length > 0
         ? loanPromoMessages
       : [...defaults.headerPromoMessages],

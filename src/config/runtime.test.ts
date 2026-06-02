@@ -6,6 +6,7 @@ import {
   getImagesConfig,
   getNewsletterConfig,
   getShippingConfig,
+  getUIConfig,
 } from './runtime';
 
 describe('runtime', () => {
@@ -18,6 +19,9 @@ describe('runtime', () => {
         extraHeaders: {
           'X-Channel': 'warpla',
         },
+      },
+      header: {
+        topBarMessage: 'HOT SALE: promos por tiempo limitado - Envío fijo a todo el país $5.000',
       },
       branding: {
         logo: 'https://cdn.example.com/logo.png',
@@ -131,5 +135,11 @@ describe('runtime', () => {
       endpoint: 'https://hooks.example.com/newsletter',
       successMessage: 'Alta ok',
     });
+  });
+
+  it('usa el mensaje promocional del header si ui.headerPromoMessages no viene de la API', () => {
+    expect(getUIConfig().headerPromoMessages).toEqual([
+      'HOT SALE: promos por tiempo limitado - Envío fijo a todo el país $5.000',
+    ]);
   });
 });

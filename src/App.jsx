@@ -15,6 +15,7 @@ import { consumePendingRedirect } from '@/features/auth/session';
 import { PENDING_REDIRECT_EVENT } from '@/lib/session';
 import { applySeo } from '@/lib/seo';
 import { bootstrapAnalytics, trackPageView } from '@/lib/analytics';
+import { useTokenExpiry } from '@/hooks/useTokenExpiry';
 import './App.css';
 
 function ScrollToTop() {
@@ -90,6 +91,11 @@ const NotFound = lazy(() => import('@/pages/NotFound').then((module) => ({ defau
 const RegistrationSuccess = lazy(() => import('@/pages/RegistrationSuccess'));
 const OrderSuccessPage = lazy(() => import('@/pages/OrderSuccessPage'));
 
+function TokenExpiryMonitor() {
+  useTokenExpiry();
+  return null;
+}
+
 function App() {
   useEffect(() => {
     applySeo({ pathname: typeof window !== 'undefined' ? window.location.pathname : '/' });
@@ -100,6 +106,7 @@ function App() {
       <Router>
         <PendingRedirectHandler />
         <ScrollToTop />
+        <TokenExpiryMonitor />
         <div className="min-h-screen flex flex-col">
           <Header />
           <main className="flex-1">

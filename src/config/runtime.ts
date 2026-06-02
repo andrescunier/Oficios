@@ -2087,7 +2087,7 @@ export const getUIConfig = (): RuntimeConfig['ui'] => {
   const header = getConfigRoot().header as { topBarMessage?: unknown; promoBarText?: unknown } | undefined;
   const defaults = DEFAULT_RUNTIME_CONFIG.ui;
   const loan = getLoanConfig();
-  const headerPromoMessage = readString(header?.topBarMessage, readString(header?.promoBarText, '')).trim();
+  const headerPromoMessage = readString(header?.topBarMessage as string | undefined, readString(header?.promoBarText as string | undefined, '')).trim();
   const loanPromoMessages = [
     `${loan.providerName}: productos pagables con préstamo`,
     loan.badgeLabel,

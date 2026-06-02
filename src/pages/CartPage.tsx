@@ -184,7 +184,7 @@ export const CartPage: React.FC = () => {
                           {item.product.description}
                         </p>
                         <p className="text-lg font-bold text-blue-600 mt-2">
-                          {formatPrice(item.product.unit_price, item.product.currency)}
+                          {formatPrice(item.unit_price, item.product.currency)}
                         </p>
                       </div>
 

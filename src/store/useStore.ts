@@ -204,6 +204,7 @@ const buildCartSnapshot = (cart: CartState): CartSnapshot => ({
     selected_options: item.selected_options,
     snapshot: {
       name: item.product?.name,
+      description: item.product?.description,
       image_url: item.product?.image_url || item.product?.thumbnail_url || null,
       sku: item.variant?.sku || item.product?.sku,
       currency: item.product?.currency,
@@ -247,6 +248,7 @@ const hydrateCartFromBackend = async (businessPartnerId: string | null) => {
           id: raw.product_id,
           sku: snap.sku || raw.product_id,
           name: snap.name || 'Producto',
+          description: snap.description || undefined,
           unit_price: typeof raw.unit_price === 'number' ? raw.unit_price : 0,
           currency: snap.currency || remote.currency || getBusinessConfig().defaultCurrency,
           tax_rate: 0,

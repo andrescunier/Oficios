@@ -81,6 +81,14 @@ export const API_ENDPOINTS = {
   // Carrito del cliente (snapshot persistente por business partner)
   CART: (accountId: string, businessPartnerId: string) =>
     `/api/accounts/${accountId}/customers/${businessPartnerId}/cart`,
+
+  // Direcciones
+  ADDRESSES: (accountId: string) => `/api/accounts/${accountId}/addresses`,
+  ADDRESS: (accountId: string, addressId: string) => `/api/accounts/${accountId}/addresses/${addressId}`,
+
+  // Business Partners (solo lectura/actualización del propio partner del cliente)
+  BUSINESS_PARTNER: (accountId: string, businessPartnerId: string) =>
+    `/api/accounts/${accountId}/business-partners/${businessPartnerId}`,
 } as const;
 
 // Configuración de timeouts

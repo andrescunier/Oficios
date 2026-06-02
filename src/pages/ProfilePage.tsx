@@ -2,7 +2,7 @@
  * Página de perfil del usuario
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   User, 
@@ -19,6 +19,9 @@ import {
 } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { getBusinessConfig, getUIConfig } from '@/config/runtime';
+import { authService } from '@/services/authService';
+import { saveShippingAddress, type AddressFormData } from '@/services/addressService';
+import { saveRegistrationDraft } from '@/features/auth/session';
 
 export const ProfilePage: React.FC = () => {
   const { auth, logout, addNotification } = useStore();
@@ -33,6 +36,53 @@ export const ProfilePage: React.FC = () => {
     email: auth.user?.email || '',
     phone: auth.user?.person?.phone || '',
   });
+
+  // Estado de dirección de envío (se carga desde /auth/me)
+  const [addressLoading, setAddressLoading] = useState(false);
+  const [isEditingAddress, setIsEditingAddress] = useState(false);
+  const [shippingAddress, setShippingAddress] = useState<{
+    address: string;
+    city: string;
+    state: string;
+    zip_code: string;
+    country: string;
+  } | null>(null);
+  const [addressForm, setAddressForm] = useState({
+    line1: '',
+    line2: '',
+    city: '',
+    state: '',
+    postal_code: '',
+    country_code: 'AR',
+  });
+
+  // Cargar dirección desde /auth/me al montar
+  useEffect(() => {
+    if (!auth.isAuthenticated) return;
+    let cancelled = false;
+    authService.getMe().then((me) => {
+      if (cancelled) return;
+      const s = me?.data?.shipping;
+      if (s) {
+        setShippingAddress({
+          address: s.address || '',
+          city: s.city || '',
+          state: s.state || '',
+          zip_code: s.zip_code || '',
+          country: s.country || '',
+        });
+        setAddressForm({
+          line1: s.address || '',
+          line2: '',
+          city: s.city || '',
+          state: s.state || '',
+          postal_code: s.zip_code || '',
+          country_code: s.country || 'AR',
+        });
+      }
+    });
+    return () => { cancelled = true; };
+  }, [auth.isAuthenticated]);
 
   // Redirigir si no está autenticado
   if (!auth.isAuthenticated) {
@@ -75,6 +125,51 @@ export const ProfilePage: React.FC = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleSaveAddress = async () => {
+    if (!addressForm.line1.trim() || !addressForm.city.trim()) {
+      addNotification({ type: 'warning', title: 'Datos incompletos', message: 'Calle y ciudad son obligatorias.' });
+      return;
+    }
+    setAddressLoading(true);
+    try {
+      const payload: AddressFormData = {
+        line1: addressForm.line1,
+        line2: addressForm.line2 || undefined,
+        city: addressForm.city,
+        state: addressForm.state || undefined,
+        postal_code: addressForm.postal_code || undefined,
+        country_code: addressForm.country_code || 'AR',
+      };
+      await saveShippingAddress(payload);
+
+      // Refrescar desde /auth/me
+      const me = await authService.getMe();
+      const s = me?.data?.shipping;
+      if (s) {
+        setShippingAddress({
+          address: s.address || '',
+          city: s.city || '',
+          state: s.state || '',
+          zip_code: s.zip_code || '',
+          country: s.country || '',
+        });
+        // Actualizar draft de checkout
+        saveRegistrationDraft({
+          address: s.address || '',
+          city: s.city || '',
+          state: s.state || '',
+          zipCode: s.zip_code || '',
+        });
+      }
+      setIsEditingAddress(false);
+      addNotification({ type: 'success', title: 'Dirección guardada', message: 'Tu dirección de envío fue actualizada.' });
+    } catch (error: any) {
+      addNotification({ type: 'error', title: 'Error al guardar', message: error?.message || 'No se pudo guardar la dirección.' });
+    } finally {
+      setAddressLoading(false);
     }
   };
 
@@ -222,6 +317,135 @@ export const ProfilePage: React.FC = () => {
                   )}
                 </div>
               </div>
+            </div>
+
+            {/* Dirección de envío */}
+            <div className="bg-white rounded-lg shadow-sm p-6 mt-6">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center">
+                  <MapPin className="w-5 h-5 text-blue-600 mr-2" />
+                  <h2 className="text-lg font-semibold">Dirección de envío</h2>
+                </div>
+                {!isEditingAddress ? (
+                  <button
+                    onClick={() => setIsEditingAddress(true)}
+                    className="flex items-center px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    <Edit className="w-3.5 h-3.5 mr-1.5" />
+                    Editar
+                  </button>
+                ) : (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setIsEditingAddress(false)}
+                      className="flex items-center px-3 py-1.5 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                    >
+                      <X className="w-3.5 h-3.5 mr-1" />
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={handleSaveAddress}
+                      disabled={addressLoading}
+                      className="flex items-center px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-400"
+                    >
+                      <Save className="w-3.5 h-3.5 mr-1" />
+                      {addressLoading ? 'Guardando...' : 'Guardar'}
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {isEditingAddress ? (
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Calle y número *</label>
+                    <input
+                      type="text"
+                      placeholder="Ej: Av. Corrientes 1234"
+                      value={addressForm.line1}
+                      onChange={(e) => setAddressForm({ ...addressForm, line1: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Piso / Depto (opcional)</label>
+                    <input
+                      type="text"
+                      placeholder="Ej: 3° B"
+                      value={addressForm.line2}
+                      onChange={(e) => setAddressForm({ ...addressForm, line2: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Ciudad *</label>
+                      <input
+                        type="text"
+                        placeholder="Buenos Aires"
+                        value={addressForm.city}
+                        onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Provincia</label>
+                      <input
+                        type="text"
+                        placeholder="Buenos Aires"
+                        value={addressForm.state}
+                        onChange={(e) => setAddressForm({ ...addressForm, state: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Código postal</label>
+                      <input
+                        type="text"
+                        placeholder="1043"
+                        value={addressForm.postal_code}
+                        onChange={(e) => setAddressForm({ ...addressForm, postal_code: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">País</label>
+                      <select
+                        value={addressForm.country_code}
+                        onChange={(e) => setAddressForm({ ...addressForm, country_code: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="AR">Argentina</option>
+                        <option value="UY">Uruguay</option>
+                        <option value="CL">Chile</option>
+                        <option value="BR">Brasil</option>
+                        <option value="PY">Paraguay</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              ) : shippingAddress && (shippingAddress.address || shippingAddress.city) ? (
+                <div className="space-y-2 text-sm text-gray-700">
+                  {shippingAddress.address && <p>{shippingAddress.address}</p>}
+                  <p>
+                    {[shippingAddress.city, shippingAddress.state].filter(Boolean).join(', ')}
+                    {shippingAddress.zip_code && ` (${shippingAddress.zip_code})`}
+                  </p>
+                  {shippingAddress.country && <p className="text-gray-500">{shippingAddress.country}</p>}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 italic">
+                  No tenés una dirección de envío guardada.{' '}
+                  <button
+                    onClick={() => setIsEditingAddress(true)}
+                    className="text-blue-600 underline hover:text-blue-800"
+                  >
+                    Agregar ahora
+                  </button>
+                </p>
+              )}
             </div>
           </div>
 

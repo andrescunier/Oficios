@@ -20,6 +20,7 @@ import {
   validateShippingInfo,
 } from '@/features/checkout/model';
 import { buildLoanPaymentPlans, getPrimaryLoanPaymentPlan } from '@/features/checkout/loan';
+import { calculateIncludedTax } from '@/features/cart/tax';
 import { useCheckoutMutation } from '@/features/checkout/mutations';
 import { isCheckoutSuccess, normalizeCheckoutFailure } from '@/features/checkout/result';
 import { clearAuthSession, getBusinessPartnerId, getPersistedRegistrationDraft, saveRegistrationDraft } from '@/features/auth/session';
@@ -35,6 +36,7 @@ export const CheckoutPage: React.FC = () => {
   const loanCfg = useMemo(() => getLoanConfig(), []);
   const shippingAmount = useMemo(() => getCheckoutShippingCharge(cart.subtotal), [cart.subtotal]);
   const totalWithShipping = cart.total_amount + shippingAmount;
+  const includedTaxAmount = useMemo(() => calculateIncludedTax(cart.items), [cart.items]);
   const loanPlans = useMemo(() => buildLoanPaymentPlans(totalWithShipping, loanCfg), [totalWithShipping, loanCfg]);
   const primaryLoanPlan = useMemo(() => getPrimaryLoanPaymentPlan(totalWithShipping, loanCfg), [totalWithShipping, loanCfg]);
   const loanCreditLimit = Math.max(loanCfg.maxAmount, totalWithShipping);
@@ -852,6 +854,12 @@ export const CheckoutPage: React.FC = () => {
                   <span>{uiCfg.checkoutSubtotalLabel}</span>
                   <span>{formatPrice(cart.subtotal, cart.currency)}</span>
                 </div>
+                {includedTaxAmount > 0 && (
+                  <div className="flex justify-between text-sm text-gray-500">
+                    <span>IVA incluido</span>
+                    <span>{formatPrice(includedTaxAmount, cart.currency)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-sm">
                   <span>{getShippingConfig().label}</span>
                   <span className={shippingAmount > 0 ? 'text-foreground' : 'text-green-600'}>

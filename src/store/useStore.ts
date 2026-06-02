@@ -15,6 +15,7 @@ import type {
 import { httpClient } from '@/services/httpClient';
 import { favoritesService } from '@/services/favoritesService';
 import { cartSyncService, type CartSnapshot } from '@/services/cartSyncService';
+import { productService } from '@/services/productService';
 import log from '@/lib/logger';
 import { getBusinessConfig } from '@/config/runtime';
 import {
@@ -208,6 +209,7 @@ const buildCartSnapshot = (cart: CartState): CartSnapshot => ({
       image_url: item.product?.image_url || item.product?.thumbnail_url || null,
       sku: item.variant?.sku || item.product?.sku,
       currency: item.product?.currency,
+      tax_rate: item.product?.tax_rate,
     },
   })),
   currency: cart.currency,
@@ -240,7 +242,7 @@ const hydrateCartFromBackend = async (businessPartnerId: string | null) => {
 
     // Reconstruir CartItem[] desde el snapshot. Usamos los datos embebidos en `snapshot`
     // como respaldo si el catálogo cambió. Stock/precio se re-validan en checkout.
-    const rebuiltItems: CartItem[] = remote.items
+    const rebuiltItems = await Promise.all(remote.items
       .map((raw: any): CartItem | null => {
         if (!raw?.product_id || typeof raw.quantity !== 'number') return null;
         const snap = raw.snapshot || {};
@@ -251,7 +253,7 @@ const hydrateCartFromBackend = async (businessPartnerId: string | null) => {
           description: snap.description || undefined,
           unit_price: typeof raw.unit_price === 'number' ? raw.unit_price : 0,
           currency: snap.currency || remote.currency || getBusinessConfig().defaultCurrency,
-          tax_rate: 0,
+          tax_rate: typeof snap.tax_rate === 'number' ? snap.tax_rate : 0,
           image_url: snap.image_url || undefined,
         } as unknown as Product;
         const variant = raw.variant_id
@@ -266,12 +268,29 @@ const hydrateCartFromBackend = async (businessPartnerId: string | null) => {
           unit_price: typeof raw.unit_price === 'number' ? raw.unit_price : 0,
         };
       })
-      .filter((x): x is CartItem => x !== null);
+      .map(async (item) => {
+        if (!item || item.product.tax_rate > 0) return item;
 
-    if (rebuiltItems.length === 0) return;
+        try {
+          const product = await productService.getProduct(item.product.id);
+          return {
+            ...item,
+            product: {
+              ...item.product,
+              tax_rate: product.tax_rate || 0,
+            },
+          };
+        } catch {
+          return item;
+        }
+      }));
+
+    const validItems = rebuiltItems.filter((x): x is CartItem => x !== null);
+
+    if (validItems.length === 0) return;
 
     const merged = calculateTotals(
-      rebuiltItems,
+      validItems,
       remote.currency || getBusinessConfig().defaultCurrency,
     );
     useStore.setState({ cart: merged });
@@ -789,6 +808,7 @@ export const initializeAuth = () => {
     }
     // Adoptar el id de sesión activa persistido (o registrar uno nuevo si no existía).
     adoptOrClaimSessionFromStorage();
+    void hydrateCartFromBackend(getBusinessPartnerId());
     log.store.info('Sesión restaurada correctamente', {
       user: store.auth.user?.email,
       tokenLength: store.auth.token.length,

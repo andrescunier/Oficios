@@ -183,8 +183,11 @@ export const CartPage: React.FC = () => {
                         <p className="text-sm text-gray-500 mt-1">
                           {item.product.description}
                         </p>
-                        <p className="text-lg font-bold text-blue-600 mt-2">
-                          {formatPrice(item.unit_price, item.product.currency)}
+                        <p className="text-sm text-gray-400 mt-1">
+                          {formatPrice(item.unit_price, item.product.currency)} c/u
+                        </p>
+                        <p className="text-lg font-bold text-blue-600">
+                          {formatPrice(item.unit_price * item.quantity, item.product.currency)}
                         </p>
                       </div>
 

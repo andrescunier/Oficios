@@ -121,52 +121,101 @@ export const Header: React.FC = () => {
                         gridTemplateColumns: `repeat(${Math.min(Math.max(categoryGroups.length, 1), 4)}, minmax(180px, 1fr))`,
                       }}
                     >
-                      {categoryGroups.map(([groupName, groupCategories]) => (
-                        <div key={groupName}>
-                          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                            {groupName}
-                          </p>
-                          <div className="space-y-1">
-                            {groupCategories.map((category) => (
-                              <div key={category.link || category.slug || category.name}>
-                                <Link
-                                  to={category.link}
-                                  className="block py-1 text-sm font-medium text-foreground transition-colors hover:text-primary"
-                                >
-                                  {category.name}
-                                </Link>
-                                {category.subcategories && category.subcategories.length > 0 && (
-                                  <div className="ml-3 space-y-0.5">
-                                    {category.subcategories.map((sub) => (
-                                      <div key={sub.link || sub.slug || sub.name}>
-                                        <Link
-                                          to={sub.link}
-                                          className="block py-0.5 text-xs text-muted-foreground transition-colors hover:text-primary"
-                                        >
-                                          {sub.name}
-                                        </Link>
-                                        {sub.subcategories && sub.subcategories.length > 0 && (
-                                          <div className="ml-3 space-y-0.5">
-                                            {sub.subcategories.map((subsub) => (
-                                              <Link
-                                                key={subsub.link || subsub.slug || subsub.name}
-                                                to={subsub.link}
-                                                className="block py-0.5 text-xs text-muted-foreground/70 transition-colors hover:text-primary"
-                                              >
-                                                {subsub.name}
-                                              </Link>
-                                            ))}
+                      {categoryGroups.map(([groupName, groupCategories]) => {
+                        // Find the root category (same name as group) to use its link in the header
+                        const rootCat = groupCategories.find(
+                          (c) => c.name.trim().toLowerCase() === groupName.trim().toLowerCase(),
+                        );
+                        return (
+                          <div key={groupName}>
+                            {rootCat ? (
+                              <Link
+                                to={rootCat.link}
+                                className="mb-2 block text-xs font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:text-primary"
+                              >
+                                {groupName}
+                              </Link>
+                            ) : (
+                              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                {groupName}
+                              </p>
+                            )}
+                            <div className="space-y-1">
+                              {groupCategories.map((category) => {
+                                const isGroupRoot =
+                                  category.name.trim().toLowerCase() === groupName.trim().toLowerCase();
+                                // Skip the root category link if it duplicates the group header; show its subs directly
+                                if (isGroupRoot && category.subcategories && category.subcategories.length > 0) {
+                                  return (
+                                    <React.Fragment key={category.link || category.slug || category.name}>
+                                      {category.subcategories.map((sub) => (
+                                        <div key={sub.link || sub.slug || sub.name}>
+                                          <Link
+                                            to={sub.link}
+                                            className="block py-0.5 text-xs text-muted-foreground transition-colors hover:text-primary"
+                                          >
+                                            {sub.name}
+                                          </Link>
+                                          {sub.subcategories && sub.subcategories.length > 0 && (
+                                            <div className="ml-3 space-y-0.5">
+                                              {sub.subcategories.map((subsub) => (
+                                                <Link
+                                                  key={subsub.link || subsub.slug || subsub.name}
+                                                  to={subsub.link}
+                                                  className="block py-0.5 text-xs text-muted-foreground/70 transition-colors hover:text-primary"
+                                                >
+                                                  {subsub.name}
+                                                </Link>
+                                              ))}
+                                            </div>
+                                          )}
+                                        </div>
+                                      ))}
+                                    </React.Fragment>
+                                  );
+                                }
+                                return (
+                                  <div key={category.link || category.slug || category.name}>
+                                    <Link
+                                      to={category.link}
+                                      className="block py-1 text-sm font-medium text-foreground transition-colors hover:text-primary"
+                                    >
+                                      {category.name}
+                                    </Link>
+                                    {category.subcategories && category.subcategories.length > 0 && (
+                                      <div className="ml-3 space-y-0.5">
+                                        {category.subcategories.map((sub) => (
+                                          <div key={sub.link || sub.slug || sub.name}>
+                                            <Link
+                                              to={sub.link}
+                                              className="block py-0.5 text-xs text-muted-foreground transition-colors hover:text-primary"
+                                            >
+                                              {sub.name}
+                                            </Link>
+                                            {sub.subcategories && sub.subcategories.length > 0 && (
+                                              <div className="ml-3 space-y-0.5">
+                                                {sub.subcategories.map((subsub) => (
+                                                  <Link
+                                                    key={subsub.link || subsub.slug || subsub.name}
+                                                    to={subsub.link}
+                                                    className="block py-0.5 text-xs text-muted-foreground/70 transition-colors hover:text-primary"
+                                                  >
+                                                    {subsub.name}
+                                                  </Link>
+                                                ))}
+                                              </div>
+                                            )}
                                           </div>
-                                        )}
+                                        ))}
                                       </div>
-                                    ))}
+                                    )}
                                   </div>
-                                )}
-                              </div>
-                            ))}
+                                );
+                              })}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
@@ -272,14 +321,23 @@ export const Header: React.FC = () => {
             )}
           </div>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
-            {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </Button>
+          <div className="flex items-center gap-1 md:hidden">
+            <Link to="/carrito" className="relative p-2">
+              <ShoppingCart className="h-5 w-5" />
+              {cartItemCount > 0 && (
+                <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-xs">
+                  {cartItemCount}
+                </Badge>
+              )}
+            </Link>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+              {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </Button>
+          </div>
         </div>
 
         {isMenuOpen && (
@@ -353,6 +411,15 @@ export const Header: React.FC = () => {
             </nav>
 
             <div className="space-y-2 border-t pt-4">
+              <Button variant="ghost" className="w-full justify-start" asChild>
+                <Link to="/carrito" onClick={() => setIsMenuOpen(false)}>
+                  <ShoppingCart className="h-4 w-4 mr-2" />
+                  Carrito
+                  {cartItemCount > 0 && (
+                    <Badge className="ml-auto h-5 px-1.5 text-xs">{cartItemCount}</Badge>
+                  )}
+                </Link>
+              </Button>
               {isAuthenticated ? (
                 <>
                   <div className="px-3 py-2 bg-green-50 border border-green-200 rounded-lg mb-3">

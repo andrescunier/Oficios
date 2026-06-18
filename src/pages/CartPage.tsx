@@ -9,7 +9,7 @@ import { useStore } from '@/store/useStore';
 import { getBusinessConfig, getUIConfig, getShippingConfig } from '@/config/runtime';
 import { SHIPPING } from '@/config/branding';
 import { getCheckoutShippingCharge } from '@/features/checkout/model';
-import { calculateIncludedTax } from '@/features/cart/tax';
+import { calculateCartTaxSummary } from '@/features/cart/tax';
 
 export const CartPage: React.FC = () => {
   const {
@@ -23,7 +23,7 @@ export const CartPage: React.FC = () => {
   const navigate = useNavigate();
   const shippingAmount = getCheckoutShippingCharge(cart.subtotal);
   const totalWithShipping = cart.total_amount + shippingAmount;
-  const includedTaxAmount = calculateIncludedTax(cart.items);
+  const taxSummary = calculateCartTaxSummary(cart.items, getBusinessConfig().defaultTaxRate, false);
 
 
 
@@ -242,10 +242,16 @@ export const CartPage: React.FC = () => {
                   <span>{uiCfg.cartPageSubtotalLabel}</span>
                   <span>{formatPrice(cart.subtotal, cart.currency)}</span>
                 </div>
-                {includedTaxAmount > 0 && (
+                {taxSummary.includedTaxAmount > 0 && (
                   <div className="flex justify-between text-sm text-gray-500">
                     <span>IVA incluido</span>
-                    <span>{formatPrice(includedTaxAmount, cart.currency)}</span>
+                    <span>{formatPrice(taxSummary.includedTaxAmount, cart.currency)}</span>
+                  </div>
+                )}
+                {taxSummary.addedTaxAmount > 0 && (
+                  <div className="flex justify-between text-sm text-gray-500">
+                    <span>IVA</span>
+                    <span>{formatPrice(taxSummary.addedTaxAmount, cart.currency)}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-sm">

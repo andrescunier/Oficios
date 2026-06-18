@@ -16,7 +16,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { useStore } from '@/store/useStore';
 import type { Product, ProductVariant, ProductVariantOption } from '@/types/api';
-import { PriceDisplay } from '@/hooks/usePriceVisibility';
+import usePriceVisibility, { PriceDisplay } from '@/hooks/usePriceVisibility';
 import { handleImgError } from '@/utils/imageHelpers';
 import { getBusinessConfig, getLoanConfig, getPaymentMethodsConfig, getUIConfig, getShippingConfig, getStockSemaforo } from '@/config/runtime';
 import { getFeatureBenefitIcon } from '@/components/ui/featureBenefitIcons';
@@ -61,6 +61,7 @@ export const ProductDetailPage: React.FC = () => {
   } = useStore();
 
   const isAuthenticated = auth.isAuthenticated;
+  const { canViewPrices } = usePriceVisibility();
   const productQuery = useQuery(productDetailQueryOptions(id || ''));
   const product = productQuery.data?.product || null;
   const variants = productQuery.data?.variants || [];
@@ -211,7 +212,7 @@ export const ProductDetailPage: React.FC = () => {
   );
   const isProductFavorite = product ? isFavorite(product.id) : false;
   const variantSelectionIncomplete = Boolean(product?.has_variants) && !selectedVariant;
-  const loanPaymentEnabled = paymentMethodsCfg.prestamo && loanCfg.enabled;
+  const loanPaymentEnabled = canViewPrices && paymentMethodsCfg.prestamo && loanCfg.enabled;
   const loanAmount = effectivePrice * quantity;
   const primaryLoanPlan = getPrimaryLoanPaymentPlan(loanAmount, loanCfg);
   const loanPlans = useMemo(() => buildLoanPaymentPlans(loanAmount, loanCfg), [loanAmount, loanCfg]);

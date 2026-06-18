@@ -7,7 +7,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calculator, CreditCard, Landmark, MapPin, User, Mail, Phone, Lock } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { PAYMENT_INFO, LEGAL, BUSINESS, SHIPPING } from '@/config/branding';
-import { getLoanConfig, getPaymentMethodsConfig, getUIConfig, getShippingConfig, getValidationConfig } from '@/config/runtime';
+import { getBusinessConfig, getLoanConfig, getPaymentMethodsConfig, getUIConfig, getShippingConfig, getValidationConfig } from '@/config/runtime';
 import { checkoutFieldRequiredMessage } from '@/lib/validationMessages';
 import log from '@/lib/logger';
 import {
@@ -20,7 +20,7 @@ import {
   validateShippingInfo,
 } from '@/features/checkout/model';
 import { buildLoanPaymentPlans, getPrimaryLoanPaymentPlan } from '@/features/checkout/loan';
-import { calculateIncludedTax } from '@/features/cart/tax';
+import { calculateCartTaxSummary } from '@/features/cart/tax';
 import { useCheckoutMutation } from '@/features/checkout/mutations';
 import { isCheckoutSuccess, normalizeCheckoutFailure } from '@/features/checkout/result';
 import { clearAuthSession, getBusinessPartnerId, getPersistedRegistrationDraft, saveRegistrationDraft } from '@/features/auth/session';
@@ -36,7 +36,7 @@ export const CheckoutPage: React.FC = () => {
   const loanCfg = useMemo(() => getLoanConfig(), []);
   const shippingAmount = useMemo(() => getCheckoutShippingCharge(cart.subtotal), [cart.subtotal]);
   const totalWithShipping = cart.total_amount + shippingAmount;
-  const includedTaxAmount = useMemo(() => calculateIncludedTax(cart.items), [cart.items]);
+  const taxSummary = useMemo(() => calculateCartTaxSummary(cart.items, getBusinessConfig().defaultTaxRate, false), [cart.items]);
   const loanPlans = useMemo(() => buildLoanPaymentPlans(totalWithShipping, loanCfg), [totalWithShipping, loanCfg]);
   const primaryLoanPlan = useMemo(() => getPrimaryLoanPaymentPlan(totalWithShipping, loanCfg), [totalWithShipping, loanCfg]);
   const loanCreditLimit = Math.max(loanCfg.maxAmount, totalWithShipping);
@@ -854,10 +854,16 @@ export const CheckoutPage: React.FC = () => {
                   <span>{uiCfg.checkoutSubtotalLabel}</span>
                   <span>{formatPrice(cart.subtotal, cart.currency)}</span>
                 </div>
-                {includedTaxAmount > 0 && (
+                {taxSummary.includedTaxAmount > 0 && (
                   <div className="flex justify-between text-sm text-gray-500">
                     <span>IVA incluido</span>
-                    <span>{formatPrice(includedTaxAmount, cart.currency)}</span>
+                    <span>{formatPrice(taxSummary.includedTaxAmount, cart.currency)}</span>
+                  </div>
+                )}
+                {taxSummary.addedTaxAmount > 0 && (
+                  <div className="flex justify-between text-sm text-gray-500">
+                    <span>IVA</span>
+                    <span>{formatPrice(taxSummary.addedTaxAmount, cart.currency)}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-sm">

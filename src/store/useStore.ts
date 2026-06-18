@@ -18,6 +18,7 @@ import { cartSyncService, type CartSnapshot } from '@/services/cartSyncService';
 import { productService } from '@/services/productService';
 import log from '@/lib/logger';
 import { getBusinessConfig } from '@/config/runtime';
+import { calculateCartTaxSummary } from '@/features/cart/tax';
 import {
   clearAuthSession,
   getAuthIntegrityIssue,
@@ -134,7 +135,8 @@ const initialUIState: UIState = {
 const calculateTotals = (items: CartItem[], currency: string = getBusinessConfig().defaultCurrency): CartState => {
   const businessCfg = getBusinessConfig();
   const subtotal = items.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0);
-  const tax_amount = subtotal * businessCfg.defaultTaxRate;
+  const taxSummary = calculateCartTaxSummary(items, businessCfg.defaultTaxRate, false);
+  const tax_amount = taxSummary.addedTaxAmount;
   const total_amount = subtotal + tax_amount;
   
   return {

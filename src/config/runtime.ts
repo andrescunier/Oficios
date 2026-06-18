@@ -98,6 +98,26 @@ export interface NewsletterConfig {
   errorMessage: string;
 }
 
+export type StockSemaforoLevel = 'out_of_stock' | 'low' | 'medium' | 'high';
+
+export interface StockSemaforoConfig {
+  enabled: boolean;
+  lowThreshold: number;
+  mediumThreshold: number;
+  outOfStockLabel: string;
+  lowLabel: string;
+  mediumLabel: string;
+  highLabel: string;
+  showQuantity: boolean;
+}
+
+export interface StockSemaforoState {
+  level: StockSemaforoLevel;
+  label: string;
+  toneClassName: string;
+  show: boolean;
+}
+
 export interface ImagesConfig {
   heroSlides: HeroSlideConfig[];
   categories: CategoryConfig[];
@@ -585,6 +605,7 @@ export interface RuntimeConfig {
     productMultiplePaymentsDesc: string;
     productMultiplePaymentsIcon: string;
     headerPromoMessages: string[];
+    stockSemaforo: StockSemaforoConfig;
 
     // Cart page (full page, not drawer)
     cartPageTitle: string;
@@ -1331,6 +1352,16 @@ const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
       productMultiplePaymentsTitle: 'Múltiples Formas de Pago',
       productMultiplePaymentsDesc: 'Transferencia, efectivo y más',
       productMultiplePaymentsIcon: 'CreditCard',
+      stockSemaforo: {
+        enabled: true,
+        lowThreshold: 5,
+        mediumThreshold: 20,
+        outOfStockLabel: 'Sin stock',
+        lowLabel: 'Stock bajo',
+        mediumLabel: 'Stock medio',
+        highLabel: 'Stock alto',
+        showQuantity: false,
+      },
       headerPromoMessages: [
         '✨ Tecnología Profesional para Empresas',
         '✨ ¡Envío gratis en todas tus compras!',
@@ -1814,6 +1845,28 @@ function normalizeShippingConfig(raw: unknown): ShippingConfig {
   };
 }
 
+function normalizeStockSemaforoConfig(raw: unknown): StockSemaforoConfig {
+  const defaults = DEFAULT_RUNTIME_CONFIG.ui.stockSemaforo;
+  if (typeof raw !== 'object' || raw === null) {
+    return { ...defaults };
+  }
+
+  const config = raw as Partial<StockSemaforoConfig>;
+  const lowThreshold = Math.max(0, readNumber(config.lowThreshold, defaults.lowThreshold));
+  const mediumThreshold = Math.max(lowThreshold, readNumber(config.mediumThreshold, defaults.mediumThreshold));
+
+  return {
+    enabled: readBoolean(config.enabled, defaults.enabled),
+    lowThreshold,
+    mediumThreshold,
+    outOfStockLabel: readString(config.outOfStockLabel, defaults.outOfStockLabel),
+    lowLabel: readString(config.lowLabel, defaults.lowLabel),
+    mediumLabel: readString(config.mediumLabel, defaults.mediumLabel),
+    highLabel: readString(config.highLabel, defaults.highLabel),
+    showQuantity: readBoolean(config.showQuantity, defaults.showQuantity),
+  };
+}
+
 function normalizeNewsletterConfig(raw: unknown): NewsletterConfig {
   if (typeof raw !== 'object' || raw === null) {
     return {
@@ -2196,6 +2249,7 @@ export const getUIConfig = (): RuntimeConfig['ui'] => {
     productMultiplePaymentsTitle: readString(ui?.productMultiplePaymentsTitle, defaults.productMultiplePaymentsTitle),
     productMultiplePaymentsDesc: readString(ui?.productMultiplePaymentsDesc, defaults.productMultiplePaymentsDesc),
     productMultiplePaymentsIcon: readString(ui?.productMultiplePaymentsIcon, defaults.productMultiplePaymentsIcon),
+    stockSemaforo: normalizeStockSemaforoConfig(ui?.stockSemaforo),
     headerPromoMessages: Array.isArray(ui?.headerPromoMessages)
       ? ui!.headerPromoMessages.filter((m: any) => typeof m === 'string' && m.trim().length > 0)
       : headerPromoMessage
@@ -2513,6 +2567,58 @@ export const getUIConfig = (): RuntimeConfig['ui'] => {
     productSubtotalLabel: readString(ui?.productSubtotalLabel, defaults.productSubtotalLabel),
     productWithVariantsLabel: readString(ui?.productWithVariantsLabel, defaults.productWithVariantsLabel),
     productAvailableUnitsLabel: readString(ui?.productAvailableUnitsLabel, defaults.productAvailableUnitsLabel),
+  };
+};
+
+export const getStockSemaforo = (stockQuantity?: number | null): StockSemaforoState => {
+  const config = getUIConfig().stockSemaforo;
+  const quantity = typeof stockQuantity === 'number' && Number.isFinite(stockQuantity)
+    ? stockQuantity
+    : 0;
+
+  if (!config.enabled) {
+    return {
+      level: quantity <= 0 ? 'out_of_stock' : 'high',
+      label: '',
+      toneClassName: '',
+      show: false,
+    };
+  }
+
+  if (quantity <= 0) {
+    return {
+      level: 'out_of_stock',
+      label: config.outOfStockLabel,
+      toneClassName: 'text-red-600',
+      show: true,
+    };
+  }
+
+  const suffix = config.showQuantity ? ` (${quantity})` : '';
+
+  if (quantity <= config.lowThreshold) {
+    return {
+      level: 'low',
+      label: `${config.lowLabel}${suffix}`,
+      toneClassName: 'text-orange-600',
+      show: true,
+    };
+  }
+
+  if (quantity <= config.mediumThreshold) {
+    return {
+      level: 'medium',
+      label: `${config.mediumLabel}${suffix}`,
+      toneClassName: 'text-amber-600',
+      show: true,
+    };
+  }
+
+  return {
+    level: 'high',
+    label: `${config.highLabel}${suffix}`,
+    toneClassName: 'text-green-600',
+    show: true,
   };
 };
 

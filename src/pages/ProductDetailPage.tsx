@@ -18,7 +18,7 @@ import { useStore } from '@/store/useStore';
 import type { Product, ProductVariant, ProductVariantOption } from '@/types/api';
 import { PriceDisplay } from '@/hooks/usePriceVisibility';
 import { handleImgError } from '@/utils/imageHelpers';
-import { getBusinessConfig, getLoanConfig, getPaymentMethodsConfig, getUIConfig, getShippingConfig } from '@/config/runtime';
+import { getBusinessConfig, getLoanConfig, getPaymentMethodsConfig, getUIConfig, getShippingConfig, getStockSemaforo } from '@/config/runtime';
 import { getFeatureBenefitIcon } from '@/components/ui/featureBenefitIcons';
 import { productDetailQueryOptions } from '@/features/catalog/queries';
 import { buildLoanPaymentPlans, getPrimaryLoanPaymentPlan } from '@/features/checkout/loan';
@@ -201,6 +201,7 @@ export const ProductDetailPage: React.FC = () => {
   const effectiveStock = selectedVariant?.stock_quantity ?? product?.stock_quantity ?? 0;
   const canBackorder = selectedVariant?.allow_backorders ?? product?.allow_backorders ?? false;
   const isOutOfStock = !canBackorder && effectiveStock <= 0;
+  const stockSemaforo = getStockSemaforo(effectiveStock);
   const maxQuantity = Math.max(
     1,
     Math.min(
@@ -548,8 +549,12 @@ export const ProductDetailPage: React.FC = () => {
             <div className="bg-white p-4 rounded-lg shadow-sm space-y-4">
               <div className="flex items-center justify-between">
                 <span className="font-medium">{uiConfig.productAvailabilityLabel}</span>
-                <span className={isOutOfStock ? 'text-red-600 font-medium' : 'text-green-600 font-medium'}>
-                  {isOutOfStock ? uiConfig.productOutOfStockLabel : `${effectiveStock} ${uiConfig.productAvailableUnitsLabel}`}
+                <span className={`${stockSemaforo.toneClassName || (isOutOfStock ? 'text-red-600' : 'text-green-600')} font-medium`}>
+                  {stockSemaforo.show
+                    ? stockSemaforo.label
+                    : isOutOfStock
+                      ? uiConfig.productOutOfStockLabel
+                      : `${effectiveStock} ${uiConfig.productAvailableUnitsLabel}`}
                 </span>
               </div>
 

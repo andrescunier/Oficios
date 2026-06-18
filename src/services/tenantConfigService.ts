@@ -12,10 +12,14 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
 const INITIAL_RETRY_DELAY_MS = 1500;
 const MAX_RETRY_DELAY_MS = 15000;
 const MAX_RETRY_DURATION_MS = 2 * 60 * 1000; // 2 minutos
+const VERSION_MISMATCH_MARKER_KEY = 'storefront:version-mismatch:last-cleared';
+const FRONTEND_VERSION = __APP_VERSION__;
 
 interface CachedConfig {
   data: NonNullable<ReturnType<typeof parseRuntimeConfigPayload>>;
   timestamp: number;
+  frontendVersion?: string;
+  configVersion?: string;
 }
 
 type TenantConfigFailureReason = 'http_error' | 'empty_payload' | 'invalid_payload' | 'network_error';
@@ -23,6 +27,7 @@ type TenantConfigFailureReason = 'http_error' | 'empty_payload' | 'invalid_paylo
 interface TenantConfigFetchSuccess {
   ok: true;
   data: NonNullable<ReturnType<typeof parseRuntimeConfigPayload>>;
+  configVersion?: string;
 }
 
 interface TenantConfigFetchFailure {
@@ -48,9 +53,21 @@ function buildCacheKey(apiBaseUrl: string, accountId: string): string {
 
 function getCachedConfig(apiBaseUrl: string, accountId: string): { data: CachedConfig['data']; isStale: boolean } | null {
   try {
-    const raw = localStorage.getItem(buildCacheKey(apiBaseUrl, accountId));
+    const cacheKey = buildCacheKey(apiBaseUrl, accountId);
+    const raw = localStorage.getItem(cacheKey);
     if (!raw) return null;
     const cached: CachedConfig = JSON.parse(raw);
+
+    if (cached.frontendVersion && cached.frontendVersion !== FRONTEND_VERSION) {
+      localStorage.removeItem(cacheKey);
+      return null;
+    }
+
+    if (cached.configVersion && cached.configVersion !== FRONTEND_VERSION) {
+      localStorage.removeItem(cacheKey);
+      return null;
+    }
+
     return {
       data: cached.data,
       isStale: Date.now() - cached.timestamp > CACHE_TTL,
@@ -64,13 +81,67 @@ function setCachedConfig(
   apiBaseUrl: string,
   accountId: string,
   data: NonNullable<ReturnType<typeof parseRuntimeConfigPayload>>,
+  configVersion?: string,
 ): void {
   try {
-    const entry: CachedConfig = { data, timestamp: Date.now() };
+    const entry: CachedConfig = {
+      data,
+      timestamp: Date.now(),
+      frontendVersion: FRONTEND_VERSION,
+      configVersion,
+    };
     localStorage.setItem(buildCacheKey(apiBaseUrl, accountId), JSON.stringify(entry));
   } catch {
     // localStorage full or unavailable — silently ignore
   }
+}
+
+function getPayloadVersion(payload: unknown): string | undefined {
+  if (typeof payload !== 'object' || payload === null) return undefined;
+  const version = (payload as Record<string, unknown>).version;
+  if (typeof version !== 'string') return undefined;
+  const normalized = version.trim();
+  return normalized || undefined;
+}
+
+function clearStorageOnVersionMismatch(
+  apiBaseUrl: string,
+  accountId: string,
+  configVersion: string,
+): void {
+  const marker = `${apiBaseUrl}|${accountId}|${FRONTEND_VERSION}|${configVersion}`;
+
+  try {
+    if (localStorage.getItem(VERSION_MISMATCH_MARKER_KEY) === marker) {
+      return;
+    }
+  } catch {
+    // ignore marker read errors
+  }
+
+  try {
+    localStorage.clear();
+  } catch {
+    // ignore clear errors
+  }
+
+  try {
+    sessionStorage.clear();
+  } catch {
+    // ignore clear errors
+  }
+
+  try {
+    localStorage.setItem(VERSION_MISMATCH_MARKER_KEY, marker);
+  } catch {
+    // ignore marker write errors
+  }
+
+  recordAppEvent('tenant_config_fallback', {
+    reason: 'version_mismatch',
+    frontendVersion: FRONTEND_VERSION,
+    configVersion,
+  });
 }
 
 function stripNullValues<T>(value: T): T {
@@ -250,6 +321,12 @@ async function fetchConfigFromAPI(apiBaseUrl: string, accountId: string): Promis
         error: 'payload must be a JSON object',
       };
     }
+
+    const configVersion = getPayloadVersion(payload);
+    if (configVersion && configVersion !== FRONTEND_VERSION) {
+      clearStorageOnVersionMismatch(apiBaseUrl, accountId, configVersion);
+    }
+
     const parsedConfig = parseRuntimeConfigPayload(payload);
 
     if (!parsedConfig) {
@@ -266,6 +343,7 @@ async function fetchConfigFromAPI(apiBaseUrl: string, accountId: string): Promis
     return {
       ok: true,
       data: parsedConfig,
+      configVersion,
     };
   } catch (error) {
     recordAppEvent('tenant_config_fallback', {
@@ -293,7 +371,7 @@ async function retryFetchUntilSuccess(
   while (true) {
     const result = await fetchConfigFromAPI(apiBaseUrl, accountId);
     if (result.ok) {
-      setCachedConfig(apiBaseUrl, accountId, result.data);
+      setCachedConfig(apiBaseUrl, accountId, result.data, result.configVersion);
       return result.data;
     }
 
@@ -337,7 +415,7 @@ export async function loadTenantConfig(apiBaseUrl: string, accountId: string) {
   if (cached && !cached.isStale) {
     recordAppEvent('tenant_config_loaded', { source: 'cache' });
     void fetchConfigFromAPI(apiBaseUrl, accountId).then((fresh) => {
-      if (fresh.ok) setCachedConfig(apiBaseUrl, accountId, fresh.data);
+      if (fresh.ok) setCachedConfig(apiBaseUrl, accountId, fresh.data, fresh.configVersion);
     });
     return cached.data;
   }
@@ -345,7 +423,7 @@ export async function loadTenantConfig(apiBaseUrl: string, accountId: string) {
   if (cached?.isStale) {
     recordAppEvent('tenant_config_fallback', { reason: 'stale_cache' });
     void fetchConfigFromAPI(apiBaseUrl, accountId).then((fresh) => {
-      if (fresh.ok) setCachedConfig(apiBaseUrl, accountId, fresh.data);
+      if (fresh.ok) setCachedConfig(apiBaseUrl, accountId, fresh.data, fresh.configVersion);
     });
     return cached.data;
   }
@@ -353,7 +431,7 @@ export async function loadTenantConfig(apiBaseUrl: string, accountId: string) {
   // No cache — blocking fetch
   const result = await fetchConfigFromAPI(apiBaseUrl, accountId);
   if (result.ok) {
-    setCachedConfig(apiBaseUrl, accountId, result.data);
+    setCachedConfig(apiBaseUrl, accountId, result.data, result.configVersion);
     return result.data;
   }
 

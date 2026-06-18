@@ -7,6 +7,7 @@ import { API_TIMEOUT, getActiveAccountId, getActiveAccountSlug } from '@/config/
 import { getApiConfig } from '@/config/runtime';
 import type { ApiError } from '@/types/api';
 import log from '@/lib/logger';
+import { recordQueryError } from '@/lib/observability';
 import { clearAuthSession, getPersistedAuthToken } from '@/features/auth/session';
 
 class HttpClient {
@@ -84,11 +85,37 @@ class HttpClient {
         return response;
       },
       (error) => {
+        const method = error.config?.method?.toUpperCase() || 'GET';
+        const baseURL = error.config?.baseURL || getApiConfig().url;
+        const path = error.config?.url || '';
+        const fullUrl = /^https?:\/\//i.test(path)
+          ? path
+          : `${String(baseURL).replace(/\/$/, '')}/${String(path).replace(/^\//, '')}`;
+
         log.http.error('Response Error:', {
           status: error.response?.status,
-          url: error.config?.url,
+          url: fullUrl,
+          method,
           message: error.response?.data?.message || error.message
         });
+
+        if (error.response?.status === 403) {
+          const responseData = error.response?.data;
+          log.http.error('HTTP 403 detectado', {
+            method,
+            url: fullUrl,
+            accountId: getActiveAccountId(),
+            code: responseData?.code || responseData?.detail?.code || null,
+            detail: responseData?.detail || responseData?.message || responseData || null,
+          });
+
+          recordQueryError('query_error', fullUrl, {
+            status: 403,
+            method,
+            code: responseData?.code || responseData?.detail?.code || null,
+            detail: responseData?.detail || responseData?.message || responseData || null,
+          });
+        }
 
         // Si es error 401, limpiar token y redirigir a login
         // PERO no hacerlo durante el proceso de login/getMe para evitar limpiar la sesión recién creada

@@ -8,7 +8,7 @@ import { Instagram, Linkedin, Mail, MapPin, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { BRANDING, ASSETS, SOCIAL_LINKS, FEATURES, CONTACT } from '@/config/branding';
-import { getCategoriesConfig, getUIConfig, getFooterConfig } from '@/config/runtime';
+import { getCategoriesConfig, getUIConfig, getFooterConfig, getPaymentMethodsConfig, getLoanConfig } from '@/config/runtime';
 import { getFeatureBenefitIcon } from '@/components/ui/featureBenefitIcons';
 import { subscribePhoneToNewsletter } from '@/services/newsletterService';
 import { useStore } from '@/store/useStore';
@@ -19,6 +19,48 @@ export const Footer: React.FC = () => {
   const addNotification = useStore((state) => state.addNotification);
   const uiCfg = getUIConfig();
   const footerCfg = getFooterConfig();
+  const paymentMethodsCfg = getPaymentMethodsConfig();
+  const loanCfg = getLoanConfig();
+
+  const enabledPaymentMethods = React.useMemo(() => {
+    const methods: string[] = [];
+
+    if (paymentMethodsCfg.transferencia) {
+      methods.push(uiCfg.paymentMethodTransfer || uiCfg.checkoutTransferLabel || 'Transferencia');
+    }
+
+    if (paymentMethodsCfg.efectivo) {
+      methods.push(uiCfg.paymentMethodCash || uiCfg.checkoutEfectivoLabel || 'Efectivo');
+    }
+
+    if (paymentMethodsCfg.mercadopago) {
+      methods.push(uiCfg.paymentMethodMercadopago || 'Mercado Pago');
+    }
+
+    if (paymentMethodsCfg.tarjeta) {
+      methods.push(uiCfg.paymentMethodCard || 'Tarjeta');
+    }
+
+    if (paymentMethodsCfg.prestamo && loanCfg.enabled) {
+      methods.push(uiCfg.paymentMethodLoan || 'Préstamo');
+    }
+
+    return Array.from(new Set(methods));
+  }, [
+    loanCfg.enabled,
+    paymentMethodsCfg.efectivo,
+    paymentMethodsCfg.mercadopago,
+    paymentMethodsCfg.prestamo,
+    paymentMethodsCfg.tarjeta,
+    paymentMethodsCfg.transferencia,
+    uiCfg.checkoutEfectivoLabel,
+    uiCfg.checkoutTransferLabel,
+    uiCfg.paymentMethodCard,
+    uiCfg.paymentMethodCash,
+    uiCfg.paymentMethodLoan,
+    uiCfg.paymentMethodMercadopago,
+    uiCfg.paymentMethodTransfer,
+  ]);
 
   const handleWhatsAppSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -272,7 +314,7 @@ export const Footer: React.FC = () => {
             <div className="flex items-center space-x-4">
               <span className="text-sm text-muted-foreground">{uiCfg.footerPaymentMethodsLabel}</span>
               <div className="flex flex-wrap gap-2">
-                {footerCfg.paymentMethods.map((method) => (
+                {enabledPaymentMethods.map((method) => (
                   <div key={method} className="px-3 py-1 bg-muted rounded border flex items-center justify-center">
                     <span className="text-xs font-semibold text-muted-foreground">
                       {method}

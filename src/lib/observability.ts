@@ -301,12 +301,23 @@ export const installGlobalErrorHandlers = () => {
 
   if (!listenersInstalled) {
     window.addEventListener('error', (event) => {
+      const target = event.target as
+        | (EventTarget & { tagName?: string; src?: string; href?: string; currentSrc?: string })
+        | null;
+
       recordAppEvent('unhandled_error', {
         message: event.message,
         filename: event.filename,
         lineno: event.lineno,
         colno: event.colno,
         error: serializeError(event.error),
+        resource: target
+          ? {
+              tagName: target.tagName || null,
+              src: target.currentSrc || target.src || null,
+              href: target.href || null,
+            }
+          : null,
       });
     });
 

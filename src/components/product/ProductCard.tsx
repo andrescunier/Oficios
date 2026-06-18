@@ -27,7 +27,7 @@ import { useStore } from '@/store/useStore';
 import type { Product } from '@/types/api';
 import { PriceDisplay, usePriceVisibility } from '@/hooks/usePriceVisibility';
 import { FEATURES } from '@/config/branding';
-import { getImagesConfig, getBusinessConfig, getUIConfig } from '@/config/runtime';
+import { getImagesConfig, getBusinessConfig, getUIConfig, getStockSemaforo } from '@/config/runtime';
 import { recordAppEvent } from '@/lib/observability';
 
 interface ProductCardProps {
@@ -62,6 +62,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   const isProductFavorite = isFavorite(product.id);
   const isOutOfStock = (product.stock_quantity || 0) <= 0;
+  const stockSemaforo = getStockSemaforo(product.stock_quantity);
   const canAddToCart = product.unit_price != null && !isOutOfStock;
   const originalPrice = product.metadata?.original_price;
   const hasDiscount = typeof originalPrice === 'number' && originalPrice > product.unit_price;
@@ -216,7 +217,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             )}
             {isOutOfStock && (
               <span className="absolute top-3 left-3 z-10 inline-flex items-center bg-background/90 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.25em] text-foreground">
-                Sin stock
+                {stockSemaforo.label || uiCfg.productOutOfStockLabel}
               </span>
             )}
             {hasDiscount && (
@@ -386,9 +387,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           />
 
           {/* Stock info */}
-          {product.stock_quantity != null && product.stock_quantity > 0 && product.stock_quantity <= 5 && (
-            <p className="text-xs font-medium text-orange-600">
-              ¡Solo quedan {product.stock_quantity} unidades!
+          {product.stock_quantity != null && stockSemaforo.show && (
+            <p className={`text-xs font-medium ${stockSemaforo.toneClassName}`}>
+              {stockSemaforo.label}
             </p>
           )}
 

@@ -275,3 +275,4 @@ Si un endpoint no está en este archivo, no se considera aprobado para este stor
 - `newsletter.endpoint` puede venir vacío o `null`; el storefront debe manejar esa ausencia sin romper bootstrap.
 - `registration.fields` debe incluir al menos `email` y `password` visibles.
 - `ui` forma parte del contrato canónico; los textos nuevos deben agregarse al backend antes de consumirse desde componentes.
+- `ui.stockSemaforo` define umbrales y labels de stock para el storefront: `outOfStockLabel`, `lowLabel`, `mediumLabel`, `highLabel`, `lowThreshold`, `mediumThreshold` y `showQuantity`.

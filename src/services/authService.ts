@@ -132,6 +132,10 @@ const asNonEmptyString = (value: unknown): string | null => {
   return normalized.length > 0 ? normalized : null;
 };
 
+export const normalizeAuthEmail = (email: string): string => {
+  return email.trim().toLowerCase();
+};
+
 export const extractBusinessPartnerIdFromAuthData = (data: BusinessPartnerCarrier): string | null => {
   return (
     asNonEmptyString(data?.business_partner_id)
@@ -148,14 +152,19 @@ export class AuthService {
   async login(
     credentials: LoginCredentials
   ): Promise<{ user: User; token: string; account: Account | null }> {
-    log.auth.info('Intentando login para:', credentials.email);
+    const normalizedCredentials: LoginCredentials = {
+      ...credentials,
+      email: normalizeAuthEmail(credentials.email),
+    };
+
+    log.auth.info('Intentando login para:', normalizedCredentials.email);
     try {
       const response = await httpClient.post<LoginResponse>(API_ENDPOINTS.AUTH.LOGIN, {
-        email: credentials.email,
-        password: credentials.password,
+        email: normalizedCredentials.email,
+        password: normalizedCredentials.password,
       });
 
-      const { token, user, account } = this.normalizeLoginResponse(response, credentials);
+      const { token, user, account } = this.normalizeLoginResponse(response, normalizedCredentials);
       const businessPartnerId = extractBusinessPartnerIdFromAuthData(response?.data);
 
       // Configurar token en el cliente HTTP automáticamente
@@ -205,12 +214,13 @@ export class AuthService {
   async register(
     data: RegisterData
   ): Promise<{ user: User; token: string; account: Account | null }> {
-    log.auth.info('Registrando usuario:', data.email);
+    const normalizedEmail = normalizeAuthEmail(data.email);
+    log.auth.info('Registrando usuario:', normalizedEmail);
     try {
       const payload = {
         first_name: data.firstName,
         last_name: data.lastName,
-        email: data.email,
+        email: normalizedEmail,
         password: data.password,
         phone: data.phone,
         title: data.title,
@@ -218,7 +228,7 @@ export class AuthService {
         tax_id: data.taxId,
         industry: data.industry,
         currency: data.currency || getBusinessConfig().defaultCurrency,
-        username: data.username || data.email.split('@')[0],
+        username: data.username || normalizedEmail.split('@')[0],
         role: data.role || 'customer',
         person_metadata: {
           phone: data.phone,
@@ -259,7 +269,7 @@ export class AuthService {
 
       // Luego de un registro exitoso, iniciamos sesión automáticamente
       return await this.login({
-        email: data.email,
+        email: normalizedEmail,
         password: data.password
       });
 

@@ -74,6 +74,32 @@ describe('tenantConfigService', () => {
     expect(getRecordedEvents().some((event) => event.type === 'tenant_config_invalid')).toBe(true);
   });
 
+  it('clears browser storage when ecommerce-config version mismatches frontend version', async () => {
+    localStorage.setItem('some-local-key', 'value');
+    sessionStorage.setItem('some-session-key', 'value');
+
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        data: {
+          version: '0.0.0-mismatch',
+          app: { name: 'Tenant Store' },
+        },
+      }),
+    }));
+
+    const config = await loadTenantConfig('http://127.0.0.1:8000', 'tenant-1');
+
+    expect(config?.app?.name).toBe('Tenant Store');
+    expect(localStorage.getItem('some-local-key')).toBeNull();
+    expect(sessionStorage.getItem('some-session-key')).toBeNull();
+    expect(
+      getRecordedEvents().some((event) =>
+        event.type === 'tenant_config_fallback' && event.details?.reason === 'version_mismatch'
+      )
+    ).toBe(true);
+  });
+
   it('uses stale cache while revalidating in background', async () => {
     localStorage.setItem(CACHE_KEY, JSON.stringify({
       timestamp: Date.now() - (10 * 60 * 1000),

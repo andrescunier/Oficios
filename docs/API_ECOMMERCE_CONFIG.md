@@ -192,6 +192,18 @@ GET /api/accounts/{account_id}/ecommerce-config
       "chargeProductSku": "SHIP-001",
       "taxRate": 0.21
     },
+    "ui": {
+      "stockSemaforo": {
+        "enabled": true,
+        "lowThreshold": 5,
+        "mediumThreshold": 20,
+        "outOfStockLabel": "Sin stock",
+        "lowLabel": "Stock bajo",
+        "mediumLabel": "Stock medio",
+        "highLabel": "Stock alto",
+        "showQuantity": false
+      }
+    },
     "newsletter": {
       "enabled": true,
       "endpoint": "https://hooks.ejemplo.com/newsletter",
@@ -297,6 +309,7 @@ GET /api/accounts/{account_id}/ecommerce-config
 - `branding.headerLogo` y `branding.footerLogo`: permiten separar logos sin volver a env vars.
 - `features.benefits[]`: cards configurables para home/footer.
 - `shipping`: centraliza textos visibles de envío y permite modelar envío con cargo como un item trazable en checkout usando `chargeProductId`.
+- `ui.stockSemaforo`: configura el semáforo visible de stock en tarjetas y detalle. Los umbrales son inclusivos: `0` o menor es sin stock, `1..lowThreshold` es bajo, `lowThreshold+1..mediumThreshold` es medio y valores mayores son alto.
 - `newsletter`: define la URL y los textos del POST de suscripción del home.
 - `images.heroSlides[].mobileImage`: hero responsive por tenant.
 - `images.categories[].group`: agrupación de categorías para navegación.

@@ -6,6 +6,7 @@ import {
   getImagesConfig,
   getNewsletterConfig,
   getShippingConfig,
+  getStockSemaforo,
   getUIConfig,
 } from './runtime';
 
@@ -45,6 +46,17 @@ describe('runtime', () => {
       newsletter: {
         endpoint: 'https://hooks.example.com/newsletter',
         successMessage: 'Alta ok',
+      },
+      ui: {
+        stockSemaforo: {
+          lowThreshold: 3,
+          mediumThreshold: 10,
+          outOfStockLabel: 'Sin stock',
+          lowLabel: 'Stock bajo',
+          mediumLabel: 'Stock medio',
+          highLabel: 'Stock alto',
+          showQuantity: true,
+        },
       },
       images: {
         heroSlides: [
@@ -141,5 +153,24 @@ describe('runtime', () => {
     expect(getUIConfig().headerPromoMessages).toEqual([
       'HOT SALE: promos por tiempo limitado - Envío fijo a todo el país $5.000',
     ]);
+  });
+
+  it('clasifica stock con semaforo configurable', () => {
+    expect(getStockSemaforo(0)).toMatchObject({
+      level: 'out_of_stock',
+      label: 'Sin stock',
+    });
+    expect(getStockSemaforo(3)).toMatchObject({
+      level: 'low',
+      label: 'Stock bajo (3)',
+    });
+    expect(getStockSemaforo(10)).toMatchObject({
+      level: 'medium',
+      label: 'Stock medio (10)',
+    });
+    expect(getStockSemaforo(11)).toMatchObject({
+      level: 'high',
+      label: 'Stock alto (11)',
+    });
   });
 });

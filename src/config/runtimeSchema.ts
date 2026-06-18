@@ -31,6 +31,17 @@ const featureBenefitSchema = z.object({
   description: z.string().optional(),
 });
 
+const stockSemaforoSchema = z.object({
+  enabled: z.boolean().optional(),
+  lowThreshold: z.number().optional(),
+  mediumThreshold: z.number().optional(),
+  outOfStockLabel: z.string().optional(),
+  lowLabel: z.string().optional(),
+  mediumLabel: z.string().optional(),
+  highLabel: z.string().optional(),
+  showQuantity: z.boolean().optional(),
+});
+
 const displayStringSchema = z.preprocess((value) => {
   if (typeof value === 'number') {
     return `${value} dias`;
@@ -611,6 +622,7 @@ const runtimeConfigSchema = z.object({
     productMultiplePaymentsTitle: z.string().optional(),
     productMultiplePaymentsDesc: z.string().optional(),
     productMultiplePaymentsIcon: z.string().optional(),
+    stockSemaforo: stockSemaforoSchema.optional(),
     headerPromoMessages: z.array(z.string()).optional(),
 
     // Cart page (full page)

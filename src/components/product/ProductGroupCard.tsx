@@ -9,7 +9,7 @@ import { Heart, Plus, Minus } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { PriceDisplay } from '@/hooks/usePriceVisibility';
 import { handleImgError } from '@/utils/imageHelpers';
-import { getBusinessConfig } from '@/config/runtime';
+import { getBusinessConfig, getStockSemaforo } from '@/config/runtime';
 import type { ProductGroup } from '@/utils/skuGrouping';
 import { findProductByOptions, getAvailableOptionValues, getInStockOptionValues, getOptionValue } from '@/utils/skuGrouping';
 
@@ -59,6 +59,7 @@ export const ProductGroupCard: React.FC<ProductGroupCardProps> = ({ group }) => 
   const isProductFavorite = isFavorite(activeProduct.id);
   const stock = activeProduct.stock_quantity ?? 0;
   const isOutOfStock = stock <= 0;
+  const stockSemaforo = getStockSemaforo(stock);
 
   const handleToggleFavorite = () => {
     if (!isAuthenticated) {
@@ -193,12 +194,9 @@ export const ProductGroupCard: React.FC<ProductGroupCardProps> = ({ group }) => 
         })}
 
         {/* Stock info — same style as ProductCard */}
-        {isOutOfStock && (
-          <p className="text-sm text-red-600 font-medium mb-2">Sin stock</p>
-        )}
-        {!isOutOfStock && stock > 0 && stock <= 5 && (
-          <p className="text-xs text-orange-600 mb-2">
-            ¡Solo quedan {stock} unidades!
+        {stockSemaforo.show && (
+          <p className={`text-xs font-medium mb-2 ${stockSemaforo.toneClassName}`}>
+            {stockSemaforo.label}
           </p>
         )}
 

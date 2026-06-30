@@ -90,12 +90,12 @@ Internet
 | Servicio | Imagen | Puerto | Dominio |
 |----------|--------|--------|---------|
 | **diap-store** | diap-ecommerce-local:5ef52c2-fix | 80 | diapstore.com / www.diapstore.com |
-| **cumar-qa** | diap-ecommerce-qa-local:5ef52c2 → re-tagged fix | 80 | qa.cumar.com.ar |
+| **cumar-qa** | ghcr.io/andrescunier/diap-ecommerce:developer | 80 | qa.cumar.com.ar |
 | **simpledash** | ghcr.io/andrescunier/simpledash:latest | 80 | dash.cumar.com.ar |
 | **warpla** | warpla-frontend:1.2.19-5ef52c2 → re-tagged fix | 80 | warpla.cumar.com.ar |
 
 - **diap-store**: Tienda DIAP (account: diap-arg, API: api.cumar.com.ar)
-- **cumar-qa**: Entorno QA de CUMAR (account: simple-qa, API: apiqa.cumar.com.ar)
+- **cumar-qa**: Tienda DIAP en QA (account: diap-arg, API: apiqa.cumar.com.ar) — imagen `:developer` desde GHCR
 - **simpledash**: Dashboard administrativo
 - **warpla**: Warpla Skate Shop (account: warpla, API: apiqa.cumar.com.ar)
 
@@ -113,7 +113,7 @@ Los frontends usan un sistema de **configuración runtime** en dos capas:
 Env vars runtime por servicio:
 ```
 diap-store:  API_URL=https://api.cumar.com.ar  ACCOUNT_ID=bed2df35-...  ACCOUNT_SLUG=diap-arg   API_CHANNEL=ecommerce  APP_URL=https://diapstore.com
-cumar-qa:    API_URL=https://apiqa.cumar.com.ar ACCOUNT_ID=b7de2251-...  ACCOUNT_SLUG=simple-qa  API_CHANNEL=ecommerce  APP_URL=https://qa.cumar.com.ar
+cumar-qa:    API_URL=https://apiqa.cumar.com.ar ACCOUNT_ID=bed2df35-717f-4900-a4b1-7c3a7fb59b7c  ACCOUNT_SLUG=diap-arg  API_CHANNEL=ecommerce  APP_URL=https://qa.cumar.com.ar
 warpla:      API_URL=https://apiqa.cumar.com.ar ACCOUNT_ID=15ef15b2-...  ACCOUNT_SLUG=warpla     API_CHANNEL=ecommerce  APP_URL=https://warpla.cumar.com.ar
 ```
 

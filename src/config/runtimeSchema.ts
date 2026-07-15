@@ -384,6 +384,8 @@ const pagesSchema = z.object({
   returns: pageContentSchema.optional(),
   warranty: pageContentSchema.optional(),
   legalNotice: pageContentSchema.optional(),
+  tracking: pageContentSchema.optional(),
+  shipping: pageContentSchema.optional(),
   notFound: pageContentSchema.optional(),
 }).partial();
 

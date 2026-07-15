@@ -99,7 +99,7 @@ export const Header: React.FC = () => {
                   className="h-10 w-auto"
                 />
               ) : (
-                <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
+                <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center">
                   <span className="text-white font-bold text-lg">
                     {BRANDING.APP_NAME.slice(0, 2).toUpperCase()}
                   </span>

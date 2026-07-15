@@ -3,29 +3,18 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { getUIConfig, getBusinessConfig } from '@/config/runtime';
-import { Link, useNavigate } from 'react-router-dom';
-import { 
-  Heart, 
-  ShoppingCart, 
-  ArrowLeft,
-  Lock,
-  Grid,
-  List,
-  Search,
-  Trash2,
-  Package
-} from 'lucide-react';
+import { getUIConfig } from '@/config/runtime';
+import { Link } from 'react-router-dom';
+import { Heart, ShoppingCart, ArrowLeft, Lock, Search } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { ProductCard } from '@/components/product/ProductCard';
+import { ProductCardSkeleton } from '@/components/product/ProductCardSkeleton';
 import { productService } from '@/services/productService';
 import type { Product } from '@/types/api';
 
 export const FavoritesPage: React.FC = () => {
-  const navigate = useNavigate();
   const { auth, favorites, removeFromFavorites, addToCart, addNotification } = useStore();
   const uiCfg = getUIConfig();
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
   const [favoriteProducts, setFavoriteProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -36,18 +25,17 @@ export const FavoritesPage: React.FC = () => {
     }
   }, [favorites, auth.isAuthenticated]);
 
-  // Redirigir si no está autenticado
   if (!auth.isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <Lock className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center px-4">
+          <Lock className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
           <h2 className="text-2xl font-bold mb-4">{uiCfg.authRequiredTitle}</h2>
-          <p className="text-gray-600 mb-6">{uiCfg.favoritesAuthMessage}</p>
-          <Link 
-            to="/login" 
+          <p className="text-muted-foreground mb-6">{uiCfg.favoritesAuthMessage}</p>
+          <Link
+            to="/login"
             state={{ from: '/favoritos' }}
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+            className="inline-flex bg-primary text-primary-foreground px-6 py-3 text-sm font-semibold uppercase tracking-[0.15em] hover:opacity-90 transition-opacity"
           >
             {uiCfg.authLoginButtonLabel}
           </Link>
@@ -60,20 +48,16 @@ export const FavoritesPage: React.FC = () => {
     setIsLoading(true);
     try {
       const products: Product[] = [];
-      
-      // Cargar cada producto favorito por su ID
       for (const productId of favorites) {
         try {
           const product = await productService.getProduct(productId);
           products.push(product);
-        } catch (error) {
-          // Si no se puede cargar un producto, lo eliminamos de favoritos
+        } catch {
           removeFromFavorites(productId);
         }
       }
-      
       setFavoriteProducts(products);
-    } catch (error) {
+    } catch {
       addNotification({
         type: 'error',
         title: 'Error al cargar favoritos',
@@ -84,50 +68,16 @@ export const FavoritesPage: React.FC = () => {
     }
   };
 
-  const formatPrice = (price: number, currency?: string) => {
-    if (typeof price !== 'number' || isNaN(price)) {
-      return 'Precio no disponible';
-    }
-    const business = getBusinessConfig();
-    const currencyCode = currency || business.defaultCurrency;
-    
-    return new Intl.NumberFormat(business.locale, {
-      style: 'currency',
-      currency: currencyCode,
-      minimumFractionDigits: 2,
-    }).format(price);
-  };
-
-  const handleRemoveFromFavorites = (productId: string, productName: string) => {
-    removeFromFavorites(productId);
-    setFavoriteProducts(prev => prev.filter(p => p.id !== productId));
-    addNotification({
-      type: 'success',
-      title: 'Eliminado de favoritos',
-      message: `${productName} fue eliminado de tus favoritos`,
-    });
-  };
-
-  const handleAddToCart = (product: Product) => {
-    if (product.has_variants) {
-      navigate(`/productos/${product.id}`);
-      return;
-    }
-    addToCart(product, 1);
-  };
-
   const handleAddAllToCart = () => {
     let addedCount = 0;
-    filteredFavorites.forEach(product => {
-      if (product.has_variants) {
-        return;
-      }
+    filteredFavorites.forEach((product) => {
+      if (product.has_variants) return;
       if (product.stock_quantity && product.stock_quantity > 0) {
         addToCart(product, 1);
         addedCount++;
       }
     });
-    
+
     addNotification({
       type: 'success',
       title: 'Productos agregados',
@@ -135,37 +85,40 @@ export const FavoritesPage: React.FC = () => {
     });
   };
 
-  const filteredFavorites = favoriteProducts.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.description?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredFavorites = favoriteProducts.filter(
+    (product) =>
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.description?.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b">
+    <div className="min-h-screen bg-background">
+      <div className="border-b bg-muted/30">
         <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Link 
-                to="/perfil" 
-                className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-4">
+              <Link
+                to="/perfil"
+                className="flex items-center text-muted-foreground hover:text-foreground transition-colors"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 {uiCfg.favoritesBackLabel}
               </Link>
               <div>
-                <h1 className="text-2xl font-bold">{uiCfg.favoritesPageTitle}</h1>
-                <p className="text-gray-600">
-                  {favoriteProducts.length} {favoriteProducts.length !== 1 ? uiCfg.favoritesCountPlural : uiCfg.favoritesCountSingular}
+                <h1 className="text-2xl font-bold tracking-tight">{uiCfg.favoritesPageTitle}</h1>
+                <p className="text-muted-foreground text-sm">
+                  {favoriteProducts.length}{' '}
+                  {favoriteProducts.length !== 1
+                    ? uiCfg.favoritesCountPlural
+                    : uiCfg.favoritesCountSingular}
                 </p>
               </div>
             </div>
-            
+
             {favoriteProducts.length > 0 && (
               <button
                 onClick={handleAddAllToCart}
-                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="inline-flex items-center justify-center bg-primary text-primary-foreground px-4 py-2 text-sm font-semibold uppercase tracking-[0.15em] hover:opacity-90 transition-opacity"
               >
                 <ShoppingCart className="w-4 h-4 mr-2" />
                 {uiCfg.favoritesAddAllLabel}
@@ -177,160 +130,53 @@ export const FavoritesPage: React.FC = () => {
 
       <div className="container mx-auto px-4 py-8">
         {isLoading ? (
-          // Estado de carga
-          <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">{uiCfg.favoritesLoadingMessage}</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[...Array(8)].map((_, i) => (
+              <ProductCardSkeleton key={i} />
+            ))}
           </div>
         ) : favoriteProducts.length === 0 ? (
-          // Estado vacío
-          <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-            <Heart className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+          <div className="text-center py-20">
+            <Heart className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">{uiCfg.favoritesEmptyTitle}</h3>
-            <p className="text-gray-600 mb-6">
-              {uiCfg.favoritesEmptyBody}
-            </p>
-            <Link 
+            <p className="text-muted-foreground mb-6">{uiCfg.favoritesEmptyBody}</p>
+            <Link
               to="/productos"
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+              className="inline-flex bg-primary text-primary-foreground px-6 py-3 text-sm font-semibold uppercase tracking-[0.15em] hover:opacity-90 transition-opacity"
             >
               {uiCfg.favoritesEmptyExploreLabel}
             </Link>
           </div>
         ) : (
           <>
-            {/* Controles y filtros */}
-            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-                <div className="flex-1 max-w-md">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input
-                      type="text"
-                      placeholder={uiCfg.favoritesSearchPlaceholder}
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                </div>
-                
-                <div className="flex items-center space-x-4">
-                  <span className="text-sm text-gray-600">
-                    {filteredFavorites.length} de {favoriteProducts.length} productos
-                  </span>
-                  
-                  <div className="flex items-center border border-gray-300 rounded-lg">
-                    <button
-                      onClick={() => setViewMode('grid')}
-                      className={`p-2 ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'} rounded-l-lg transition-colors`}
-                    >
-                      <Grid className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => setViewMode('list')}
-                      className={`p-2 ${viewMode === 'list' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'} rounded-r-lg transition-colors`}
-                    >
-                      <List className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
+            <div className="mb-8 flex flex-col gap-4 border-b pb-6 sm:flex-row sm:items-center sm:justify-between">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder={uiCfg.favoritesSearchPlaceholder}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full border border-input bg-background pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                />
               </div>
+              <span className="text-sm text-muted-foreground">
+                {filteredFavorites.length} de {favoriteProducts.length} productos
+              </span>
             </div>
 
             {filteredFavorites.length === 0 ? (
-              // No hay resultados de búsqueda
-              <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-                <Search className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+              <div className="text-center py-16">
+                <Search className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold mb-2">{uiCfg.noProductsTitle}</h3>
-                <p className="text-gray-600">
-                  {uiCfg.favoritesNoResultsBody}
-                </p>
+                <p className="text-muted-foreground">{uiCfg.favoritesNoResultsBody}</p>
               </div>
             ) : (
-              <>
-                {/* Vista en cuadrícula */}
-                {viewMode === 'grid' && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {filteredFavorites.map((product) => (
-                      <ProductCard 
-                        key={product.id} 
-                        product={product}
-                      />
-                    ))}
-                  </div>
-                )}
-
-                {/* Vista en lista */}
-                {viewMode === 'list' && (
-                  <div className="space-y-4">
-                    {filteredFavorites.map((product) => (
-                      <div key={product.id} className="bg-white rounded-lg shadow-sm p-6">
-                        <div className="flex items-center space-x-6">
-                          <img
-                            src={product.image_url || '/placeholder-product.svg'}
-                            alt={product.name}
-                            className="w-24 h-24 object-cover rounded-lg flex-shrink-0"
-                          />
-                          
-                          <div className="flex-1 min-w-0">
-                            <h3 className="text-lg font-semibold mb-2 truncate">{product.name}</h3>
-                            {product.description && (
-                              <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                                {product.description}
-                              </p>
-                            )}
-                            
-                            <div className="flex items-center space-x-4">
-                              <span className="text-2xl font-bold text-blue-600">
-                                {formatPrice(product.unit_price, product.currency)}
-                              </span>
-
-                              {product.has_variants ? (
-                                <span className="text-sm px-2 py-1 rounded-full bg-blue-100 text-blue-800">
-                                  {uiCfg.favoritesVariantsLabel}
-                                </span>
-                              ) : product.stock_quantity !== undefined && (
-                                <span className={`text-sm px-2 py-1 rounded-full ${
-                                  product.stock_quantity > 10 
-                                    ? 'bg-green-100 text-green-800'
-                                    : product.stock_quantity > 0
-                                    ? 'bg-yellow-100 text-yellow-800'
-                                    : 'bg-red-100 text-red-800'
-                                }`}>
-                                  {product.stock_quantity > 0 
-                                    ? `${product.stock_quantity} en stock`
-                                    : 'Sin stock'
-                                  }
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          
-                          <div className="flex flex-col space-y-2">
-                            <button
-                              onClick={() => handleAddToCart(product)}
-                              disabled={!product.has_variants && product.stock_quantity === 0}
-                              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-                            >
-                              <ShoppingCart className="w-4 h-4 mr-2" />
-                              {product.has_variants ? 'Elegir variante' : product.stock_quantity === 0 ? 'Sin Stock' : 'Agregar'}
-                            </button>
-                            
-                            <button
-                              onClick={() => handleRemoveFromFavorites(product.id, product.name)}
-                              className="flex items-center px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
-                            >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Quitar
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {filteredFavorites.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
             )}
           </>
         )}

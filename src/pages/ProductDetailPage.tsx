@@ -361,7 +361,7 @@ export const ProductDetailPage: React.FC = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           <div className="space-y-4">
-            <div className="aspect-square bg-white rounded-lg overflow-hidden shadow-sm">
+            <div className="aspect-square overflow-hidden bg-muted">
               <img
                 src={effectiveImage}
                 alt={selectedVariant?.name || product.name}
@@ -377,7 +377,7 @@ export const ProductDetailPage: React.FC = () => {
                 <div>
                   <h1 className="text-3xl font-bold text-gray-900">{product.name}</h1>
                   {product.has_variants && (
-                    <p className="text-sm text-blue-600 mt-1">{uiConfig.productWithVariantsLabel}</p>
+                    <p className="text-sm text-muted-foreground mt-1">{uiConfig.productWithVariantsLabel}</p>
                   )}
                 </div>
                 <button
@@ -398,9 +398,9 @@ export const ProductDetailPage: React.FC = () => {
               )}
 
               {product.category && (
-                <span className="inline-block bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground mt-2">
                   {product.category}
-                </span>
+                </p>
               )}
             </div>
 
@@ -408,7 +408,7 @@ export const ProductDetailPage: React.FC = () => {
               <PriceDisplay
                 price={effectivePrice}
                 showLoginButton={true}
-                className="text-3xl font-bold text-blue-600"
+                className="text-3xl font-bold"
               />
               {selectedVariant && selectedVariant.unit_price !== null && selectedVariant.unit_price !== undefined && (
                 <p className="text-sm text-gray-500">{uiConfig.productSubtotalLabel}</p>
@@ -497,10 +497,10 @@ export const ProductDetailPage: React.FC = () => {
                                   [option.name]: value.value,
                                 }))
                               }
-                              className={`px-3 py-2 rounded-lg border text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                              className={`px-3 py-2 border text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                                 selected
-                                  ? 'border-blue-600 bg-blue-50 text-blue-700'
-                                  : 'border-gray-300 bg-white text-gray-700 hover:border-blue-400'
+                                  ? 'border-foreground bg-foreground text-background'
+                                  : 'border-border bg-background text-foreground hover:border-foreground/50'
                               }`}
                               title={!available ? 'Sin stock para esta combinación' : value.label}
                             >
@@ -582,7 +582,7 @@ export const ProductDetailPage: React.FC = () => {
               <button
                 onClick={handleAddToCart}
                 disabled={variantSelectionIncomplete}
-                className="w-full bg-blue-600 text-white py-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center"
+                className="w-full bg-primary text-primary-foreground py-4 font-semibold uppercase tracking-[0.15em] text-sm hover:opacity-90 transition-opacity disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed flex items-center justify-center"
               >
                 <ShoppingCart className="w-5 h-5 mr-2" />
                 {variantSelectionIncomplete ? uiConfig.productSelectVariantLabel : uiConfig.productAddToCartLabel}
@@ -599,7 +599,7 @@ export const ProductDetailPage: React.FC = () => {
                 return (
                   <>
                     <div className="bg-white p-4 rounded-lg shadow-sm text-center">
-                      <ShippingIcon className="w-6 h-6 text-blue-600 mx-auto mb-2" />
+                      <ShippingIcon className="w-6 h-6 text-primary mx-auto mb-2" />
                       <h4 className="font-medium mb-1">{shippingCfg.productBadgeTitle}</h4>
                       <p className="text-sm text-gray-600">{shippingCfg.productBadgeDescription}</p>
                     </div>

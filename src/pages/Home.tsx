@@ -7,9 +7,9 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { CategoryConfig } from '@/config/runtime';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ProductCard } from '@/components/product/ProductCard';
+import { ProductCardSkeleton } from '@/components/product/ProductCardSkeleton';
 import { useStore } from '@/store/useStore';
 import { useQuery } from '@tanstack/react-query';
 import { ASSETS, BRANDING, BUSINESS, FEATURES, NEWSLETTER } from '@/config/branding';
@@ -294,16 +294,7 @@ export const Home: React.FC = () => {
           {isLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {[...Array(8)].map((_, i) => (
-                <Card key={i} className="animate-pulse">
-                  <CardContent className="p-0">
-                    <div className="aspect-square bg-muted" />
-                    <div className="p-4 space-y-2">
-                      <div className="h-4 bg-muted rounded" />
-                      <div className="h-4 bg-muted rounded w-2/3" />
-                      <div className="h-6 bg-muted rounded w-1/2" />
-                    </div>
-                  </CardContent>
-                </Card>
+                <ProductCardSkeleton key={i} />
               ))}
             </div>
           ) : (

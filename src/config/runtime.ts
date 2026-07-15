@@ -263,6 +263,7 @@ export interface PagesConfig {
   warranty?: PageContent;
   legalNotice?: PageContent;
   tracking?: PageContent;
+  shipping?: PageContent;
   notFound?: PageContent;
 }
 

@@ -13,6 +13,7 @@ import { getBusinessConfig, getCategoryBySlug, getFiltersConfig } from '@/config
 import type { CategoryConfig } from '@/config/runtime';
 import { ProductCard } from '@/components/product/ProductCard';
 import { ProductGroupCard } from '@/components/product/ProductGroupCard';
+import { ProductCardSkeleton } from '@/components/product/ProductCardSkeleton';
 import { groupProductsBySku } from '@/utils/skuGrouping';
 
 interface FilterOption {
@@ -281,7 +282,7 @@ export const CategoryPage: React.FC = () => {
                   type="checkbox"
                   checked={selectedValues.includes(option.value)}
                   onChange={() => updateFilters(filterKey as keyof ActiveFilters, option.value)}
-                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                 />
                 <span className="ml-3 text-sm text-gray-600 group-hover:text-gray-900">
                   {option.label}
@@ -343,7 +344,7 @@ export const CategoryPage: React.FC = () => {
                 }}
                 className={`inline-flex items-center rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
                   (!subcategory || (subcategory && !subsubcategory && !level3Config && level2Config === categoryConfig))
-                    ? 'bg-white text-blue-700'
+                    ? 'bg-white text-foreground'
                     : 'bg-white/20 text-white hover:bg-white/30'
                 }`}
               >
@@ -365,7 +366,7 @@ export const CategoryPage: React.FC = () => {
                     }}
                     className={`inline-flex items-center rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
                       isActive
-                        ? 'bg-white text-blue-700'
+                        ? 'bg-white text-foreground'
                         : 'bg-white/20 text-white hover:bg-white/30'
                     }`}
                   >
@@ -390,7 +391,7 @@ export const CategoryPage: React.FC = () => {
                       Filtros
                     </h2>
                     {activeFilterCount > 0 && (
-                      <button onClick={clearFilters} className="text-sm text-blue-600 hover:text-blue-800">
+                      <button onClick={clearFilters} className="text-sm text-primary hover:opacity-80">
                         Limpiar ({activeFilterCount})
                       </button>
                     )}
@@ -402,7 +403,7 @@ export const CategoryPage: React.FC = () => {
                         type="checkbox"
                         checked={activeFilters.enStock || false}
                         onChange={(e) => updateFilters('enStock', e.target.checked)}
-                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                       />
                       <span className="ml-3 text-sm font-medium text-gray-900">Solo con stock</span>
                     </label>
@@ -424,7 +425,7 @@ export const CategoryPage: React.FC = () => {
                   <SlidersHorizontal className="w-5 h-5 mr-2" />
                   Filtros
                   {activeFilterCount > 0 && (
-                    <span className="ml-2 bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full">
+                    <span className="ml-2 bg-foreground text-background text-xs px-2 py-0.5">
                       {activeFilterCount}
                     </span>
                   )}
@@ -458,7 +459,7 @@ export const CategoryPage: React.FC = () => {
 
                   <div className="p-4">
                     {activeFilterCount > 0 && (
-                      <button onClick={clearFilters} className="w-full mb-4 py-2 text-blue-600 border border-blue-600 rounded-lg">
+                      <button onClick={clearFilters} className="w-full mb-4 py-2 text-primary border border-primary">
                         Limpiar filtros ({activeFilterCount})
                       </button>
                     )}
@@ -469,7 +470,7 @@ export const CategoryPage: React.FC = () => {
                           type="checkbox"
                           checked={activeFilters.enStock || false}
                           onChange={(e) => updateFilters('enStock', e.target.checked)}
-                          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                         />
                         <span className="ml-3 text-sm font-medium text-gray-900">Solo con stock</span>
                       </label>
@@ -483,7 +484,7 @@ export const CategoryPage: React.FC = () => {
                   <div className="p-4 border-t">
                     <button
                       onClick={() => setShowMobileFilters(false)}
-                      className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold"
+                      className="w-full py-3 bg-primary text-primary-foreground font-semibold uppercase tracking-[0.15em] text-sm"
                     >
                       Ver {totalProducts} productos
                     </button>
@@ -516,7 +517,7 @@ export const CategoryPage: React.FC = () => {
               {activeFilterCount > 0 && (
                 <div className="flex flex-wrap gap-2 mb-4">
                   {activeFilters.enStock && (
-                    <span className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                    <span className="inline-flex items-center px-3 py-1 bg-muted text-foreground text-sm">
                       Con stock
                       <button onClick={() => updateFilters('enStock', false)} className="ml-2">
                         <X className="w-3 h-3" />
@@ -527,7 +528,7 @@ export const CategoryPage: React.FC = () => {
                     if (key === 'enStock' || !Array.isArray(values)) return null;
 
                     return values.map((value) => (
-                      <span key={`${key}-${value}`} className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                      <span key={`${key}-${value}`} className="inline-flex items-center px-3 py-1 bg-muted text-foreground text-sm">
                         {value.toUpperCase()}
                         <button onClick={() => updateFilters(key as keyof ActiveFilters, value)} className="ml-2">
                           <X className="w-3 h-3" />
@@ -541,43 +542,36 @@ export const CategoryPage: React.FC = () => {
               {loading && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {[...Array(8)].map((_, i) => (
-                    <div key={i} className="bg-white rounded-lg shadow-sm animate-pulse">
-                      <div className="aspect-square bg-gray-200 rounded-t-lg" />
-                      <div className="p-4 space-y-3">
-                        <div className="h-4 bg-gray-200 rounded" />
-                        <div className="h-4 bg-gray-200 rounded w-2/3" />
-                        <div className="h-6 bg-gray-200 rounded w-1/2" />
-                      </div>
-                    </div>
+                    <ProductCardSkeleton key={i} />
                   ))}
                 </div>
               )}
 
               {error && (
                 <div className="text-center py-20">
-                  <p className="text-red-600 mb-4">{error}</p>
-                  <Link to="/" className="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+                  <p className="text-destructive mb-4">{error}</p>
+                  <Link to="/" className="inline-block bg-primary text-primary-foreground px-8 py-3 font-semibold uppercase tracking-[0.15em] text-sm hover:opacity-90 transition-opacity">
                     Volver al Inicio
                   </Link>
                 </div>
               )}
 
               {!loading && !error && filteredProducts.length === 0 && (
-                <div className="text-center py-16 bg-white rounded-lg shadow-sm">
-                  <Filter className="w-16 h-16 mx-auto text-gray-300 mb-4" />
+                <div className="text-center py-16 border border-border">
+                  <Filter className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
                       <h2 className="text-xl font-bold mb-2">{getUIConfig().noProductsTitle}</h2>
-                  <p className="text-gray-600 mb-6">
+                  <p className="text-muted-foreground mb-6">
                     {activeFilterCount > 0
                       ? 'Intenta ajustar los filtros para ver más resultados'
                       : `No hay productos disponibles en ${categoryName}`}
                   </p>
 
                   {activeFilterCount > 0 ? (
-                    <button onClick={clearFilters} className="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+                    <button onClick={clearFilters} className="inline-block bg-primary text-primary-foreground px-8 py-3 font-semibold uppercase tracking-[0.15em] text-sm hover:opacity-90 transition-opacity">
                       Limpiar filtros
                     </button>
                   ) : (
-                    <Link to="/" className="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+                    <Link to="/" className="inline-block bg-primary text-primary-foreground px-8 py-3 font-semibold uppercase tracking-[0.15em] text-sm hover:opacity-90 transition-opacity">
                       Volver al Inicio
                     </Link>
                   )}
@@ -619,10 +613,10 @@ export const CategoryPage: React.FC = () => {
                           <button
                             key={item}
                             onClick={() => goToPage(item)}
-                            className={`min-w-[40px] px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            className={`min-w-[40px] px-3 py-2 text-sm font-medium transition-colors ${
                               item === safeCurrentPage
-                                ? 'bg-blue-600 text-white'
-                                : 'border border-gray-300 hover:bg-gray-100'
+                                ? 'bg-foreground text-background'
+                                : 'border border-border hover:bg-muted'
                             }`}
                           >
                             {item}

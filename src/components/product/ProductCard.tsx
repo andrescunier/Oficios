@@ -189,9 +189,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   const reviewCount = product.metadata?.review_count || 0;
 
   const cardClasses = {
-    default: "group relative overflow-hidden border-0 bg-transparent shadow-none rounded-none transition-all duration-300",
-    compact: "group relative overflow-hidden border-0 bg-transparent shadow-none rounded-none transition-all duration-300",
-    featured: "group relative overflow-hidden border-0 bg-transparent shadow-none rounded-none transition-all duration-300"
+    default: "group relative overflow-hidden rounded-lg border bg-card shadow-sm transition-all duration-300 hover:shadow-md",
+    compact: "group relative overflow-hidden rounded-lg border bg-card shadow-sm transition-all duration-300 hover:shadow-md",
+    featured: "group relative overflow-hidden rounded-lg border bg-card shadow-sm transition-all duration-300 hover:shadow-md",
   };
 
   return (
@@ -199,7 +199,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       <CardContent className="p-0">
         <Link to={`/productos/${product.id}`} onClick={handleProductClick}>
           {/* Image container with optimized loading */}
-          <div className="relative aspect-square overflow-hidden bg-gray-100">
+          <div className="relative aspect-square overflow-hidden bg-muted">
             {/* Product image optimized */}
             <ProductImage
               src={product.image_url || ''}
@@ -356,7 +356,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         </Link>
 
         {/* Product info */}
-        <div className="pt-4 px-1 pb-2 space-y-1.5 text-left">
+        <div className="p-4 space-y-1.5 text-left">
           {product.category && (
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
               {product.category}
@@ -401,7 +401,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           )}
 
           {product.has_variants && (
-            <p className="text-xs text-blue-600">
+            <p className="text-xs text-muted-foreground">
               Colores, talles u opciones disponibles
             </p>
           )}

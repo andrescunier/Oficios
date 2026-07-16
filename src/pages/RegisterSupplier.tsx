@@ -23,7 +23,7 @@ import { getBusinessConfig } from '@/config/runtime';
 import { useRegisterSupplierMutation } from '@/features/auth/mutations';
 import { buildRegisterDataFromForm, type RegisterFormData } from '@/features/auth/registrationPayload';
 
-const SUPPLIER_COMPANY_LABEL = 'Nombre comercial / oficio';
+const SUPPLIER_COMPANY_LABEL = 'Tu nombre (como te conocen)';
 
 export const RegisterSupplier: React.FC = () => {
   const [passwordVisible, setPasswordVisible] = useState<Record<string, boolean>>({});
@@ -129,7 +129,7 @@ export const RegisterSupplier: React.FC = () => {
       addNotification({
         type: 'success',
         title: '¡Listo!',
-        message: 'Tu cuenta de proveedor quedó creada. Ya podés publicar tus servicios.',
+        message: 'Listo. Ya podés publicar el oficio que ofrecés como particular.',
       });
 
       navigate('/proveedor', { replace: true });
@@ -160,9 +160,9 @@ export const RegisterSupplier: React.FC = () => {
               }}
             />
           </div>
-          <CardTitle className="text-2xl">Registro de proveedores</CardTitle>
+          <CardTitle className="text-2xl">Ofrezco mi oficio</CardTitle>
           <CardDescription>
-            Sumate al marketplace y publicá tus servicios para que te encuentren.
+            Sos una persona particular, no una empresa: publicá lo que sabés hacer y que te contacten vecinos.
           </CardDescription>
         </CardHeader>
 
@@ -188,7 +188,7 @@ export const RegisterSupplier: React.FC = () => {
                       <Input
                         id={field.name}
                         type={isPasswordType ? (passwordVisible[field.name] ? 'text' : 'password') : (field.type || 'text')}
-                        placeholder={field.name === 'company_name' ? 'Ej: Plomería García' : (field.placeholder || '')}
+                        placeholder={field.name === 'company_name' ? 'Ej: Martín Acosta' : (field.placeholder || '')}
                         {...register(field.name)}
                         className={fieldError ? (isPasswordType ? 'border-destructive pr-10' : 'border-destructive') : (isPasswordType ? 'pr-10' : '')}
                       />

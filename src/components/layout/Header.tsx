@@ -312,7 +312,7 @@ export const Header: React.FC = () => {
                 <Button variant="ghost" size="sm" asChild>
                   <Link to="/registro-proveedor">
                     <Briefcase className="h-4 w-4 mr-2" />
-                    Soy proveedor
+                    Ofrezco mi oficio
                   </Link>
                 </Button>
                 <Button variant="ghost" size="sm" asChild>
@@ -478,7 +478,7 @@ export const Header: React.FC = () => {
                   <Button variant="ghost" className="w-full justify-start" asChild>
                     <Link to="/registro-proveedor" onClick={() => setIsMenuOpen(false)}>
                       <Briefcase className="h-4 w-4 mr-2" />
-                      Soy proveedor
+                      Ofrezco mi oficio
                     </Link>
                   </Button>
                   <Button variant="ghost" className="w-full justify-start" asChild>

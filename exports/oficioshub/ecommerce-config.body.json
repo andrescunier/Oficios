@@ -11,12 +11,12 @@
   "app": {
     "name": "OficiosHub",
     "companyName": "OficiosHub",
-    "slogan": "Servicios de personas, para personas",
-    "description": "Marketplace donde proveedores ofrecen sus oficios como servicios y los clientes los contratan online.",
+    "slogan": "Vecinos con oficio, cerca tuyo",
+    "description": "Marketplace de personas particulares que ofrecen un oficio: alguien que arregla, pinta o cuida tu casa. No es un directorio de empresas.",
     "url": "https://oficioshub.cumar.com.ar",
     "hidePricesForGuests": false,
     "requireAuthForCart": false,
-    "loginMessage": "Ingresá para contratar servicios y gestionar tus pedidos",
+    "loginMessage": "Ingresá para contratar a una persona y seguir tus pedidos",
     "loginCta": "Ingresar"
   },
   "contact": {
@@ -48,13 +48,13 @@
     "locale": "es-AR"
   },
   "branding": {
-    "logo": "/branding/oficioshub/logo.svg?v=20260715a",
-    "headerLogo": "/branding/oficioshub/logo.svg?v=20260715a",
-    "footerLogo": "/branding/oficioshub/logo.svg?v=20260715a",
-    "logoDark": "/branding/oficioshub/logo.svg?v=20260715a",
-    "favicon": "/branding/oficioshub/favicon.svg?v=20260715a",
-    "banner": "/branding/oficioshub/hero-oficios.svg?v=20260715a",
-    "ogImage": "/branding/oficioshub/og.svg?v=20260715a"
+    "logo": "/branding/oficioshub/logo.svg?v=20260716b",
+    "headerLogo": "/branding/oficioshub/logo.svg?v=20260716b",
+    "footerLogo": "/branding/oficioshub/logo.svg?v=20260716b",
+    "logoDark": "/branding/oficioshub/logo.svg?v=20260716b",
+    "favicon": "/branding/oficioshub/favicon.svg?v=20260716b",
+    "banner": "/branding/oficioshub/photos/hero-home.jpg?v=20260716b",
+    "ogImage": "/branding/oficioshub/photos/hero-person.jpg?v=20260716b"
   },
   "theme": {
     "colorPrimary": "#14213D",
@@ -92,23 +92,23 @@
     "benefits": [
       {
         "icon": "BadgeCheck",
-        "title": "Proveedores reales",
-        "description": "Cada servicio lo brinda una persona con oficio publicado"
+        "title": "Personas, no empresas",
+        "description": "Cada perfil es alguien particular con un oficio, no un rubro corporativo"
       },
       {
-        "icon": "Package",
-        "title": "Contratá online",
-        "description": "Elegí el servicio, pedí y coordiná fecha con el proveedor"
+        "icon": "Users",
+        "title": "Pocos oficios, claros",
+        "description": "Hogar, electricidad, pintura y exterior: fácil de elegir"
       },
       {
-        "icon": "Shield",
-        "title": "Pedido trazable",
-        "description": "Tu contratación queda registrada en la plataforma"
+        "icon": "MessageCircle",
+        "title": "Coordinás con la persona",
+        "description": "Pedís online y arreglás día y detalle directo con quien lo hace"
       },
       {
-        "icon": "Truck",
-        "title": "A domicilio",
-        "description": "La mayoría de los oficios se hacen en tu casa u obra"
+        "icon": "Star",
+        "title": "Reseñas reales",
+        "description": "Quienes contrataron puntúan servicio, limpieza y puntualidad"
       }
     ]
   },
@@ -146,14 +146,14 @@
   "shipping": {
     "enabled": true,
     "mode": "flat_rate",
-    "bannerText": "Los servicios se coordinan directo con cada proveedor",
+    "bannerText": "Coordinás día y horario directo con la persona",
     "label": "Visita / coordinación",
     "freeLabel": "Incluida",
     "pendingLabel": "A coordinar",
     "chargedMessage": "La visita se coordina al confirmar el pedido",
-    "drawerMessage": "Cada proveedor confirma día y horario",
+    "drawerMessage": "La persona te confirma día y horario",
     "productBadgeTitle": "Modalidad",
-    "productBadgeDescription": "Servicio a domicilio o en taller",
+    "productBadgeDescription": "En tu casa o donde indiques",
     "chargeAmount": 0,
     "chargeProductId": null,
     "chargeProductSku": null,
@@ -165,7 +165,7 @@
     "endpoint": null,
     "headers": {},
     "title": "Oficios y tips en tu correo",
-    "description": "Novedades de proveedores y servicios destacados",
+    "description": "Tips de oficios y personas nuevas en el hub",
     "placeholder": "tu@email.com",
     "buttonLabel": "Suscribirme",
     "successMessage": "¡Listo! Te avisamos las próximas novedades",
@@ -173,7 +173,7 @@
   },
   "registration": {
     "title": "Crear cuenta",
-    "subtitle": "Registrate para contratar servicios de proveedores",
+    "subtitle": "Registrate para contratar a personas con oficio",
     "submitLabel": "Crear cuenta",
     "successMessage": "Cuenta creada con éxito",
     "acceptTermsLabel": "Acepto los términos y condiciones",
@@ -205,14 +205,14 @@
       },
       {
         "name": "company_name",
-        "label": "Nombre o empresa",
-        "placeholder": "Cómo te llamamos",
+        "label": "Tu nombre",
+        "placeholder": "Ej: Martín Acosta",
         "required": true,
         "visible": true
       },
       {
         "name": "tax_id",
-        "label": "CUIT / CUIL",
+        "label": "CUIT / CUIL (opcional)",
         "placeholder": "20-12345678-9",
         "required": false,
         "visible": true
@@ -263,22 +263,22 @@
     }
   },
   "seo": {
-    "title": "OficiosHub · Marketplace de servicios",
-    "description": "Contratá plomería, electricidad, pintura y más oficios de proveedores reales.",
+    "title": "OficiosHub · Personas con oficio cerca tuyo",
+    "description": "Contratá a vecinos que arreglan el hogar, electricidad, pintura o exterior. Personas particulares, no empresas.",
     "robots": "index,follow",
     "keywords": [
       "oficios",
-      "servicios",
-      "marketplace",
-      "plomería",
+      "personas",
+      "hogar",
       "electricidad",
-      "proveedores"
+      "pintura",
+      "jardín"
     ],
-    "defaultTitle": "OficiosHub · Servicios de proveedores",
+    "defaultTitle": "OficiosHub · Personas con oficio",
     "titleTemplate": "{title} | OficiosHub",
-    "defaultDescription": "Marketplace para contratar servicios de oficios brindados por proveedores.",
-    "defaultKeywords": "oficios, servicios, marketplace, proveedores",
-    "defaultOgImage": "/branding/oficioshub/og.svg?v=20260715a",
+    "defaultDescription": "Marketplace de personas particulares que ofrecen un oficio en tu zona.",
+    "defaultKeywords": "oficios, personas, hogar, electricidad, pintura",
+    "defaultOgImage": "/branding/oficioshub/photos/hero-person.jpg?v=20260716b",
     "twitterHandle": "",
     "canonicalBaseUrl": "https://oficioshub.cumar.com.ar",
     "enableJsonLd": true,
@@ -286,27 +286,27 @@
     "organization": {
       "name": "OficiosHub",
       "url": "https://oficioshub.cumar.com.ar",
-      "logo": "/branding/oficioshub/logo.svg?v=20260715a",
+      "logo": "/branding/oficioshub/logo.svg?v=20260716b",
       "sameAs": []
     },
     "routes": {
       "/": {
         "title": "Inicio",
-        "description": "Contratá oficios de proveedores en tu zona."
+        "description": "Encontrá personas con oficio cerca tuyo."
       },
       "/productos": {
         "title": "Servicios",
-        "description": "Catálogo de servicios por oficio y proveedor."
+        "description": "Servicios publicados por personas particulares."
       },
       "/contacto": {
         "title": "Contacto",
-        "description": "Escribinos para sumarte como proveedor o cliente."
+        "description": "Escribinos para sumarte u obtener ayuda."
       }
     }
   },
   "pages": {
-    "about": "OficiosHub es un marketplace donde personas publican sus oficios como servicios y otras personas los contratan. Los productos del catálogo son servicios; los proveedores son las personas que los brindan.",
-    "terms": "Al contratar un servicio aceptás coordinar fecha, alcance y forma de pago con el proveedor. OficiosHub facilita el pedido; la ejecución la realiza el proveedor.",
+    "about": "OficiosHub conecta personas: alguien necesita un arreglo y otra persona particular lo ofrece. No somos un directorio de empresas por rubro; cada perfil es un vecino con un oficio concreto.",
+    "terms": "Al contratar aceptás coordinar fecha, alcance y pago con la persona. OficiosHub facilita el pedido; el trabajo lo realiza quien publicó el servicio.",
     "contact": "Escribinos a hola@oficioshub.cumar.com.ar o por WhatsApp.",
     "privacy": "Cuidamos tus datos conforme a la normativa argentina de protección de datos.",
     "cookies": "Usamos cookies técnicas para el carrito, la sesión y el funcionamiento del marketplace."
@@ -314,49 +314,51 @@
   "images": {
     "heroSlides": [
       {
-        "image": "/branding/oficioshub/hero-oficios.svg?v=20260715a",
+        "image": "/branding/oficioshub/photos/hero-home.jpg?v=20260716b",
         "title": "OficiosHub",
-        "subtitle": "Contratá servicios de proveedores: plomería, electricidad, pintura y más",
-        "cta": "Ver servicios",
+        "subtitle": "Personas particulares que arreglan, pintan o cuidan tu casa",
+        "cta": "Ver personas",
         "link": "/productos"
       },
       {
-        "image": "/branding/oficioshub/og.svg?v=20260715a",
-        "title": "Proveedores con oficio",
-        "subtitle": "Cada servicio lo ofrece una persona. Elegí, pedí y coordiná",
-        "cta": "Explorar oficios",
+        "image": "/branding/oficioshub/photos/hero-person.jpg?v=20260716b",
+        "title": "Un oficio, una persona",
+        "subtitle": "Pocas categorías. Elegí a alguien y coordiná directo",
+        "cta": "Explorar",
         "link": "/productos"
       }
     ],
     "categories": [
       {
-        "name": "Plomería",
-        "image": "/branding/oficioshub/mark.svg?v=20260715a",
-        "link": "/productos?buscar=plomeria",
-        "description": "Destapes, instalaciones y reparaciones",
-        "slug": "plomeria",
-        "group": "Oficios",
+        "name": "Hogar",
+        "image": "/branding/oficioshub/photos/cat-hogar.jpg?v=20260716b",
+        "link": "/productos?buscar=hogar",
+        "description": "Arreglos y manos en casa: caños, puertas, refacciones chicas",
+        "slug": "hogar",
+        "group": "Personas",
         "searchTerms": [
+          "hogar",
+          "arreglo",
           "plomería",
-          "caño",
-          "destape"
+          "mano"
         ],
         "productCategories": [
-          "Plomería"
+          "Hogar"
         ],
         "subcategories": []
       },
       {
         "name": "Electricidad",
-        "image": "/branding/oficioshub/mark.svg?v=20260715a",
+        "image": "/branding/oficioshub/photos/cat-electricidad.jpg?v=20260716b",
         "link": "/productos?buscar=electricidad",
-        "description": "Instalaciones y tableros",
+        "description": "Enchufes, luces, tablero y aires a cargo de una persona",
         "slug": "electricidad",
-        "group": "Oficios",
+        "group": "Personas",
         "searchTerms": [
           "electricidad",
           "enchufe",
-          "tablero"
+          "aire",
+          "luz"
         ],
         "productCategories": [
           "Electricidad"
@@ -364,50 +366,16 @@
         "subcategories": []
       },
       {
-        "name": "Gas",
-        "image": "/branding/oficioshub/mark.svg?v=20260715a",
-        "link": "/productos?buscar=gas",
-        "description": "Artefactos y conexiones de gas",
-        "slug": "gas",
-        "group": "Oficios",
-        "searchTerms": [
-          "gas",
-          "calefón",
-          "cocina"
-        ],
-        "productCategories": [
-          "Gas"
-        ],
-        "subcategories": []
-      },
-      {
-        "name": "Albañilería",
-        "image": "/branding/oficioshub/mark.svg?v=20260715a",
-        "link": "/productos?buscar=albanileria",
-        "description": "Refacciones y obra liviana",
-        "slug": "albanileria",
-        "group": "Oficios",
-        "searchTerms": [
-          "albañilería",
-          "revoque",
-          "obra"
-        ],
-        "productCategories": [
-          "Albañilería"
-        ],
-        "subcategories": []
-      },
-      {
         "name": "Pintura",
-        "image": "/branding/oficioshub/mark.svg?v=20260715a",
+        "image": "/branding/oficioshub/photos/cat-pintura.jpg?v=20260716b",
         "link": "/productos?buscar=pintura",
-        "description": "Interior, exterior y terminaciones",
+        "description": "Pintura de ambientes o frentes, sin cuadrillas",
         "slug": "pintura",
-        "group": "Oficios",
+        "group": "Personas",
         "searchTerms": [
           "pintura",
-          "látex",
-          "pintor"
+          "pintor",
+          "látex"
         ],
         "productCategories": [
           "Pintura"
@@ -415,75 +383,42 @@
         "subcategories": []
       },
       {
-        "name": "Carpintería",
-        "image": "/branding/oficioshub/mark.svg?v=20260715a",
-        "link": "/productos?buscar=carpinteria",
-        "description": "Muebles, puertas y reparaciones",
-        "slug": "carpinteria",
-        "group": "Oficios",
+        "name": "Exterior",
+        "image": "/branding/oficioshub/photos/cat-exterior.jpg?v=20260716b",
+        "link": "/productos?buscar=exterior",
+        "description": "Jardín, poda y mantenimiento afuera de casa",
+        "slug": "exterior",
+        "group": "Personas",
         "searchTerms": [
-          "carpintería",
-          "madera",
-          "puerta"
-        ],
-        "productCategories": [
-          "Carpintería"
-        ],
-        "subcategories": []
-      },
-      {
-        "name": "Climatización",
-        "image": "/branding/oficioshub/mark.svg?v=20260715a",
-        "link": "/productos?buscar=climatizacion",
-        "description": "Aires, splits y mantenimiento",
-        "slug": "climatizacion",
-        "group": "Oficios",
-        "searchTerms": [
-          "aire",
-          "split",
-          "climatización"
-        ],
-        "productCategories": [
-          "Climatización"
-        ],
-        "subcategories": []
-      },
-      {
-        "name": "Jardinería",
-        "image": "/branding/oficioshub/mark.svg?v=20260715a",
-        "link": "/productos?buscar=jardineria",
-        "description": "Poda, césped y mantenimiento",
-        "slug": "jardineria",
-        "group": "Oficios",
-        "searchTerms": [
-          "jardinería",
+          "jardín",
+          "exterior",
           "poda",
           "césped"
         ],
         "productCategories": [
-          "Jardinería"
+          "Exterior"
         ],
         "subcategories": []
       }
     ],
     "placeholders": {
-      "product": "/branding/oficioshub/mark.svg?v=20260715a",
-      "category": "/branding/oficioshub/mark.svg?v=20260715a",
-      "user": "/branding/oficioshub/mark.svg?v=20260715a"
+      "product": "/branding/oficioshub/photos/svc-arreglos.jpg?v=20260716b",
+      "category": "/branding/oficioshub/photos/cat-hogar.jpg?v=20260716b",
+      "user": "/branding/oficioshub/photos/hero-person.jpg?v=20260716b"
     },
     "backgrounds": {
-      "hero": "/branding/oficioshub/hero-oficios.svg?v=20260715a",
+      "hero": "/branding/oficioshub/photos/hero-home.jpg?v=20260716b",
       "features": "",
       "testimonials": ""
     },
     "banners": {
-      "main": "/branding/oficioshub/hero-oficios.svg?v=20260715a",
+      "main": "/branding/oficioshub/photos/hero-home.jpg?v=20260716b",
       "secondary": "",
       "seasonal": "",
       "sale": ""
     },
     "productFallbacks": {
-      "default": "/branding/oficioshub/mark.svg?v=20260715a"
+      "default": "/branding/oficioshub/photos/svc-arreglos.jpg?v=20260716b"
     }
   },
   "header": {
@@ -493,7 +428,7 @@
     "showOrders": true,
     "showAccount": true,
     "showCart": true,
-    "topBarMessage": "Marketplace de oficios · Contratá servicios de proveedores reales",
+    "topBarMessage": "Personas con oficio · No empresas · Coordinás directo",
     "topBarHref": "/productos",
     "menu": [
       {
@@ -516,8 +451,8 @@
         "title": "Oficios",
         "links": [
           {
-            "label": "Plomería",
-            "href": "/productos?buscar=plomeria"
+            "label": "Hogar",
+            "href": "/productos?buscar=hogar"
           },
           {
             "label": "Electricidad",
@@ -526,6 +461,10 @@
           {
             "label": "Pintura",
             "href": "/productos?buscar=pintura"
+          },
+          {
+            "label": "Exterior",
+            "href": "/productos?buscar=exterior"
           }
         ]
       },
@@ -548,7 +487,7 @@
       }
     ],
     "showWhatsappCapture": true,
-    "whatsappOptInMessage": "Hola! Quiero contratar un servicio en OficiosHub.",
+    "whatsappOptInMessage": "Hola! Quiero contratar a alguien en OficiosHub.",
     "whatsappOptInSuccessMessage": "¡Listo! Te abrimos WhatsApp para continuar.",
     "withdrawalWhatsappMessage": "Quiero cancelar o modificar mi contratación en OficiosHub.",
     "paymentMethods": [
@@ -675,21 +614,21 @@
     "trackEcommerce": true
   },
   "ui": {
-    "searchPlaceholder": "Buscar oficio, servicio o proveedor...",
-    "noProductsTitle": "No encontramos servicios",
-    "noProductsMessage": "Probá con otro oficio o mirá el catálogo completo",
+    "searchPlaceholder": "Buscar persona u oficio...",
+    "noProductsTitle": "No encontramos a nadie con ese oficio",
+    "noProductsMessage": "Probá Hogar, Electricidad, Pintura o Exterior",
     "loginTitle": "Ingresar a OficiosHub",
-    "loginSubtitle": "Accedé para contratar servicios de proveedores",
-    "cartEmptyTitle": "Todavía no elegiste servicios",
-    "cartEmptyMessage": "Sumá un oficio al pedido para contratarlo",
+    "loginSubtitle": "Accedé para contratar a una persona y seguir tus pedidos",
+    "cartEmptyTitle": "Todavía no elegiste a nadie",
+    "cartEmptyMessage": "Sumá el servicio de una persona para contratarla",
     "checkoutFinalizeLabel": "Confirmar contratación",
-    "addToCartLabel": "Contratar servicio",
-    "homeHeroCta": "Ver servicios",
-    "homeFeaturedTitle": "Servicios destacados",
-    "homeFeaturedSubtitle": "Oficios que más se contratan esta semana",
+    "addToCartLabel": "Contratar a esta persona",
+    "homeHeroCta": "Ver personas",
+    "homeFeaturedTitle": "Personas destacadas",
+    "homeFeaturedSubtitle": "Vecinos con oficio que más se contratan",
     "homeCategoriesTitle": "Oficios",
-    "homeCategoriesSubtitle": "Elegí el rubro y encontrá proveedores",
-    "homeNewTitle": "Nuevos en el hub",
-    "homeNewSubtitle": "Últimos servicios publicados por proveedores"
+    "homeCategoriesSubtitle": "Solo cuatro: elegí y mirá quién ofrece",
+    "homeNewTitle": "Recién sumados",
+    "homeNewSubtitle": "Personas que acaban de publicar su oficio"
   }
 }

@@ -17,9 +17,16 @@ STOREFRONT = "https://oficioshub.cumar.com.ar"
 BRAND = "/branding/oficioshub"
 
 
+ASSET_V = "20260716b"
+
+
 def asset(name: str) -> str:
     # query bust helps when Cloudflare cached early 404s from misrouting
-    return f"{BRAND}/{name}?v=20260715a"
+    return f"{BRAND}/{name}?v={ASSET_V}"
+
+
+def photo(name: str) -> str:
+    return asset(f"photos/{name}")
 
 
 def api(method: str, path: str, token: str | None = None, body: dict | None = None):
@@ -72,11 +79,12 @@ def cat(
     slug: str,
     description: str,
     search_terms: list[str],
-    group: str = "Oficios",
+    image: str,
+    group: str = "Personas",
 ) -> dict:
     return {
         "name": name,
-        "image": asset("mark.svg"),
+        "image": image,
         "link": f"/productos?buscar={slug}",
         "description": description,
         "slug": slug,
@@ -99,15 +107,15 @@ def build_config() -> dict:
         "app": {
             "name": "OficiosHub",
             "companyName": "OficiosHub",
-            "slogan": "Servicios de personas, para personas",
+            "slogan": "Vecinos con oficio, cerca tuyo",
             "description": (
-                "Marketplace donde proveedores ofrecen sus oficios como servicios "
-                "y los clientes los contratan online."
+                "Marketplace de personas particulares que ofrecen un oficio: "
+                "alguien que arregla, pinta o cuida tu casa. No es un directorio de empresas."
             ),
             "url": STOREFRONT,
             "hidePricesForGuests": False,
             "requireAuthForCart": False,
-            "loginMessage": "Ingresá para contratar servicios y gestionar tus pedidos",
+            "loginMessage": "Ingresá para contratar a una persona y seguir tus pedidos",
             "loginCta": "Ingresar",
         },
         "contact": {
@@ -144,8 +152,8 @@ def build_config() -> dict:
             "footerLogo": asset("logo.svg"),
             "logoDark": asset("logo.svg"),
             "favicon": asset("favicon.svg"),
-            "banner": asset("hero-oficios.svg"),
-            "ogImage": asset("og.svg"),
+            "banner": photo("hero-home.jpg"),
+            "ogImage": photo("hero-person.jpg"),
         },
         "theme": {
             "colorPrimary": "#14213D",
@@ -183,23 +191,23 @@ def build_config() -> dict:
             "benefits": [
                 {
                     "icon": "BadgeCheck",
-                    "title": "Proveedores reales",
-                    "description": "Cada servicio lo brinda una persona con oficio publicado",
+                    "title": "Personas, no empresas",
+                    "description": "Cada perfil es alguien particular con un oficio, no un rubro corporativo",
                 },
                 {
-                    "icon": "Package",
-                    "title": "Contratá online",
-                    "description": "Elegí el servicio, pedí y coordiná fecha con el proveedor",
+                    "icon": "Users",
+                    "title": "Pocos oficios, claros",
+                    "description": "Hogar, electricidad, pintura y exterior: fácil de elegir",
                 },
                 {
-                    "icon": "Shield",
-                    "title": "Pedido trazable",
-                    "description": "Tu contratación queda registrada en la plataforma",
+                    "icon": "MessageCircle",
+                    "title": "Coordinás con la persona",
+                    "description": "Pedís online y arreglás día y detalle directo con quien lo hace",
                 },
                 {
-                    "icon": "Truck",
-                    "title": "A domicilio",
-                    "description": "La mayoría de los oficios se hacen en tu casa u obra",
+                    "icon": "Star",
+                    "title": "Reseñas reales",
+                    "description": "Quienes contrataron puntúan servicio, limpieza y puntualidad",
                 },
             ],
         },
@@ -235,14 +243,14 @@ def build_config() -> dict:
         "shipping": {
             "enabled": True,
             "mode": "flat_rate",
-            "bannerText": "Los servicios se coordinan directo con cada proveedor",
+            "bannerText": "Coordinás día y horario directo con la persona",
             "label": "Visita / coordinación",
             "freeLabel": "Incluida",
             "pendingLabel": "A coordinar",
             "chargedMessage": "La visita se coordina al confirmar el pedido",
-            "drawerMessage": "Cada proveedor confirma día y horario",
+            "drawerMessage": "La persona te confirma día y horario",
             "productBadgeTitle": "Modalidad",
-            "productBadgeDescription": "Servicio a domicilio o en taller",
+            "productBadgeDescription": "En tu casa o donde indiques",
             "chargeAmount": 0,
             "chargeProductId": None,
             "chargeProductSku": None,
@@ -254,7 +262,7 @@ def build_config() -> dict:
             "endpoint": None,
             "headers": {},
             "title": "Oficios y tips en tu correo",
-            "description": "Novedades de proveedores y servicios destacados",
+            "description": "Tips de oficios y personas nuevas en el hub",
             "placeholder": "tu@email.com",
             "buttonLabel": "Suscribirme",
             "successMessage": "¡Listo! Te avisamos las próximas novedades",
@@ -262,7 +270,7 @@ def build_config() -> dict:
         },
         "registration": {
             "title": "Crear cuenta",
-            "subtitle": "Registrate para contratar servicios de proveedores",
+            "subtitle": "Registrate para contratar a personas con oficio",
             "submitLabel": "Crear cuenta",
             "successMessage": "Cuenta creada con éxito",
             "acceptTermsLabel": "Acepto los términos y condiciones",
@@ -294,14 +302,14 @@ def build_config() -> dict:
                 },
                 {
                     "name": "company_name",
-                    "label": "Nombre o empresa",
-                    "placeholder": "Cómo te llamamos",
+                    "label": "Tu nombre",
+                    "placeholder": "Ej: Martín Acosta",
                     "required": True,
                     "visible": True,
                 },
                 {
                     "name": "tax_id",
-                    "label": "CUIT / CUIL",
+                    "label": "CUIT / CUIL (opcional)",
                     "placeholder": "20-12345678-9",
                     "required": False,
                     "visible": True,
@@ -352,22 +360,22 @@ def build_config() -> dict:
             },
         },
         "seo": {
-            "title": "OficiosHub · Marketplace de servicios",
-            "description": "Contratá plomería, electricidad, pintura y más oficios de proveedores reales.",
+            "title": "OficiosHub · Personas con oficio cerca tuyo",
+            "description": "Contratá a vecinos que arreglan el hogar, electricidad, pintura o exterior. Personas particulares, no empresas.",
             "robots": "index,follow",
             "keywords": [
                 "oficios",
-                "servicios",
-                "marketplace",
-                "plomería",
+                "personas",
+                "hogar",
                 "electricidad",
-                "proveedores",
+                "pintura",
+                "jardín",
             ],
-            "defaultTitle": "OficiosHub · Servicios de proveedores",
+            "defaultTitle": "OficiosHub · Personas con oficio",
             "titleTemplate": "{title} | OficiosHub",
-            "defaultDescription": "Marketplace para contratar servicios de oficios brindados por proveedores.",
-            "defaultKeywords": "oficios, servicios, marketplace, proveedores",
-            "defaultOgImage": asset("og.svg"),
+            "defaultDescription": "Marketplace de personas particulares que ofrecen un oficio en tu zona.",
+            "defaultKeywords": "oficios, personas, hogar, electricidad, pintura",
+            "defaultOgImage": photo("hero-person.jpg"),
             "twitterHandle": "",
             "canonicalBaseUrl": STOREFRONT,
             "enableJsonLd": True,
@@ -381,27 +389,27 @@ def build_config() -> dict:
             "routes": {
                 "/": {
                     "title": "Inicio",
-                    "description": "Contratá oficios de proveedores en tu zona.",
+                    "description": "Encontrá personas con oficio cerca tuyo.",
                 },
                 "/productos": {
                     "title": "Servicios",
-                    "description": "Catálogo de servicios por oficio y proveedor.",
+                    "description": "Servicios publicados por personas particulares.",
                 },
                 "/contacto": {
                     "title": "Contacto",
-                    "description": "Escribinos para sumarte como proveedor o cliente.",
+                    "description": "Escribinos para sumarte u obtener ayuda.",
                 },
             },
         },
         "pages": {
             "about": (
-                "OficiosHub es un marketplace donde personas publican sus oficios como servicios "
-                "y otras personas los contratan. Los productos del catálogo son servicios; "
-                "los proveedores son las personas que los brindan."
+                "OficiosHub conecta personas: alguien necesita un arreglo y otra persona "
+                "particular lo ofrece. No somos un directorio de empresas por rubro; "
+                "cada perfil es un vecino con un oficio concreto."
             ),
             "terms": (
-                "Al contratar un servicio aceptás coordinar fecha, alcance y forma de pago "
-                "con el proveedor. OficiosHub facilita el pedido; la ejecución la realiza el proveedor."
+                "Al contratar aceptás coordinar fecha, alcance y pago con la persona. "
+                "OficiosHub facilita el pedido; el trabajo lo realiza quien publicó el servicio."
             ),
             "contact": "Escribinos a hola@oficioshub.cumar.com.ar o por WhatsApp.",
             "privacy": "Cuidamos tus datos conforme a la normativa argentina de protección de datos.",
@@ -410,47 +418,67 @@ def build_config() -> dict:
         "images": {
             "heroSlides": [
                 {
-                    "image": asset("hero-oficios.svg"),
+                    "image": photo("hero-home.jpg"),
                     "title": "OficiosHub",
-                    "subtitle": "Contratá servicios de proveedores: plomería, electricidad, pintura y más",
-                    "cta": "Ver servicios",
+                    "subtitle": "Personas particulares que arreglan, pintan o cuidan tu casa",
+                    "cta": "Ver personas",
                     "link": "/productos",
                 },
                 {
-                    "image": asset("og.svg"),
-                    "title": "Proveedores con oficio",
-                    "subtitle": "Cada servicio lo ofrece una persona. Elegí, pedí y coordiná",
-                    "cta": "Explorar oficios",
+                    "image": photo("hero-person.jpg"),
+                    "title": "Un oficio, una persona",
+                    "subtitle": "Pocas categorías. Elegí a alguien y coordiná directo",
+                    "cta": "Explorar",
                     "link": "/productos",
                 },
             ],
             "categories": [
-                cat("Plomería", "plomeria", "Destapes, instalaciones y reparaciones", ["plomería", "caño", "destape"]),
-                cat("Electricidad", "electricidad", "Instalaciones y tableros", ["electricidad", "enchufe", "tablero"]),
-                cat("Gas", "gas", "Artefactos y conexiones de gas", ["gas", "calefón", "cocina"]),
-                cat("Albañilería", "albanileria", "Refacciones y obra liviana", ["albañilería", "revoque", "obra"]),
-                cat("Pintura", "pintura", "Interior, exterior y terminaciones", ["pintura", "látex", "pintor"]),
-                cat("Carpintería", "carpinteria", "Muebles, puertas y reparaciones", ["carpintería", "madera", "puerta"]),
-                cat("Climatización", "climatizacion", "Aires, splits y mantenimiento", ["aire", "split", "climatización"]),
-                cat("Jardinería", "jardineria", "Poda, césped y mantenimiento", ["jardinería", "poda", "césped"]),
+                cat(
+                    "Hogar",
+                    "hogar",
+                    "Arreglos y manos en casa: caños, puertas, refacciones chicas",
+                    ["hogar", "arreglo", "plomería", "mano"],
+                    photo("cat-hogar.jpg"),
+                ),
+                cat(
+                    "Electricidad",
+                    "electricidad",
+                    "Enchufes, luces, tablero y aires a cargo de una persona",
+                    ["electricidad", "enchufe", "aire", "luz"],
+                    photo("cat-electricidad.jpg"),
+                ),
+                cat(
+                    "Pintura",
+                    "pintura",
+                    "Pintura de ambientes o frentes, sin cuadrillas",
+                    ["pintura", "pintor", "látex"],
+                    photo("cat-pintura.jpg"),
+                ),
+                cat(
+                    "Exterior",
+                    "exterior",
+                    "Jardín, poda y mantenimiento afuera de casa",
+                    ["jardín", "exterior", "poda", "césped"],
+                    photo("cat-exterior.jpg"),
+                ),
             ],
             "placeholders": {
-                "product": asset("mark.svg"),
-                "category": asset("mark.svg"),
-                "user": asset("mark.svg"),
+                "product": photo("svc-arreglos.jpg"),
+                "category": photo("cat-hogar.jpg"),
+                "user": photo("hero-person.jpg"),
             },
             "backgrounds": {
-                "hero": asset("hero-oficios.svg"),
+                "hero": photo("hero-home.jpg"),
                 "features": "",
                 "testimonials": "",
             },
             "banners": {
-                "main": asset("hero-oficios.svg"),
+                "main": photo("hero-home.jpg"),
                 "secondary": "",
                 "seasonal": "",
                 "sale": "",
             },
-            "productFallbacks": {"default": asset("mark.svg")},
+            "productFallbacks": {"default": photo("svc-arreglos.jpg")},
         },
         "header": {
             "showSearch": True,
@@ -459,7 +487,7 @@ def build_config() -> dict:
             "showOrders": True,
             "showAccount": True,
             "showCart": True,
-            "topBarMessage": "Marketplace de oficios · Contratá servicios de proveedores reales",
+            "topBarMessage": "Personas con oficio · No empresas · Coordinás directo",
             "topBarHref": "/productos",
             "menu": [
                 {"label": "Servicios", "href": "/productos"},
@@ -472,9 +500,10 @@ def build_config() -> dict:
                 {
                     "title": "Oficios",
                     "links": [
-                        {"label": "Plomería", "href": "/productos?buscar=plomeria"},
+                        {"label": "Hogar", "href": "/productos?buscar=hogar"},
                         {"label": "Electricidad", "href": "/productos?buscar=electricidad"},
                         {"label": "Pintura", "href": "/productos?buscar=pintura"},
+                        {"label": "Exterior", "href": "/productos?buscar=exterior"},
                     ],
                 },
                 {
@@ -487,7 +516,7 @@ def build_config() -> dict:
                 },
             ],
             "showWhatsappCapture": True,
-            "whatsappOptInMessage": "Hola! Quiero contratar un servicio en OficiosHub.",
+            "whatsappOptInMessage": "Hola! Quiero contratar a alguien en OficiosHub.",
             "whatsappOptInSuccessMessage": "¡Listo! Te abrimos WhatsApp para continuar.",
             "withdrawalWhatsappMessage": "Quiero cancelar o modificar mi contratación en OficiosHub.",
             "paymentMethods": ["Transferencia", "Efectivo"],
@@ -603,183 +632,136 @@ def build_config() -> dict:
             "trackEcommerce": True,
         },
         "ui": {
-            "searchPlaceholder": "Buscar oficio, servicio o proveedor...",
-            "noProductsTitle": "No encontramos servicios",
-            "noProductsMessage": "Probá con otro oficio o mirá el catálogo completo",
+            "searchPlaceholder": "Buscar persona u oficio...",
+            "noProductsTitle": "No encontramos a nadie con ese oficio",
+            "noProductsMessage": "Probá Hogar, Electricidad, Pintura o Exterior",
             "loginTitle": "Ingresar a OficiosHub",
-            "loginSubtitle": "Accedé para contratar servicios de proveedores",
-            "cartEmptyTitle": "Todavía no elegiste servicios",
-            "cartEmptyMessage": "Sumá un oficio al pedido para contratarlo",
+            "loginSubtitle": "Accedé para contratar a una persona y seguir tus pedidos",
+            "cartEmptyTitle": "Todavía no elegiste a nadie",
+            "cartEmptyMessage": "Sumá el servicio de una persona para contratarla",
             "checkoutFinalizeLabel": "Confirmar contratación",
-            "addToCartLabel": "Contratar servicio",
-            "homeHeroCta": "Ver servicios",
-            "homeFeaturedTitle": "Servicios destacados",
-            "homeFeaturedSubtitle": "Oficios que más se contratan esta semana",
+            "addToCartLabel": "Contratar a esta persona",
+            "homeHeroCta": "Ver personas",
+            "homeFeaturedTitle": "Personas destacadas",
+            "homeFeaturedSubtitle": "Vecinos con oficio que más se contratan",
             "homeCategoriesTitle": "Oficios",
-            "homeCategoriesSubtitle": "Elegí el rubro y encontrá proveedores",
-            "homeNewTitle": "Nuevos en el hub",
-            "homeNewSubtitle": "Últimos servicios publicados por proveedores",
+            "homeCategoriesSubtitle": "Solo cuatro: elegí y mirá quién ofrece",
+            "homeNewTitle": "Recién sumados",
+            "homeNewSubtitle": "Personas que acaban de publicar su oficio",
         },
     }
 
 
-# product = servicio; provider_* = persona que lo brinda
+# Un servicio ≈ una persona particular (no empresa de rubro).
+# Categorías canónicas: Hogar | Electricidad | Pintura | Exterior
 PRODUCTS = [
     {
-        "sku": "OH-PLO-DES-01",
-        "name": "Destape de cañerías",
-        "description": "Destape de cocina, baño o cloaca con equipo profesional. Incluye diagnóstico en domicilio.",
+        "sku": "OH-HOG-MARTIN-01",
+        "name": "Martín · Destape y caños en casa",
+        "description": (
+            "Soy Martín. Voy a tu casa en CABA/GBA a destapar cocina, baño o cloaca "
+            "y te dejo el diagnóstico. Trabajo solo, con herramientas propias."
+        ),
         "unit_price": 45000,
-        "stock_quantity": 50,
-        "stock_unit": "servicio",
-        "family": "Hogar",
-        "category": "Plomería",
-        "subcategory": "Destapes",
-        "provider_name": "Martín Acosta",
-        "provider_headline": "Plomero matriculado · CABA y GBA",
-    },
-    {
-        "sku": "OH-PLO-INS-01",
-        "name": "Instalación de grifería",
-        "description": "Cambio o instalación de grifería de cocina/baño. Mano de obra; grifería a cargo del cliente o a cotizar.",
-        "unit_price": 38000,
         "stock_quantity": 40,
         "stock_unit": "servicio",
         "family": "Hogar",
-        "category": "Plomería",
-        "subcategory": "Instalaciones",
+        "category": "Hogar",
+        "subcategory": "",
+        "image": "svc-plomeria.jpg",
         "provider_name": "Martín Acosta",
-        "provider_headline": "Plomero matriculado · CABA y GBA",
+        "provider_headline": "Particular · arreglos de caños en CABA y GBA",
+        "provider_zone": "CABA y GBA Norte",
     },
     {
-        "sku": "OH-ELE-TAB-01",
-        "name": "Revisión de tablero eléctrico",
-        "description": "Chequeo de tablero, termomagnéticas y puesta a tierra. Informe y recomendaciones.",
-        "unit_price": 52000,
-        "stock_quantity": 30,
-        "stock_unit": "servicio",
-        "family": "Hogar",
-        "category": "Electricidad",
-        "subcategory": "Tableros",
-        "provider_name": "Lucía Fernández",
-        "provider_headline": "Electricista · instalaciones domiciliarias",
-    },
-    {
-        "sku": "OH-ELE-PUN-01",
-        "name": "Puntos de luz y tomas",
-        "description": "Instalación de hasta 3 puntos de luz o tomacorrientes. Cableado embutido o exterior según obra.",
-        "unit_price": 68000,
-        "stock_quantity": 25,
-        "stock_unit": "servicio",
-        "family": "Hogar",
-        "category": "Electricidad",
-        "subcategory": "Instalaciones",
-        "provider_name": "Lucía Fernández",
-        "provider_headline": "Electricista · instalaciones domiciliarias",
-    },
-    {
-        "sku": "OH-GAS-CAL-01",
-        "name": "Instalación de calefón",
-        "description": "Instalación de calefón a gas con prueba de hermeticidad. Artefacto a cargo del cliente.",
-        "unit_price": 95000,
-        "stock_quantity": 20,
-        "stock_unit": "servicio",
-        "family": "Hogar",
-        "category": "Gas",
-        "subcategory": "Artefactos",
-        "provider_name": "Diego Rivas",
-        "provider_headline": "Gasista matriculado",
-    },
-    {
-        "sku": "OH-ALB-REV-01",
-        "name": "Reparación de revoque",
-        "description": "Reparación de revoque y fisuras en pared interior (hasta 4 m²). Incluye preparación y terminación.",
-        "unit_price": 72000,
+        "sku": "OH-HOG-DIEGO-01",
+        "name": "Diego · Manos en casa (arreglos varios)",
+        "description": (
+            "Soy Diego. Arreglo puertas que no cierran, grifería que gotea y refacciones "
+            "chicas. No soy una empresa: voy yo, coordinamos por WhatsApp."
+        ),
+        "unit_price": 42000,
         "stock_quantity": 35,
         "stock_unit": "servicio",
-        "family": "Obra",
-        "category": "Albañilería",
-        "subcategory": "Refacciones",
-        "provider_name": "Pedro Gómez",
-        "provider_headline": "Albañil · refacciones y obra liviana",
+        "family": "Hogar",
+        "category": "Hogar",
+        "subcategory": "",
+        "image": "svc-arreglos.jpg",
+        "provider_name": "Diego Rivas",
+        "provider_headline": "Particular · mano de obra liviana en el hogar",
+        "provider_zone": "Zona Oeste",
     },
     {
-        "sku": "OH-PIN-INT-01",
-        "name": "Pintura interior por ambiente",
-        "description": "Pintura de un ambiente estándar (hasta 12 m²). Incluye preparación liviana y dos manos.",
-        "unit_price": 110000,
-        "stock_quantity": 40,
-        "stock_unit": "servicio",
-        "family": "Terminaciones",
-        "category": "Pintura",
-        "subcategory": "Interior",
-        "provider_name": "Ana Beltrán",
-        "provider_headline": "Pintora profesional",
-    },
-    {
-        "sku": "OH-PIN-EXT-01",
-        "name": "Pintura de frente",
-        "description": "Pintura de frente de casa o PH (hasta 30 m²). Presupuesto a confirmar según estado.",
-        "unit_price": 185000,
-        "stock_quantity": 15,
-        "stock_unit": "servicio",
-        "family": "Terminaciones",
-        "category": "Pintura",
-        "subcategory": "Exterior",
-        "provider_name": "Ana Beltrán",
-        "provider_headline": "Pintora profesional",
-    },
-    {
-        "sku": "OH-CAR-PUE-01",
-        "name": "Ajuste y reparación de puertas",
-        "description": "Ajuste de bisagras, cepillado y cierre de puertas interiores. Hasta 2 puertas.",
-        "unit_price": 42000,
+        "sku": "OH-ELE-LUCIA-01",
+        "name": "Lucía · Luces, tomas y tablero",
+        "description": (
+            "Soy Lucía. Instalo o reviso puntos de luz, tomas y tablero domiciliario. "
+            "Trabajo por mi cuenta en casas y departamentos."
+        ),
+        "unit_price": 62000,
         "stock_quantity": 30,
         "stock_unit": "servicio",
-        "family": "Hogar",
-        "category": "Carpintería",
-        "subcategory": "Reparaciones",
-        "provider_name": "Sofía Ruiz",
-        "provider_headline": "Carpintera · muebles y aberturas",
+        "family": "Electricidad",
+        "category": "Electricidad",
+        "subcategory": "",
+        "image": "svc-electricidad.jpg",
+        "provider_name": "Lucía Fernández",
+        "provider_headline": "Particular · electricidad domiciliaria",
+        "provider_zone": "CABA",
     },
     {
-        "sku": "OH-CLI-SPL-01",
-        "name": "Instalación de split",
-        "description": "Instalación de aire split hasta 3000 frigorías. Incluye soporte y conexión básica.",
-        "unit_price": 140000,
-        "stock_quantity": 18,
-        "stock_unit": "servicio",
-        "family": "Hogar",
-        "category": "Climatización",
-        "subcategory": "Instalación",
-        "provider_name": "Nicolás Vega",
-        "provider_headline": "Técnico en climatización",
-    },
-    {
-        "sku": "OH-CLI-MNT-01",
-        "name": "Service de aire acondicionado",
-        "description": "Limpieza y service de split o ventana. Incluye filtros y chequeo de gas.",
+        "sku": "OH-ELE-NICO-01",
+        "name": "Nico · Service de aire en casa",
+        "description": (
+            "Soy Nico. Hago limpieza y service de split o ventana en tu domicilio. "
+            "Voy solo; si hace falta gas, te aviso antes."
+        ),
         "unit_price": 48000,
-        "stock_quantity": 45,
+        "stock_quantity": 35,
         "stock_unit": "servicio",
-        "family": "Hogar",
-        "category": "Climatización",
-        "subcategory": "Mantenimiento",
+        "family": "Electricidad",
+        "category": "Electricidad",
+        "subcategory": "",
+        "image": "svc-aires.jpg",
         "provider_name": "Nicolás Vega",
-        "provider_headline": "Técnico en climatización",
+        "provider_headline": "Particular · aires y climatización hogareña",
+        "provider_zone": "GBA Sur",
     },
     {
-        "sku": "OH-JAR-POD-01",
-        "name": "Poda y mantenimiento de jardín",
-        "description": "Poda liviana, corte de césped y limpieza de jardín chico/mediano (hasta 80 m²).",
+        "sku": "OH-PIN-ANA-01",
+        "name": "Ana · Pintura de un ambiente",
+        "description": (
+            "Soy Ana. Pinto un ambiente (hasta ~12 m²) con preparación liviana y dos manos. "
+            "Trabajo sola; la pintura la podemos ver juntos."
+        ),
+        "unit_price": 110000,
+        "stock_quantity": 25,
+        "stock_unit": "servicio",
+        "family": "Pintura",
+        "category": "Pintura",
+        "subcategory": "",
+        "image": "svc-pintura.jpg",
+        "provider_name": "Ana Beltrán",
+        "provider_headline": "Particular · pintura de interiores",
+        "provider_zone": "CABA y GBA Oeste",
+    },
+    {
+        "sku": "OH-EXT-CAMILA-01",
+        "name": "Camila · Jardín y poda chica",
+        "description": (
+            "Soy Camila. Hago poda liviana, corte de césped y orden de jardín chico/mediano. "
+            "Voy yo con mis herramientas; no tengo cuadrilla."
+        ),
         "unit_price": 55000,
-        "stock_quantity": 40,
+        "stock_quantity": 30,
         "stock_unit": "servicio",
         "family": "Exterior",
-        "category": "Jardinería",
-        "subcategory": "Mantenimiento",
+        "category": "Exterior",
+        "subcategory": "",
+        "image": "svc-jardin.jpg",
         "provider_name": "Camila Soto",
-        "provider_headline": "Jardinera · mantenimiento residencial",
+        "provider_headline": "Particular · jardín y exterior",
+        "provider_zone": "Zona Norte",
     },
 ]
 
@@ -798,48 +780,111 @@ def put_config(token: str, config: dict) -> None:
     print(f"OK ecommerce-config version={(payload.get('data') or {}).get('version')}")
 
 
-def create_products(token: str) -> None:
-    created = 0
-    skipped = 0
-    for raw in PRODUCTS:
-        item = dict(raw)
-        provider_name = item.pop("provider_name")
-        provider_headline = item.pop("provider_headline")
-        description = (
-            f"{item['description']} Proveedor: {provider_name} — {provider_headline}."
+def list_products(token: str) -> list[dict]:
+    items: list[dict] = []
+    page = 1
+    while page <= 20:
+        status, payload = api(
+            "GET",
+            f"/api/accounts/{ACCOUNT_ID}/products?page={page}&page_size=100",
+            token=token,
         )
-        body = {
-            **item,
-            "description": description,
-            "currency": "ARS",
-            "tax_rate": 0.21,
-            "status": "active",
-            "product_type": "service",
-            "track_inventory": True,
-            "allow_backorders": True,
-            "stock_min": 0,
-            "image_url": asset("mark.svg"),
-            "thumbnail_url": asset("mark.svg"),
-            "metadata": {
-                "kind": "service",
-                "marketplace": "oficioshub",
-                "provider": {
-                    "name": provider_name,
-                    "headline": provider_headline,
-                    "type": "person",
-                },
-                "rubro": item["family"],
-                "country": "AR",
-                "locale": "es-AR",
+        if status >= 400:
+            raise SystemExit(f"List products HTTP {status}: {payload}")
+        batch = payload.get("data") or []
+        if not isinstance(batch, list):
+            break
+        items.extend(batch)
+        pag = payload.get("pagination") or {}
+        total_pages = int(pag.get("total_pages") or pag.get("pages") or 1)
+        if page >= total_pages or not batch:
+            break
+        page += 1
+    return items
+
+
+def product_body(raw: dict) -> dict:
+    item = dict(raw)
+    provider_name = item.pop("provider_name")
+    provider_headline = item.pop("provider_headline")
+    provider_zone = item.pop("provider_zone", "")
+    image_name = item.pop("image", "svc-arreglos.jpg")
+    image_url = photo(image_name)
+    description = item["description"]
+    return {
+        "sku": item["sku"],
+        "name": item["name"],
+        "description": description,
+        "unit_price": item["unit_price"],
+        "stock_quantity": item["stock_quantity"],
+        "stock_unit": item["stock_unit"],
+        "family": item["family"],
+        "category": item["category"],
+        "subcategory": item.get("subcategory") or None,
+        "currency": "ARS",
+        "tax_rate": 0.21,
+        "status": "active",
+        "product_type": "service",
+        "track_inventory": True,
+        "allow_backorders": True,
+        "stock_min": 0,
+        "image_url": image_url,
+        "thumbnail_url": image_url,
+        "metadata": {
+            "kind": "service",
+            "marketplace": "oficioshub",
+            "provider": {
+                "name": provider_name,
+                "headline": provider_headline,
+                "zone": provider_zone,
+                "type": "person",
+            },
+            "rubro": item["family"],
+            "country": "AR",
+            "locale": "es-AR",
+            "channels": ["ecommerce"],
+            "showecommerce": True,
+            "public": {
                 "channels": ["ecommerce"],
                 "showecommerce": True,
-                "public": {
-                    "channels": ["ecommerce"],
-                    "showecommerce": True,
-                    "provider_name": provider_name,
-                },
+                "provider_name": provider_name,
+                "provider_headline": provider_headline,
+                "provider_zone": provider_zone,
             },
-        }
+        },
+    }
+
+
+def sync_products(token: str) -> None:
+    existing = list_products(token)
+    by_sku = {str(p.get("sku") or ""): p for p in existing}
+    keep_skus = {p["sku"] for p in PRODUCTS}
+    created = 0
+    updated = 0
+
+    for raw in PRODUCTS:
+        body = product_body(raw)
+        sku = body["sku"]
+        current = by_sku.get(sku)
+        if current and current.get("id"):
+            pid = current["id"]
+            patch = {k: v for k, v in body.items() if k != "sku"}
+            status, payload = api(
+                "PATCH",
+                f"/api/accounts/{ACCOUNT_ID}/products/{pid}",
+                token=token,
+                body=patch,
+            )
+            if status in (200, 201):
+                updated += 1
+                print(f"  ~ {sku}")
+            else:
+                print(
+                    f"  ! PATCH FAIL {sku} HTTP {status}: "
+                    f"{json.dumps(payload, ensure_ascii=False)[:400]}"
+                )
+            continue
+
         status, payload = api(
             "POST",
             f"/api/accounts/{ACCOUNT_ID}/products",
@@ -848,34 +893,58 @@ def create_products(token: str) -> None:
         )
         if status in (200, 201):
             created += 1
-            print(f"  + {item['sku']} · {provider_name} · {item['name']}")
-        elif status == 409 or "Ya existe" in json.dumps(payload, ensure_ascii=False):
-            skipped += 1
-            print(f"  = existe {item['sku']}")
+            print(f"  + {sku}")
+            continue
+        if status == 422 and "product_type" in json.dumps(payload, ensure_ascii=False):
+            body["product_type"] = "physical"
+            status2, payload2 = api(
+                "POST",
+                f"/api/accounts/{ACCOUNT_ID}/products",
+                token=token,
+                body=body,
+            )
+            if status2 in (200, 201):
+                created += 1
+                print(f"  + {sku} (physical fallback)")
+                continue
+            print(
+                f"  ! FAIL {sku} HTTP {status2}: "
+                f"{json.dumps(payload2, ensure_ascii=False)[:400]}"
+            )
         else:
-            # Fallback product_type if API rejects "service"
-            if status == 422 and "product_type" in json.dumps(payload, ensure_ascii=False):
-                body["product_type"] = "physical"
-                status2, payload2 = api(
-                    "POST",
-                    f"/api/accounts/{ACCOUNT_ID}/products",
-                    token=token,
-                    body=body,
-                )
-                if status2 in (200, 201):
-                    created += 1
-                    print(f"  + {item['sku']} (physical fallback) · {provider_name}")
-                    continue
-                print(
-                    f"  ! FAIL {item['sku']} HTTP {status2}: "
-                    f"{json.dumps(payload2, ensure_ascii=False)[:400]}"
-                )
-            else:
-                print(
-                    f"  ! FAIL {item['sku']} HTTP {status}: "
-                    f"{json.dumps(payload, ensure_ascii=False)[:400]}"
-                )
-    print(f"OK productos created={created} skipped={skipped} total={len(PRODUCTS)}")
+            print(
+                f"  ! FAIL {sku} HTTP {status}: "
+                f"{json.dumps(payload, ensure_ascii=False)[:400]}"
+            )
+
+    archived = 0
+    for p in existing:
+        sku = str(p.get("sku") or "")
+        meta = p.get("metadata") or {}
+        is_oh = meta.get("marketplace") == "oficioshub" or sku.startswith("OH-")
+        if not is_oh or sku in keep_skus:
+            continue
+        if str(p.get("status") or "").lower() == "inactive":
+            continue
+        pid = p.get("id")
+        if not pid:
+            continue
+        status, payload = api(
+            "PATCH",
+            f"/api/accounts/{ACCOUNT_ID}/products/{pid}",
+            token=token,
+            body={"status": "inactive"},
+        )
+        if status in (200, 201):
+            archived += 1
+            print(f"  - archive {sku}")
+        else:
+            print(f"  ! archive FAIL {sku} HTTP {status}")
+
+    print(
+        f"OK productos created={created} updated={updated} "
+        f"archived={archived} catalog={len(PRODUCTS)}"
+    )
 
 
 def verify() -> None:
@@ -904,7 +973,7 @@ def main() -> int:
 
     token = login()
     put_config(token, config)
-    create_products(token)
+    sync_products(token)
     verify()
     return 0
 

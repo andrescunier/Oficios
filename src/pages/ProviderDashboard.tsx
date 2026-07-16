@@ -267,18 +267,18 @@ export const ProviderDashboard: React.FC = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Briefcase className="h-5 w-5" />
-                Panel de proveedores
+                Tu oficio en OficiosHub
               </CardTitle>
               <CardDescription>
-                Tu cuenta está registrada como cliente. Para publicar servicios necesitás una cuenta de proveedor.
+                Esta cuenta es de cliente. Para publicar lo que sabés hacer necesitás registrarte como persona con oficio.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-muted-foreground">
-                Registrate como proveedor y vas a poder cargar tus servicios, definir precios y recibir reseñas de quienes te contraten.
+                Sumate como particular (no como empresa): cargá un servicio, tu precio y recibí reseñas de quienes te contraten.
               </p>
               <Button asChild>
-                <Link to="/registro-proveedor">Registrarme como proveedor</Link>
+                <Link to="/registro-proveedor">Ofrecer mi oficio</Link>
               </Button>
             </CardContent>
           </Card>
@@ -301,9 +301,9 @@ export const ProviderDashboard: React.FC = () => {
 
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Mis servicios</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Lo que ofrezco</h1>
             <p className="text-muted-foreground mt-1">
-              Administrá lo que ofrecés en el marketplace de {BRANDING.APP_NAME}.
+              Como particular en {BRANDING.APP_NAME}: un oficio claro, sin catálogo de empresa.
             </p>
           </div>
           {!showCreateForm && (
@@ -317,8 +317,10 @@ export const ProviderDashboard: React.FC = () => {
         {showCreateForm && (
           <Card className="mb-8">
             <CardHeader>
-              <CardTitle>Nuevo servicio</CardTitle>
-              <CardDescription>Completá los datos básicos. Podés pausarlo o editarlo después.</CardDescription>
+              <CardTitle>Publicar mi oficio</CardTitle>
+              <CardDescription>
+                Contá qué hacés vos (una persona). Mejor un servicio concreto que muchas categorías.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {formError && (

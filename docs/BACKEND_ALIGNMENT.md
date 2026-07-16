@@ -28,9 +28,14 @@ Si un helper contradice el contrato backend real, el helper esta mal.
 | Logout | `POST /api/auth/logout` | Bearer | bearer + tenant opcional coherente | `authService.logout` | `tests/test_auth.py` | `src/features/auth/session.test.ts` |
 | Sesion | `GET /api/auth/me` | Bearer | bearer + tenant opcional coherente | `authService.getMe` | `tests/test_auth.py` | `src/services/authService.test.ts` |
 | Registro | `POST /api/simple/register-customer` | Publica | `X-Account-ID` o slug | `authService.register` | `tests/test_api_contract.py` | `src/features/auth/registrationPayload.test.ts` |
+| Registro proveedor | `POST /api/simple/register-supplier` | Publica | `X-Account-ID` o slug | `authService.registerSupplier` | backend contract | `src/pages/RegisterSupplier.tsx` |
 | Catalogo anonimo | `GET /api/accounts/{account_id}/products/public` | Publica | path account | `productService.getProducts` sin token | `tests/test_products.py` | `src/features/catalog/queries.test.ts` |
 | Catalogo autenticado | `GET /api/accounts/{account_id}/products` | Bearer | bearer + path account | `productService.getProducts` con token | `tests/test_products.py` | `src/features/catalog/queries.test.ts` |
 | Producto + variantes | `GET /api/accounts/{account_id}/products/{product_id}` | Opcional | bearer si existe | `productService.getProductWithVariants` | `tests/test_products.py` | catalog/product tests |
+| Servicios del proveedor | `GET/POST/PATCH /api/accounts/{account_id}/products` con `mine=true` | Bearer | bearer + path account | `providerProductService` | backend contract | `src/pages/ProviderDashboard.tsx` |
+| Reseñas de producto | `GET/POST /api/accounts/{account_id}/products/{product_id}/reviews` | Bearer en POST | bearer + path account | `reviewService` | backend contract | `src/components/product/ProductRatingPanel.tsx` |
+| Resumen reseñas | `GET /api/accounts/{account_id}/products/{product_id}/reviews/summary` | Publica/Opcional | path account | `reviewService.summary` | backend contract | `src/components/product/ProductRatingPanel.tsx` |
+| Business partner | `GET /api/accounts/{account_id}/business-partners/{business_partner_id}` | Bearer | bearer + path account | `businessPartnerService.getBusinessPartner` | backend contract | `src/pages/ProviderDashboard.tsx` |
 | Ordenes | `POST/GET /api/accounts/{account_id}/sales-orders` | Bearer | bearer + path account | `orderService` | `tests/test_sales_orders.py` | checkout/order tests |
 | Stock | `POST /api/accounts/{account_id}/sales-orders/validate-stock` | Bearer | bearer + path account | `orderService.validateStock` | `tests/test_sales_orders.py` | checkout model tests |
 | Submit orden | `POST /api/accounts/{account_id}/sales-orders/{order_id}/submit` | Bearer | bearer + path account | `orderService.submitOrder` | `tests/test_order_state_machine.py` | checkout/order tests |

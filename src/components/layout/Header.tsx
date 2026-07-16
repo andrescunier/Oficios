@@ -14,6 +14,7 @@ import {
   X,
   Heart,
   ChevronDown,
+  Briefcase,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -295,6 +296,9 @@ export const Header: React.FC = () => {
                     <Link to="/pedidos">{getUIConfig().headerMyOrdersLabel}</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
+                    <Link to="/proveedor">Mis servicios</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <Link to="/favoritos">{getUIConfig().headerFavoritesLabel}</Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
@@ -305,6 +309,12 @@ export const Header: React.FC = () => {
               </DropdownMenu>
             ) : (
               <div className="flex items-center space-x-2">
+                <Button variant="ghost" size="sm" asChild>
+                  <Link to="/registro-proveedor">
+                    <Briefcase className="h-4 w-4 mr-2" />
+                    Soy proveedor
+                  </Link>
+                </Button>
                 <Button variant="ghost" size="sm" asChild>
                   <Link to="/login">
                     <LogIn className="h-4 w-4 mr-2" />
@@ -443,6 +453,12 @@ export const Header: React.FC = () => {
                     </Link>
                   </Button>
                   <Button variant="ghost" className="w-full justify-start" asChild>
+                    <Link to="/proveedor" onClick={() => setIsMenuOpen(false)}>
+                      <Briefcase className="h-4 w-4 mr-2" />
+                      Mis servicios
+                    </Link>
+                  </Button>
+                  <Button variant="ghost" className="w-full justify-start" asChild>
                     <Link to="/favoritos" onClick={() => setIsMenuOpen(false)}>
                       <Heart className="h-4 w-4 mr-2" />
                       {getUIConfig().headerFavoritesLabel}
@@ -459,6 +475,12 @@ export const Header: React.FC = () => {
                 </>
               ) : (
                 <>
+                  <Button variant="ghost" className="w-full justify-start" asChild>
+                    <Link to="/registro-proveedor" onClick={() => setIsMenuOpen(false)}>
+                      <Briefcase className="h-4 w-4 mr-2" />
+                      Soy proveedor
+                    </Link>
+                  </Button>
                   <Button variant="ghost" className="w-full justify-start" asChild>
                     <Link to="/login" onClick={() => setIsMenuOpen(false)}>
                       <LogIn className="h-4 w-4 mr-2" />

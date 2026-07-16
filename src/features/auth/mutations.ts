@@ -12,3 +12,9 @@ export const useRegisterMutation = () =>
     mutationKey: ['auth', 'register'],
     mutationFn: (payload: RegisterData) => authService.register(payload),
   });
+
+export const useRegisterSupplierMutation = () =>
+  useMutation({
+    mutationKey: ['auth', 'register-supplier'],
+    mutationFn: (payload: RegisterData) => authService.registerSupplier(payload),
+  });

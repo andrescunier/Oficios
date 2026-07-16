@@ -75,6 +75,8 @@ const ContactPage = lazy(() => import('@/pages/ContactPage').then((module) => ({
 const AboutUs = lazy(() => import('@/pages/AboutUs').then((module) => ({ default: module.AboutUs })));
 const Login = lazy(() => import('@/pages/Login').then((module) => ({ default: module.Login })));
 const Register = lazy(() => import('@/pages/Register').then((module) => ({ default: module.Register })));
+const RegisterSupplier = lazy(() => import('@/pages/RegisterSupplier').then((module) => ({ default: module.RegisterSupplier })));
+const ProviderDashboard = lazy(() => import('@/pages/ProviderDashboard').then((module) => ({ default: module.ProviderDashboard })));
 const CartPage = lazy(() => import('@/pages/CartPage').then((module) => ({ default: module.CartPage })));
 const CheckoutPage = lazy(() => import('@/pages/CheckoutPage').then((module) => ({ default: module.CheckoutPage })));
 const ProfilePage = lazy(() => import('@/pages/ProfilePage').then((module) => ({ default: module.ProfilePage })));
@@ -119,6 +121,9 @@ function App() {
                 <Route path="/sobrenosotros" element={<AboutUs />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/registro" element={<Register />} />
+                <Route path="/registro-proveedor" element={<RegisterSupplier />} />
+                <Route path="/proveedor" element={<ProviderDashboard />} />
+                <Route path="/proveedor/servicios/nuevo" element={<ProviderDashboard />} />
                 <Route path="/registro-exitoso" element={<RegistrationSuccess />} />
                 <Route path="/carrito" element={<CartPage />} />
                 <Route path="/checkout" element={<CheckoutPage />} />

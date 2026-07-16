@@ -42,15 +42,20 @@ export const API_ENDPOINTS = {
     ME: '/api/auth/me',
   },
 
-  // Registro de clientes
+  // Registro de clientes y proveedores
   SIMPLE: {
     REGISTER_CUSTOMER: '/api/simple/register-customer',
+    REGISTER_SUPPLIER: '/api/simple/register-supplier',
   },
 
   // Productos
   PRODUCTS: (accountId: string) => `/api/accounts/${accountId}/products`,
   PRODUCT: (accountId: string, productId: string) => `/api/accounts/${accountId}/products/${productId}`,
   PRODUCTS_PUBLIC: (accountId: string) => `/api/accounts/${accountId}/products/public`,
+  PRODUCT_REVIEWS: (accountId: string, productId: string) =>
+    `/api/accounts/${accountId}/products/${productId}/reviews`,
+  PRODUCT_REVIEW_SUMMARY: (accountId: string, productId: string) =>
+    `/api/accounts/${accountId}/products/${productId}/reviews/summary`,
 
   // Órdenes de Venta
   SALES_ORDERS: (accountId: string) => `/api/accounts/${accountId}/sales-orders`,

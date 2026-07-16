@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="OficiosHub">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#14213D"/>
+      <stop offset="70%" stop-color="#243B63"/>
+      <stop offset="100%" stop-color="#EEF2F6"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect x="0" y="0" width="18" height="630" fill="#FCA311"/>
+  <g transform="translate(90,200)">
+    <rect width="110" height="110" rx="26" fill="#FCA311"/>
+    <path d="M34 66 L55 38 L76 66" fill="none" stroke="#14213D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M55 44 V88" fill="none" stroke="#14213D" stroke-width="9" stroke-linecap="round"/>
+  </g>
+  <text x="240" y="270" font-family="'Segoe UI', Arial, sans-serif" font-size="78" font-weight="800" fill="#FFFFFF">OficiosHub</text>
+  <text x="240" y="340" font-family="'Segoe UI', Arial, sans-serif" font-size="34" fill="#FCA311">Marketplace de servicios</text>
+  <text x="240" y="400" font-family="'Segoe UI', Arial, sans-serif" font-size="28" fill="#D7DEE8">Contratá oficios de proveedores verificados</text>
+</svg>

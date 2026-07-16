@@ -1,0 +1,695 @@
+{
+  "version": "1.0.0",
+  "api": {
+    "storefrontBaseUrl": "https://oficioshub.cumar.com.ar",
+    "assetsBaseUrl": "",
+    "supportBaseUrl": "",
+    "extraHeaders": {
+      "X-Channel": "ecommerce"
+    }
+  },
+  "app": {
+    "name": "OficiosHub",
+    "companyName": "OficiosHub",
+    "slogan": "Servicios de personas, para personas",
+    "description": "Marketplace donde proveedores ofrecen sus oficios como servicios y los clientes los contratan online.",
+    "url": "https://oficioshub.cumar.com.ar",
+    "hidePricesForGuests": false,
+    "requireAuthForCart": false,
+    "loginMessage": "Ingresá para contratar servicios y gestionar tus pedidos",
+    "loginCta": "Ingresar"
+  },
+  "contact": {
+    "email": "hola@oficioshub.cumar.com.ar",
+    "salesEmail": "proveedores@oficioshub.cumar.com.ar",
+    "phone": "+54 11 5555 0100",
+    "whatsapp": "5491155550100",
+    "address": "Buenos Aires, Argentina"
+  },
+  "legal": {
+    "companyName": "OficiosHub",
+    "cuit": "00000000000",
+    "address": "Buenos Aires, Argentina",
+    "jurisdiction": "CABA, Argentina"
+  },
+  "business": {
+    "defaultTaxRate": 0.21,
+    "maxQuantityPerProduct": 20,
+    "defaultCurrency": "ARS",
+    "defaultCountry": "AR",
+    "businessHours": "Lunes a Sábado 8:00 a 20:00",
+    "returnPolicyDays": 0,
+    "refundProcessingTime": "A coordinar con el proveedor",
+    "productsPerPage": 24,
+    "featuredProductsCount": 8,
+    "heroSliderInterval": 6000,
+    "invoiceNote": "Los servicios se facturan según la condición fiscal del proveedor.",
+    "freeShippingThreshold": 0,
+    "locale": "es-AR"
+  },
+  "branding": {
+    "logo": "/branding/oficioshub/logo.svg?v=20260715a",
+    "headerLogo": "/branding/oficioshub/logo.svg?v=20260715a",
+    "footerLogo": "/branding/oficioshub/logo.svg?v=20260715a",
+    "logoDark": "/branding/oficioshub/logo.svg?v=20260715a",
+    "favicon": "/branding/oficioshub/favicon.svg?v=20260715a",
+    "banner": "/branding/oficioshub/hero-oficios.svg?v=20260715a",
+    "ogImage": "/branding/oficioshub/og.svg?v=20260715a"
+  },
+  "theme": {
+    "colorPrimary": "#14213D",
+    "colorPrimaryHover": "#0D1729",
+    "colorPrimaryForeground": "#FFFFFF",
+    "colorSecondary": "#EEF2F6",
+    "colorSecondaryForeground": "#14213D",
+    "colorBackground": "#EEF2F6",
+    "colorForeground": "#14213D",
+    "colorSurface": "#FFFFFF",
+    "colorSurfaceForeground": "#14213D",
+    "colorMuted": "#E2E8F0",
+    "colorMutedForeground": "#4B5563",
+    "colorBorder": "#CBD5E1",
+    "colorInput": "#CBD5E1",
+    "colorRing": "#FCA311",
+    "colorSuccess": "#2F9E6E",
+    "colorWarning": "#E08E00",
+    "colorError": "#C2410C",
+    "colorAccent": "#FCA311",
+    "colorAccentForeground": "#14213D",
+    "fontFamily": "'Outfit', system-ui, sans-serif",
+    "fontUrl": "https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Bricolage+Grotesque:wght@600;700;800&display=swap"
+  },
+  "social": {
+    "facebook": "",
+    "instagram": "",
+    "twitter": "",
+    "linkedin": ""
+  },
+  "features": {
+    "notifications": true,
+    "analytics": false,
+    "realPayments": false,
+    "benefits": [
+      {
+        "icon": "BadgeCheck",
+        "title": "Proveedores reales",
+        "description": "Cada servicio lo brinda una persona con oficio publicado"
+      },
+      {
+        "icon": "Package",
+        "title": "Contratá online",
+        "description": "Elegí el servicio, pedí y coordiná fecha con el proveedor"
+      },
+      {
+        "icon": "Shield",
+        "title": "Pedido trazable",
+        "description": "Tu contratación queda registrada en la plataforma"
+      },
+      {
+        "icon": "Truck",
+        "title": "A domicilio",
+        "description": "La mayoría de los oficios se hacen en tu casa u obra"
+      }
+    ]
+  },
+  "filters": {
+    "enabled": true,
+    "capacidad": false,
+    "velocidad": false,
+    "capacidadOptions": [],
+    "velocidadOptions": []
+  },
+  "paymentMethods": {
+    "transferencia": true,
+    "efectivo": true,
+    "mercadopago": false,
+    "tarjeta": false,
+    "prestamo": false
+  },
+  "payment": {
+    "bankName": "Mercado Pago",
+    "accountHolder": "OficiosHub",
+    "cbu": "",
+    "alias": "oficios.hub",
+    "whatsappVerification": "5491155550100"
+  },
+  "loan": {
+    "enabled": false
+  },
+  "observability": {
+    "enabled": false,
+    "endpoint": null,
+    "flushIntervalMs": 15000,
+    "maxQueueSize": 50,
+    "useBeacon": true
+  },
+  "shipping": {
+    "enabled": true,
+    "mode": "flat_rate",
+    "bannerText": "Los servicios se coordinan directo con cada proveedor",
+    "label": "Visita / coordinación",
+    "freeLabel": "Incluida",
+    "pendingLabel": "A coordinar",
+    "chargedMessage": "La visita se coordina al confirmar el pedido",
+    "drawerMessage": "Cada proveedor confirma día y horario",
+    "productBadgeTitle": "Modalidad",
+    "productBadgeDescription": "Servicio a domicilio o en taller",
+    "chargeAmount": 0,
+    "chargeProductId": null,
+    "chargeProductSku": null,
+    "chargeProductDescription": "Coordinación de visita",
+    "taxRate": 0.21
+  },
+  "newsletter": {
+    "enabled": true,
+    "endpoint": null,
+    "headers": {},
+    "title": "Oficios y tips en tu correo",
+    "description": "Novedades de proveedores y servicios destacados",
+    "placeholder": "tu@email.com",
+    "buttonLabel": "Suscribirme",
+    "successMessage": "¡Listo! Te avisamos las próximas novedades",
+    "errorMessage": "No se pudo suscribir. Probá de nuevo"
+  },
+  "registration": {
+    "title": "Crear cuenta",
+    "subtitle": "Registrate para contratar servicios de proveedores",
+    "submitLabel": "Crear cuenta",
+    "successMessage": "Cuenta creada con éxito",
+    "acceptTermsLabel": "Acepto los términos y condiciones",
+    "alreadyHaveAccountText": "¿Ya tenés cuenta?",
+    "alreadyHaveAccountLinkText": "Ingresá acá",
+    "fields": [
+      {
+        "name": "email",
+        "label": "Email",
+        "placeholder": "tu@email.com",
+        "required": true,
+        "visible": true
+      },
+      {
+        "name": "password",
+        "label": "Contraseña",
+        "placeholder": "Tu contraseña",
+        "required": true,
+        "visible": true,
+        "type": "password"
+      },
+      {
+        "name": "confirmPassword",
+        "label": "Confirmar contraseña",
+        "placeholder": "Repetí la contraseña",
+        "required": false,
+        "visible": true,
+        "type": "password"
+      },
+      {
+        "name": "company_name",
+        "label": "Nombre o empresa",
+        "placeholder": "Cómo te llamamos",
+        "required": true,
+        "visible": true
+      },
+      {
+        "name": "tax_id",
+        "label": "CUIT / CUIL",
+        "placeholder": "20-12345678-9",
+        "required": false,
+        "visible": true
+      },
+      {
+        "name": "phone",
+        "label": "Celular",
+        "placeholder": "11 5555 0100",
+        "required": true,
+        "visible": true,
+        "type": "tel"
+      }
+    ]
+  },
+  "validation": {
+    "passwordMinLength": 8,
+    "passwordRequireUppercase": true,
+    "passwordRequireLowercase": true,
+    "passwordRequireNumber": true,
+    "passwordRequireSymbol": false,
+    "zipRegex": "^[0-9]{4}$",
+    "phoneRegex": "^[0-9+\\s()-]{8,20}$",
+    "taxIdRegex": "",
+    "messages": {
+      "invalidZip": "El código postal no es válido",
+      "invalidEmail": "Ingresá un email válido",
+      "invalidPhone": "El celular no tiene un formato válido",
+      "fieldRequired": "{field} es obligatorio",
+      "loginGreeting": "¡Bienvenido/a {name}!",
+      "requiredField": "Este campo es obligatorio",
+      "passwordTooShort": "La contraseña debe tener al menos {min} caracteres",
+      "loginGenericError": "No se pudo ingresar. Probá de nuevo",
+      "passwordsDontMatch": "Las contraseñas no coinciden",
+      "acceptTermsRequired": "Tenés que aceptar los términos y condiciones",
+      "passwordNeedsNumber": "Debe incluir al menos un número",
+      "passwordNeedsSymbol": "Debe incluir al menos un símbolo",
+      "sessionCleanedTitle": "Sesión limpia",
+      "registerGenericError": "No pudimos crear tu cuenta. Probá más tarde",
+      "registerSuccessTitle": "¡Cuenta creada!",
+      "sessionCleanedMessage": "La sesión local quedó limpia. Volvé a ingresar",
+      "passwordNeedsLowercase": "Debe incluir al menos una minúscula",
+      "passwordNeedsUppercase": "Debe incluir al menos una mayúscula",
+      "registerSuccessMessage": "Te mandamos un mail a {email} para confirmar la cuenta",
+      "checkoutAuthRequiredTitle": "Ingresá a tu cuenta",
+      "checkoutFieldRequiredTitle": "Faltan datos",
+      "checkoutAuthRequiredMessage": "Para contratar necesitás ingresar",
+      "checkoutFieldRequiredMessage": "Completá el campo: {field}"
+    }
+  },
+  "seo": {
+    "title": "OficiosHub · Marketplace de servicios",
+    "description": "Contratá plomería, electricidad, pintura y más oficios de proveedores reales.",
+    "robots": "index,follow",
+    "keywords": [
+      "oficios",
+      "servicios",
+      "marketplace",
+      "plomería",
+      "electricidad",
+      "proveedores"
+    ],
+    "defaultTitle": "OficiosHub · Servicios de proveedores",
+    "titleTemplate": "{title} | OficiosHub",
+    "defaultDescription": "Marketplace para contratar servicios de oficios brindados por proveedores.",
+    "defaultKeywords": "oficios, servicios, marketplace, proveedores",
+    "defaultOgImage": "/branding/oficioshub/og.svg?v=20260715a",
+    "twitterHandle": "",
+    "canonicalBaseUrl": "https://oficioshub.cumar.com.ar",
+    "enableJsonLd": true,
+    "enableProductJsonLd": true,
+    "organization": {
+      "name": "OficiosHub",
+      "url": "https://oficioshub.cumar.com.ar",
+      "logo": "/branding/oficioshub/logo.svg?v=20260715a",
+      "sameAs": []
+    },
+    "routes": {
+      "/": {
+        "title": "Inicio",
+        "description": "Contratá oficios de proveedores en tu zona."
+      },
+      "/productos": {
+        "title": "Servicios",
+        "description": "Catálogo de servicios por oficio y proveedor."
+      },
+      "/contacto": {
+        "title": "Contacto",
+        "description": "Escribinos para sumarte como proveedor o cliente."
+      }
+    }
+  },
+  "pages": {
+    "about": "OficiosHub es un marketplace donde personas publican sus oficios como servicios y otras personas los contratan. Los productos del catálogo son servicios; los proveedores son las personas que los brindan.",
+    "terms": "Al contratar un servicio aceptás coordinar fecha, alcance y forma de pago con el proveedor. OficiosHub facilita el pedido; la ejecución la realiza el proveedor.",
+    "contact": "Escribinos a hola@oficioshub.cumar.com.ar o por WhatsApp.",
+    "privacy": "Cuidamos tus datos conforme a la normativa argentina de protección de datos.",
+    "cookies": "Usamos cookies técnicas para el carrito, la sesión y el funcionamiento del marketplace."
+  },
+  "images": {
+    "heroSlides": [
+      {
+        "image": "/branding/oficioshub/hero-oficios.svg?v=20260715a",
+        "title": "OficiosHub",
+        "subtitle": "Contratá servicios de proveedores: plomería, electricidad, pintura y más",
+        "cta": "Ver servicios",
+        "link": "/productos"
+      },
+      {
+        "image": "/branding/oficioshub/og.svg?v=20260715a",
+        "title": "Proveedores con oficio",
+        "subtitle": "Cada servicio lo ofrece una persona. Elegí, pedí y coordiná",
+        "cta": "Explorar oficios",
+        "link": "/productos"
+      }
+    ],
+    "categories": [
+      {
+        "name": "Plomería",
+        "image": "/branding/oficioshub/mark.svg?v=20260715a",
+        "link": "/productos?buscar=plomeria",
+        "description": "Destapes, instalaciones y reparaciones",
+        "slug": "plomeria",
+        "group": "Oficios",
+        "searchTerms": [
+          "plomería",
+          "caño",
+          "destape"
+        ],
+        "productCategories": [
+          "Plomería"
+        ],
+        "subcategories": []
+      },
+      {
+        "name": "Electricidad",
+        "image": "/branding/oficioshub/mark.svg?v=20260715a",
+        "link": "/productos?buscar=electricidad",
+        "description": "Instalaciones y tableros",
+        "slug": "electricidad",
+        "group": "Oficios",
+        "searchTerms": [
+          "electricidad",
+          "enchufe",
+          "tablero"
+        ],
+        "productCategories": [
+          "Electricidad"
+        ],
+        "subcategories": []
+      },
+      {
+        "name": "Gas",
+        "image": "/branding/oficioshub/mark.svg?v=20260715a",
+        "link": "/productos?buscar=gas",
+        "description": "Artefactos y conexiones de gas",
+        "slug": "gas",
+        "group": "Oficios",
+        "searchTerms": [
+          "gas",
+          "calefón",
+          "cocina"
+        ],
+        "productCategories": [
+          "Gas"
+        ],
+        "subcategories": []
+      },
+      {
+        "name": "Albañilería",
+        "image": "/branding/oficioshub/mark.svg?v=20260715a",
+        "link": "/productos?buscar=albanileria",
+        "description": "Refacciones y obra liviana",
+        "slug": "albanileria",
+        "group": "Oficios",
+        "searchTerms": [
+          "albañilería",
+          "revoque",
+          "obra"
+        ],
+        "productCategories": [
+          "Albañilería"
+        ],
+        "subcategories": []
+      },
+      {
+        "name": "Pintura",
+        "image": "/branding/oficioshub/mark.svg?v=20260715a",
+        "link": "/productos?buscar=pintura",
+        "description": "Interior, exterior y terminaciones",
+        "slug": "pintura",
+        "group": "Oficios",
+        "searchTerms": [
+          "pintura",
+          "látex",
+          "pintor"
+        ],
+        "productCategories": [
+          "Pintura"
+        ],
+        "subcategories": []
+      },
+      {
+        "name": "Carpintería",
+        "image": "/branding/oficioshub/mark.svg?v=20260715a",
+        "link": "/productos?buscar=carpinteria",
+        "description": "Muebles, puertas y reparaciones",
+        "slug": "carpinteria",
+        "group": "Oficios",
+        "searchTerms": [
+          "carpintería",
+          "madera",
+          "puerta"
+        ],
+        "productCategories": [
+          "Carpintería"
+        ],
+        "subcategories": []
+      },
+      {
+        "name": "Climatización",
+        "image": "/branding/oficioshub/mark.svg?v=20260715a",
+        "link": "/productos?buscar=climatizacion",
+        "description": "Aires, splits y mantenimiento",
+        "slug": "climatizacion",
+        "group": "Oficios",
+        "searchTerms": [
+          "aire",
+          "split",
+          "climatización"
+        ],
+        "productCategories": [
+          "Climatización"
+        ],
+        "subcategories": []
+      },
+      {
+        "name": "Jardinería",
+        "image": "/branding/oficioshub/mark.svg?v=20260715a",
+        "link": "/productos?buscar=jardineria",
+        "description": "Poda, césped y mantenimiento",
+        "slug": "jardineria",
+        "group": "Oficios",
+        "searchTerms": [
+          "jardinería",
+          "poda",
+          "césped"
+        ],
+        "productCategories": [
+          "Jardinería"
+        ],
+        "subcategories": []
+      }
+    ],
+    "placeholders": {
+      "product": "/branding/oficioshub/mark.svg?v=20260715a",
+      "category": "/branding/oficioshub/mark.svg?v=20260715a",
+      "user": "/branding/oficioshub/mark.svg?v=20260715a"
+    },
+    "backgrounds": {
+      "hero": "/branding/oficioshub/hero-oficios.svg?v=20260715a",
+      "features": "",
+      "testimonials": ""
+    },
+    "banners": {
+      "main": "/branding/oficioshub/hero-oficios.svg?v=20260715a",
+      "secondary": "",
+      "seasonal": "",
+      "sale": ""
+    },
+    "productFallbacks": {
+      "default": "/branding/oficioshub/mark.svg?v=20260715a"
+    }
+  },
+  "header": {
+    "showSearch": true,
+    "showCategoriesMenu": true,
+    "showFavorites": true,
+    "showOrders": true,
+    "showAccount": true,
+    "showCart": true,
+    "topBarMessage": "Marketplace de oficios · Contratá servicios de proveedores reales",
+    "topBarHref": "/productos",
+    "menu": [
+      {
+        "label": "Servicios",
+        "href": "/productos"
+      },
+      {
+        "label": "Oficios",
+        "href": "/productos"
+      },
+      {
+        "label": "Contacto",
+        "href": "/contacto"
+      }
+    ]
+  },
+  "footer": {
+    "sections": [
+      {
+        "title": "Oficios",
+        "links": [
+          {
+            "label": "Plomería",
+            "href": "/productos?buscar=plomeria"
+          },
+          {
+            "label": "Electricidad",
+            "href": "/productos?buscar=electricidad"
+          },
+          {
+            "label": "Pintura",
+            "href": "/productos?buscar=pintura"
+          }
+        ]
+      },
+      {
+        "title": "Ayuda",
+        "links": [
+          {
+            "label": "Contacto",
+            "href": "/contacto"
+          },
+          {
+            "label": "Seguimiento",
+            "href": "/seguimiento"
+          },
+          {
+            "label": "Términos",
+            "href": "/terminos"
+          }
+        ]
+      }
+    ],
+    "showWhatsappCapture": true,
+    "whatsappOptInMessage": "Hola! Quiero contratar un servicio en OficiosHub.",
+    "whatsappOptInSuccessMessage": "¡Listo! Te abrimos WhatsApp para continuar.",
+    "withdrawalWhatsappMessage": "Quiero cancelar o modificar mi contratación en OficiosHub.",
+    "paymentMethods": [
+      "Transferencia",
+      "Efectivo"
+    ],
+    "showSocial": true,
+    "showPaymentBadges": true
+  },
+  "checkout": {
+    "steps": [
+      "shipping",
+      "payment",
+      "review"
+    ],
+    "guestCheckoutEnabled": false,
+    "fields": [
+      {
+        "name": "firstName",
+        "label": "Nombre",
+        "required": true,
+        "visible": true,
+        "type": "text",
+        "step": "shipping",
+        "group": "account"
+      },
+      {
+        "name": "lastName",
+        "label": "Apellido",
+        "required": true,
+        "visible": true,
+        "type": "text",
+        "step": "shipping",
+        "group": "account"
+      },
+      {
+        "name": "email",
+        "label": "Email",
+        "required": true,
+        "visible": true,
+        "type": "email",
+        "step": "shipping",
+        "group": "account"
+      },
+      {
+        "name": "phone",
+        "label": "Celular",
+        "required": true,
+        "visible": true,
+        "type": "tel",
+        "step": "shipping",
+        "group": "account"
+      },
+      {
+        "name": "address",
+        "label": "Dirección del servicio",
+        "required": true,
+        "visible": true,
+        "type": "text",
+        "step": "shipping",
+        "group": "address"
+      },
+      {
+        "name": "city",
+        "label": "Localidad",
+        "required": true,
+        "visible": true,
+        "type": "text",
+        "step": "shipping",
+        "group": "address"
+      },
+      {
+        "name": "state",
+        "label": "Provincia",
+        "required": true,
+        "visible": true,
+        "type": "text",
+        "step": "shipping",
+        "group": "address"
+      },
+      {
+        "name": "zipCode",
+        "label": "Código postal",
+        "required": true,
+        "visible": true,
+        "type": "text",
+        "step": "shipping",
+        "group": "address"
+      }
+    ],
+    "showOrderNotes": true,
+    "orderNotesLabel": "Detalle del trabajo",
+    "orderNotesPlaceholder": "Describí el problema, horarios preferidos, acceso al domicilio...",
+    "showCouponInput": false,
+    "couponPlaceholder": "Código de descuento",
+    "couponApplyLabel": "Aplicar"
+  },
+  "wishlist": {
+    "enabled": true,
+    "storageKey": "wishlist_oficioshub_v1",
+    "requireAuth": false
+  },
+  "consent": {
+    "enabled": true,
+    "title": "Usamos cookies para que el marketplace funcione",
+    "body": "Usamos cookies propias para el carrito, la sesión y mejorar la experiencia. Podés aceptar o rechazar.",
+    "acceptLabel": "Aceptar",
+    "rejectLabel": "Rechazar",
+    "preferencesLabel": "Preferencias",
+    "learnMoreLabel": "Más info",
+    "learnMoreHref": "/cookies",
+    "storageKey": "cookie_consent_oficioshub_v1",
+    "blockAnalyticsUntilConsent": true
+  },
+  "analytics": {
+    "enabled": false,
+    "ga4MeasurementId": "",
+    "gtmContainerId": "",
+    "facebookPixelId": "",
+    "hotjarId": "",
+    "clarityId": "",
+    "anonymizeIp": true,
+    "trackPageViews": true,
+    "trackEcommerce": true
+  },
+  "ui": {
+    "searchPlaceholder": "Buscar oficio, servicio o proveedor...",
+    "noProductsTitle": "No encontramos servicios",
+    "noProductsMessage": "Probá con otro oficio o mirá el catálogo completo",
+    "loginTitle": "Ingresar a OficiosHub",
+    "loginSubtitle": "Accedé para contratar servicios de proveedores",
+    "cartEmptyTitle": "Todavía no elegiste servicios",
+    "cartEmptyMessage": "Sumá un oficio al pedido para contratarlo",
+    "checkoutFinalizeLabel": "Confirmar contratación",
+    "addToCartLabel": "Contratar servicio",
+    "homeHeroCta": "Ver servicios",
+    "homeFeaturedTitle": "Servicios destacados",
+    "homeFeaturedSubtitle": "Oficios que más se contratan esta semana",
+    "homeCategoriesTitle": "Oficios",
+    "homeCategoriesSubtitle": "Elegí el rubro y encontrá proveedores",
+    "homeNewTitle": "Nuevos en el hub",
+    "homeNewSubtitle": "Últimos servicios publicados por proveedores"
+  }
+}

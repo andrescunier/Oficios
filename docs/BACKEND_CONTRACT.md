@@ -49,10 +49,12 @@ POST /api/auth/login
 POST /api/auth/logout
 GET /api/auth/me
 POST /api/simple/register-customer
+POST /api/simple/register-supplier
 ```
 
 Reglas operativas:
 - `POST /api/auth/login` y `POST /api/simple/register-customer` resuelven el tenant por `X-Account-ID` o `X-Account-Slug`
+- `POST /api/simple/register-supplier` usa el mismo body que `register-customer`; crea `business_partner` con `partner_type=supplier` y usuario con rol `customer`
 - `GET /api/auth/me` y `POST /api/auth/logout` resuelven la sesión por `Authorization: Bearer <token>` y validan que, si se envía `X-Account-ID` o `X-Account-Slug`, coincidan con el tenant activo del token
 - el token JWT es la fuente de verdad de la cuenta activa autenticada
 - `business_partner_id` debe leerse directamente de `data.business_partner_id`
@@ -94,6 +96,56 @@ Notas:
 - `GET /products/public` debe usarse para storefront anónimo
 - `GET /products` debe usarse cuando existe token y el backend puede devolver información enriquecida
 - no existe endpoint dedicado `products/{id}/variants`; las variantes se leen embebidas en `GET /products/{id}`
+
+### Servicios de proveedor (marketplace)
+
+```http
+GET    /api/accounts/{account_id}/products?mine=true
+POST   /api/accounts/{account_id}/products
+PATCH  /api/accounts/{account_id}/products/{product_id}
+```
+
+Notas:
+- requiere `Authorization: Bearer <token>`
+- `mine=true` lista sólo productos del proveedor autenticado
+- la propiedad se valida vía `metadata.provider.business_partner_id`
+- el storefront usa estos endpoints desde `providerProductService` y `ProviderDashboard`
+
+### Reseñas de producto
+
+```http
+GET  /api/accounts/{account_id}/products/{product_id}/reviews
+GET  /api/accounts/{account_id}/products/{product_id}/reviews/summary
+POST /api/accounts/{account_id}/products/{product_id}/reviews?business_partner_id={business_partner_id}
+```
+
+Body de `POST`:
+```json
+{
+  "overall_rating": 1,
+  "dimensions": {
+    "service": 1,
+    "cleanliness": 1,
+    "punctuality": 1,
+    "quality": 1
+  },
+  "comment": "opcional",
+  "sales_order_id": "opcional"
+}
+```
+
+Notas:
+- `overall_rating` y cada dimensión van de 1 a 5
+- el storefront consume summary + list desde `reviewService` y muestra el panel en detalle de producto
+
+### Business partner (lectura propia)
+
+```http
+GET /api/accounts/{account_id}/business-partners/{business_partner_id}
+```
+
+Notas:
+- el storefront usa `partner_type in ['supplier', 'both']` para habilitar `/proveedor`
 
 ### Checkout / órdenes
 

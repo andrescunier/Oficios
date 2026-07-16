@@ -26,7 +26,7 @@ export interface RegisterData {
   industry?: string;
   currency?: string;
   username?: string;
-  role?: 'customer' | 'supplier';
+  role?: 'customer' | 'supplier'; // supplier → POST /register-supplier
   personMetadata?: Record<string, any>;
   companyMetadata?: Record<string, any>;
 }
@@ -285,6 +285,78 @@ export class AuthService {
         throw new Error(error.message);
       }
 
+      throw new Error('Error de conexión. Verifica tu conexión a internet.');
+    }
+  }
+
+  async registerSupplier(
+    data: RegisterData
+  ): Promise<{ user: User; token: string; account: Account | null }> {
+    const normalizedEmail = normalizeAuthEmail(data.email);
+    log.auth.info('Registrando proveedor:', normalizedEmail);
+    try {
+      const payload = {
+        first_name: data.firstName,
+        last_name: data.lastName,
+        email: normalizedEmail,
+        password: data.password,
+        phone: data.phone,
+        title: data.title,
+        company_name: data.companyName || `${data.firstName} ${data.lastName}`,
+        tax_id: data.taxId,
+        industry: data.industry,
+        currency: data.currency || getBusinessConfig().defaultCurrency,
+        username: data.username || normalizedEmail.split('@')[0],
+        role: 'supplier' as const,
+        person_metadata: {
+          phone: data.phone,
+          title: data.title,
+          ...(data.personMetadata || {})
+        },
+        company_metadata: {
+          tax_id: data.taxId,
+          industry: data.industry,
+          marketplace_role: 'supplier',
+          ...(data.companyMetadata || {})
+        }
+      };
+
+      const response = await httpClient.post<SimpleRegistrationResponse>(
+        API_ENDPOINTS.SIMPLE.REGISTER_SUPPLIER,
+        payload
+      );
+
+      if (!response?.success) {
+        throw new Error(response?.message || 'Error en el registro de proveedor');
+      }
+
+      const registrationData = {
+        first_name: data.firstName,
+        last_name: data.lastName,
+        phone: data.phone,
+        company_name: data.companyName
+      };
+      saveRegistrationDraft(registrationData);
+
+      const businessPartnerId = extractBusinessPartnerIdFromAuthData(response.data);
+      if (businessPartnerId) {
+        saveBusinessPartnerId(businessPartnerId);
+        log.auth.info('Business Partner ID guardado del registro proveedor:', businessPartnerId);
+      }
+
+      return await this.login({
+        email: normalizedEmail,
+        password: data.password
+      });
+
+    } catch (error: any) {
+      log.auth.error('Registro proveedor fallido:', error.message || error);
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      }
+      if (error.message) {
+        throw new Error(error.message);
+      }
       throw new Error('Error de conexión. Verifica tu conexión a internet.');
     }
   }

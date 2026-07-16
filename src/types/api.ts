@@ -49,7 +49,7 @@ export interface User extends BaseEntity {
   person_id: string;
   email: string;
   username: string;
-  role: 'owner' | 'admin' | 'user' | 'customer';
+  role: 'owner' | 'admin' | 'user' | 'customer' | 'supplier';
   status: 'active' | 'inactive' | 'suspended';
   person?: Person;
 }
@@ -73,6 +73,8 @@ export interface Product extends BaseEntity {
   unit_price: number;
   currency: string;
   tax_rate: number;
+  /** Marketplace: BusinessPartner proveedor dueño del servicio */
+  provider_partner_id?: string | null;
   metadata?: Record<string, any>;
   product_type?: string;
   has_variants?: boolean;

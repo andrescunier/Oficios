@@ -25,6 +25,7 @@ import { buildLoanPaymentPlans, getPrimaryLoanPaymentPlan } from '@/features/che
 import { recordAppEvent } from '@/lib/observability';
 import { setProductJsonLd, clearProductJsonLd } from '@/lib/seo';
 import { trackEcommerceEvent } from '@/lib/analytics';
+import { ProductRatingPanel } from '@/components/product/ProductRatingPanel';
 
 const sortVariantOptions = (options: ProductVariantOption[]) =>
   options
@@ -421,6 +422,8 @@ export const ProductDetailPage: React.FC = () => {
                 <p className="text-gray-700 leading-relaxed">{product.description}</p>
               </div>
             )}
+
+            <ProductRatingPanel productId={product.id} productMetadata={product.metadata} />
 
             {loanPaymentEnabled && primaryLoanPlan && (
               <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 shadow-sm">

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="OficiosHub">
+  <rect width="128" height="128" rx="28" fill="#14213D"/>
+  <path d="M40 70 L64 38 L88 70" fill="none" stroke="#FCA311" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M64 44 V92" fill="none" stroke="#FCA311" stroke-width="10" stroke-linecap="round"/>
+  <circle cx="64" cy="100" r="6" fill="#EEF2F6"/>
+</svg>

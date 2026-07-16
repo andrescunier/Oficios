@@ -37,6 +37,8 @@ Si un helper contradice el contrato backend real, el helper esta mal.
 | Resumen reseñas | `GET /api/accounts/{account_id}/products/{product_id}/reviews/summary` | Publica/Opcional | path account | `reviewService.summary` | backend contract | `src/components/product/ProductRatingPanel.tsx` |
 | Business partner | `GET /api/accounts/{account_id}/business-partners/{business_partner_id}` | Bearer | bearer + path account | `businessPartnerService.getBusinessPartner` | backend contract | `src/pages/ProviderDashboard.tsx` |
 | Ordenes | `POST/GET /api/accounts/{account_id}/sales-orders` | Bearer | bearer + path account | `orderService` | `tests/test_sales_orders.py` | checkout/order tests |
+| Ordenes proveedor | `GET /api/accounts/{account_id}/sales-orders` (+ storefront-status) | Bearer supplier | scoped a productos con `provider_partner_id` | `providerOrderService` | backend contract | `ProviderDashboard` reservas/cobros |
+| Capacitaciones | `GET/PATCH /api/accounts/{account_id}/tasks/mine` | Bearer supplier | tareas `metadata.project=capacitacion` | `taskService` | backend contract | `ProviderDashboard` capacitaciones |
 | Stock | `POST /api/accounts/{account_id}/sales-orders/validate-stock` | Bearer | bearer + path account | `orderService.validateStock` | `tests/test_sales_orders.py` | checkout model tests |
 | Submit orden | `POST /api/accounts/{account_id}/sales-orders/{order_id}/submit` | Bearer | bearer + path account | `orderService.submitOrder` | `tests/test_order_state_machine.py` | checkout/order tests |
 | Prestamos | `POST/GET /api/accounts/{account_id}/loans` | Bearer | bearer + path account | `orderService.createLoan` | `tests/test_loans.py` | `src/services/orderService.test.ts` |

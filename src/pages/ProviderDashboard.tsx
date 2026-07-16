@@ -3,10 +3,15 @@ import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-do
 import {
   ArrowLeft,
   Briefcase,
+  CalendarDays,
+  CheckCircle2,
+  GraduationCap,
   Loader2,
   Lock,
   Plus,
   Save,
+  ShieldCheck,
+  Wallet,
 } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { BRANDING } from '@/config/branding';
@@ -18,6 +23,12 @@ import {
   providerProductService,
   type ProviderProductInput,
 } from '@/services/providerProductService';
+import {
+  providerOrderService,
+  type ProviderCobro,
+  type ProviderOrder,
+} from '@/services/providerOrderService';
+import { taskService, type ProviderTask } from '@/services/taskService';
 import type { Product } from '@/types/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,6 +36,16 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+
+type TabId = 'servicios' | 'reservas' | 'capacitaciones' | 'cobros' | 'plataforma';
+
+const TABS: Array<{ id: TabId; label: string; icon: React.ReactNode }> = [
+  { id: 'servicios', label: 'Servicios', icon: <Briefcase className="h-4 w-4" /> },
+  { id: 'reservas', label: 'Reservas', icon: <CalendarDays className="h-4 w-4" /> },
+  { id: 'capacitaciones', label: 'Capacitaciones', icon: <GraduationCap className="h-4 w-4" /> },
+  { id: 'cobros', label: 'Cobros', icon: <Wallet className="h-4 w-4" /> },
+  { id: 'plataforma', label: 'Plataforma', icon: <ShieldCheck className="h-4 w-4" /> },
+];
 
 const flattenCategoryOptions = (): Array<{ value: string; label: string }> => {
   const categories = getCategoriesConfig();
@@ -44,21 +65,52 @@ const flattenCategoryOptions = (): Array<{ value: string; label: string }> => {
   return options;
 };
 
+const statusLabel = (status: string) => {
+  const map: Record<string, string> = {
+    draft: 'Borrador',
+    submitted: 'Reservada',
+    pending_payment: 'Pago pendiente',
+    payment_review: 'En revisión de pago',
+    confirmed: 'Confirmada',
+    preparing: 'En preparación',
+    ready_to_ship: 'Lista',
+    shipped: 'En camino',
+    delivered: 'Entregada',
+    completed: 'Completada',
+    cancelled: 'Cancelada',
+    open: 'Pendiente',
+    in_progress: 'En curso',
+    done: 'Hecha',
+    paid: 'Pagado',
+    partially_paid: 'Pago parcial',
+    validated: 'Pago validado',
+    pending_backend_validation: 'A validar',
+  };
+  return map[status] || status;
+};
+
 export const ProviderDashboard: React.FC = () => {
   const { auth, addNotification } = useStore();
   const navigate = useNavigate();
   const location = useLocation();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const uiCfg = getUIConfig();
   const businessCfg = getBusinessConfig();
   const categoryOptions = useMemo(() => flattenCategoryOptions(), []);
 
   const [products, setProducts] = useState<Product[]>([]);
+  const [orders, setOrders] = useState<ProviderOrder[]>([]);
+  const [tasks, setTasks] = useState<ProviderTask[]>([]);
+  const [cobros, setCobros] = useState<ProviderCobro[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [supplierAccess, setSupplierAccess] = useState<boolean | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
+  const [taskUpdatingId, setTaskUpdatingId] = useState<string | null>(null);
+
+  const tabParam = searchParams.get('tab') as TabId | null;
+  const activeTab: TabId = TABS.some((t) => t.id === tabParam) ? (tabParam as TabId) : 'servicios';
 
   const showCreateForm =
     location.pathname === '/proveedor/servicios/nuevo'
@@ -76,6 +128,16 @@ export const ProviderDashboard: React.FC = () => {
 
   const businessPartnerId = getBusinessPartnerId();
 
+  const setTab = (tab: TabId) => {
+    const next = new URLSearchParams(searchParams);
+    next.set('tab', tab);
+    next.delete('nuevo');
+    setSearchParams(next, { replace: true });
+    if (location.pathname !== '/proveedor') {
+      navigate(`/proveedor?tab=${tab}`, { replace: true });
+    }
+  };
+
   useEffect(() => {
     if (!auth.isAuthenticated || !businessPartnerId) {
       setIsLoading(false);
@@ -92,27 +154,35 @@ export const ProviderDashboard: React.FC = () => {
         if (cancelled) return;
         setSupplierAccess(allowedByPartner);
 
-        if (!allowed) {
+        if (!allowedByPartner) {
           setProducts([]);
+          setOrders([]);
+          setTasks([]);
+          setCobros([]);
           return;
         }
 
-        const mine = await providerProductService.listMine();
-        if (!cancelled) {
-          setProducts(mine);
-        }
+        const [mine, orderList, taskList] = await Promise.all([
+          providerProductService.listMine(),
+          providerOrderService.listMine().catch(() => [] as ProviderOrder[]),
+          taskService.listMine({ project: 'capacitacion' }).catch(() => [] as ProviderTask[]),
+        ]);
+        if (cancelled) return;
+        setProducts(mine);
+        setOrders(orderList);
+        setTasks(taskList);
+        const cobroList = await providerOrderService.listCobros(orderList).catch(() => [] as ProviderCobro[]);
+        if (!cancelled) setCobros(cobroList);
       } catch (error) {
         if (!cancelled) {
           addNotification({
             type: 'error',
-            title: 'No pudimos cargar tus servicios',
+            title: 'No pudimos cargar tu panel',
             message: error instanceof Error ? error.message : 'Intentá de nuevo en unos minutos.',
           });
         }
       } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
+        if (!cancelled) setIsLoading(false);
       }
     };
 
@@ -120,7 +190,7 @@ export const ProviderDashboard: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [addNotification, auth.isAuthenticated, businessPartnerId]);
+  }, [addNotification, auth.isAuthenticated, auth.user?.role, businessPartnerId]);
 
   useEffect(() => {
     if (showCreateForm && !form.sku && form.name.trim()) {
@@ -138,6 +208,18 @@ export const ProviderDashboard: React.FC = () => {
       minimumFractionDigits: 0,
     }).format(price);
 
+  const formatDate = (value?: string | null) => {
+    if (!value) return 'A coordinar';
+    try {
+      return new Intl.DateTimeFormat(businessCfg.locale, {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      }).format(new Date(value));
+    } catch {
+      return value;
+    }
+  };
+
   const openCreateForm = () => {
     navigate('/proveedor/servicios/nuevo');
     setFormError(null);
@@ -152,7 +234,7 @@ export const ProviderDashboard: React.FC = () => {
   };
 
   const closeCreateForm = () => {
-    navigate('/proveedor');
+    navigate('/proveedor?tab=servicios');
     setFormError(null);
   };
 
@@ -227,13 +309,34 @@ export const ProviderDashboard: React.FC = () => {
     }
   };
 
+  const handleTaskDone = async (task: ProviderTask) => {
+    try {
+      setTaskUpdatingId(task.id);
+      const updated = await taskService.updateStatus(task.id, 'done');
+      setTasks((current) => current.map((item) => (item.id === task.id ? updated : item)));
+      addNotification({
+        type: 'success',
+        title: 'Capacitación marcada',
+        message: `"${task.title}" quedó como hecha.`,
+      });
+    } catch (error) {
+      addNotification({
+        type: 'error',
+        title: 'No se pudo actualizar la capacitación',
+        message: error instanceof Error ? error.message : 'Intentá de nuevo.',
+      });
+    } finally {
+      setTaskUpdatingId(null);
+    }
+  };
+
   if (!auth.isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
         <div className="text-center max-w-md">
           <Lock className="w-16 h-16 mx-auto text-gray-400 mb-4" />
           <h2 className="text-2xl font-bold mb-4">{uiCfg.authRequiredTitle}</h2>
-          <p className="text-gray-600 mb-6">Tenés que iniciar sesión para administrar tus servicios.</p>
+          <p className="text-gray-600 mb-6">Tenés que iniciar sesión para ver tu panel de oficio.</p>
           <Link
             to="/login"
             state={{ from: '/proveedor' }}
@@ -275,7 +378,7 @@ export const ProviderDashboard: React.FC = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-muted-foreground">
-                Sumate como particular (no como empresa): cargá un servicio, tu precio y recibí reseñas de quienes te contraten.
+                Sumate como particular: cargá un servicio, recibí reservas como órdenes de venta, capacitaciones como tareas y el seguimiento de cobros.
               </p>
               <Button asChild>
                 <Link to="/registro-proveedor">Ofrecer mi oficio</Link>
@@ -286,6 +389,8 @@ export const ProviderDashboard: React.FC = () => {
       </div>
     );
   }
+
+  const cobrosTotal = cobros.reduce((acc, item) => acc + (item.paidAmount || 0), 0);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -299,189 +404,404 @@ export const ProviderDashboard: React.FC = () => {
           Volver al inicio
         </button>
 
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Lo que ofrezco</h1>
-            <p className="text-muted-foreground mt-1">
-              Como particular en {BRANDING.APP_NAME}: un oficio claro, sin catálogo de empresa.
-            </p>
-          </div>
-          {!showCreateForm && (
-            <Button onClick={openCreateForm}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nuevo servicio
-            </Button>
-          )}
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">Mi panel</h1>
+          <p className="text-muted-foreground mt-1">
+            Servicios, reservas (órdenes de venta), capacitaciones y cobros en {BRANDING.APP_NAME}.
+          </p>
         </div>
 
-        {showCreateForm && (
-          <Card className="mb-8">
+        <div className="flex gap-2 overflow-x-auto pb-2 mb-8">
+          {TABS.map((tab) => (
+            <Button
+              key={tab.id}
+              type="button"
+              variant={activeTab === tab.id ? 'default' : 'outline'}
+              className="shrink-0"
+              onClick={() => setTab(tab.id)}
+            >
+              <span className="mr-2">{tab.icon}</span>
+              {tab.label}
+            </Button>
+          ))}
+        </div>
+
+        {activeTab === 'plataforma' && (
+          <Card className="mb-6 border-primary/20 bg-white">
             <CardHeader>
-              <CardTitle>Publicar mi oficio</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <ShieldCheck className="h-5 w-5 text-primary" />
+                Cómo te acompaña OficiosHub
+              </CardTitle>
               <CardDescription>
-                Contá qué hacés vos (una persona). Mejor un servicio concreto que muchas categorías.
+                La plataforma valida idoneidad y antecedentes, y reinvierta la intermediación en tu capacitación.
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              {formError && (
-                <Alert variant="destructive" className="mb-4">
-                  <AlertDescription>{formError}</AlertDescription>
-                </Alert>
-              )}
-              <form onSubmit={handleCreateService} className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="service-name">Nombre del servicio</Label>
-                    <Input
-                      id="service-name"
-                      value={form.name}
-                      onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
-                      placeholder="Ej: Instalación de termotanque"
-                    />
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="service-description">Descripción</Label>
-                    <Textarea
-                      id="service-description"
-                      value={form.description}
-                      onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
-                      placeholder="Contá qué incluye, tiempos estimados y zona de cobertura."
-                      rows={4}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="service-price">Precio referencial</Label>
-                    <Input
-                      id="service-price"
-                      type="number"
-                      min={0}
-                      step="0.01"
-                      value={form.unit_price || ''}
-                      onChange={(event) =>
-                        setForm((current) => ({
-                          ...current,
-                          unit_price: Number(event.target.value) || 0,
-                        }))
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="service-category">Rubro</Label>
-                    <select
-                      id="service-category"
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      value={form.category || ''}
-                      onChange={(event) =>
-                        setForm((current) => ({ ...current, category: event.target.value }))
-                      }
-                    >
-                      {categoryOptions.length === 0 ? (
-                        <option value="">Sin categorías configuradas</option>
-                      ) : (
-                        categoryOptions.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))
-                      )}
-                    </select>
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="service-sku">SKU</Label>
-                    <Input
-                      id="service-sku"
-                      value={form.sku || ''}
-                      readOnly
-                      className="bg-muted"
-                    />
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-3">
-                  <Button type="submit" disabled={isSaving}>
-                    {isSaving ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Guardando...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="h-4 w-4 mr-2" />
-                        Publicar servicio
-                      </>
-                    )}
-                  </Button>
-                  <Button type="button" variant="outline" onClick={closeCreateForm}>
-                    Cancelar
-                  </Button>
-                </div>
-              </form>
+            <CardContent className="space-y-4 text-sm text-gray-700 leading-relaxed">
+              <p>
+                Antes de que aparezcas ante clientes, revisamos tu idoneidad como persona con oficio
+                y antecedentes relevantes. No sos una empresa de rubro: sos vos, con un servicio concreto.
+              </p>
+              <p>
+                Con lo que recauda la intermediación, OficiosHub te acerca capacitaciones para mejorar
+                calidad de trabajo y nivel de vida. Esas capacitaciones te llegan acá como <strong>tareas</strong>.
+              </p>
+              <p>
+                Cuando un cliente te contrata, la reserva llega como <strong>orden de venta</strong>
+                (tu caso de compra del servicio). En Cobros ves lo asociado a esos servicios prestados.
+              </p>
+              <Button type="button" variant="outline" onClick={() => setTab('capacitaciones')}>
+                Ver mis capacitaciones
+              </Button>
             </CardContent>
           </Card>
         )}
 
-        {products.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <Briefcase className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
-              <h2 className="text-xl font-semibold mb-2">Todavía no publicaste servicios</h2>
-              <p className="text-muted-foreground mb-6">
-                Creá tu primer servicio y empezá a aparecer en el catálogo.
-              </p>
-              <Button onClick={openCreateForm}>
-                <Plus className="h-4 w-4 mr-2" />
-                Nuevo servicio
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-4">
-            {products.map((product) => {
-              const isActive = product.is_active !== false && product.metadata?.status !== 'inactive';
-              return (
-                <Card key={product.id}>
-                  <CardContent className="py-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-3">
-                        <h3 className="text-lg font-semibold">{product.name}</h3>
-                        <span
-                          className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                            isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
-                          }`}
-                        >
-                          {isActive ? 'Activo' : 'Inactivo'}
-                        </span>
+        {activeTab === 'servicios' && (
+          <>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-semibold">Lo que ofrezco</h2>
+                <p className="text-sm text-muted-foreground">Un oficio claro, sin catálogo de empresa.</p>
+              </div>
+              {!showCreateForm && (
+                <Button onClick={openCreateForm}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nuevo servicio
+                </Button>
+              )}
+            </div>
+
+            {showCreateForm && (
+              <Card className="mb-8">
+                <CardHeader>
+                  <CardTitle>Publicar mi oficio</CardTitle>
+                  <CardDescription>
+                    Contá qué hacés vos (una persona). Mejor un servicio concreto que muchas categorías.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {formError && (
+                    <Alert variant="destructive" className="mb-4">
+                      <AlertDescription>{formError}</AlertDescription>
+                    </Alert>
+                  )}
+                  <form onSubmit={handleCreateService} className="space-y-4">
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2 md:col-span-2">
+                        <Label htmlFor="service-name">Nombre del servicio</Label>
+                        <Input
+                          id="service-name"
+                          value={form.name}
+                          onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+                          placeholder="Ej: Destape de caños en casa"
+                        />
                       </div>
-                      {product.category && (
-                        <p className="text-sm text-muted-foreground">{product.category}</p>
-                      )}
-                      <p className="text-sm text-gray-700 line-clamp-2">
-                        {product.description || 'Sin descripción'}
-                      </p>
-                      <p className="text-sm font-medium">{formatPrice(product.unit_price, product.currency)}</p>
-                      <p className="text-xs text-muted-foreground">SKU: {product.sku}</p>
+                      <div className="space-y-2 md:col-span-2">
+                        <Label htmlFor="service-description">Descripción</Label>
+                        <Textarea
+                          id="service-description"
+                          value={form.description}
+                          onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
+                          placeholder="Contá qué incluye, zona y cómo coordinás."
+                          rows={4}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="service-price">Precio referencial</Label>
+                        <Input
+                          id="service-price"
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          value={form.unit_price || ''}
+                          onChange={(event) =>
+                            setForm((current) => ({
+                              ...current,
+                              unit_price: Number(event.target.value) || 0,
+                            }))
+                          }
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="service-category">Oficio</Label>
+                        <select
+                          id="service-category"
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                          value={form.category || ''}
+                          onChange={(event) =>
+                            setForm((current) => ({ ...current, category: event.target.value }))
+                          }
+                        >
+                          {categoryOptions.length === 0 ? (
+                            <option value="">Sin oficios configurados</option>
+                          ) : (
+                            categoryOptions.map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
+                              </option>
+                            ))
+                          )}
+                        </select>
+                      </div>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      <Button variant="outline" asChild>
-                        <Link to={`/productos/${product.id}`}>Ver ficha</Link>
-                      </Button>
-                      <Button
-                        variant={isActive ? 'secondary' : 'default'}
-                        disabled={statusUpdatingId === product.id}
-                        onClick={() => handleToggleStatus(product)}
-                      >
-                        {statusUpdatingId === product.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : isActive ? (
-                          'Pausar'
+                    <div className="flex flex-wrap gap-3">
+                      <Button type="submit" disabled={isSaving}>
+                        {isSaving ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Guardando...
+                          </>
                         ) : (
-                          'Activar'
+                          <>
+                            <Save className="h-4 w-4 mr-2" />
+                            Publicar servicio
+                          </>
                         )}
                       </Button>
+                      <Button type="button" variant="outline" onClick={closeCreateForm}>
+                        Cancelar
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+            )}
+
+            {products.length === 0 ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <Briefcase className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
+                  <h2 className="text-xl font-semibold mb-2">Todavía no publicaste servicios</h2>
+                  <p className="text-muted-foreground mb-6">
+                    Creá tu primer servicio y empezá a aparecer en el catálogo.
+                  </p>
+                  <Button onClick={openCreateForm}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Nuevo servicio
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {products.map((product) => {
+                  const isActive = product.is_active !== false && product.metadata?.status !== 'inactive';
+                  return (
+                    <Card key={product.id}>
+                      <CardContent className="py-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-3">
+                            <h3 className="text-lg font-semibold">{product.name}</h3>
+                            <span
+                              className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                                isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+                              }`}
+                            >
+                              {isActive ? 'Activo' : 'Inactivo'}
+                            </span>
+                          </div>
+                          {product.category && (
+                            <p className="text-sm text-muted-foreground">{product.category}</p>
+                          )}
+                          <p className="text-sm text-gray-700 line-clamp-2">
+                            {product.description || 'Sin descripción'}
+                          </p>
+                          <p className="text-sm font-medium">{formatPrice(product.unit_price, product.currency)}</p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <Button variant="outline" asChild>
+                            <Link to={`/productos/${product.id}`}>Ver ficha</Link>
+                          </Button>
+                          <Button
+                            variant={isActive ? 'secondary' : 'default'}
+                            disabled={statusUpdatingId === product.id}
+                            onClick={() => handleToggleStatus(product)}
+                          >
+                            {statusUpdatingId === product.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : isActive ? (
+                              'Pausar'
+                            ) : (
+                              'Activar'
+                            )}
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </>
+        )}
+
+        {activeTab === 'reservas' && (
+          <div className="space-y-4">
+            <div className="mb-2">
+              <h2 className="text-xl font-semibold">Ficha de reservas</h2>
+              <p className="text-sm text-muted-foreground">
+                Cada contratación de tu servicio llega como orden de venta. Acá está la ficha para coordinar.
+              </p>
+            </div>
+            {orders.length === 0 ? (
+              <Card>
+                <CardContent className="py-10 text-center text-muted-foreground">
+                  Todavía no tenés reservas. Cuando alguien te contrate, la orden aparece acá.
+                </CardContent>
+              </Card>
+            ) : (
+              orders.map((order) => {
+                const meta = (order.metadata || {}) as Record<string, unknown>;
+                const reservation = (meta.service_reservation || meta.reservation || {}) as Record<string, unknown>;
+                const scheduled =
+                  (reservation.scheduled_at as string | undefined)
+                  || order.due_at
+                  || order.issued_at
+                  || order.created_at;
+                const address = order.shipping_address
+                  ? [order.shipping_address.line1, order.shipping_address.city, order.shipping_address.state]
+                      .filter(Boolean)
+                      .join(', ')
+                  : 'A coordinar con el cliente';
+                return (
+                  <Card key={order.id}>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-lg flex flex-wrap items-center gap-2">
+                        Reserva {order.order_number}
+                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground">
+                          {statusLabel(order.status)}
+                        </span>
+                      </CardTitle>
+                      <CardDescription>
+                        Cliente: {order.customer?.name || 'Cliente'} · {formatDate(scheduled)}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-2 text-sm">
+                      <p>
+                        <span className="font-medium">Servicio: </span>
+                        {order.items?.map((i) => i.description).filter(Boolean).join(', ') || 'Servicio'}
+                      </p>
+                      <p>
+                        <span className="font-medium">Dónde: </span>
+                        {address}
+                      </p>
+                      {order.notes && (
+                        <p>
+                          <span className="font-medium">Detalle del trabajo: </span>
+                          {order.notes}
+                        </p>
+                      )}
+                      {order.customer?.phone && (
+                        <p>
+                          <span className="font-medium">Contacto: </span>
+                          {order.customer.phone}
+                          {order.customer.email ? ` · ${order.customer.email}` : ''}
+                        </p>
+                      )}
+                      <p className="font-medium">{formatPrice(Number(order.total || 0), order.currency)}</p>
+                    </CardContent>
+                  </Card>
+                );
+              })
+            )}
+          </div>
+        )}
+
+        {activeTab === 'capacitaciones' && (
+          <div className="space-y-4">
+            <div className="mb-2">
+              <h2 className="text-xl font-semibold">Capacitaciones</h2>
+              <p className="text-sm text-muted-foreground">
+                Te llegan como tareas. Completalas para mejorar calidad y seguimiento de OficiosHub.
+              </p>
+            </div>
+            {tasks.length === 0 ? (
+              <Card>
+                <CardContent className="py-10 text-center text-muted-foreground">
+                  No tenés capacitaciones asignadas por ahora. Cuando la plataforma te asigne una, aparece acá.
+                </CardContent>
+              </Card>
+            ) : (
+              tasks.map((task) => (
+                <Card key={task.id}>
+                  <CardContent className="py-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <GraduationCap className="h-4 w-4 text-primary" />
+                        <h3 className="font-semibold">{task.title}</h3>
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-muted">
+                          {statusLabel(task.status)}
+                        </span>
+                      </div>
+                      {task.description && (
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap">{task.description}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground">Vence: {formatDate(task.due_at)}</p>
+                    </div>
+                    {task.status !== 'done' && (
+                      <Button
+                        type="button"
+                        disabled={taskUpdatingId === task.id}
+                        onClick={() => handleTaskDone(task)}
+                      >
+                        {taskUpdatingId === task.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <>
+                            <CheckCircle2 className="h-4 w-4 mr-2" />
+                            Marcar hecha
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+        )}
+
+        {activeTab === 'cobros' && (
+          <div className="space-y-4">
+            <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h2 className="text-xl font-semibold">Cobros por servicios prestados</h2>
+                <p className="text-sm text-muted-foreground">
+                  Seguimiento de lo asociado a tus órdenes de venta. La plataforma intermedia y registra el estado.
+                </p>
+              </div>
+              <p className="text-lg font-semibold">
+                Acumulado: {formatPrice(cobrosTotal)}
+              </p>
+            </div>
+            {cobros.length === 0 ? (
+              <Card>
+                <CardContent className="py-10 text-center text-muted-foreground">
+                  Todavía no hay cobros. Aparecen cuando hay órdenes de tus servicios.
+                </CardContent>
+              </Card>
+            ) : (
+              cobros.map((cobro) => (
+                <Card key={cobro.orderId}>
+                  <CardContent className="py-5 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <p className="font-semibold">{cobro.orderNumber}</p>
+                      <p className="text-sm text-muted-foreground">{cobro.serviceName}</p>
+                      <p className="text-xs text-muted-foreground">{formatDate(cobro.createdAt)}</p>
+                    </div>
+                    <div className="text-right space-y-1">
+                      <p className="font-medium">{formatPrice(cobro.grossTotal, cobro.currency)}</p>
+                      <p className="text-sm">
+                        Cobrado: {formatPrice(cobro.paidAmount, cobro.currency)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Orden: {statusLabel(cobro.status)} · Pago: {statusLabel(cobro.paymentStatus)}
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
-              );
-            })}
+              ))
+            )}
           </div>
         )}
       </div>

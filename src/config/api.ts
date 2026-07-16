@@ -94,6 +94,10 @@ export const API_ENDPOINTS = {
   // Business Partners (solo lectura/actualización del propio partner del cliente)
   BUSINESS_PARTNER: (accountId: string, businessPartnerId: string) =>
     `/api/accounts/${accountId}/business-partners/${businessPartnerId}`,
+
+  // Capacitaciones del proveedor (tareas asignadas)
+  TASKS_MINE: (accountId: string) => `/api/accounts/${accountId}/tasks/mine`,
+  TASK: (accountId: string, taskId: string) => `/api/accounts/${accountId}/tasks/${taskId}`,
 } as const;
 
 // Configuración de timeouts

@@ -206,7 +206,9 @@ export const ProductDetailPage: React.FC = () => {
   const canBackorder = selectedVariant?.allow_backorders ?? product?.allow_backorders ?? false;
   const isOutOfStock = !canBackorder && effectiveStock <= 0;
   const stockSemaforo = getStockSemaforo(effectiveStock);
-  const canHire = product ? canRequestService(product) && !isOutOfStock : false;
+  const canHire = product
+    ? (listing.isService ? canRequestService(product) : canRequestService(product) && !isOutOfStock)
+    : false;
   const hireLabel = listing.isAConvenir
     ? 'Pedir presupuesto'
     : (listing.isService ? 'Contratar a esta persona' : uiConfig.productAddToCartLabel);
@@ -248,7 +250,7 @@ export const ProductDetailPage: React.FC = () => {
       return;
     }
 
-    if (isOutOfStock) {
+    if (!listing.isService && isOutOfStock) {
       addNotification({
         type: 'error',
         title: uiConfig.productOutOfStockNotifTitle,
@@ -257,7 +259,7 @@ export const ProductDetailPage: React.FC = () => {
       return;
     }
 
-    addToCart(product, quantity, selectedVariant || undefined);
+    addToCart(product, listing.isService ? 1 : quantity, selectedVariant || undefined);
   };
 
   const handleToggleFavorite = () => {
@@ -590,11 +592,19 @@ export const ProductDetailPage: React.FC = () => {
               </div>
               )}
               {listing.isService && (
-                <p className="text-sm text-muted-foreground">
-                  {listing.isAConvenir
-                    ? 'Precio a convenir · la persona acepta la reserva por OficiosHub'
-                    : 'Precio fijo del servicio · la persona acepta la reserva por OficiosHub'}
-                </p>
+                <div className="space-y-2">
+                  <p className={`inline-flex rounded-sm px-2.5 py-1 text-xs font-medium ${listing.demandToneClassName}`}>
+                    {listing.demandLabel}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {listing.isAConvenir
+                      ? 'Precio a convenir · 1 servicio · la persona acepta la reserva por OficiosHub'
+                      : 'Precio fijo · 1 servicio · la persona acepta la reserva por OficiosHub'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    La plataforma indica si está muy contratado, medio o bajo; no gestiona stock ni agenda día a día.
+                  </p>
+                </div>
               )}
 
               {canHire && (

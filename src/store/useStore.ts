@@ -31,6 +31,7 @@ import {
   releaseActiveSession,
 } from '@/features/auth/activeSession';
 import { recordAppEvent } from '@/lib/observability';
+import { getServiceListing } from '@/utils/serviceListing';
 
 // Tipos del store
 interface AuthState {
@@ -374,10 +375,45 @@ export const useStore = create<AppStore>()(
           const lineId = buildCartLineId(product.id, variant?.id);
           const existingItem = state.cart.items.find(item => item.line_id === lineId);
           const currentQuantity = existingItem ? existingItem.quantity : 0;
-          const newQuantity = currentQuantity + quantity;
           const unitPrice = variant?.effective_price ?? variant?.unit_price ?? product.unit_price;
           const displayName = variant?.name || product.name;
-          
+          const isService = getServiceListing(product).isService;
+
+          // Servicios OficiosHub: siempre cantidad 1 (una reserva por persona/servicio)
+          if (isService) {
+            if (existingItem) {
+              get().addNotification({
+                type: 'info',
+                title: 'Ya está en tu pedido',
+                message: `${displayName} ya está en el carrito (1 servicio).`,
+                duration: 3000,
+              });
+              return state;
+            }
+            const newItems: CartItem[] = [...state.cart.items, {
+              line_id: lineId,
+              product,
+              variant,
+              selected_options: variant?.option_values,
+              quantity: 1,
+              unit_price: unitPrice,
+            }];
+            const newCart = calculateTotals(newItems, state.cart.currency);
+            recordAppEvent('add_to_cart', {
+              productId: product.id,
+              quantity: 1,
+              variantId: variant?.id || null,
+            });
+            get().addNotification({
+              type: 'success',
+              title: 'Servicio agregado',
+              message: `${displayName} agregado al pedido`,
+              duration: 3000,
+            });
+            return { cart: newCart };
+          }
+
+          const newQuantity = currentQuantity + quantity;
           const maxQuantityPerProduct = getMaxQuantityPerProduct();
 
           // Verificar límite de unidades por producto
@@ -480,6 +516,22 @@ export const useStore = create<AppStore>()(
       
       updateCartQuantity: (lineId, quantity) => {
         set((state) => {
+          const target = state.cart.items.find((item) => item.line_id === lineId);
+          if (target && getServiceListing(target.product).isService) {
+            // Servicios: no se cambian cantidades; 0 elimina
+            if (quantity <= 0) {
+              const newItems = state.cart.items.filter((item) => item.line_id !== lineId);
+              return { cart: calculateTotals(newItems, state.cart.currency) };
+            }
+            if (target.quantity !== 1) {
+              const newItems = state.cart.items.map((item) =>
+                item.line_id === lineId ? { ...item, quantity: 1 } : item,
+              );
+              return { cart: calculateTotals(newItems, state.cart.currency) };
+            }
+            return state;
+          }
+
           if (quantity <= 0) {
             // Si la cantidad es 0 o menos, eliminar el producto
             const newItems = state.cart.items.filter(item => item.line_id !== lineId);

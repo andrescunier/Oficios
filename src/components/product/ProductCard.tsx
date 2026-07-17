@@ -107,7 +107,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       return;
     }
 
-    if (!product.stock_quantity || product.stock_quantity <= 0) {
+    if (!listing.isService && (!product.stock_quantity || product.stock_quantity <= 0)) {
       addNotification({
         type: 'error',
         title: uiCfg.productOutOfStockNotifTitle,
@@ -116,7 +116,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       return;
     }
 
-    addToCart(product, quantity);
+    addToCart(product, listing.isService ? 1 : quantity);
   };
 
   const handleToggleFavorite = (e: React.MouseEvent) => {
@@ -315,6 +315,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
                         {canAddToCart && (
                         <>
+                        {!listing.isService && (
                         <div className="flex items-center space-x-2">
                           <Button
                             variant="outline"
@@ -340,6 +341,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                             <Plus className="w-4 h-4" />
                           </Button>
                         </div>
+                        )}
 
                         <Button 
                           className="w-full" 
@@ -416,11 +418,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             showLoginButton={true}
           />
 
-          {/* Stock info */}
-          {product.stock_quantity != null && stockSemaforo.show && (
-            <p className={`text-xs font-medium ${stockSemaforo.toneClassName}`}>
-              {stockSemaforo.label}
+          {/* Demanda (servicios) o stock (ecommerce) */}
+          {listing.isService ? (
+            <p className={`inline-flex w-fit rounded-sm px-2 py-0.5 text-xs font-medium ${listing.demandToneClassName}`}>
+              {listing.demandLabel}
             </p>
+          ) : (
+            product.stock_quantity != null && stockSemaforo.show && (
+              <p className={`text-xs font-medium ${stockSemaforo.toneClassName}`}>
+                {stockSemaforo.label}
+              </p>
+            )
           )}
 
           {/* Talle from SKU */}

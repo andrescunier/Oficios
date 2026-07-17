@@ -1,5 +1,5 @@
 /**
- * PÃ¡gina del carrito de compras
+ * P?gina del carrito de compras
  */
 
 import React from 'react';
@@ -10,6 +10,7 @@ import { getBusinessConfig, getUIConfig, getShippingConfig } from '@/config/runt
 import { SHIPPING } from '@/config/branding';
 import { getCheckoutShippingCharge } from '@/features/checkout/model';
 import { calculateCartTaxSummary } from '@/features/cart/tax';
+import { getServiceListing } from '@/utils/serviceListing';
 
 export const CartPage: React.FC = () => {
   const {
@@ -37,18 +38,18 @@ export const CartPage: React.FC = () => {
 
   const handleCheckout = async () => {
     try {
-      // Verificar autenticaciÃ³n
+      // Verificar autenticaci?n
       if (!auth.isAuthenticated) {
         addNotification({
           type: 'warning',
-          title: 'AutenticaciÃ³n requerida',
-          message: 'Debes iniciar sesiÃ³n para realizar el checkout',
+          title: 'Autenticaci?n requerida',
+          message: 'Debes iniciar sesi?n para realizar el checkout',
         });
         navigate('/login', { state: { from: '/checkout' } });
         return;
       }
 
-      // Redirigir a la pÃ¡gina de checkout directamente
+      // Redirigir a la p?gina de checkout directamente
       navigate('/checkout');
       
     } catch (error) {
@@ -179,43 +180,56 @@ export const CartPage: React.FC = () => {
                         <p className="text-xs text-gray-400">SKU: {item.variant?.sku || item.product.sku}</p>
                         {item.selected_options && Object.keys(item.selected_options).length > 0 && (
                           <p className="text-xs text-gray-500 mt-1">
-                            {Object.entries(item.selected_options).map(([key, value]) => `${key}: ${value}`).join(' â€¢ ')}
+                            {Object.entries(item.selected_options).map(([key, value]) => `${key}: ${value}`).join(' ÿÿÿ ')}
                           </p>
                         )}
-                        <p className="text-sm text-gray-400 mt-1">
-                          {formatPrice(item.unit_price, item.product.currency)} c/u
-                        </p>
-                        <p className="text-lg font-bold text-blue-600">
-                          {formatPrice(item.unit_price * item.quantity, item.product.currency)}
-                        </p>
+                        {(() => {
+                          const listing = getServiceListing(item.product);
+                          return (
+                            <>
+                              <p className="text-sm text-gray-400 mt-1">
+                                {listing.isService
+                                  ? (listing.isAConvenir
+                                    ? 'A convenir ? 1 servicio'
+                                    : `${formatPrice(item.unit_price, item.product.currency)} ? 1 servicio`)
+                                  : `${formatPrice(item.unit_price, item.product.currency)} c/u`}
+                              </p>
+                              {!(listing.isService && listing.isAConvenir) && (
+                                <p className="text-lg font-bold text-blue-600">
+                                  {formatPrice(item.unit_price * item.quantity, item.product.currency)}
+                                </p>
+                              )}
+                            </>
+                          );
+                        })()}
                       </div>
 
-                      {/* Quantity Controls */}
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => handleQuantityChange(item.line_id, item.quantity - 1)}
-                          className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors"
-                        >
-                          <Minus className="w-4 h-4" />
-                        </button>
-                        <span className="w-12 text-center font-semibold">
-                          {item.quantity}
-                        </span>
-                        <button
-                          onClick={() => handleQuantityChange(item.line_id, item.quantity + 1)}
-                          disabled={item.quantity >= 5}
-                          className={`w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center transition-colors ${
-                            item.quantity >= 5 
-                              ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                              : 'hover:bg-gray-50'
-                          }`}
-                          title={item.quantity >= 5 ? 'MÃ¡ximo 5 unidades por producto' : ''}
-                        >
-                          <Plus className="w-4 h-4" />
-                        </button>
-                      </div>
-                      {item.quantity >= 5 && (
-                        <span className="text-xs text-orange-600 ml-2">MÃ¡x. 5 uds.</span>
+                      {getServiceListing(item.product).isService ? (
+                        <span className="text-sm text-muted-foreground px-2">1 servicio</span>
+                      ) : (
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => handleQuantityChange(item.line_id, item.quantity - 1)}
+                            className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors"
+                          >
+                            <Minus className="w-4 h-4" />
+                          </button>
+                          <span className="w-12 text-center font-semibold">
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() => handleQuantityChange(item.line_id, item.quantity + 1)}
+                            disabled={item.quantity >= 5}
+                            className={`w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center transition-colors ${
+                              item.quantity >= 5
+                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                : 'hover:bg-gray-50'
+                            }`}
+                            title={item.quantity >= 5 ? 'M?ximo 5 unidades por producto' : ''}
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        </div>
                       )}
 
                       {/* Remove Button */}
@@ -282,14 +296,14 @@ export const CartPage: React.FC = () => {
               <div className="mt-6 pt-6 border-t">
                 <div className="text-center text-sm text-gray-500">
                   <div className="flex items-center justify-center space-x-4 mb-2">
-                    <span>ðŸ”’ {uiCfg.cartPageSSLBadge}</span>
-                    <span>ðŸšš {uiCfg.cartPageShippingBadge}</span>
+                    <span>ÿÿÿÿ {uiCfg.cartPageSSLBadge}</span>
+                    <span>ÿÿÿÿ {uiCfg.cartPageShippingBadge}</span>
                   </div>
                   <p>{uiCfg.cartPageSSLDesc}</p>
                   <p className="mt-2 text-xs">
                     Al continuar aceptas nuestros{' '}
                     <Link to="/terminos" className="text-blue-600 hover:underline">
-                      TÃ©rminos y Condiciones
+                      T?rminos y Condiciones
                     </Link>
                   </p>
                 </div>

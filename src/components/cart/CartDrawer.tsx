@@ -27,6 +27,7 @@ import { Separator } from '@/components/ui/separator';
 import { useStore } from '@/store/useStore';
 import { getBusinessConfig, getUIConfig, getShippingConfig } from '@/config/runtime';
 import { getCheckoutShippingCharge } from '@/features/checkout/model';
+import { getServiceListing } from '@/utils/serviceListing';
 import log from '@/lib/logger';
 
 interface CartDrawerProps {
@@ -183,33 +184,38 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
                         </Button>
                       </div>
                       
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={() => handleQuantityChange(item.line_id, item.quantity - 1)}
-                        >
-                          <Minus className="h-3 w-3" />
-                        </Button>
-                        <span className="text-sm font-medium w-8 text-center">
-                          {item.quantity}
-                        </span>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={() => handleQuantityChange(item.line_id, item.quantity + 1)}
-                          disabled={item.quantity >= (item.variant?.stock_quantity || item.product.stock_quantity || 0)}
-                        >
-                          <Plus className="h-3 w-3" />
-                        </Button>
-                      </div>
-                      
-                      {item.quantity > 1 && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Subtotal: {formatPrice(item.unit_price * item.quantity, item.product.currency)}
-                        </p>
+                      {getServiceListing(item.product).isService ? (
+                        <p className="text-xs text-muted-foreground">1 servicio · sin cantidad</p>
+                      ) : (
+                        <>
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => handleQuantityChange(item.line_id, item.quantity - 1)}
+                            >
+                              <Minus className="h-3 w-3" />
+                            </Button>
+                            <span className="text-sm font-medium w-8 text-center">
+                              {item.quantity}
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => handleQuantityChange(item.line_id, item.quantity + 1)}
+                              disabled={item.quantity >= (item.variant?.stock_quantity || item.product.stock_quantity || 0)}
+                            >
+                              <Plus className="h-3 w-3" />
+                            </Button>
+                          </div>
+                          {item.quantity > 1 && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Subtotal: {formatPrice(item.unit_price * item.quantity, item.product.currency)}
+                            </p>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>

@@ -89,9 +89,9 @@ const buildCreatePayload = (input: ProviderProductInput, businessPartnerId: stri
     category: input.category || undefined,
     status,
     product_type: 'service',
-    stock_quantity: 50,
+    stock_quantity: 1,
     stock_unit: 'servicio',
-    track_inventory: true,
+    track_inventory: false,
     allow_backorders: true,
     provider_partner_id: businessPartnerId,
     image_url: imageUrl,
@@ -100,6 +100,8 @@ const buildCreatePayload = (input: ProviderProductInput, businessPartnerId: stri
       kind: 'service',
       marketplace: 'oficioshub',
       pricing_mode: pricingMode,
+      // La plataforma ajusta demand_level; default medio al publicar
+      demand_level: 'medium',
       channels: [channel],
       showecommerce: true,
       provider: {
@@ -117,6 +119,7 @@ const buildCreatePayload = (input: ProviderProductInput, businessPartnerId: stri
         provider_name: personName,
         trade_rank: tradeRank,
         pricing_mode: pricingMode,
+        demand_level: 'medium',
       },
     },
   };

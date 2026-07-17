@@ -167,7 +167,10 @@ def build_pages() -> dict:
                             "icon": "Clock",
                             "iconColor": "slate",
                             "title": "Horario de atención de la plataforma",
-                            "description": "Lunes a sábado 8:00 a 20:00. El horario del trabajo lo coordinás con la persona.",
+                            "description": (
+                                "Lunes a sábado 8:00 a 20:00. Fecha y hora del trabajo se indican "
+                                "en la reserva y se confirman por OficiosHub."
+                            ),
                         },
                     ],
                 },
@@ -175,8 +178,8 @@ def build_pages() -> dict:
                     "type": "text",
                     "title": "¿Sos proveedor?",
                     "body": (
-                        "Registrate en Ofrezco mi oficio y usá el panel para servicios, reservas, "
-                        "capacitaciones y cobros. Si ya tenés cuenta, entrá a /proveedor."
+                        "Registrate en Ofrezco mi oficio. Validamos idoneidad antes de que tu perfil "
+                        "quede operativo. Usá el panel para servicios, reservas, capacitaciones y cobros."
                     ),
                 },
             ],
@@ -200,8 +203,9 @@ def build_pages() -> dict:
                     "type": "section",
                     "title": "2. Contratar un servicio",
                     "body": (
-                        "Al confirmar un pedido aceptás coordinar fecha, alcance, acceso al domicilio "
-                        "y forma de pago con la persona. El pedido queda registrado como orden de venta."
+                        "Al confirmar una reserva aceptás que OficiosHub intermedie la contratación: "
+                        "indicás fecha, zona y detalle del trabajo; el proveedor acepta en su panel; "
+                        "no hay contacto directo entre las partes. El pedido queda como orden de venta."
                     ),
                 },
                 {
@@ -209,36 +213,35 @@ def build_pages() -> dict:
                     "title": "3. Ofrecer un oficio",
                     "body": (
                         "Quienes se registran como proveedores lo hacen como personas particulares. "
-                        "Deben publicar información veraz, cumplir lo acordado y completar las "
-                        "capacitaciones asignadas por la plataforma cuando corresponda."
+                        "Deben publicar información veraz, aceptar o rechazar reservas por la plataforma, "
+                        "cumplir lo acordado y completar las capacitaciones asignadas cuando corresponda."
                     ),
                 },
                 {
                     "type": "section",
                     "title": "4. Validación y capacitaciones",
                     "body": (
-                        "OficiosHub puede validar idoneidad y antecedentes. Las capacitaciones se "
-                        "asignan como tareas en el panel del proveedor y buscan mejorar calidad de servicio "
-                        "y nivel de vida, financiadas con la intermediación."
+                        "OficiosHub valida idoneidad y antecedentes antes de que el perfil quede operativo. "
+                        "Las capacitaciones se asignan como tareas en el panel del proveedor, "
+                        "financiadas con la intermediación."
                     ),
                 },
                 {
                     "type": "section",
                     "title": "5. Pagos y cobros",
                     "body": (
-                        "Los medios de pago habilitados se muestran en el checkout. El proveedor puede "
-                        "ver el estado de cobro asociado a sus órdenes de venta en su panel. "
-                        "La plataforma no reemplaza acuerdos de pago en efectivo o transferencia "
-                        "acordados con la persona cuando así esté habilitado."
+                        "Los medios de pago habilitados se muestran en el checkout. OficiosHub intermedia "
+                        "el cobro: se retiene hasta que el cliente da el OK de calidad. "
+                        "No está permitido acordar pagos por fuera de la plataforma."
                     ),
                 },
                 {
                     "type": "section",
                     "title": "6. Cancelaciones",
                     "body": (
-                        "Podés pedir cambios o cancelaciones escribiendo por WhatsApp o contacto, "
-                        "indicando el número de orden. La viabilidad depende del estado del pedido "
-                        "y de lo acordado con la persona."
+                        "Podés pedir cambios o cancelaciones por el canal oficial (Contacto o WhatsApp "
+                        "de OficiosHub), indicando el número de orden. La viabilidad depende del estado "
+                        "de la reserva; OficiosHub gestiona el caso con la otra parte."
                     ),
                 },
             ],
@@ -262,8 +265,9 @@ def build_pages() -> dict:
                     "type": "section",
                     "title": "Con quién se comparten",
                     "body": (
-                        "Compartimos con la contraparte lo necesario para concretar el servicio "
-                        "(por ejemplo, datos de contacto y detalle del pedido). No vendemos tu información."
+                        "Para tu seguridad no compartimos teléfono ni WhatsApp entre cliente y proveedor. "
+                        "El proveedor ve zona/barrio y, tras aceptar la reserva, la dirección del servicio "
+                        "necesaria para la visita. La coordinación pasa por OficiosHub. No vendemos tu información."
                     ),
                 },
                 {
@@ -310,18 +314,18 @@ def build_pages() -> dict:
                     "type": "section",
                     "title": "Servicios, no devoluciones de góndola",
                     "body": (
-                        "Si necesitás cancelar o modificar una reserva, escribinos con el número de orden "
-                        "lo antes posible. Coordinamos con la persona según el estado del pedido "
-                        "(si todavía no se realizó el trabajo suele ser más simple)."
+                        "Si necesitás cancelar o modificar una reserva, escribinos al canal oficial "
+                        "con el número de orden lo antes posible. OficiosHub gestiona el caso según "
+                        "el estado (si todavía no se realizó el trabajo suele ser más simple)."
                     ),
                 },
                 {
                     "type": "list",
                     "title": "Cómo pedirlo",
                     "items": [
-                        "Usá Contacto o WhatsApp con tu número de orden.",
+                        "Usá Contacto o el WhatsApp oficial de OficiosHub con tu número de orden.",
                         "Contá el motivo y si querés reprogramar o cancelar.",
-                        "Si el trabajo ya empezó o terminó, se evalúa caso por caso con la persona.",
+                        "No contactes a la otra parte por fuera; si el trabajo ya empezó, se evalúa caso por caso.",
                     ],
                 },
             ],
@@ -345,9 +349,9 @@ def build_pages() -> dict:
                     "type": "section",
                     "title": "Si algo no salió bien",
                     "body": (
-                        "Contactanos con el número de orden. Revisamos el caso con la persona "
-                        "y buscamos una solución razonable. No ofrecemos garantía de fábrica "
-                        "como un e‑commerce de productos; el foco es el oficio prestado."
+                        "No des el OK de calidad hasta estar conforme, o contactanos con el número de orden "
+                        "antes. Revisamos el caso por la plataforma y buscamos una solución razonable. "
+                        "No ofrecemos garantía de fábrica como un e‑commerce de productos; el foco es el oficio prestado."
                     ),
                 },
             ],
@@ -396,19 +400,58 @@ def build_pages() -> dict:
         ),
         "shipping": page(
             "Visitas y coordinación",
-            "No hay envíos de paquetería: se coordina la visita con la persona.",
+            "No hay envíos de paquetería: OficiosHub intermedia la visita.",
             [
                 {
                     "type": "section",
                     "title": "Cómo se hace el servicio",
                     "body": (
                         "La mayoría de los oficios se realizan en tu domicilio u obra. "
-                        "Al confirmar el pedido podés dejar notas (acceso, horario preferido, detalle del problema). "
-                        "La persona confirma día y horario."
+                        "Al pedir el servicio indicás fecha, hora, zona y detalle. "
+                        "El proveedor acepta en su panel; no hay contacto directo. "
+                        "El cobro se libera recién con tu OK de calidad."
                     ),
                 },
+                {
+                    "type": "list",
+                    "title": "Seguridad",
+                    "items": [
+                        "No compartimos tu teléfono con la otra parte.",
+                        "La dirección completa se muestra al proveedor recién al aceptar la reserva.",
+                        "Cualquier duda: canal oficial de OficiosHub con tu número de orden.",
+                    ],
+                },
             ],
-            cta_primary=("Ver servicios", "/productos"),
+            cta_primary=("Ver oficios", "/productos"),
+            cta_secondary=("Cómo funciona", "/como-funciona"),
+        ),
+        "company": page(
+            "Sobre OficiosHub",
+            "Marketplace de personas con oficio, con intermediación y respaldo.",
+            [
+                {
+                    "type": "text",
+                    "title": "Nuestra propuesta",
+                    "body": (
+                        "OficiosHub conecta vecinos que necesitan un arreglo con personas particulares "
+                        "que saben hacerlo. No somos un directorio de contactos: intermediamos la reserva, "
+                        "validamos idoneidad y retenemos el cobro hasta el OK de calidad del cliente."
+                    ),
+                },
+                {
+                    "type": "list",
+                    "title": "Por qué da seguridad",
+                    "items": [
+                        "Sin contacto directo entre cliente y proveedor.",
+                        "Validación de idoneidad y antecedentes de quienes ofrecen oficios.",
+                        "Cobro liberado recién con OK de calidad.",
+                        "Capacitaciones financiadas con la intermediación.",
+                        "Pocas categorías claras: Hogar, Electricidad, Pintura y Exterior.",
+                    ],
+                },
+            ],
+            cta_primary=("Cómo funciona", "/como-funciona"),
+            cta_secondary=("Ver oficios", "/productos"),
         ),
         "notFound": page(
             "No encontramos esa página",

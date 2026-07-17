@@ -30,6 +30,7 @@ import {
 import { useStore } from '@/store/useStore';
 import { BRANDING, ASSETS } from '@/config/branding';
 import { getCategoriesConfig, getUIConfig } from '@/config/runtime';
+import { isSupplierUserRole } from '@/services/businessPartnerService';
 
 export const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -43,6 +44,7 @@ export const Header: React.FC = () => {
   const logout = useStore((state) => state.logout);
   const isAuthenticated = auth.isAuthenticated;
   const user = auth.user;
+  const showProviderNav = isSupplierUserRole(user?.role);
   const cartItemCount = cart.items.length;
 
   const handleSearch = (e: React.FormEvent) => {
@@ -295,9 +297,11 @@ export const Header: React.FC = () => {
                   <DropdownMenuItem asChild>
                     <Link to="/pedidos">{getUIConfig().headerMyOrdersLabel}</Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/proveedor">Mis servicios</Link>
-                  </DropdownMenuItem>
+                  {showProviderNav && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/proveedor">Mis servicios</Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem asChild>
                     <Link to="/favoritos">{getUIConfig().headerFavoritesLabel}</Link>
                   </DropdownMenuItem>
@@ -452,12 +456,14 @@ export const Header: React.FC = () => {
                       {getUIConfig().headerMyOrdersLabel}
                     </Link>
                   </Button>
-                  <Button variant="ghost" className="w-full justify-start" asChild>
-                    <Link to="/proveedor" onClick={() => setIsMenuOpen(false)}>
-                      <Briefcase className="h-4 w-4 mr-2" />
-                      Mis servicios
-                    </Link>
-                  </Button>
+                  {showProviderNav && (
+                    <Button variant="ghost" className="w-full justify-start" asChild>
+                      <Link to="/proveedor" onClick={() => setIsMenuOpen(false)}>
+                        <Briefcase className="h-4 w-4 mr-2" />
+                        Mis servicios
+                      </Link>
+                    </Button>
+                  )}
                   <Button variant="ghost" className="w-full justify-start" asChild>
                     <Link to="/favoritos" onClick={() => setIsMenuOpen(false)}>
                       <Heart className="h-4 w-4 mr-2" />

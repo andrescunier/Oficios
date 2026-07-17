@@ -258,6 +258,7 @@ export interface PageContent {
 
 export interface PagesConfig {
   about?: PageContent;
+  company?: PageContent;
   contact?: PageContent;
   cookies?: PageContent;
   terms?: PageContent;

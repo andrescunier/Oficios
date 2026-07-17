@@ -7,7 +7,6 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { CategoryConfig } from '@/config/runtime';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { ProductCard } from '@/components/product/ProductCard';
 import { ProductCardSkeleton } from '@/components/product/ProductCardSkeleton';
 import { useStore } from '@/store/useStore';
@@ -315,7 +314,7 @@ export const Home: React.FC = () => {
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 mb-10">
             <div>
-              <p className="eyebrow mb-2">New in</p>
+              <p className="eyebrow mb-2">Nuevos</p>
               <h2 className="section-title">{uiCfg.homeNewTitle}</h2>
               <p className="text-muted-foreground mt-2">{uiCfg.homeNewSubtitle}</p>
             </div>
@@ -344,10 +343,9 @@ export const Home: React.FC = () => {
           <div className="container mx-auto px-4">
             <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 mb-10">
               <div>
-                <p className="eyebrow mb-2">Sale</p>
+                <p className="eyebrow mb-2">Demanda</p>
                 <h2 className="section-title flex items-center gap-3">
                   {uiCfg.homeSaleTitle}
-                  <Badge variant="destructive" className="rounded-none uppercase tracking-[0.2em] text-[10px] font-medium">Hot</Badge>
                 </h2>
                 <p className="text-muted-foreground mt-2">{uiCfg.homeSaleSubtitle}</p>
               </div>

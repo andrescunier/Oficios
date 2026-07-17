@@ -292,7 +292,7 @@ export const ProviderDashboard: React.FC = () => {
       addNotification({
         type: 'success',
         title: 'Servicio publicado',
-        message: `"${created.name}" ya está visible en el marketplace.`,
+        message: `"${created.name}" quedó publicado. La plataforma puede revisar idoneidad; las reservas llegan a tu panel.`,
       });
       closeCreateForm();
     } catch (error) {
@@ -374,7 +374,7 @@ export const ProviderDashboard: React.FC = () => {
         type: 'success',
         title: action === 'accept' ? 'Reserva aceptada' : 'Reserva rechazada',
         message: action === 'accept'
-          ? 'Coordiná el trabajo por OficiosHub. El cobro se libera con el OK de calidad del cliente.'
+          ? 'Reserva aceptada. Ya podés ver la dirección del servicio. Coordinación y cobro solo por OficiosHub (cobro tras OK de calidad).'
           : 'El cliente podrá ver que no tomaste esta reserva.',
       });
     } catch (error) {
@@ -505,7 +505,7 @@ export const ProviderDashboard: React.FC = () => {
                 Cómo te acompaña OficiosHub
               </CardTitle>
               <CardDescription>
-                La plataforma valida idoneidad y antecedentes, y reinvierta la intermediación en tu capacitación.
+                La plataforma valida idoneidad y antecedentes, y reinvertimos la intermediación en tu capacitación.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 text-sm text-gray-700 leading-relaxed">
@@ -576,7 +576,7 @@ export const ProviderDashboard: React.FC = () => {
                           id="service-description"
                           value={form.description}
                           onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
-                          placeholder="Contá qué incluye, zona y cómo coordinás."
+                          placeholder="Contá qué incluye y tu zona. La coordinación es por OficiosHub."
                           rows={4}
                         />
                       </div>
@@ -887,13 +887,22 @@ export const ProviderDashboard: React.FC = () => {
                     : reservation.serviceDate)
                   || order.due_at
                   || order.created_at;
-                const address = order.shipping_address
+                const pendingAccept = reservation.providerStatus === 'pending_accept'
+                  || reservation.providerStatus === 'pending';
+                const accepted = reservation.providerStatus === 'accepted'
+                  || ['confirmed', 'preparing', 'ready_to_ship', 'shipped', 'delivered', 'completed'].includes(order.status);
+                const fullAddress = order.shipping_address
                   ? [order.shipping_address.line1, order.shipping_address.city, order.shipping_address.state]
                       .filter(Boolean)
                       .join(', ')
-                  : 'Zona a coordinar por OficiosHub';
-                const pendingAccept = reservation.providerStatus === 'pending_accept'
-                  || reservation.providerStatus === 'pending';
+                  : '';
+                const address = pendingAccept
+                  ? (reservation.barrio
+                    ? `Zona: ${reservation.barrio} (dirección completa al aceptar)`
+                    : 'Zona a coordinar — dirección completa al aceptar')
+                  : (accepted && fullAddress
+                    ? fullAddress
+                    : (reservation.barrio || fullAddress || 'Zona a coordinar por OficiosHub'));
                 return (
                   <Card key={order.id}>
                     <CardHeader className="pb-2">

@@ -113,7 +113,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
           <SheetDescription>
             {itemsCount === 0 
               ? uiCfg.cartDrawerEmptyDescription
-              : `${itemsCount} ${itemsCount === 1 ? 'producto' : 'productos'} ${uiCfg.cartDrawerCountSuffix}`
+              : `${itemsCount} ${itemsCount === 1 ? uiCfg.cartPageProductSingular : uiCfg.cartPageProductPlural} ${uiCfg.cartDrawerCountSuffix}`
             }
           </SheetDescription>
         </SheetHeader>
@@ -163,7 +163,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
                       <h4 className="text-sm font-medium line-clamp-2 mb-1">
                         {item.variant?.name || item.product.name}
                       </h4>
-                      <p className="text-xs text-muted-foreground/60 mb-0.5">SKU: {item.variant?.sku || item.product.sku}</p>
+                      {!getServiceListing(item.product).isService && (item.variant?.sku || item.product.sku) && (
+                        <p className="text-xs text-muted-foreground/60 mb-0.5">SKU: {item.variant?.sku || item.product.sku}</p>
+                      )}
                       {item.selected_options && Object.keys(item.selected_options).length > 0 && (
                         <p className="text-xs text-muted-foreground mb-1">
                           {Object.entries(item.selected_options).map(([key, value]) => `${key}: ${value}`).join(' • ')}

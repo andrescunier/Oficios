@@ -25,6 +25,7 @@ import { useCheckoutMutation } from '@/features/checkout/mutations';
 import { isCheckoutSuccess, normalizeCheckoutFailure } from '@/features/checkout/result';
 import { clearAuthSession, getBusinessPartnerId, getPersistedRegistrationDraft, saveRegistrationDraft } from '@/features/auth/session';
 import { createCorrelationId, recordAppEvent } from '@/lib/observability';
+import { getServiceListing } from '@/utils/serviceListing';
 
 export const CheckoutPage: React.FC = () => {
   const { cart, clearCart, addNotification, auth } = useStore();
@@ -835,7 +836,7 @@ export const CheckoutPage: React.FC = () => {
                 
                 {/* Products Review */}
                 <div className="mb-6">
-                  <h3 className="font-medium mb-4">Productos</h3>
+                  <h3 className="font-medium mb-4">Servicios</h3>
                   <div className="space-y-4">
                     {cart.items.map((item) => (
                       <div key={item.line_id} className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg">
@@ -846,13 +847,17 @@ export const CheckoutPage: React.FC = () => {
                         />
                         <div className="flex-1">
                           <h4 className="font-medium">{item.variant?.name || item.product.name}</h4>
-                          <p className="text-xs text-gray-400">SKU: {item.variant?.sku || item.product.sku}</p>
+                          {!getServiceListing(item.product).isService && (item.variant?.sku || item.product.sku) && (
+                            <p className="text-xs text-gray-400">SKU: {item.variant?.sku || item.product.sku}</p>
+                          )}
                           {item.selected_options && Object.keys(item.selected_options).length > 0 && (
                             <p className="text-xs text-gray-500">
                               {Object.entries(item.selected_options).map(([key, value]) => `${key}: ${value}`).join(' • ')}
                             </p>
                           )}
-                          <p className="text-sm text-gray-600">Cantidad: {item.quantity}</p>
+                          {!getServiceListing(item.product).isService && (
+                            <p className="text-sm text-gray-600">Cantidad: {item.quantity}</p>
+                          )}
                         </div>
                         <div className="text-right">
                           <p className="font-medium">{formatPrice(item.unit_price * item.quantity, item.product.currency)}</p>

@@ -382,6 +382,7 @@ const pageContentSchema = z.object({
 
 const pagesSchema = z.object({
   about: pageContentSchema.optional(),
+  company: pageContentSchema.optional(),
   contact: pageContentSchema.optional(),
   cookies: pageContentSchema.optional(),
   terms: pageContentSchema.optional(),

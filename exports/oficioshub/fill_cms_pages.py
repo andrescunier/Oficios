@@ -10,6 +10,7 @@ import urllib.request
 from pathlib import Path
 
 from oficioshub_pages import build_pages
+from ui_patch import UI_PATCH
 
 ACCOUNT_ID = "cccedb72-8267-4513-9b9f-48c2d1fae78d"
 ACCOUNT_SLUG = "oficioshub"
@@ -100,7 +101,7 @@ def main() -> int:
                 {"label": "Seguimiento", "href": "/seguimiento"},
                 {"label": "Cambios / cancelaciones", "href": "/devoluciones"},
                 {"label": "Calidad y reseñas", "href": "/garantias"},
-                {"label": "Visitas y coordinación", "href": "/como-funciona"},
+                {"label": "Visitas y coordinación", "href": "/visitas"},
             ],
         },
         {
@@ -151,6 +152,7 @@ def main() -> int:
     config["features"] = features
 
     ui = config.get("ui") if isinstance(config.get("ui"), dict) else {}
+    ui.update(UI_PATCH)
     stock_semaforo = ui.get("stockSemaforo") if isinstance(ui.get("stockSemaforo"), dict) else {}
     stock_semaforo["enabled"] = False
     ui["stockSemaforo"] = stock_semaforo

@@ -402,7 +402,7 @@ export const ProductDetailPage: React.FC = () => {
                 </button>
               </div>
 
-              {effectiveSku && (
+              {!listing.isService && effectiveSku && (
                 <p className="text-sm text-gray-500 mb-2">SKU: {effectiveSku}</p>
               )}
 
@@ -415,6 +415,7 @@ export const ProductDetailPage: React.FC = () => {
                 {listing.tradeRankLabel && (
                   <span className="inline-flex items-center rounded-sm bg-primary/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
                     {listing.tradeRankLabel}
+                    {listing.isService ? ' · revisión' : ''}
                   </span>
                 )}
               </div>
@@ -533,7 +534,7 @@ export const ProductDetailPage: React.FC = () => {
                                   ? 'border-foreground bg-foreground text-background'
                                   : 'border-border bg-background text-foreground hover:border-foreground/50'
                               }`}
-                              title={!available ? 'Sin stock para esta combinación' : value.label}
+                              title={!available ? (listing.isService ? 'Opción no disponible' : 'Sin stock para esta combinación') : value.label}
                             >
                               {isColorOption(option.name) ? (
                                 <span className="inline-flex items-center gap-2">

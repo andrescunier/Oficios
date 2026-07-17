@@ -162,7 +162,8 @@ export const RegisterSupplier: React.FC = () => {
           </div>
           <CardTitle className="text-2xl">Ofrezco mi oficio</CardTitle>
           <CardDescription>
-            Sos una persona particular, no una empresa: publicá lo que sabés hacer y que te contacten vecinos.
+            Sos una persona particular, no una empresa. Validamos idoneidad antes de publicar;
+            las reservas y el cobro pasan por OficiosHub, sin contacto directo.
           </CardDescription>
         </CardHeader>
 

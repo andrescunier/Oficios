@@ -88,6 +88,7 @@ const LegalNotice = lazy(() => import('@/pages/LegalNotice').then((module) => ({
 const CookiesPolicy = lazy(() => import('@/pages/CookiesPolicy').then((module) => ({ default: module.CookiesPolicy })));
 const OrderTracking = lazy(() => import('@/pages/OrderTracking').then((module) => ({ default: module.OrderTracking })));
 const ReturnsPage = lazy(() => import('@/pages/ReturnsPage').then((module) => ({ default: module.ReturnsPage })));
+const ShippingPage = lazy(() => import('@/pages/ShippingPage').then((module) => ({ default: module.ShippingPage })));
 const WarrantyPage = lazy(() => import('@/pages/WarrantyPage').then((module) => ({ default: module.WarrantyPage })));
 const NotFound = lazy(() => import('@/pages/NotFound').then((module) => ({ default: module.NotFound })));
 const RegistrationSuccess = lazy(() => import('@/pages/RegistrationSuccess'));
@@ -120,6 +121,8 @@ function App() {
                 <Route path="/contacto" element={<ContactPage />} />
                 <Route path="/sobrenosotros" element={<AboutUs />} />
                 <Route path="/como-funciona" element={<AboutUs />} />
+                <Route path="/visitas" element={<ShippingPage />} />
+                <Route path="/envios" element={<ShippingPage />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/registro" element={<Register />} />
                 <Route path="/registro-proveedor" element={<RegisterSupplier />} />

@@ -11,6 +11,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from oficioshub_pages import build_pages  # noqa: E402
+from ui_patch import UI_PATCH  # noqa: E402
 
 ACCOUNT_ID = "cccedb72-8267-4513-9b9f-48c2d1fae78d"
 ACCOUNT_SLUG = "oficioshub"
@@ -662,22 +663,10 @@ def build_config() -> dict:
             "trackEcommerce": True,
         },
         "ui": {
-            "searchPlaceholder": "Buscar persona u oficio...",
-            "noProductsTitle": "No encontramos a nadie con ese oficio",
-            "noProductsMessage": "Probá Hogar, Electricidad, Pintura o Exterior",
+            **UI_PATCH,
             "loginTitle": "Ingresar a OficiosHub",
-            "loginSubtitle": "Accedé para contratar a una persona y seguir tus pedidos",
-            "cartEmptyTitle": "Todavía no elegiste a nadie",
-            "cartEmptyMessage": "Sumá el servicio de una persona para contratarla",
-            "checkoutFinalizeLabel": "Confirmar contratación",
             "addToCartLabel": "Contratar a esta persona",
             "homeHeroCta": "Ver personas",
-            "homeFeaturedTitle": "Personas destacadas",
-            "homeFeaturedSubtitle": "Vecinos con oficio que más se contratan",
-            "homeCategoriesTitle": "Oficios",
-            "homeCategoriesSubtitle": "Solo cuatro: elegí y mirá quién ofrece",
-            "homeNewTitle": "Recién sumados",
-            "homeNewSubtitle": "Personas que acaban de publicar su oficio",
             "stockSemaforo": {
                 "enabled": False,
             },

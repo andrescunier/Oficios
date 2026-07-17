@@ -869,7 +869,7 @@ export const OrdersPage: React.FC = () => {
                             type="text"
                             value={cancelReason}
                             onChange={(event) => setCancelReason(event.target.value)}
-                            placeholder="Ej: Ya no necesito el producto"
+                            placeholder="Ej: Ya no necesito el servicio"
                             className="w-full px-3 py-2 border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
                           />
                         </div>

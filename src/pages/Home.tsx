@@ -86,7 +86,7 @@ export const Home: React.FC = () => {
       addNotification({
         type: 'error',
         title: 'Error de carga',
-        message: 'No se pudieron cargar algunos productos. Intenta recargar la página.',
+        message: 'No se pudieron cargar algunos oficios. Intentá recargar la página.',
       });
     }
   }, [

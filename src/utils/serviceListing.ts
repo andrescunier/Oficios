@@ -89,7 +89,8 @@ export const getServiceListing = (product: Product | null | undefined) => {
   const isService =
     meta.kind === 'service'
     || meta.marketplace === 'oficioshub'
-    || product?.product_type === 'service';
+    || product?.product_type === 'service'
+    || Boolean(provider.business_partner_id || provider.name || pub.provider_name);
 
   const demandRaw = String(
     meta.demand_level || pub.demand_level || provider.demand_level || 'medium',

@@ -229,9 +229,9 @@ def build_config() -> dict:
                     "description": "Hogar, electricidad, pintura y exterior: fácil de elegir",
                 },
                 {
-                    "icon": "MessageCircle",
-                    "title": "Coordinás con la persona",
-                    "description": "Pedís online y arreglás día y detalle directo con quien lo hace",
+                    "icon": "ShieldCheck",
+                    "title": "Mediación OficiosHub",
+                    "description": "Sin contacto directo: reserva, coordinación y cobro pasan por la plataforma",
                 },
                 {
                     "icon": "Star",

@@ -1,5 +1,5 @@
 /**
- * P?gina del carrito de compras
+ * PÃ¡gina del carrito de compras
  */
 
 import React from 'react';
@@ -177,10 +177,12 @@ export const CartPage: React.FC = () => {
                         <h3 className="font-semibold text-gray-900 truncate">
                           {item.variant?.name || item.product.name}
                         </h3>
-                        <p className="text-xs text-gray-400">SKU: {item.variant?.sku || item.product.sku}</p>
+                        {!getServiceListing(item.product).isService && (item.variant?.sku || item.product.sku) && (
+                          <p className="text-xs text-gray-400">SKU: {item.variant?.sku || item.product.sku}</p>
+                        )}
                         {item.selected_options && Object.keys(item.selected_options).length > 0 && (
                           <p className="text-xs text-gray-500 mt-1">
-                            {Object.entries(item.selected_options).map(([key, value]) => `${key}: ${value}`).join(' ÿÿÿ ')}
+                            {Object.entries(item.selected_options).map(([key, value]) => `${key}: ${value}`).join('  ')}
                           </p>
                         )}
                         {(() => {
@@ -190,8 +192,8 @@ export const CartPage: React.FC = () => {
                               <p className="text-sm text-gray-400 mt-1">
                                 {listing.isService
                                   ? (listing.isAConvenir
-                                    ? 'A convenir ? 1 servicio'
-                                    : `${formatPrice(item.unit_price, item.product.currency)} ? 1 servicio`)
+                                    ? 'A convenir Â· 1 servicio'
+                                    : `${formatPrice(item.unit_price, item.product.currency)} Â· 1 servicio`)
                                   : `${formatPrice(item.unit_price, item.product.currency)} c/u`}
                               </p>
                               {!(listing.isService && listing.isAConvenir) && (
@@ -225,7 +227,7 @@ export const CartPage: React.FC = () => {
                                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                                 : 'hover:bg-gray-50'
                             }`}
-                            title={item.quantity >= 5 ? 'M?ximo 5 unidades por producto' : ''}
+                            title={item.quantity >= 5 ? 'MÃ¡ximo 5 unidades por producto' : ''}
                           >
                             <Plus className="w-4 h-4" />
                           </button>
@@ -296,8 +298,8 @@ export const CartPage: React.FC = () => {
               <div className="mt-6 pt-6 border-t">
                 <div className="text-center text-sm text-gray-500">
                   <div className="flex items-center justify-center space-x-4 mb-2">
-                    <span>ÿÿÿÿ {uiCfg.cartPageSSLBadge}</span>
-                    <span>ÿÿÿÿ {uiCfg.cartPageShippingBadge}</span>
+                    <span>{uiCfg.cartPageSSLBadge}</span>
+                    <span> {uiCfg.cartPageShippingBadge}</span>
                   </div>
                   <p>{uiCfg.cartPageSSLDesc}</p>
                   <p className="mt-2 text-xs">

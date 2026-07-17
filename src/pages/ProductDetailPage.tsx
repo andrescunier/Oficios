@@ -69,7 +69,7 @@ export const ProductDetailPage: React.FC = () => {
   const variants = productQuery.data?.variants || [];
   const variantOptions = productQuery.data?.variantOptions || [];
   const loading = productQuery.isLoading;
-  const error = productQuery.isError ? 'No se pudo cargar el producto' : null;
+  const error = productQuery.isError ? 'No se pudo cargar el servicio' : null;
 
   useEffect(() => {
     if (!product) return;
@@ -463,7 +463,11 @@ export const ProductDetailPage: React.FC = () => {
                   <div>
                     <p className="text-sm font-semibold text-primary">{loanCfg.badgeLabel}</p>
                     <h3 className="text-lg font-semibold text-gray-900">Crédito Prestameya</h3>
-                    <p className="text-sm text-gray-600">Simulación para {quantity} unidad{quantity === 1 ? '' : 'es'} de este producto.</p>
+                    <p className="text-sm text-gray-600">
+                      {listing.isService
+                        ? 'Simulación de financiamiento para este servicio.'
+                        : `Simulación para ${quantity} unidad${quantity === 1 ? '' : 'es'} de este producto.`}
+                    </p>
                   </div>
                 </div>
                 <div className="mb-4 rounded-lg bg-white p-4">

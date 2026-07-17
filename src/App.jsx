@@ -119,6 +119,7 @@ function App() {
                 <Route path="/productos/:id" element={<ProductDetailPage />} />
                 <Route path="/contacto" element={<ContactPage />} />
                 <Route path="/sobrenosotros" element={<AboutUs />} />
+                <Route path="/como-funciona" element={<AboutUs />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/registro" element={<Register />} />
                 <Route path="/registro-proveedor" element={<RegisterSupplier />} />

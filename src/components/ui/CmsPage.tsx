@@ -30,19 +30,23 @@ function renderBlock(block: PageBlock, idx: number): React.ReactNode {
   const type = block.type || 'text';
 
   if (type === 'paragraph' || type === 'text') {
-    if (block.html) {
-      return (
-        <p
-          key={idx}
-          className="text-lg text-gray-700 leading-relaxed mb-6"
-          dangerouslySetInnerHTML={{ __html: block.html }}
-        />
-      );
-    }
     return (
-      <p key={idx} className="text-lg text-gray-700 leading-relaxed mb-6">
-        {block.body}
-      </p>
+      <div key={idx} className="mb-8">
+        {block.title && (
+          <h2 className="text-2xl font-bold text-gray-900 mb-3">{block.title}</h2>
+        )}
+        {block.subtitle && (
+          <p className="text-lg text-gray-600 mb-3">{block.subtitle}</p>
+        )}
+        {block.html ? (
+          <div
+            className="text-lg text-gray-700 leading-relaxed"
+            dangerouslySetInnerHTML={{ __html: block.html }}
+          />
+        ) : block.body ? (
+          <p className="text-lg text-gray-700 leading-relaxed whitespace-pre-line">{block.body}</p>
+        ) : null}
+      </div>
     );
   }
 

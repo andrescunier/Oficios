@@ -1,6 +1,7 @@
 import {
   Award,
   BadgeCheck,
+  Briefcase,
   CalendarClock,
   CalendarDays,
   Clock,
@@ -36,6 +37,7 @@ import {
 export const featureBenefitIcons = {
   Award,
   BadgeCheck,
+  Briefcase,
   CalendarClock,
   CalendarDays,
   Clock,

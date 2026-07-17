@@ -2,8 +2,8 @@
   "version": "1.0.0",
   "api": {
     "storefrontBaseUrl": "https://oficioshub.cumar.com.ar",
-    "assetsBaseUrl": "",
-    "supportBaseUrl": "",
+    "assetsBaseUrl": null,
+    "supportBaseUrl": null,
     "extraHeaders": {
       "X-Channel": "ecommerce"
     }
@@ -11,8 +11,8 @@
   "app": {
     "name": "OficiosHub",
     "companyName": "OficiosHub",
-    "slogan": "Vecinos con oficio, cerca tuyo",
-    "description": "Marketplace de personas particulares que ofrecen un oficio: alguien que arregla, pinta o cuida tu casa. No es un directorio de empresas.",
+    "slogan": "Personas con oficio, con respaldo de plataforma",
+    "description": "Marketplace de personas particulares. Validamos idoneidad y antecedentes, reinvertimos la intermediación en capacitaciones, y las contrataciones quedan como órdenes de venta con ficha de reserva.",
     "url": "https://oficioshub.cumar.com.ar",
     "hidePricesForGuests": false,
     "requireAuthForCart": false,
@@ -44,7 +44,7 @@
     "featuredProductsCount": 8,
     "heroSliderInterval": 6000,
     "invoiceNote": "Los servicios se facturan según la condición fiscal del proveedor.",
-    "freeShippingThreshold": 0,
+    "freeShippingThreshold": 0.0,
     "locale": "es-AR"
   },
   "branding": {
@@ -91,24 +91,24 @@
     "realPayments": false,
     "benefits": [
       {
-        "icon": "BadgeCheck",
-        "title": "Personas, no empresas",
-        "description": "Cada perfil es alguien particular con un oficio, no un rubro corporativo"
+        "icon": "ShieldCheck",
+        "title": "Idoneidad validada",
+        "description": "Revisamos antecedentes e idoneidad de cada persona con oficio"
+      },
+      {
+        "icon": "GraduationCap",
+        "title": "Capacitaciones",
+        "description": "Llegan como tareas al proveedor; financiadas por la intermediación"
+      },
+      {
+        "icon": "CalendarDays",
+        "title": "Reservas claras",
+        "description": "Cada contratación es una orden de venta con ficha para coordinar"
       },
       {
         "icon": "Users",
-        "title": "Pocos oficios, claros",
-        "description": "Hogar, electricidad, pintura y exterior: fácil de elegir"
-      },
-      {
-        "icon": "MessageCircle",
-        "title": "Coordinás con la persona",
-        "description": "Pedís online y arreglás día y detalle directo con quien lo hace"
-      },
-      {
-        "icon": "Star",
-        "title": "Reseñas reales",
-        "description": "Quienes contrataron puntúan servicio, limpieza y puntualidad"
+        "title": "Personas, no empresas",
+        "description": "Pocos oficios: Hogar, Electricidad, Pintura y Exterior"
       }
     ]
   },
@@ -136,185 +136,11 @@
   "loan": {
     "enabled": false
   },
-  "observability": {
-    "enabled": false,
-    "endpoint": null,
-    "flushIntervalMs": 15000,
-    "maxQueueSize": 50,
-    "useBeacon": true
-  },
-  "shipping": {
-    "enabled": true,
-    "mode": "flat_rate",
-    "bannerText": "Coordinás día y horario directo con la persona",
-    "label": "Visita / coordinación",
-    "freeLabel": "Incluida",
-    "pendingLabel": "A coordinar",
-    "chargedMessage": "La visita se coordina al confirmar el pedido",
-    "drawerMessage": "La persona te confirma día y horario",
-    "productBadgeTitle": "Modalidad",
-    "productBadgeDescription": "En tu casa o donde indiques",
-    "chargeAmount": 0,
-    "chargeProductId": null,
-    "chargeProductSku": null,
-    "chargeProductDescription": "Coordinación de visita",
-    "taxRate": 0.21
-  },
-  "newsletter": {
-    "enabled": true,
-    "endpoint": null,
-    "headers": {},
-    "title": "Oficios y tips en tu correo",
-    "description": "Tips de oficios y personas nuevas en el hub",
-    "placeholder": "tu@email.com",
-    "buttonLabel": "Suscribirme",
-    "successMessage": "¡Listo! Te avisamos las próximas novedades",
-    "errorMessage": "No se pudo suscribir. Probá de nuevo"
-  },
-  "registration": {
-    "title": "Crear cuenta",
-    "subtitle": "Registrate para contratar a personas con oficio",
-    "submitLabel": "Crear cuenta",
-    "successMessage": "Cuenta creada con éxito",
-    "acceptTermsLabel": "Acepto los términos y condiciones",
-    "alreadyHaveAccountText": "¿Ya tenés cuenta?",
-    "alreadyHaveAccountLinkText": "Ingresá acá",
-    "fields": [
-      {
-        "name": "email",
-        "label": "Email",
-        "placeholder": "tu@email.com",
-        "required": true,
-        "visible": true
-      },
-      {
-        "name": "password",
-        "label": "Contraseña",
-        "placeholder": "Tu contraseña",
-        "required": true,
-        "visible": true,
-        "type": "password"
-      },
-      {
-        "name": "confirmPassword",
-        "label": "Confirmar contraseña",
-        "placeholder": "Repetí la contraseña",
-        "required": false,
-        "visible": true,
-        "type": "password"
-      },
-      {
-        "name": "company_name",
-        "label": "Tu nombre",
-        "placeholder": "Ej: Martín Acosta",
-        "required": true,
-        "visible": true
-      },
-      {
-        "name": "tax_id",
-        "label": "CUIT / CUIL (opcional)",
-        "placeholder": "20-12345678-9",
-        "required": false,
-        "visible": true
-      },
-      {
-        "name": "phone",
-        "label": "Celular",
-        "placeholder": "11 5555 0100",
-        "required": true,
-        "visible": true,
-        "type": "tel"
-      }
-    ]
-  },
-  "validation": {
-    "passwordMinLength": 8,
-    "passwordRequireUppercase": true,
-    "passwordRequireLowercase": true,
-    "passwordRequireNumber": true,
-    "passwordRequireSymbol": false,
-    "zipRegex": "^[0-9]{4}$",
-    "phoneRegex": "^[0-9+\\s()-]{8,20}$",
-    "taxIdRegex": "",
-    "messages": {
-      "invalidZip": "El código postal no es válido",
-      "invalidEmail": "Ingresá un email válido",
-      "invalidPhone": "El celular no tiene un formato válido",
-      "fieldRequired": "{field} es obligatorio",
-      "loginGreeting": "¡Bienvenido/a {name}!",
-      "requiredField": "Este campo es obligatorio",
-      "passwordTooShort": "La contraseña debe tener al menos {min} caracteres",
-      "loginGenericError": "No se pudo ingresar. Probá de nuevo",
-      "passwordsDontMatch": "Las contraseñas no coinciden",
-      "acceptTermsRequired": "Tenés que aceptar los términos y condiciones",
-      "passwordNeedsNumber": "Debe incluir al menos un número",
-      "passwordNeedsSymbol": "Debe incluir al menos un símbolo",
-      "sessionCleanedTitle": "Sesión limpia",
-      "registerGenericError": "No pudimos crear tu cuenta. Probá más tarde",
-      "registerSuccessTitle": "¡Cuenta creada!",
-      "sessionCleanedMessage": "La sesión local quedó limpia. Volvé a ingresar",
-      "passwordNeedsLowercase": "Debe incluir al menos una minúscula",
-      "passwordNeedsUppercase": "Debe incluir al menos una mayúscula",
-      "registerSuccessMessage": "Te mandamos un mail a {email} para confirmar la cuenta",
-      "checkoutAuthRequiredTitle": "Ingresá a tu cuenta",
-      "checkoutFieldRequiredTitle": "Faltan datos",
-      "checkoutAuthRequiredMessage": "Para contratar necesitás ingresar",
-      "checkoutFieldRequiredMessage": "Completá el campo: {field}"
-    }
-  },
-  "seo": {
-    "title": "OficiosHub · Personas con oficio cerca tuyo",
-    "description": "Contratá a vecinos que arreglan el hogar, electricidad, pintura o exterior. Personas particulares, no empresas.",
-    "robots": "index,follow",
-    "keywords": [
-      "oficios",
-      "personas",
-      "hogar",
-      "electricidad",
-      "pintura",
-      "jardín"
-    ],
-    "defaultTitle": "OficiosHub · Personas con oficio",
-    "titleTemplate": "{title} | OficiosHub",
-    "defaultDescription": "Marketplace de personas particulares que ofrecen un oficio en tu zona.",
-    "defaultKeywords": "oficios, personas, hogar, electricidad, pintura",
-    "defaultOgImage": "/branding/oficioshub/photos/hero-person.jpg?v=20260716b",
-    "twitterHandle": "",
-    "canonicalBaseUrl": "https://oficioshub.cumar.com.ar",
-    "enableJsonLd": true,
-    "enableProductJsonLd": true,
-    "organization": {
-      "name": "OficiosHub",
-      "url": "https://oficioshub.cumar.com.ar",
-      "logo": "/branding/oficioshub/logo.svg?v=20260716b",
-      "sameAs": []
-    },
-    "routes": {
-      "/": {
-        "title": "Inicio",
-        "description": "Encontrá personas con oficio cerca tuyo."
-      },
-      "/productos": {
-        "title": "Servicios",
-        "description": "Servicios publicados por personas particulares."
-      },
-      "/contacto": {
-        "title": "Contacto",
-        "description": "Escribinos para sumarte u obtener ayuda."
-      }
-    }
-  },
-  "pages": {
-    "about": "OficiosHub conecta personas: alguien necesita un arreglo y otra persona particular lo ofrece. No somos un directorio de empresas por rubro; cada perfil es un vecino con un oficio concreto.",
-    "terms": "Al contratar aceptás coordinar fecha, alcance y pago con la persona. OficiosHub facilita el pedido; el trabajo lo realiza quien publicó el servicio.",
-    "contact": "Escribinos a hola@oficioshub.cumar.com.ar o por WhatsApp.",
-    "privacy": "Cuidamos tus datos conforme a la normativa argentina de protección de datos.",
-    "cookies": "Usamos cookies técnicas para el carrito, la sesión y el funcionamiento del marketplace."
-  },
   "images": {
     "heroSlides": [
       {
         "image": "/branding/oficioshub/photos/hero-home.jpg?v=20260716b",
+        "mobileImage": null,
         "title": "OficiosHub",
         "subtitle": "Personas particulares que arreglan, pintan o cuidan tu casa",
         "cta": "Ver personas",
@@ -322,6 +148,7 @@
       },
       {
         "image": "/branding/oficioshub/photos/hero-person.jpg?v=20260716b",
+        "mobileImage": null,
         "title": "Un oficio, una persona",
         "subtitle": "Pocas categorías. Elegí a alguien y coordiná directo",
         "cta": "Explorar",
@@ -408,42 +235,582 @@
     },
     "backgrounds": {
       "hero": "/branding/oficioshub/photos/hero-home.jpg?v=20260716b",
-      "features": "",
-      "testimonials": ""
+      "features": null,
+      "testimonials": null
     },
     "banners": {
       "main": "/branding/oficioshub/photos/hero-home.jpg?v=20260716b",
-      "secondary": "",
-      "seasonal": "",
-      "sale": ""
+      "secondary": null,
+      "seasonal": null,
+      "sale": null
     },
     "productFallbacks": {
       "default": "/branding/oficioshub/photos/svc-arreglos.jpg?v=20260716b"
     }
   },
+  "observability": {
+    "enabled": false,
+    "endpoint": null,
+    "flushIntervalMs": 15000,
+    "maxQueueSize": 50,
+    "useBeacon": true
+  },
+  "shipping": {
+    "enabled": true,
+    "mode": "flat_rate",
+    "bannerText": "Coordinás día y horario directo con la persona",
+    "label": "Visita / coordinación",
+    "freeLabel": "Incluida",
+    "pendingLabel": "A coordinar",
+    "chargedMessage": "La visita se coordina al confirmar el pedido",
+    "drawerMessage": "La persona te confirma día y horario",
+    "productBadgeTitle": "Modalidad",
+    "productBadgeDescription": "En tu casa o donde indiques",
+    "chargeAmount": 0.0,
+    "chargeProductId": null,
+    "chargeProductSku": null,
+    "chargeProductDescription": "Coordinación de visita",
+    "taxRate": 0.21
+  },
+  "newsletter": {
+    "enabled": true,
+    "endpoint": null,
+    "headers": {},
+    "title": "Oficios y tips en tu correo",
+    "description": "Tips de oficios y personas nuevas en el hub",
+    "placeholder": "tu@email.com",
+    "buttonLabel": "Suscribirme",
+    "successMessage": "¡Listo! Te avisamos las próximas novedades",
+    "errorMessage": "No se pudo suscribir. Probá de nuevo"
+  },
+  "registration": {
+    "title": "Crear cuenta",
+    "subtitle": "Registrate para contratar a personas con oficio",
+    "submitLabel": "Crear cuenta",
+    "successMessage": "Cuenta creada con éxito",
+    "acceptTermsLabel": "Acepto los términos y condiciones",
+    "alreadyHaveAccountText": "¿Ya tenés cuenta?",
+    "alreadyHaveAccountLinkText": "Ingresá acá",
+    "fields": [
+      {
+        "name": "email",
+        "label": "Email",
+        "placeholder": "tu@email.com",
+        "required": true,
+        "visible": true,
+        "type": null
+      },
+      {
+        "name": "password",
+        "label": "Contraseña",
+        "placeholder": "Tu contraseña",
+        "required": true,
+        "visible": true,
+        "type": "password"
+      },
+      {
+        "name": "confirmPassword",
+        "label": "Confirmar contraseña",
+        "placeholder": "Repetí la contraseña",
+        "required": false,
+        "visible": true,
+        "type": "password"
+      },
+      {
+        "name": "company_name",
+        "label": "Tu nombre",
+        "placeholder": "Ej: Martín Acosta",
+        "required": true,
+        "visible": true,
+        "type": null
+      },
+      {
+        "name": "tax_id",
+        "label": "CUIT / CUIL (opcional)",
+        "placeholder": "20-12345678-9",
+        "required": false,
+        "visible": true,
+        "type": null
+      },
+      {
+        "name": "phone",
+        "label": "Celular",
+        "placeholder": "11 5555 0100",
+        "required": true,
+        "visible": true,
+        "type": "tel"
+      }
+    ]
+  },
+  "validation": {
+    "messages": {
+      "invalidZip": "El código postal no es válido",
+      "invalidEmail": "Ingresá un email válido",
+      "invalidPhone": "El celular no tiene un formato válido",
+      "fieldRequired": "{field} es obligatorio",
+      "loginGreeting": "¡Bienvenido/a {name}!",
+      "requiredField": "Este campo es obligatorio",
+      "passwordTooShort": "La contraseña debe tener al menos {min} caracteres",
+      "loginGenericError": "No se pudo ingresar. Probá de nuevo",
+      "passwordsDontMatch": "Las contraseñas no coinciden",
+      "acceptTermsRequired": "Tenés que aceptar los términos y condiciones",
+      "passwordNeedsNumber": "Debe incluir al menos un número",
+      "passwordNeedsSymbol": "Debe incluir al menos un símbolo",
+      "sessionCleanedTitle": "Sesión limpia",
+      "registerGenericError": "No pudimos crear tu cuenta. Probá más tarde",
+      "registerSuccessTitle": "¡Cuenta creada!",
+      "sessionCleanedMessage": "La sesión local quedó limpia. Volvé a ingresar",
+      "passwordNeedsLowercase": "Debe incluir al menos una minúscula",
+      "passwordNeedsUppercase": "Debe incluir al menos una mayúscula",
+      "registerSuccessMessage": "Te mandamos un mail a {email} para confirmar la cuenta",
+      "checkoutAuthRequiredTitle": "Ingresá a tu cuenta",
+      "checkoutFieldRequiredTitle": "Faltan datos",
+      "checkoutAuthRequiredMessage": "Para contratar necesitás ingresar",
+      "checkoutFieldRequiredMessage": "Completá el campo: {field}"
+    },
+    "zipRegex": "^[0-9]{4}$",
+    "phoneRegex": "^[0-9+\\s()-]{8,20}$",
+    "taxIdRegex": "",
+    "passwordMinLength": 8,
+    "passwordRequireNumber": true,
+    "passwordRequireSymbol": false,
+    "passwordRequireLowercase": true,
+    "passwordRequireUppercase": true
+  },
+  "seo": {
+    "title": "OficiosHub · Personas con oficio cerca tuyo",
+    "robots": "index,follow",
+    "routes": {
+      "/": {
+        "title": "Inicio",
+        "description": "Encontrá personas con oficio cerca tuyo."
+      },
+      "/contacto": {
+        "title": "Contacto",
+        "description": "Escribinos para sumarte u obtener ayuda."
+      },
+      "/productos": {
+        "title": "Servicios",
+        "description": "Servicios publicados por personas particulares."
+      }
+    },
+    "keywords": [
+      "oficios",
+      "personas",
+      "hogar",
+      "electricidad",
+      "pintura",
+      "jardín"
+    ],
+    "description": "Contratá a vecinos que arreglan el hogar, electricidad, pintura o exterior. Personas particulares, no empresas.",
+    "defaultTitle": "OficiosHub · Personas con oficio",
+    "enableJsonLd": true,
+    "organization": {
+      "url": "https://oficioshub.cumar.com.ar",
+      "logo": "/branding/oficioshub/logo.svg?v=20260716b",
+      "name": "OficiosHub",
+      "sameAs": []
+    },
+    "titleTemplate": "{title} | OficiosHub",
+    "twitterHandle": "",
+    "defaultOgImage": "/branding/oficioshub/photos/hero-person.jpg?v=20260716b",
+    "defaultKeywords": "oficios, personas, hogar, electricidad, pintura",
+    "canonicalBaseUrl": "https://oficioshub.cumar.com.ar",
+    "defaultDescription": "Marketplace de personas particulares que ofrecen un oficio en tu zona.",
+    "enableProductJsonLd": true
+  },
+  "pages": {
+    "about": {
+      "enabled": true,
+      "title": "Cómo funciona OficiosHub",
+      "subtitle": "Personas particulares con oficio. La plataforma valida, capacita y conecta.",
+      "heroVariant": "gradient",
+      "blocks": [
+        {
+          "type": "text",
+          "title": "Qué es OficiosHub",
+          "body": "OficiosHub es un marketplace de personas, no de empresas por rubro. Alguien necesita un arreglo en casa y otra persona particular lo ofrece: plomería, electricidad, pintura o exterior. Cada perfil es un vecino con un oficio concreto."
+        },
+        {
+          "type": "cards",
+          "items": [
+            {
+              "icon": "Users",
+              "iconColor": "blue",
+              "title": "Si necesitás un servicio",
+              "description": "Elegís a una persona, contratás online y coordinás día y detalle. Tu pedido queda registrado como orden de venta."
+            },
+            {
+              "icon": "Briefcase",
+              "iconColor": "amber",
+              "title": "Si ofrecés tu oficio",
+              "description": "Te registrás como particular, publicás lo que sabés hacer y recibís reservas, capacitaciones y el seguimiento de cobros en tu panel."
+            },
+            {
+              "icon": "ShieldCheck",
+              "iconColor": "green",
+              "title": "Qué hace la plataforma",
+              "description": "Validamos idoneidad y antecedentes. Con lo que recauda la intermediación te ayudamos a capacitarte para mejorar calidad y nivel de vida."
+            },
+            {
+              "icon": "GraduationCap",
+              "iconColor": "purple",
+              "title": "Capacitaciones = tareas",
+              "description": "Las capacitaciones te llegan al panel del proveedor como tareas. Las contrataciones llegan como órdenes de venta (tu reserva)."
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "title": "El recorrido, paso a paso"
+        },
+        {
+          "type": "list",
+          "title": "Para quien contrata",
+          "items": [
+            "Entrá al catálogo y elegí una persona / servicio.",
+            "Creá tu cuenta de cliente si todavía no tenés.",
+            "Confirmá el pedido: eso genera la reserva (orden de venta).",
+            "Coordiná con la persona fecha, acceso y detalle del trabajo.",
+            "Después podés dejar reseña (servicio, limpieza, puntualidad, calidad)."
+          ]
+        },
+        {
+          "type": "list",
+          "title": "Para quien ofrece el oficio",
+          "items": [
+            "Registrate como persona con oficio (no como empresa de rubro).",
+            "La plataforma valida idoneidad y antecedentes.",
+            "Publicá un servicio claro en Hogar, Electricidad, Pintura o Exterior.",
+            "Cuando te contraten, ves la ficha de reserva en tu panel.",
+            "Completá capacitaciones (tareas) y seguí tus cobros por servicios prestados."
+          ]
+        },
+        {
+          "type": "section",
+          "title": "Pocas categorías, a propósito",
+          "body": "Solo cuatro oficios: Hogar, Electricidad, Pintura y Exterior. Así es más fácil encontrar a alguien y cada persona se presenta por lo que hace, no por un catálogo corporativo enorme."
+        }
+      ],
+      "lastUpdated": "2026-07-16",
+      "ctaTitle": "¿De qué lado estás?",
+      "ctaSubtitle": "Podés contratar un servicio o sumarte a ofrecer el tuyo.",
+      "ctaPrimaryLabel": "Ver personas y servicios",
+      "ctaPrimaryHref": "/productos",
+      "ctaSecondaryLabel": "Ofrecer mi oficio",
+      "ctaSecondaryHref": "/registro-proveedor"
+    },
+    "contact": {
+      "enabled": true,
+      "title": "Contacto",
+      "subtitle": "Escribinos si querés contratar, sumarte como persona con oficio o pedir ayuda.",
+      "heroVariant": "gradient",
+      "blocks": [
+        {
+          "type": "cards",
+          "items": [
+            {
+              "icon": "Mail",
+              "iconColor": "blue",
+              "title": "Email",
+              "description": "hola@oficioshub.cumar.com.ar"
+            },
+            {
+              "icon": "MessageCircle",
+              "iconColor": "green",
+              "title": "WhatsApp",
+              "description": "+54 11 5555 0100 · también para proveedores: proveedores@oficioshub.cumar.com.ar"
+            },
+            {
+              "icon": "MapPin",
+              "iconColor": "amber",
+              "title": "Zona",
+              "description": "Buenos Aires, Argentina · servicios a domicilio según cada persona."
+            },
+            {
+              "icon": "Clock",
+              "iconColor": "slate",
+              "title": "Horario de atención de la plataforma",
+              "description": "Lunes a sábado 8:00 a 20:00. El horario del trabajo lo coordinás con la persona."
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "title": "¿Sos proveedor?",
+          "body": "Registrate en Ofrezco mi oficio y usá el panel para servicios, reservas, capacitaciones y cobros. Si ya tenés cuenta, entrá a /proveedor."
+        }
+      ],
+      "lastUpdated": "2026-07-16",
+      "ctaPrimaryLabel": "Ofrecer mi oficio",
+      "ctaPrimaryHref": "/registro-proveedor",
+      "ctaSecondaryLabel": "Ver servicios",
+      "ctaSecondaryHref": "/productos"
+    },
+    "terms": {
+      "enabled": true,
+      "title": "Términos y condiciones",
+      "subtitle": "Reglas claras para contratar y para ofrecer un oficio en OficiosHub.",
+      "heroVariant": "gradient",
+      "blocks": [
+        {
+          "type": "section",
+          "title": "1. Naturaleza del marketplace",
+          "body": "OficiosHub conecta clientes con personas particulares que publican un servicio. La plataforma facilita el pedido y el seguimiento; la ejecución del trabajo la realiza la persona que publicó el servicio."
+        },
+        {
+          "type": "section",
+          "title": "2. Contratar un servicio",
+          "body": "Al confirmar un pedido aceptás coordinar fecha, alcance, acceso al domicilio y forma de pago con la persona. El pedido queda registrado como orden de venta."
+        },
+        {
+          "type": "section",
+          "title": "3. Ofrecer un oficio",
+          "body": "Quienes se registran como proveedores lo hacen como personas particulares. Deben publicar información veraz, cumplir lo acordado y completar las capacitaciones asignadas por la plataforma cuando corresponda."
+        },
+        {
+          "type": "section",
+          "title": "4. Validación y capacitaciones",
+          "body": "OficiosHub puede validar idoneidad y antecedentes. Las capacitaciones se asignan como tareas en el panel del proveedor y buscan mejorar calidad de servicio y nivel de vida, financiadas con la intermediación."
+        },
+        {
+          "type": "section",
+          "title": "5. Pagos y cobros",
+          "body": "Los medios de pago habilitados se muestran en el checkout. El proveedor puede ver el estado de cobro asociado a sus órdenes de venta en su panel. La plataforma no reemplaza acuerdos de pago en efectivo o transferencia acordados con la persona cuando así esté habilitado."
+        },
+        {
+          "type": "section",
+          "title": "6. Cancelaciones",
+          "body": "Podés pedir cambios o cancelaciones escribiendo por WhatsApp o contacto, indicando el número de orden. La viabilidad depende del estado del pedido y de lo acordado con la persona."
+        }
+      ],
+      "lastUpdated": "2026-07-16",
+      "ctaPrimaryLabel": "Volver al inicio",
+      "ctaPrimaryHref": "/",
+      "ctaSecondaryLabel": "Contacto",
+      "ctaSecondaryHref": "/contacto"
+    },
+    "privacy": {
+      "enabled": true,
+      "title": "Privacidad",
+      "subtitle": "Cómo cuidamos tus datos en OficiosHub.",
+      "heroVariant": "gradient",
+      "blocks": [
+        {
+          "type": "section",
+          "title": "Qué datos usamos",
+          "body": "Datos de cuenta (nombre, email, teléfono), pedidos, reseñas y, si sos proveedor, datos de tu oficio y seguimiento de capacitaciones. Los usamos para operar el marketplace, validar idoneidad cuando corresponda y mejorar la experiencia."
+        },
+        {
+          "type": "section",
+          "title": "Con quién se comparten",
+          "body": "Compartimos con la contraparte lo necesario para concretar el servicio (por ejemplo, datos de contacto y detalle del pedido). No vendemos tu información."
+        },
+        {
+          "type": "section",
+          "title": "Tus derechos",
+          "body": "Podés pedir acceso, corrección o baja escribiendo a hola@oficioshub.cumar.com.ar, conforme a la normativa argentina de protección de datos personales."
+        }
+      ],
+      "lastUpdated": "2026-07-16",
+      "ctaPrimaryLabel": "Contacto",
+      "ctaPrimaryHref": "/contacto"
+    },
+    "cookies": {
+      "enabled": true,
+      "title": "Cookies",
+      "subtitle": "Usamos cookies técnicas para que el marketplace funcione.",
+      "heroVariant": "gradient",
+      "blocks": [
+        {
+          "type": "section",
+          "title": "Para qué sirven",
+          "body": "Cookies propias para sesión, carrito, preferencias de consentimiento y el funcionamiento básico del sitio. Si habilitamos analítica, solo después de tu consentimiento."
+        },
+        {
+          "type": "list",
+          "title": "Tipos",
+          "items": [
+            "Esenciales: login, carrito y seguridad.",
+            "Preferencias: tu elección de cookies.",
+            "Analítica (opcional): solo si aceptás."
+          ]
+        }
+      ],
+      "lastUpdated": "2026-07-16",
+      "ctaPrimaryLabel": "Volver al inicio",
+      "ctaPrimaryHref": "/"
+    },
+    "returns": {
+      "enabled": true,
+      "title": "Cambios y cancelaciones",
+      "subtitle": "En OficiosHub contratás personas y servicios, no productos de stock.",
+      "heroVariant": "gradient",
+      "blocks": [
+        {
+          "type": "section",
+          "title": "Servicios, no devoluciones de góndola",
+          "body": "Si necesitás cancelar o modificar una reserva, escribinos con el número de orden lo antes posible. Coordinamos con la persona según el estado del pedido (si todavía no se realizó el trabajo suele ser más simple)."
+        },
+        {
+          "type": "list",
+          "title": "Cómo pedirlo",
+          "items": [
+            "Usá Contacto o WhatsApp con tu número de orden.",
+            "Contá el motivo y si querés reprogramar o cancelar.",
+            "Si el trabajo ya empezó o terminó, se evalúa caso por caso con la persona."
+          ]
+        }
+      ],
+      "lastUpdated": "2026-07-16",
+      "ctaPrimaryLabel": "Seguimiento de pedido",
+      "ctaPrimaryHref": "/seguimiento",
+      "ctaSecondaryLabel": "Contacto",
+      "ctaSecondaryHref": "/contacto"
+    },
+    "warranty": {
+      "enabled": true,
+      "title": "Calidad y reseñas",
+      "subtitle": "La calidad se construye con personas validadas, capacitaciones y reseñas reales.",
+      "heroVariant": "gradient",
+      "blocks": [
+        {
+          "type": "section",
+          "title": "Cómo cuidamos la calidad",
+          "body": "Validamos idoneidad y antecedentes de quienes ofrecen oficios. Además asignamos capacitaciones (como tareas) para mejorar el servicio. Después de contratar, podés puntuar servicio, limpieza, puntualidad y calidad."
+        },
+        {
+          "type": "section",
+          "title": "Si algo no salió bien",
+          "body": "Contactanos con el número de orden. Revisamos el caso con la persona y buscamos una solución razonable. No ofrecemos garantía de fábrica como un e‑commerce de productos; el foco es el oficio prestado."
+        }
+      ],
+      "lastUpdated": "2026-07-16",
+      "ctaPrimaryLabel": "Cómo funciona",
+      "ctaPrimaryHref": "/como-funciona",
+      "ctaSecondaryLabel": "Contacto",
+      "ctaSecondaryHref": "/contacto"
+    },
+    "legalNotice": {
+      "enabled": true,
+      "title": "Aviso legal",
+      "subtitle": "Información de la plataforma OficiosHub.",
+      "heroVariant": "gradient",
+      "blocks": [
+        {
+          "type": "section",
+          "title": "Titular",
+          "body": "OficiosHub opera como marketplace de intermediación entre clientes y personas particulares con oficio. Contacto: hola@oficioshub.cumar.com.ar · Buenos Aires, Argentina."
+        },
+        {
+          "type": "section",
+          "title": "Rol de la plataforma",
+          "body": "OficiosHub no ejecuta los trabajos publicados. Facilita la contratación, el registro de pedidos, la validación/capacitación de proveedores y el seguimiento."
+        }
+      ],
+      "lastUpdated": "2026-07-16",
+      "ctaPrimaryLabel": "Términos",
+      "ctaPrimaryHref": "/terminos",
+      "ctaSecondaryLabel": "Privacidad",
+      "ctaSecondaryHref": "/privacidad"
+    },
+    "tracking": {
+      "enabled": true,
+      "title": "Seguimiento de pedidos",
+      "subtitle": "Consultá el estado de tu contratación con el número de orden.",
+      "heroVariant": "gradient",
+      "blocks": [
+        {
+          "type": "text",
+          "body": "Cuando contratás a una persona, el pedido queda como orden de venta. Usá la pantalla de seguimiento o tu cuenta (Mis pedidos) para ver el estado. Si sos proveedor, las reservas de tus servicios están en tu panel."
+        }
+      ],
+      "lastUpdated": "2026-07-16",
+      "ctaPrimaryLabel": "Ir a seguimiento",
+      "ctaPrimaryHref": "/seguimiento",
+      "ctaSecondaryLabel": "Mis pedidos",
+      "ctaSecondaryHref": "/pedidos"
+    },
+    "shipping": {
+      "enabled": true,
+      "title": "Visitas y coordinación",
+      "subtitle": "No hay envíos de paquetería: se coordina la visita con la persona.",
+      "heroVariant": "gradient",
+      "blocks": [
+        {
+          "type": "section",
+          "title": "Cómo se hace el servicio",
+          "body": "La mayoría de los oficios se realizan en tu domicilio u obra. Al confirmar el pedido podés dejar notas (acceso, horario preferido, detalle del problema). La persona confirma día y horario."
+        }
+      ],
+      "lastUpdated": "2026-07-16",
+      "ctaPrimaryLabel": "Ver servicios",
+      "ctaPrimaryHref": "/productos"
+    },
+    "notFound": {
+      "enabled": true,
+      "title": "No encontramos esa página",
+      "subtitle": "Puede que el enlace esté vencido o mal escrito.",
+      "heroVariant": "gradient",
+      "blocks": [
+        {
+          "type": "text",
+          "body": "Volvé al inicio o mirá cómo funciona OficiosHub para orientarte."
+        }
+      ],
+      "lastUpdated": "2026-07-16",
+      "ctaPrimaryLabel": "Inicio",
+      "ctaPrimaryHref": "/",
+      "ctaSecondaryLabel": "Cómo funciona",
+      "ctaSecondaryHref": "/como-funciona"
+    }
+  },
+  "analytics": {
+    "enabled": false,
+    "hotjarId": "",
+    "clarityId": "",
+    "anonymizeIp": true,
+    "gtmContainerId": "",
+    "trackEcommerce": true,
+    "trackPageViews": true,
+    "facebookPixelId": "",
+    "ga4MeasurementId": ""
+  },
+  "consent": {
+    "body": "Usamos cookies propias para el carrito, la sesión y mejorar la experiencia. Podés aceptar o rechazar.",
+    "title": "Usamos cookies para que el marketplace funcione",
+    "enabled": true,
+    "storageKey": "cookie_consent_oficioshub_v1",
+    "acceptLabel": "Aceptar",
+    "rejectLabel": "Rechazar",
+    "learnMoreHref": "/cookies",
+    "learnMoreLabel": "Más info",
+    "preferencesLabel": "Preferencias",
+    "blockAnalyticsUntilConsent": true
+  },
   "header": {
-    "showSearch": true,
-    "showCategoriesMenu": true,
-    "showFavorites": true,
-    "showOrders": true,
-    "showAccount": true,
-    "showCart": true,
-    "topBarMessage": "Personas con oficio · No empresas · Coordinás directo",
-    "topBarHref": "/productos",
     "menu": [
       {
         "label": "Servicios",
         "href": "/productos"
       },
       {
-        "label": "Oficios",
-        "href": "/productos"
+        "label": "Cómo funciona",
+        "href": "/como-funciona"
       },
       {
         "label": "Contacto",
         "href": "/contacto"
       }
-    ]
+    ],
+    "showCart": true,
+    "showOrders": true,
+    "showSearch": true,
+    "topBarHref": "/como-funciona",
+    "showAccount": true,
+    "showFavorites": true,
+    "topBarMessage": "Personas con oficio · Validamos idoneidad · Capacitamos con la intermediación",
+    "showCategoriesMenu": true
   },
   "footer": {
     "sections": [
@@ -469,33 +836,79 @@
         ]
       },
       {
-        "title": "Ayuda",
+        "title": "El sistema",
         "links": [
+          {
+            "label": "Cómo funciona",
+            "href": "/como-funciona"
+          },
+          {
+            "label": "Sobre OficiosHub",
+            "href": "/sobrenosotros"
+          },
+          {
+            "label": "Ofrecer mi oficio",
+            "href": "/registro-proveedor"
+          },
           {
             "label": "Contacto",
             "href": "/contacto"
-          },
+          }
+        ]
+      },
+      {
+        "title": "Ayuda",
+        "links": [
           {
             "label": "Seguimiento",
             "href": "/seguimiento"
           },
           {
+            "label": "Cambios / cancelaciones",
+            "href": "/devoluciones"
+          },
+          {
+            "label": "Calidad y reseñas",
+            "href": "/garantias"
+          },
+          {
+            "label": "Visitas y coordinación",
+            "href": "/como-funciona"
+          }
+        ]
+      },
+      {
+        "title": "Legal",
+        "links": [
+          {
             "label": "Términos",
             "href": "/terminos"
+          },
+          {
+            "label": "Privacidad",
+            "href": "/privacidad"
+          },
+          {
+            "label": "Cookies",
+            "href": "/cookies"
+          },
+          {
+            "label": "Aviso legal",
+            "href": "/aviso-legal"
           }
         ]
       }
     ],
-    "showWhatsappCapture": true,
-    "whatsappOptInMessage": "Hola! Quiero contratar a alguien en OficiosHub.",
-    "whatsappOptInSuccessMessage": "¡Listo! Te abrimos WhatsApp para continuar.",
-    "withdrawalWhatsappMessage": "Quiero cancelar o modificar mi contratación en OficiosHub.",
+    "showSocial": true,
     "paymentMethods": [
       "Transferencia",
       "Efectivo"
     ],
-    "showSocial": true,
-    "showPaymentBadges": true
+    "showPaymentBadges": true,
+    "showWhatsappCapture": true,
+    "whatsappOptInMessage": "Hola! Quiero contratar a alguien en OficiosHub.",
+    "withdrawalWhatsappMessage": "Quiero cancelar o modificar mi contratación en OficiosHub.",
+    "whatsappOptInSuccessMessage": "¡Listo! Te abrimos WhatsApp para continuar."
   },
   "checkout": {
     "steps": [
@@ -503,132 +916,449 @@
       "payment",
       "review"
     ],
-    "guestCheckoutEnabled": false,
     "fields": [
       {
         "name": "firstName",
-        "label": "Nombre",
-        "required": true,
-        "visible": true,
-        "type": "text",
         "step": "shipping",
-        "group": "account"
+        "type": "text",
+        "group": "account",
+        "label": "Nombre",
+        "visible": true,
+        "required": true
       },
       {
         "name": "lastName",
-        "label": "Apellido",
-        "required": true,
-        "visible": true,
-        "type": "text",
         "step": "shipping",
-        "group": "account"
+        "type": "text",
+        "group": "account",
+        "label": "Apellido",
+        "visible": true,
+        "required": true
       },
       {
         "name": "email",
-        "label": "Email",
-        "required": true,
-        "visible": true,
-        "type": "email",
         "step": "shipping",
-        "group": "account"
+        "type": "email",
+        "group": "account",
+        "label": "Email",
+        "visible": true,
+        "required": true
       },
       {
         "name": "phone",
-        "label": "Celular",
-        "required": true,
-        "visible": true,
-        "type": "tel",
         "step": "shipping",
-        "group": "account"
+        "type": "tel",
+        "group": "account",
+        "label": "Celular",
+        "visible": true,
+        "required": true
       },
       {
         "name": "address",
-        "label": "Dirección del servicio",
-        "required": true,
-        "visible": true,
-        "type": "text",
         "step": "shipping",
-        "group": "address"
+        "type": "text",
+        "group": "address",
+        "label": "Dirección del servicio",
+        "visible": true,
+        "required": true
       },
       {
         "name": "city",
-        "label": "Localidad",
-        "required": true,
-        "visible": true,
-        "type": "text",
         "step": "shipping",
-        "group": "address"
+        "type": "text",
+        "group": "address",
+        "label": "Localidad",
+        "visible": true,
+        "required": true
       },
       {
         "name": "state",
-        "label": "Provincia",
-        "required": true,
-        "visible": true,
-        "type": "text",
         "step": "shipping",
-        "group": "address"
+        "type": "text",
+        "group": "address",
+        "label": "Provincia",
+        "visible": true,
+        "required": true
       },
       {
         "name": "zipCode",
-        "label": "Código postal",
-        "required": true,
-        "visible": true,
-        "type": "text",
         "step": "shipping",
-        "group": "address"
+        "type": "text",
+        "group": "address",
+        "label": "Código postal",
+        "visible": true,
+        "required": true
       }
     ],
     "showOrderNotes": true,
     "orderNotesLabel": "Detalle del trabajo",
-    "orderNotesPlaceholder": "Describí el problema, horarios preferidos, acceso al domicilio...",
     "showCouponInput": false,
+    "couponApplyLabel": "Aplicar",
     "couponPlaceholder": "Código de descuento",
-    "couponApplyLabel": "Aplicar"
+    "guestCheckoutEnabled": false,
+    "orderNotesPlaceholder": "Describí el problema, horarios preferidos, acceso al domicilio..."
   },
   "wishlist": {
     "enabled": true,
     "storageKey": "wishlist_oficioshub_v1",
     "requireAuth": false
   },
-  "consent": {
-    "enabled": true,
-    "title": "Usamos cookies para que el marketplace funcione",
-    "body": "Usamos cookies propias para el carrito, la sesión y mejorar la experiencia. Podés aceptar o rechazar.",
-    "acceptLabel": "Aceptar",
-    "rejectLabel": "Rechazar",
-    "preferencesLabel": "Preferencias",
-    "learnMoreLabel": "Más info",
-    "learnMoreHref": "/cookies",
-    "storageKey": "cookie_consent_oficioshub_v1",
-    "blockAnalyticsUntilConsent": true
-  },
-  "analytics": {
-    "enabled": false,
-    "ga4MeasurementId": "",
-    "gtmContainerId": "",
-    "facebookPixelId": "",
-    "hotjarId": "",
-    "clarityId": "",
-    "anonymizeIp": true,
-    "trackPageViews": true,
-    "trackEcommerce": true
-  },
+  "hotel": {},
   "ui": {
     "searchPlaceholder": "Buscar persona u oficio...",
     "noProductsTitle": "No encontramos a nadie con ese oficio",
     "noProductsMessage": "Probá Hogar, Electricidad, Pintura o Exterior",
-    "loginTitle": "Ingresar a OficiosHub",
-    "loginSubtitle": "Accedé para contratar a una persona y seguir tus pedidos",
-    "cartEmptyTitle": "Todavía no elegiste a nadie",
-    "cartEmptyMessage": "Sumá el servicio de una persona para contratarla",
-    "checkoutFinalizeLabel": "Confirmar contratación",
-    "addToCartLabel": "Contratar a esta persona",
-    "homeHeroCta": "Ver personas",
-    "homeFeaturedTitle": "Personas destacadas",
-    "homeFeaturedSubtitle": "Vecinos con oficio que más se contratan",
+    "alreadyHaveAccountText": "¿Ya tenés cuenta?",
     "homeCategoriesTitle": "Oficios",
     "homeCategoriesSubtitle": "Solo cuatro: elegí y mirá quién ofrece",
+    "homeFeaturedTitle": "Personas destacadas",
+    "homeFeaturedSubtitle": "Vecinos con oficio que más se contratan",
     "homeNewTitle": "Recién sumados",
-    "homeNewSubtitle": "Personas que acaban de publicar su oficio"
+    "homeNewSubtitle": "Personas que acaban de publicar su oficio",
+    "homeSaleTitle": "Ofertas",
+    "homeSaleSubtitle": "Los mejores precios del momento",
+    "homeViewAllLabel": "Ver todos",
+    "headerCategoriesLabel": "Categorías",
+    "headerAllProductsLabel": "Todos los productos",
+    "headerLoginLabel": "Iniciar Sesión",
+    "headerRegisterLabel": "Registrarse",
+    "headerMyProfileLabel": "Mi Perfil",
+    "headerMyOrdersLabel": "Mis Pedidos",
+    "headerFavoritesLabel": "Favoritos",
+    "headerLogoutLabel": "Cerrar Sesión",
+    "footerWhatsappTitle": "Recibí notificaciones por WhatsApp",
+    "footerWhatsappBody": "Ingresá tu número y recibí novedades y estado de tus pedidos",
+    "footerWhatsappPlaceholder": "+54 9 11 1234-5678",
+    "footerWhatsappButton": "Suscribirme",
+    "footerCopyrightSuffix": "Todos los derechos reservados.",
+    "footerPaymentMethodsLabel": "Medios de pago",
+    "cartTitle": "Mi Carrito",
+    "cartEmptyTitle": "Todavía no elegiste a nadie",
+    "cartEmptyBody": "Todavía no agregaste nada, ¡explorá nuestros productos!",
+    "cartEmptyExploreLabel": "Explorar Productos",
+    "cartProceedAuthLabel": "Finalizar Compra",
+    "cartProceedGuestLabel": "Iniciar Sesión para Comprar",
+    "cartClearLabel": "Vaciar Carrito",
+    "authRequiredTitle": "Acceso Requerido",
+    "authLoginButtonLabel": "Iniciar Sesión",
+    "authRegisterButtonLabel": "Registrarse",
+    "loginTitle": "Ingresar a OficiosHub",
+    "loginSubtitle": "Accedé para contratar a una persona y seguir tus pedidos",
+    "loginEmailLabel": "Email",
+    "loginEmailPlaceholder": "tu@email.com",
+    "loginPasswordLabel": "Contraseña",
+    "loginPasswordPlaceholder": "Tu contraseña",
+    "loginForgotPasswordLabel": "¿Olvidaste tu contraseña?",
+    "loginSubmitLabel": "Iniciar Sesión",
+    "loginLoadingLabel": "Iniciando sesión...",
+    "loginNoAccountText": "¿No tenés cuenta?",
+    "loginNoAccountLinkText": "Registrate",
+    "loginClearSessionLabel": "Limpiar sesión",
+    "loginSuccessTitle": "¡Bienvenido!",
+    "loginErrorTitle": "Error al iniciar sesión",
+    "loginSessionExpiredMessage": "Tu sesión expiró. Por favor iniciá sesión nuevamente.",
+    "registerLoadingLabel": "Creando cuenta...",
+    "registerSuccessTitle": "¡Cuenta creada!",
+    "registerErrorTitle": "Error al registrarse",
+    "passwordValidationLength": "Mínimo 8 caracteres",
+    "passwordValidationUppercase": "Al menos una mayúscula",
+    "passwordValidationLowercase": "Al menos una minúscula",
+    "passwordValidationNumber": "Al menos un número",
+    "productNotFoundTitle": "Producto no encontrado",
+    "productNotFoundBody": "El producto que buscás no existe o fue removido",
+    "productViewAllLabel": "Ver todos los productos",
+    "productBackLabel": "Volver",
+    "productBreadcrumbHome": "Inicio",
+    "productBreadcrumbProducts": "Productos",
+    "productDescriptionLabel": "Descripción",
+    "productVariantLabel": "Variante",
+    "productNoVariantMessage": "No hay variantes disponibles",
+    "productAvailabilityLabel": "Disponibilidad",
+    "productOutOfStockLabel": "Sin stock",
+    "productAddToCartLabel": "Agregar al carrito",
+    "productSelectVariantLabel": "Seleccioná una variante",
+    "productBuySecureTitle": "Compra Segura",
+    "productBuySecureDesc": "Tus datos están protegidos con encriptación SSL",
+    "productMultiplePaymentsTitle": "Múltiples Formas de Pago",
+    "productMultiplePaymentsDesc": "Transferencia, efectivo y más",
+    "cartPageTitle": "Carrito de Compras",
+    "cartPageContinueShopping": "Seguir Comprando",
+    "cartPageItemsLabel": "Productos en tu carrito",
+    "cartPageClearCartLabel": "Vaciar carrito",
+    "cartPageProductSingular": "producto",
+    "cartPageProductPlural": "productos",
+    "cartPageSubtotalLabel": "Subtotal",
+    "cartPageShippingLabel": "Envío",
+    "cartPageTotalLabel": "Total",
+    "cartPageCheckoutLabel": "Proceder al Pago",
+    "cartPageSSLBadge": "Compra 100% Segura",
+    "cartPageSSLDesc": "Todos tus datos están protegidos",
+    "cartPageShippingBadge": "Envío Rápido",
+    "cartPageShippingDesc": "Entrega a todo el país",
+    "checkoutTitle": "Finalizar Compra",
+    "checkoutBackLabel": "Volver al Carrito",
+    "checkoutStepShipping": "Envío",
+    "checkoutStepPayment": "Pago",
+    "checkoutStepReview": "Revisar",
+    "checkoutShippingTitle": "Información de Envío",
+    "checkoutPaymentTitle": "Información de Pago",
+    "checkoutReviewTitle": "Revisá tu Pedido",
+    "checkoutAddressTitle": "Dirección de Entrega",
+    "checkoutAccountDataTitle": "Datos de tu cuenta",
+    "checkoutFieldFirst": "Nombre",
+    "checkoutFieldLast": "Apellido",
+    "checkoutFieldEmail": "Email",
+    "checkoutFieldPhone": "Teléfono",
+    "checkoutFieldAddress": "Dirección de Entrega",
+    "checkoutFieldCity": "Ciudad",
+    "checkoutFieldState": "Provincia",
+    "checkoutFieldZip": "Código Postal",
+    "checkoutContinueToPayment": "Continuar al Pago",
+    "checkoutPaymentMethodLabel": "Método de Pago",
+    "checkoutTransferLabel": "Transferencia Bancaria",
+    "checkoutTransferDesc": "Método de pago seguro y directo",
+    "checkoutTransferInfoTitle": "Datos para la Transferencia",
+    "checkoutEfectivoLabel": "Efectivo",
+    "checkoutEfectivoDesc": "Pago en efectivo al momento de la entrega o retiro",
+    "checkoutEfectivoInfoTitle": "Pago en Efectivo",
+    "checkoutFinalizeLabel": "Confirmar contratación",
+    "checkoutFinalizingLabel": "Procesando...",
+    "checkoutBackButton": "Volver",
+    "checkoutCartEmptyTitle": "Carrito vacío",
+    "checkoutCartEmptyMsg": "No tenés productos en tu carrito para procesar",
+    "checkoutViewProductsLabel": "Ver Productos",
+    "checkoutSubtotalLabel": "Subtotal",
+    "checkoutShippingLabel": "Envío",
+    "checkoutTotalLabel": "Total",
+    "checkoutOrderTitle": "Resumen del Pedido",
+    "checkoutBankLabel": "Banco",
+    "checkoutHolderLabel": "Titular",
+    "checkoutCbuLabel": "CBU",
+    "checkoutAliasLabel": "Alias",
+    "checkoutTransferImportantNote": "Una vez realizada la transferencia, enviá el comprobante por WhatsApp con tu número de orden para acelerar la confirmación.",
+    "checkoutEfectivoNote": "Recibirás una confirmación por email con los detalles de tu pedido y coordinación de entrega.",
+    "footerCompanyTitle": "Empresa",
+    "footerCustomerServiceTitle": "Atención al Cliente",
+    "footerCategoriesTitle": "Categorías",
+    "footerLegalTitle": "Legal",
+    "footerCompanyAboutLabel": "Sobre Nosotros",
+    "footerCustomerHelpLabel": "Centro de Ayuda",
+    "footerCustomerTrackingLabel": "Seguimiento de Pedido",
+    "footerCustomerReturnsLabel": "Devoluciones",
+    "footerCustomerWarrantyLabel": "Garantías",
+    "footerLegalTermsLabel": "Términos y Condiciones",
+    "footerLegalPrivacyLabel": "Política de Privacidad",
+    "footerLegalCookiesLabel": "Política de Cookies",
+    "footerLegalNoticeLabel": "Aviso Legal",
+    "footerLegalWithdrawalLabel": "Derecho de Arrepentimiento",
+    "registrationSuccessTitle": "¡Bienvenido!",
+    "registrationSuccessSubtitle": "Tu cuenta ha sido creada y ya estás conectado",
+    "registrationSuccessReadyTitle": "¡Todo listo!",
+    "registrationSuccessBullet1": "Tu cuenta empresarial está activa",
+    "registrationSuccessBullet2": "Ya podés ver precios exclusivos B2B",
+    "registrationSuccessBullet3": "Explorá nuestro catálogo de productos",
+    "registrationSuccessBullet4": "Realizá pedidos cuando quieras",
+    "registrationSuccessViewProductsLabel": "Ver Productos",
+    "registrationSuccessHomeLabel": "Ir al Inicio",
+    "orderSuccessTitle": "Pedido Recibido",
+    "orderSuccessSubtitle": "Gracias por tu compra. El backend validará el pago antes de confirmar el pedido.",
+    "orderSuccessOrderNumberLabel": "Número de Orden",
+    "orderSuccessPaymentMethodLabel": "Medio de pago informado",
+    "orderSuccessPaymentPendingLabel": "Estado: pendiente de validación por el backend",
+    "orderSuccessEmailLabel": "Confirmación enviada a",
+    "orderSuccessTotalLabel": "Total del Pedido",
+    "orderSuccessNextTitle": "¿Qué sigue?",
+    "orderSuccessNextBullet1": "Recibirás un email con los detalles de tu pedido",
+    "orderSuccessNextBullet2": "El backend validará el pago informado y actualizará el estado del pedido",
+    "orderSuccessNextBullet3": "Cuando la orden avance de estado, la verás reflejada en Mis Pedidos",
+    "orderSuccessViewOrdersLabel": "Ver Mis Pedidos",
+    "orderSuccessContinueLabel": "Seguir Comprando",
+    "orderSuccessBackHomeLabel": "Volver al inicio",
+    "paymentMethodCash": "Efectivo",
+    "paymentMethodTransfer": "Transferencia",
+    "paymentMethodCreditCard": "Tarjeta de crédito",
+    "paymentMethodDebitCard": "Tarjeta de débito",
+    "paymentMethodMercadopago": "Mercado Pago",
+    "paymentMethodLoan": "Préstamo",
+    "paymentMethodCard": "Tarjeta",
+    "paymentMethodCheck": "Cheque",
+    "paymentMethodOther": "Otro",
+    "paymentMethodPending": "Pendiente",
+    "orderStatusDraft": "Borrador",
+    "orderStatusPendingPayment": "Pago pendiente",
+    "orderStatusPaymentReview": "Revisión de pago",
+    "orderStatusConfirmed": "Confirmado",
+    "orderStatusPreparing": "En preparación",
+    "orderStatusReadyToShip": "Listo para enviar",
+    "orderStatusShipped": "Enviado",
+    "orderStatusInTransit": "En tránsito",
+    "orderStatusOutForDelivery": "En reparto",
+    "orderStatusDelivered": "Entregado",
+    "orderStatusCompleted": "Completado",
+    "orderStatusCancelled": "Cancelado",
+    "orderStatusReturnRequested": "Devolución solicitada",
+    "orderStatusReturnInTransit": "Dev. en tránsito",
+    "orderStatusReturned": "Devuelto",
+    "orderStatusRefunded": "Reembolsado",
+    "paymentReviewPendingSubmit": "Pendiente de envío",
+    "paymentReviewPendingValidation": "Pendiente de validación",
+    "paymentReviewInReview": "En revisión backend",
+    "paymentReviewValidated": "Validado por backend",
+    "paymentReviewCancelled": "Cancelado",
+    "paymentReviewInReturn": "En devolución",
+    "paymentReviewReturned": "Devuelto",
+    "paymentReviewRefunded": "Reembolsado",
+    "ordersPageTitle": "Mis Pedidos",
+    "ordersAuthMessage": "Necesitás iniciar sesión para ver tus pedidos",
+    "ordersBackToProfileLabel": "Volver a Perfil",
+    "ordersSearchPlaceholder": "Buscar por número de pedido o producto...",
+    "ordersFilterAllLabel": "Todos los estados",
+    "ordersFilterPendingLabel": "Pendiente",
+    "ordersFilterProcessingLabel": "Procesando",
+    "ordersFilterShippedLabel": "Enviado",
+    "ordersFilterDeliveredLabel": "Entregado",
+    "ordersFilterCancelledLabel": "Cancelado",
+    "ordersFilterReturnedLabel": "Devolución",
+    "ordersLoadingMessage": "Cargando tus pedidos...",
+    "ordersEmptyTitle": "No tenés pedidos aún",
+    "ordersEmptyBody": "Cuando realices tu primera compra, aparecerá aquí.",
+    "ordersEmptyFilterTitle": "No se encontraron pedidos",
+    "ordersEmptyFilterBody": "Intentá ajustar los filtros de búsqueda.",
+    "ordersEmptyExploreLabel": "Explorar Productos",
+    "ordersViewDetailLabel": "Ver Detalles",
+    "ordersCancelLabel": "Cancelar",
+    "ordersCancellingLabel": "Cancelando...",
+    "ordersTrackingLabel": "Seguimiento",
+    "ordersPaymentInformedLabel": "Pago informado",
+    "ordersPaymentInfoBody": "El storefront solo informa el medio de pago. La validación queda del lado backend.",
+    "ordersItemsCountLabel": "producto(s)",
+    "ordersDetailTitle": "Detalles del Pedido",
+    "ordersDetailStatusLabel": "Estado",
+    "ordersDetailDateLabel": "Fecha",
+    "ordersDetailTotalLabel": "Total",
+    "ordersDetailChannelLabel": "Canal",
+    "ordersDetailNoChannelLabel": "Sin definir",
+    "ordersDetailNotesLabel": "Notas / entrega",
+    "ordersDetailProductsLabel": "Productos",
+    "ordersDetailQuantityLabel": "Cantidad",
+    "ordersDetailEachLabel": "c/u",
+    "ordersDetailPaymentStatusLabel": "Estado de pago",
+    "ordersDetailStatusHistoryLabel": "Historial de estados",
+    "ordersDetailNoHistoryMessage": "No hay historial detallado disponible para este pedido.",
+    "ordersDetailStorefrontNote": "El frontend informó el medio de pago y el backend controla la validación.",
+    "profilePageTitle": "Mi Perfil",
+    "profileBackLabel": "Volver",
+    "profileEditLabel": "Editar Perfil",
+    "profileSaveLabel": "Guardar",
+    "profileSavingLabel": "Guardando...",
+    "profileCancelLabel": "Cancelar",
+    "profilePersonalInfoTitle": "Información Personal",
+    "profileFirstNameLabel": "Nombre",
+    "profileLastNameLabel": "Apellido",
+    "profileEmailLabel": "Email",
+    "profilePhoneLabel": "Teléfono",
+    "profileEmailReadOnly": "(No editable)",
+    "profileNotSpecified": "No especificado",
+    "profileAccountInfoTitle": "Información de Cuenta",
+    "profileUsernameLabel": "Usuario:",
+    "profileStatusLabel": "Estado:",
+    "profileStatusActive": "✓ Activo",
+    "profileMemberSinceLabel": "Miembro desde:",
+    "profileActionsTitle": "Acciones",
+    "profileViewOrdersLabel": "Ver mis pedidos",
+    "profileFavoritesLabel": "Mis favoritos",
+    "profileLogoutLabel": "Cerrar sesión",
+    "profileAuthMessage": "Necesitás iniciar sesión para ver tu perfil",
+    "favoritesPageTitle": "Mis Favoritos",
+    "favoritesBackLabel": "Volver a Perfil",
+    "favoritesAuthMessage": "Necesitás iniciar sesión para ver tus favoritos",
+    "favoritesAddAllLabel": "Agregar Todo al Carrito",
+    "favoritesLoadingMessage": "Cargando tus favoritos...",
+    "favoritesEmptyTitle": "No tenés favoritos aún",
+    "favoritesEmptyBody": "Guardá los productos que te gusten para encontrarlos fácilmente más tarde.",
+    "favoritesEmptyExploreLabel": "Explorar Productos",
+    "favoritesSearchPlaceholder": "Buscar en favoritos...",
+    "favoritesNoResultsBody": "Intentá con otros términos de búsqueda.",
+    "favoritesVariantsLabel": "Variantes disponibles",
+    "favoritesCountSingular": "producto guardado",
+    "favoritesCountPlural": "productos guardados",
+    "trackingPageTitle": "Seguimiento de Pedido",
+    "trackingBackLabel": "Volver al inicio",
+    "trackingSubtitle": "Consultá el estado de tu pedido en tiempo real",
+    "trackingWhatsappTitle": "Consultá tu Pedido por WhatsApp",
+    "trackingWhatsappBody": "Nuestro equipo te brindará información actualizada sobre el estado de tu pedido",
+    "trackingWhatsappLabel": "Consultar por WhatsApp",
+    "trackingHowTitle": "¿Cómo funciona el seguimiento?",
+    "trackingStep1Title": "Número de Pedido",
+    "trackingStep1Body": "Una vez confirmada tu compra, recibirás un número de pedido único por email y WhatsApp.",
+    "trackingStep2Title": "Contactá por WhatsApp",
+    "trackingStep2Body": "Enviá un mensaje a nuestro WhatsApp oficial con tu número de pedido.",
+    "trackingStep3Title": "Estado en Tiempo Real",
+    "trackingStep3Body": "Te informaremos el estado actual de tu pedido.",
+    "trackingStatusSectionTitle": "Estados del Pedido",
+    "trackingStatus1Label": "Procesando",
+    "trackingStatus1Desc": "Tu pedido está siendo verificado",
+    "trackingStatus2Label": "En Preparación",
+    "trackingStatus2Desc": "Estamos preparando tu pedido",
+    "trackingStatus3Label": "Despachado",
+    "trackingStatus3Desc": "Tu pedido fue enviado",
+    "trackingStatus4Label": "Entregado",
+    "trackingStatus4Desc": "Tu pedido fue entregado exitosamente",
+    "trackingFaqTitle": "Preguntas Frecuentes",
+    "trackingFaq1Question": "¿Cuánto tarda en llegar mi pedido?",
+    "trackingFaq1Answer": "Los tiempos varían según tu ubicación. CABA/GBA: 24-48hs. Interior: 3-7 días hábiles.",
+    "trackingFaq2Question": "¿Puedo modificar mi pedido?",
+    "trackingFaq2Answer": "Si aún no fue despachado, podemos modificarlo. Contactanos por WhatsApp.",
+    "trackingFaq3Question": "No recibí el número de pedido",
+    "trackingFaq3Answer": "Revisá tu carpeta de spam. Si no lo encontrás, contactanos por WhatsApp.",
+    "trackingFaq4Question": "¿Puedo retirar mi pedido en persona?",
+    "trackingFaq4Answer": "Sí, ofrecemos retiro en nuestras oficinas. Consultá disponibilidad por WhatsApp.",
+    "trackingHelpTitle": "¿Necesitás ayuda adicional?",
+    "trackingHelpBody": "Nuestro equipo está disponible para resolver todas tus dudas",
+    "trackingHelpCtaLabel": "Ir a Centro de Ayuda",
+    "contactPageTitle": "Centro de Ayuda",
+    "contactBackLabel": "Volver al inicio",
+    "contactSubtitle": "Estamos aquí para asistirte en lo que necesites",
+    "contactOfficialChannelTitle": "Canal Oficial de Atención",
+    "contactOfficialChannelBody": "Nuestro medio oficial de contacto es WhatsApp. Respuesta inmediata.",
+    "contactWhatsappLabel": "Chatear por WhatsApp",
+    "contactHowHelpTitle": "¿Cómo podemos ayudarte?",
+    "contactProductsTitle": "Consultas de Productos",
+    "contactProductsBody": "¿Necesitás información sobre stock, especificaciones o disponibilidad?",
+    "contactProductsLabel": "Consultar por WhatsApp →",
+    "contactTrackingTitle": "Seguimiento de Pedido",
+    "contactTrackingBody": "Consultá el estado de tu pedido y tiempos de entrega.",
+    "contactTrackingLabel": "Consultar seguimiento →",
+    "contactB2bTitle": "Cotizaciones B2B",
+    "contactB2bBody": "Solicitá cotizaciones personalizadas para empresas.",
+    "contactB2bLabel": "Solicitar cotización →",
+    "contactSupportTitle": "Soporte Técnico",
+    "contactSupportBody": "¿Problemas técnicos? Nuestro equipo te asesora.",
+    "contactSupportLabel": "Obtener soporte →",
+    "contactReturnsTitle": "Devoluciones",
+    "contactReturnsBody": "Gestioná cambios, devoluciones y garantías.",
+    "contactReturnsLabel": "Gestionar devolución →",
+    "cartDrawerEmptyDescription": "Tu carrito está vacío",
+    "cartDrawerCountSuffix": "en tu carrito",
+    "cartItemRemovedTitle": "Producto eliminado",
+    "cartItemRemovedMessage": "El producto fue eliminado del carrito",
+    "cartClearedTitle": "Carrito vaciado",
+    "cartClearedMessage": "Todos los productos fueron eliminados",
+    "cartDrawerSubtotalLabel": "Subtotal:",
+    "cartDrawerTotalLabel": "Total:",
+    "productOutOfStockNotifTitle": "Sin stock",
+    "productOutOfStockNotifMessage": "Este producto no tiene stock disponible",
+    "productAddedToFavoritesTitle": "Agregado a favoritos",
+    "productAddedToFavoritesMessage": "agregado a tus favoritos",
+    "productRemovedFromFavoritesTitle": "Eliminado de favoritos",
+    "productRemovedFromFavoritesMessage": "eliminado de favoritos",
+    "productLoginForFavoritesTitle": "Iniciá sesión",
+    "productLoginForFavoritesMessage": "Necesitás iniciar sesión para agregar productos a favoritos",
+    "productVariantRequiredTitle": "Elegí una variante",
+    "productVariantRequiredMessage": "Seleccioná color, talle u opciones antes de agregar al carrito.",
+    "productVariantOutOfStockMessage": "La variante elegida no tiene stock disponible.",
+    "productSubtotalLabel": "Subtotal actual:",
+    "productWithVariantsLabel": "Producto con variantes",
+    "productAvailableUnitsLabel": "disponibles"
   }
 }

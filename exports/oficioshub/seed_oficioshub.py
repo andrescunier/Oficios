@@ -8,6 +8,9 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from oficioshub_pages import build_pages  # noqa: E402
+
 ACCOUNT_ID = "cccedb72-8267-4513-9b9f-48c2d1fae78d"
 ACCOUNT_SLUG = "oficioshub"
 API = "https://api.cumar.com.ar"
@@ -401,20 +404,7 @@ def build_config() -> dict:
                 },
             },
         },
-        "pages": {
-            "about": (
-                "OficiosHub conecta personas: alguien necesita un arreglo y otra persona "
-                "particular lo ofrece. No somos un directorio de empresas por rubro; "
-                "cada perfil es un vecino con un oficio concreto."
-            ),
-            "terms": (
-                "Al contratar aceptás coordinar fecha, alcance y pago con la persona. "
-                "OficiosHub facilita el pedido; el trabajo lo realiza quien publicó el servicio."
-            ),
-            "contact": "Escribinos a hola@oficioshub.cumar.com.ar o por WhatsApp.",
-            "privacy": "Cuidamos tus datos conforme a la normativa argentina de protección de datos.",
-            "cookies": "Usamos cookies técnicas para el carrito, la sesión y el funcionamiento del marketplace.",
-        },
+        "pages": build_pages(),
         "images": {
             "heroSlides": [
                 {
@@ -487,11 +477,13 @@ def build_config() -> dict:
             "showOrders": True,
             "showAccount": True,
             "showCart": True,
-            "topBarMessage": "Personas con oficio · No empresas · Coordinás directo",
-            "topBarHref": "/productos",
+            "topBarMessage": (
+                "Personas con oficio · Validamos idoneidad · Capacitamos con la intermediación"
+            ),
+            "topBarHref": "/como-funciona",
             "menu": [
                 {"label": "Servicios", "href": "/productos"},
-                {"label": "Oficios", "href": "/productos"},
+                {"label": "Cómo funciona", "href": "/como-funciona"},
                 {"label": "Contacto", "href": "/contacto"},
             ],
         },
@@ -507,10 +499,20 @@ def build_config() -> dict:
                     ],
                 },
                 {
+                    "title": "El sistema",
+                    "links": [
+                        {"label": "Cómo funciona", "href": "/como-funciona"},
+                        {"label": "Sobre OficiosHub", "href": "/sobrenosotros"},
+                        {"label": "Ofrecer mi oficio", "href": "/registro-proveedor"},
+                        {"label": "Contacto", "href": "/contacto"},
+                    ],
+                },
+                {
                     "title": "Ayuda",
                     "links": [
-                        {"label": "Contacto", "href": "/contacto"},
                         {"label": "Seguimiento", "href": "/seguimiento"},
+                        {"label": "Cambios / cancelaciones", "href": "/devoluciones"},
+                        {"label": "Calidad y reseñas", "href": "/garantias"},
                         {"label": "Términos", "href": "/terminos"},
                     ],
                 },

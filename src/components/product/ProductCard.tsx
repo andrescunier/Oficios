@@ -29,6 +29,7 @@ import { PriceDisplay, usePriceVisibility } from '@/hooks/usePriceVisibility';
 import { FEATURES } from '@/config/branding';
 import { getImagesConfig, getBusinessConfig, getUIConfig, getStockSemaforo } from '@/config/runtime';
 import { recordAppEvent } from '@/lib/observability';
+import { canRequestService, getServiceListing } from '@/utils/serviceListing';
 
 interface ProductCardProps {
   product: Product;
@@ -63,20 +64,30 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   const isProductFavorite = isFavorite(product.id);
   const isOutOfStock = (product.stock_quantity || 0) <= 0;
   const stockSemaforo = getStockSemaforo(product.stock_quantity);
-  const canAddToCart = product.unit_price != null && !isOutOfStock;
+  const listing = getServiceListing(product);
+  const canAddToCart = canRequestService(product);
   const originalPrice = product.metadata?.original_price;
-  const hasDiscount = typeof originalPrice === 'number' && originalPrice > product.unit_price;
+  const hasDiscount =
+    !listing.isAConvenir
+    && typeof originalPrice === 'number'
+    && typeof product.unit_price === 'number'
+    && originalPrice > product.unit_price;
   const discountPercentage = hasDiscount 
     ? Math.round(((originalPrice - product.unit_price) / originalPrice) * 100)
     : 0;
 
-  // Extract talle from metadata or SKU segments (PREFIX-COLOR-TALLE)
-  const talle = product.metadata?.talle
-    || product.metadata?.size
-    || (() => {
-        const parts = (product.sku || '').split('-');
-        return parts.length >= 3 ? parts[parts.length - 1] : undefined;
-      })();
+  // Talle solo en ecommerce de variantes; no en personas/servicios
+  const talle = listing.isService
+    ? undefined
+    : (product.metadata?.talle
+      || product.metadata?.size
+      || (() => {
+          const parts = (product.sku || '').split('-');
+          return parts.length >= 3 ? parts[parts.length - 1] : undefined;
+        })());
+  const cartLabel = listing.isAConvenir
+    ? 'Pedir presupuesto'
+    : (listing.isService ? 'Contratar' : 'Agregar');
 
   const handleAddToCart = () => {
     if (product.has_variants) {
@@ -287,9 +298,16 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                           <PriceDisplay
                             price={product.unit_price}
                             originalPrice={hasDiscount ? product.metadata?.original_price : undefined}
+                            pricingMode={listing.pricingMode}
                             showLoginButton={true}
                           />
                         </div>
+
+                        {(listing.tradeRankLabel || listing.zone) && (
+                          <p className="text-sm text-muted-foreground">
+                            {[listing.tradeRankLabel, listing.zone].filter(Boolean).join(' · ')}
+                          </p>
+                        )}
 
                         <p className="text-sm text-muted-foreground">
                           {product.description}
@@ -328,7 +346,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                           onClick={handleAddToCart}
                         >
                           <ShoppingCart className="w-4 h-4 mr-2" />
-                          {product.has_variants ? 'Elegir variante' : 'Agregar al Carrito'}
+                          {product.has_variants ? 'Elegir variante' : cartLabel}
                         </Button>
                         </>
                         )}
@@ -348,7 +366,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                 onClick={handleAddToCart}
               >
                 <ShoppingCart className="w-4 h-4 mr-2" />
-                {product.has_variants ? 'Elegir variante' : 'Agregar'}
+                {product.has_variants ? 'Elegir variante' : cartLabel}
               </Button>
             </div>
             )}
@@ -357,17 +375,28 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
         {/* Product info */}
         <div className="p-4 space-y-1.5 text-left">
-          {product.category && (
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              {product.category}
-            </p>
-          )}
+          <div className="flex flex-wrap items-center gap-2">
+            {product.category && (
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                {product.category}
+              </p>
+            )}
+            {listing.tradeRankLabel && (
+              <span className="inline-flex items-center rounded-sm bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
+                {listing.tradeRankLabel}
+              </span>
+            )}
+          </div>
 
           <Link to={`/productos/${product.id}`} onClick={handleProductClick}>
             <h3 className="text-sm font-medium leading-snug text-foreground line-clamp-2 hover:text-foreground/70 transition-colors">
               {product.name}
             </h3>
           </Link>
+
+          {listing.zone && (
+            <p className="text-xs text-muted-foreground">{listing.zone}</p>
+          )}
 
           {/* Rating */}
           {rating > 0 && (
@@ -383,6 +412,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <PriceDisplay
             price={product.unit_price}
             originalPrice={hasDiscount ? product.metadata?.original_price : undefined}
+            pricingMode={listing.pricingMode}
             showLoginButton={true}
           />
 
@@ -400,7 +430,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             </p>
           )}
 
-          {product.has_variants && (
+          {product.has_variants && !listing.isService && (
             <p className="text-xs text-muted-foreground">
               Colores, talles u opciones disponibles
             </p>

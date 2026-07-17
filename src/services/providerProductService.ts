@@ -2,6 +2,7 @@ import { httpClient } from './httpClient';
 import { API_ENDPOINTS, getActiveAccountId, getActiveChannel } from '@/config/api';
 import { getBusinessConfig } from '@/config/runtime';
 import type { Product } from '@/types/api';
+import type { PricingMode, TradeRank } from '@/utils/serviceListing';
 
 export interface ProviderProductInput {
   name: string;
@@ -10,6 +11,13 @@ export interface ProviderProductInput {
   category?: string;
   /** Zona / barrio donde ofrece el servicio (filtro de catálogo) */
   zone?: string;
+  /** Oficial / Medio oficial / Ayudante / Particular */
+  tradeRank?: TradeRank;
+  /** Precio fijo o a convenir */
+  pricingMode?: PricingMode;
+  /** Foto de la persona (URL absoluta o path /branding/...) */
+  imageUrl?: string;
+  personName?: string;
   sku?: string;
   status?: 'active' | 'inactive';
 }
@@ -62,12 +70,20 @@ const buildCreatePayload = (input: ProviderProductInput, businessPartnerId: stri
   const business = getBusinessConfig();
   const status = input.status || 'active';
   const channel = getActiveChannel();
+  const pricingMode: PricingMode = input.pricingMode || 'fixed';
+  const tradeRank: TradeRank = input.tradeRank || 'particular';
+  const unitPrice = pricingMode === 'a_convenir'
+    ? Math.max(0, Number(input.unit_price) || 0)
+    : Number(input.unit_price) || 0;
+  const imageUrl = input.imageUrl?.trim() || undefined;
+  const personName = input.personName?.trim() || undefined;
+  const zone = input.zone?.trim() || undefined;
 
   return {
     sku: input.sku || buildProviderSku(input.name),
     name: input.name.trim(),
     description: input.description?.trim() || '',
-    unit_price: input.unit_price,
+    unit_price: unitPrice,
     currency: business.defaultCurrency,
     tax_rate: business.defaultTaxRate ?? 0.21,
     category: input.category || undefined,
@@ -78,21 +94,29 @@ const buildCreatePayload = (input: ProviderProductInput, businessPartnerId: stri
     track_inventory: true,
     allow_backorders: true,
     provider_partner_id: businessPartnerId,
+    image_url: imageUrl,
+    thumbnail_url: imageUrl,
     metadata: {
       kind: 'service',
       marketplace: 'oficioshub',
+      pricing_mode: pricingMode,
       channels: [channel],
       showecommerce: true,
       provider: {
         business_partner_id: businessPartnerId,
         type: 'person',
-        zone: input.zone?.trim() || undefined,
+        name: personName,
+        zone,
+        trade_rank: tradeRank,
       },
       provider_business_partner_id: businessPartnerId,
       public: {
         channels: [channel],
         showecommerce: true,
-        provider_zone: input.zone?.trim() || undefined,
+        provider_zone: zone,
+        provider_name: personName,
+        trade_rank: tradeRank,
+        pricing_mode: pricingMode,
       },
     },
   };
@@ -130,6 +154,10 @@ export class ProviderProductService {
     if (input.category !== undefined) payload.category = input.category;
     if (input.status !== undefined) {
       payload.status = input.status;
+    }
+    if (input.imageUrl !== undefined) {
+      payload.image_url = input.imageUrl.trim() || null;
+      payload.thumbnail_url = input.imageUrl.trim() || null;
     }
 
     const response = await httpClient.patch<unknown>(

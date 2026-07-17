@@ -70,14 +70,17 @@ export const PriceDisplay = ({
   currency = BUSINESS.DEFAULT_CURRENCY,
   className = '',
   showLoginButton = true,
-  onLoginClick
+  onLoginClick,
+  pricingMode = 'fixed',
 }: {
-  price: number;
+  price: number | null | undefined;
   originalPrice?: number;
   currency?: string;
   className?: string;
   showLoginButton?: boolean;
   onLoginClick?: () => void;
+  /** fixed = monto; a_convenir = presupuesto (servicios variables) */
+  pricingMode?: 'fixed' | 'a_convenir';
 }) => {
   const { canViewPrices, loginMessage, loginCTA } = usePriceVisibility();
   const navigate = useNavigate();
@@ -99,25 +102,48 @@ export const PriceDisplay = ({
     }
   };
 
-  // Si el precio no es un número válido, mostrar mensaje de login o "no disponible"
+  if (!canViewPrices) {
+    return (
+      <div className={`${className} space-y-2`}>
+        <p className="text-muted-foreground italic text-sm">
+          {loginMessage}
+        </p>
+        {showLoginButton && (
+          <button
+            onClick={handleLoginClick}
+            className="text-primary hover:text-primary/80 text-sm font-medium underline"
+          >
+            {loginCTA}
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  if (pricingMode === 'a_convenir') {
+    const hasReference = typeof price === 'number' && !isNaN(price) && price > 0;
+    const formattedReference = hasReference
+      ? new Intl.NumberFormat(BUSINESS.LOCALE, {
+          style: 'currency',
+          currency,
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        }).format(price)
+      : null;
+    return (
+      <div className={className}>
+        <span className="text-lg font-bold text-primary">A convenir</span>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          {formattedReference
+            ? `Presupuesto según el trabajo · referencia desde ${formattedReference}`
+            : 'Presupuesto según el trabajo (se acuerda por OficiosHub)'}
+        </p>
+      </div>
+    );
+  }
+
+  // Si el precio no es un número válido, mostrar "no disponible"
   if (typeof price !== 'number' || isNaN(price) || price === null || price === undefined) {
-    if (!canViewPrices) {
-      return (
-        <div className={`${className} space-y-2`}>
-          <p className="text-muted-foreground italic text-sm">
-            {loginMessage}
-          </p>
-          {showLoginButton && (
-            <button
-              onClick={handleLoginClick}
-              className="text-primary hover:text-primary/80 text-sm font-medium underline"
-            >
-              {loginCTA}
-            </button>
-          )}
-        </div>
-      );
-    }
     return (
       <div className={className}>
         <span className="text-sm text-muted-foreground italic">
@@ -140,24 +166,6 @@ export const PriceDisplay = ({
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(originalPrice) : null;
-
-  if (!canViewPrices) {
-    return (
-      <div className={`${className} space-y-2`}>
-        <p className="text-muted-foreground italic text-sm">
-          {loginMessage}
-        </p>
-        {showLoginButton && (
-          <button
-            onClick={handleLoginClick}
-            className="text-primary hover:text-primary/80 text-sm font-medium underline"
-          >
-            {loginCTA}
-          </button>
-        )}
-      </div>
-    );
-  }
 
   return (
     <div className={className}>

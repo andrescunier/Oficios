@@ -8,26 +8,21 @@ from pathlib import Path
 DIR = Path("/mnt/c/simpleOficioshub/public/branding/oficioshub/photos")
 DIR.mkdir(parents=True, exist_ok=True)
 
-for junk in Path("/mnt/c/simpleFastApi").glob("*.jpg"):
-    junk.unlink(missing_ok=True)
-
-# Curated Unsplash stills of people / home work (not corporate stock).
-# Each entry may list fallbacks if an ID 404s.
+# Fotos de PERSONAS (proveedores) + héroes/categorías con gente en contexto de oficio.
+# No usar stills de herramientas/productos como ficha de supplier.
 PHOTOS: dict[str, list[str]] = {
     "hero-home.jpg": [
         "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=1600&q=80",
-        "https://images.unsplash.com/photo-1556911220-bff31c812d84?auto=format&fit=crop&w=1600&q=80",
     ],
     "hero-person.jpg": [
         "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&w=1600&q=80",
-        "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=1600&q=80",
     ],
+    # Categorías: persona trabajando
     "cat-hogar.jpg": [
-        "https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=900&q=80",
+        "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=900&q=80",
     ],
     "cat-electricidad.jpg": [
         "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?auto=format&fit=crop&w=900&q=80",
-        "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=900&q=80",
     ],
     "cat-pintura.jpg": [
         "https://images.unsplash.com/photo-1562259949-e8e7689d7828?auto=format&fit=crop&w=900&q=80",
@@ -35,29 +30,49 @@ PHOTOS: dict[str, list[str]] = {
     "cat-exterior.jpg": [
         "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=900&q=80",
     ],
+    # Personas (una por supplier demo)
+    "person-martin.jpg": [
+        "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=900&q=80",
+        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=900&q=80",
+    ],
+    "person-diego.jpg": [
+        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=900&q=80",
+        "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=900&q=80",
+    ],
+    "person-lucia.jpg": [
+        "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=900&q=80",
+        "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=900&q=80",
+    ],
+    "person-nico.jpg": [
+        "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=900&q=80",
+        "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=900&q=80",
+    ],
+    "person-ana.jpg": [
+        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=900&q=80",
+        "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=900&q=80",
+    ],
+    "person-camila.jpg": [
+        "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=900&q=80",
+        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=900&q=80",
+    ],
+    # Compat: mismos archivos viejos apuntan a personas
     "svc-plomeria.jpg": [
-        "https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?auto=format&fit=crop&w=1200&q=80",
-        "https://images.unsplash.com/photo-1581244277943-fe4a9c777189?auto=format&fit=crop&w=1200&q=80",
-    ],
-    "svc-electricidad.jpg": [
-        "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=1200&q=80",
-        "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?auto=format&fit=crop&w=1200&q=80",
-    ],
-    "svc-pintura.jpg": [
-        "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&w=1200&q=80",
-        "https://images.unsplash.com/photo-1562259949-e8e7689d7828?auto=format&fit=crop&w=1200&q=80",
-    ],
-    "svc-aires.jpg": [
-        "https://images.unsplash.com/photo-1631545806609-adc37e645aa4?auto=format&fit=crop&w=1200&q=80",
-        "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=1200&q=80",
-    ],
-    "svc-jardin.jpg": [
-        "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=1200&q=80",
-        "https://images.unsplash.com/photo-1592419044706-39796d40f98c?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=900&q=80",
     ],
     "svc-arreglos.jpg": [
-        "https://images.unsplash.com/photo-1581244277943-fe4a9c777189?auto=format&fit=crop&w=1200&q=80",
-        "https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=900&q=80",
+    ],
+    "svc-electricidad.jpg": [
+        "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=900&q=80",
+    ],
+    "svc-aires.jpg": [
+        "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=900&q=80",
+    ],
+    "svc-pintura.jpg": [
+        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=900&q=80",
+    ],
+    "svc-jardin.jpg": [
+        "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=900&q=80",
     ],
 }
 
@@ -71,26 +86,21 @@ def fetch(url: str) -> bytes:
 
 
 def main() -> None:
-    for old in DIR.glob("*.jpg"):
-        old.unlink()
     for name, urls in PHOTOS.items():
         data = None
         last_err: Exception | None = None
         for url in urls:
             try:
                 data = fetch(url)
-                if data[:3] == b"\xff\xd8\xff":
+                if len(data) > 5000:
                     break
-                last_err = RuntimeError(f"not jpeg: {data[:30]!r}")
-                data = None
             except Exception as exc:  # noqa: BLE001
                 last_err = exc
                 data = None
-        if data is None:
-            raise SystemExit(f"FAIL {name}: {last_err}")
+        if not data:
+            raise SystemExit(f"No se pudo bajar {name}: {last_err}")
         (DIR / name).write_bytes(data)
         print(f"OK {name} ({len(data)} bytes)")
-    print("DONE", DIR)
 
 
 if __name__ == "__main__":

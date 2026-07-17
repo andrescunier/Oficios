@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 import urllib.error
 import urllib.request
@@ -13,14 +14,14 @@ from oficioshub_pages import build_pages  # noqa: E402
 
 ACCOUNT_ID = "cccedb72-8267-4513-9b9f-48c2d1fae78d"
 ACCOUNT_SLUG = "oficioshub"
-API = "https://api.cumar.com.ar"
+API = os.environ.get("OFICIOSHUB_API", "https://api.cumar.com.ar")
 EMAIL = "oficioshub@cumar.com.ar"
 PASSWORD = "Hola4751.."
 STOREFRONT = "https://oficioshub.cumar.com.ar"
 BRAND = "/branding/oficioshub"
 
 
-ASSET_V = "20260716b"
+ASSET_V = "20260716c"
 
 
 def asset(name: str) -> str:
@@ -689,111 +690,123 @@ def build_config() -> dict:
 PRODUCTS = [
     {
         "sku": "OH-HOG-MARTIN-01",
-        "name": "Martín · Destape y caños en casa",
+        "name": "Martín Acosta · Destape y caños",
         "description": (
-            "Soy Martín. Voy a tu casa en CABA/GBA a destapar cocina, baño o cloaca "
-            "y te dejo el diagnóstico. Trabajo solo, con herramientas propias."
+            "Soy Martín, oficial plomero. Destapes y caños en casa: el valor final "
+            "depende del diagnóstico (a convenir). Coordinamos solo por OficiosHub."
         ),
-        "unit_price": 45000,
+        "unit_price": 0,
+        "pricing_mode": "a_convenir",
+        "trade_rank": "oficial",
         "stock_quantity": 40,
         "stock_unit": "servicio",
         "family": "Hogar",
         "category": "Hogar",
         "subcategory": "",
-        "image": "svc-plomeria.jpg",
+        "image": "person-martin.jpg",
         "provider_name": "Martín Acosta",
-        "provider_headline": "Particular · arreglos de caños en CABA y GBA",
-        "provider_zone": "CABA y GBA Norte",
+        "provider_headline": "Oficial plomero · destapes y caños",
+        "provider_zone": "Palermo",
     },
     {
         "sku": "OH-HOG-DIEGO-01",
-        "name": "Diego · Manos en casa (arreglos varios)",
+        "name": "Diego Rivas · Manos en casa",
         "description": (
-            "Soy Diego. Arreglo puertas que no cierran, grifería que gotea y refacciones "
-            "chicas. No soy una empresa: voy yo, coordinamos por WhatsApp."
+            "Soy Diego, medio oficial. Arreglos varios (puertas, grifería, refacciones chicas). "
+            "Presupuesto según el trabajo; pedilo por OficiosHub."
         ),
-        "unit_price": 42000,
+        "unit_price": 0,
+        "pricing_mode": "a_convenir",
+        "trade_rank": "medio_oficial",
         "stock_quantity": 35,
         "stock_unit": "servicio",
         "family": "Hogar",
         "category": "Hogar",
         "subcategory": "",
-        "image": "svc-arreglos.jpg",
+        "image": "person-diego.jpg",
         "provider_name": "Diego Rivas",
-        "provider_headline": "Particular · mano de obra liviana en el hogar",
-        "provider_zone": "Zona Oeste",
+        "provider_headline": "Medio oficial · arreglos en el hogar",
+        "provider_zone": "Ramos Mejía",
     },
     {
         "sku": "OH-ELE-LUCIA-01",
-        "name": "Lucía · Luces, tomas y tablero",
+        "name": "Lucía Fernández · Cambio de toma",
         "description": (
-            "Soy Lucía. Instalo o reviso puntos de luz, tomas y tablero domiciliario. "
-            "Trabajo por mi cuenta en casas y departamentos."
+            "Soy Lucía, oficial electricista. Cambio o instalación de una toma de luz "
+            "domiciliaria a precio fijo. Trabajo sola en casas y departamentos."
         ),
-        "unit_price": 62000,
+        "unit_price": 28000,
+        "pricing_mode": "fixed",
+        "trade_rank": "oficial",
         "stock_quantity": 30,
         "stock_unit": "servicio",
         "family": "Electricidad",
         "category": "Electricidad",
         "subcategory": "",
-        "image": "svc-electricidad.jpg",
+        "image": "person-lucia.jpg",
         "provider_name": "Lucía Fernández",
-        "provider_headline": "Particular · electricidad domiciliaria",
-        "provider_zone": "CABA",
+        "provider_headline": "Oficial · electricidad domiciliaria",
+        "provider_zone": "Caballito",
     },
     {
         "sku": "OH-ELE-NICO-01",
-        "name": "Nico · Service de aire en casa",
+        "name": "Nicolás Vega · Service de aire",
         "description": (
-            "Soy Nico. Hago limpieza y service de split o ventana en tu domicilio. "
-            "Voy solo; si hace falta gas, te aviso antes."
+            "Soy Nico, medio oficial. Service y limpieza de split o ventana a precio fijo. "
+            "Si hace falta gas u otro material, te aviso por OficiosHub antes."
         ),
         "unit_price": 48000,
+        "pricing_mode": "fixed",
+        "trade_rank": "medio_oficial",
         "stock_quantity": 35,
         "stock_unit": "servicio",
         "family": "Electricidad",
         "category": "Electricidad",
         "subcategory": "",
-        "image": "svc-aires.jpg",
+        "image": "person-nico.jpg",
         "provider_name": "Nicolás Vega",
-        "provider_headline": "Particular · aires y climatización hogareña",
-        "provider_zone": "GBA Sur",
+        "provider_headline": "Medio oficial · aires y climatización",
+        "provider_zone": "Quilmes",
     },
     {
         "sku": "OH-PIN-ANA-01",
-        "name": "Ana · Pintura de un ambiente",
+        "name": "Ana Beltrán · Pintura de un ambiente",
         "description": (
-            "Soy Ana. Pinto un ambiente (hasta ~12 m²) con preparación liviana y dos manos. "
-            "Trabajo sola; la pintura la podemos ver juntos."
+            "Soy Ana, oficial pintora. Un ambiente (~12 m²) con preparación liviana y dos manos, "
+            "precio fijo. La pintura la vemos por OficiosHub."
         ),
         "unit_price": 110000,
+        "pricing_mode": "fixed",
+        "trade_rank": "oficial",
         "stock_quantity": 25,
         "stock_unit": "servicio",
         "family": "Pintura",
         "category": "Pintura",
         "subcategory": "",
-        "image": "svc-pintura.jpg",
+        "image": "person-ana.jpg",
         "provider_name": "Ana Beltrán",
-        "provider_headline": "Particular · pintura de interiores",
-        "provider_zone": "CABA y GBA Oeste",
+        "provider_headline": "Oficial · pintura de interiores",
+        "provider_zone": "Flores",
     },
     {
         "sku": "OH-EXT-CAMILA-01",
-        "name": "Camila · Jardín y poda chica",
+        "name": "Camila Soto · Jardín y poda",
         "description": (
-            "Soy Camila. Hago poda liviana, corte de césped y orden de jardín chico/mediano. "
-            "Voy yo con mis herramientas; no tengo cuadrilla."
+            "Soy Camila, particular con experiencia en jardín. Poda y césped: "
+            "el valor se acuerda según tamaño y estado (a convenir)."
         ),
-        "unit_price": 55000,
+        "unit_price": 0,
+        "pricing_mode": "a_convenir",
+        "trade_rank": "particular",
         "stock_quantity": 30,
         "stock_unit": "servicio",
         "family": "Exterior",
         "category": "Exterior",
         "subcategory": "",
-        "image": "svc-jardin.jpg",
+        "image": "person-camila.jpg",
         "provider_name": "Camila Soto",
         "provider_headline": "Particular · jardín y exterior",
-        "provider_zone": "Zona Norte",
+        "provider_zone": "San Isidro",
     },
 ]
 
@@ -840,7 +853,9 @@ def product_body(raw: dict) -> dict:
     provider_name = item.pop("provider_name")
     provider_headline = item.pop("provider_headline")
     provider_zone = item.pop("provider_zone", "")
-    image_name = item.pop("image", "svc-arreglos.jpg")
+    trade_rank = item.pop("trade_rank", "particular")
+    pricing_mode = item.pop("pricing_mode", "fixed")
+    image_name = item.pop("image", "person-martin.jpg")
     image_url = photo(image_name)
     description = item["description"]
     return {
@@ -865,11 +880,13 @@ def product_body(raw: dict) -> dict:
         "metadata": {
             "kind": "service",
             "marketplace": "oficioshub",
+            "pricing_mode": pricing_mode,
             "provider": {
                 "name": provider_name,
                 "headline": provider_headline,
                 "zone": provider_zone,
                 "type": "person",
+                "trade_rank": trade_rank,
             },
             "rubro": item["family"],
             "country": "AR",
@@ -880,6 +897,8 @@ def product_body(raw: dict) -> dict:
                 "channels": ["ecommerce"],
                 "showecommerce": True,
                 "provider_name": provider_name,
+                "trade_rank": trade_rank,
+                "pricing_mode": pricing_mode,
                 "provider_headline": provider_headline,
                 "provider_zone": provider_zone,
             },

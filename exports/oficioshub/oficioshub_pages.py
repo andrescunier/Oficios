@@ -48,42 +48,49 @@ def build_pages() -> dict:
                     ),
                 },
                 {
+                    "type": "heading",
+                    "title": "Responsabilidad de cada parte",
+                },
+                {
                     "type": "cards",
                     "items": [
                         {
                             "icon": "Users",
                             "iconColor": "blue",
-                            "title": "Si necesitás un servicio",
+                            "title": "Cliente",
                             "description": (
-                                "Elegís a una persona, contratás online y coordinás día y detalle. "
-                                "Tu pedido queda registrado como orden de venta."
+                                "Elegís a la persona, pedís el servicio con fecha y zona, "
+                                "das el OK de calidad y dejás reseña. No hay contacto directo: "
+                                "todo pasa por OficiosHub."
                             ),
                         },
                         {
                             "icon": "Briefcase",
                             "iconColor": "amber",
-                            "title": "Si ofrecés tu oficio",
+                            "title": "Persona con oficio (supplier)",
                             "description": (
-                                "Te registrás como particular, publicás lo que sabés hacer y recibís "
-                                "reservas, capacitaciones y el seguimiento de cobros en tu panel."
+                                "Sos vos, no una empresa. Publicás tu oficio con título "
+                                "(Oficial, Medio oficial, etc.), foto personal, zona y precio fijo "
+                                "o a convenir. Aceptás la reserva y ejecutás el trabajo."
                             ),
                         },
                         {
                             "icon": "ShieldCheck",
                             "iconColor": "green",
-                            "title": "Qué hace la plataforma",
+                            "title": "OficiosHub (plataforma)",
                             "description": (
-                                "Validamos idoneidad y antecedentes. Con lo que recauda la intermediación "
-                                "te ayudamos a capacitarte para mejorar calidad y nivel de vida."
+                                "Intermedia la contratación y el pago. Valida idoneidad y antecedentes, "
+                                "no ejecuta el trabajo. El cobro se libera recién con el OK de calidad "
+                                "del cliente."
                             ),
                         },
                         {
                             "icon": "GraduationCap",
                             "iconColor": "purple",
-                            "title": "Capacitaciones = tareas",
+                            "title": "Capacitaciones",
                             "description": (
-                                "Las capacitaciones te llegan al panel del proveedor como tareas. "
-                                "Las contrataciones llegan como órdenes de venta (tu reserva)."
+                                "Con la intermediación financiamos capacitaciones que llegan "
+                                "al panel del proveedor como tareas, para mejorar calidad y nivel de vida."
                             ),
                         },
                     ],

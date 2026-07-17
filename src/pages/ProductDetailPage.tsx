@@ -26,6 +26,7 @@ import { recordAppEvent } from '@/lib/observability';
 import { setProductJsonLd, clearProductJsonLd } from '@/lib/seo';
 import { trackEcommerceEvent } from '@/lib/analytics';
 import { ProductRatingPanel } from '@/components/product/ProductRatingPanel';
+import { canRequestService, getServiceListing } from '@/utils/serviceListing';
 
 const sortVariantOptions = (options: ProductVariantOption[]) =>
   options
@@ -197,6 +198,7 @@ export const ProductDetailPage: React.FC = () => {
     }
   }, [getAvailableValues, product?.has_variants, selectedOptions, variantOptions]);
 
+  const listing = getServiceListing(product);
   const effectivePrice = selectedVariant?.effective_price ?? product?.unit_price ?? 0;
   const effectiveImage = selectedVariant?.image_url || product?.image_url || '/placeholder-product.svg';
   const effectiveSku = selectedVariant?.sku || product?.sku;
@@ -204,6 +206,10 @@ export const ProductDetailPage: React.FC = () => {
   const canBackorder = selectedVariant?.allow_backorders ?? product?.allow_backorders ?? false;
   const isOutOfStock = !canBackorder && effectiveStock <= 0;
   const stockSemaforo = getStockSemaforo(effectiveStock);
+  const canHire = product ? canRequestService(product) && !isOutOfStock : false;
+  const hireLabel = listing.isAConvenir
+    ? 'Pedir presupuesto'
+    : (listing.isService ? 'Contratar a esta persona' : uiConfig.productAddToCartLabel);
   const maxQuantity = Math.max(
     1,
     Math.min(
@@ -398,9 +404,22 @@ export const ProductDetailPage: React.FC = () => {
                 <p className="text-sm text-gray-500 mb-2">SKU: {effectiveSku}</p>
               )}
 
-              {product.category && (
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground mt-2">
-                  {product.category}
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                {product.category && (
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                    {product.category}
+                  </p>
+                )}
+                {listing.tradeRankLabel && (
+                  <span className="inline-flex items-center rounded-sm bg-primary/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
+                    {listing.tradeRankLabel}
+                  </span>
+                )}
+              </div>
+              {(listing.personName || listing.zone || listing.headline) && (
+                <p className="text-sm text-muted-foreground mt-2">
+                  {[listing.personName, listing.tradeRankLabel, listing.zone].filter(Boolean).join(' · ')}
+                  {listing.headline ? ` — ${listing.headline}` : ''}
                 </p>
               )}
             </div>
@@ -408,11 +427,18 @@ export const ProductDetailPage: React.FC = () => {
             <div className="space-y-2">
               <PriceDisplay
                 price={effectivePrice}
+                pricingMode={listing.pricingMode}
                 showLoginButton={true}
                 className="text-3xl font-bold"
               />
               {selectedVariant && selectedVariant.unit_price !== null && selectedVariant.unit_price !== undefined && (
                 <p className="text-sm text-gray-500">{uiConfig.productSubtotalLabel}</p>
+              )}
+              {listing.isService && (
+                <p className="text-sm text-muted-foreground">
+                  OficiosHub intermedia: sin contacto directo. La persona ejecuta el trabajo;
+                  el cobro se libera con tu OK de calidad.
+                </p>
               )}
             </div>
 
@@ -551,6 +577,7 @@ export const ProductDetailPage: React.FC = () => {
             )}
 
             <div className="bg-white p-4 rounded-lg shadow-sm space-y-4">
+              {!listing.isService && (
               <div className="flex items-center justify-between">
                 <span className="font-medium">{uiConfig.productAvailabilityLabel}</span>
                 <span className={`${stockSemaforo.toneClassName || (isOutOfStock ? 'text-red-600' : 'text-green-600')} font-medium`}>
@@ -561,9 +588,18 @@ export const ProductDetailPage: React.FC = () => {
                       : `${effectiveStock} ${uiConfig.productAvailableUnitsLabel}`}
                 </span>
               </div>
+              )}
+              {listing.isService && (
+                <p className="text-sm text-muted-foreground">
+                  {listing.isAConvenir
+                    ? 'Precio a convenir · la persona acepta la reserva por OficiosHub'
+                    : 'Precio fijo del servicio · la persona acepta la reserva por OficiosHub'}
+                </p>
+              )}
 
-              {product.unit_price != null && !isOutOfStock && (
+              {canHire && (
               <>
+              {!listing.isService && (
               <div className="flex items-center space-x-3">
                 <button
                   onClick={() => setQuantity((current) => Math.max(1, current - 1))}
@@ -581,6 +617,7 @@ export const ProductDetailPage: React.FC = () => {
                   <Plus className="w-4 h-4" />
                 </button>
               </div>
+              )}
 
               <button
                 onClick={handleAddToCart}
@@ -588,7 +625,7 @@ export const ProductDetailPage: React.FC = () => {
                 className="w-full bg-primary text-primary-foreground py-4 font-semibold uppercase tracking-[0.15em] text-sm hover:opacity-90 transition-opacity disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed flex items-center justify-center"
               >
                 <ShoppingCart className="w-5 h-5 mr-2" />
-                {variantSelectionIncomplete ? uiConfig.productSelectVariantLabel : uiConfig.productAddToCartLabel}
+                {variantSelectionIncomplete ? uiConfig.productSelectVariantLabel : hireLabel}
               </button>
               </>
               )}

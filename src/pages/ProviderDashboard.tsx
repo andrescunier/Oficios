@@ -29,6 +29,13 @@ import {
   type ProviderCobro,
   type ProviderOrder,
 } from '@/services/providerOrderService';
+import {
+  getServiceListing,
+  PRICING_MODE_OPTIONS,
+  TRADE_RANK_OPTIONS,
+  type PricingMode,
+  type TradeRank,
+} from '@/utils/serviceListing';
 import { taskService, type ProviderTask } from '@/services/taskService';
 import type { Product } from '@/types/api';
 import { Button } from '@/components/ui/button';
@@ -133,6 +140,10 @@ export const ProviderDashboard: React.FC = () => {
     unit_price: 0,
     category: categoryOptions[0]?.value || '',
     zone: barrioOptions[0]?.value || '',
+    tradeRank: 'particular',
+    pricingMode: 'fixed',
+    personName: '',
+    imageUrl: '',
     sku: '',
     status: 'active',
   });
@@ -240,6 +251,10 @@ export const ProviderDashboard: React.FC = () => {
       unit_price: 0,
       category: categoryOptions[0]?.value || '',
       zone: barrioOptions[0]?.value || '',
+      tradeRank: 'particular',
+      pricingMode: 'fixed',
+      personName: '',
+      imageUrl: '',
       sku: buildProviderSku('servicio'),
       status: 'active',
     });
@@ -258,8 +273,8 @@ export const ProviderDashboard: React.FC = () => {
       setFormError('Ingresá un nombre para el servicio.');
       return;
     }
-    if (!form.unit_price || form.unit_price <= 0) {
-      setFormError('El precio tiene que ser mayor a cero.');
+    if ((form.pricingMode || 'fixed') === 'fixed' && (!form.unit_price || form.unit_price <= 0)) {
+      setFormError('Con precio fijo, el monto tiene que ser mayor a cero. Si no sabés el valor, elegí “A convenir”.');
       return;
     }
 
@@ -566,7 +581,11 @@ export const ProviderDashboard: React.FC = () => {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="service-price">Precio referencial</Label>
+                        <Label htmlFor="service-price">
+                          {(form.pricingMode || 'fixed') === 'a_convenir'
+                            ? 'Referencia opcional (puede quedar en 0)'
+                            : 'Precio del servicio'}
+                        </Label>
                         <Input
                           id="service-price"
                           type="number"
@@ -631,6 +650,71 @@ export const ProviderDashboard: React.FC = () => {
                           />
                         )}
                       </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="service-person">Tu nombre (como aparece)</Label>
+                        <Input
+                          id="service-person"
+                          value={form.personName || ''}
+                          onChange={(event) =>
+                            setForm((current) => ({ ...current, personName: event.target.value }))
+                          }
+                          placeholder="Ej: Martín Acosta"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="service-rank">Título del oficio</Label>
+                        <select
+                          id="service-rank"
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                          value={form.tradeRank || 'particular'}
+                          onChange={(event) =>
+                            setForm((current) => ({
+                              ...current,
+                              tradeRank: event.target.value as TradeRank,
+                            }))
+                          }
+                        >
+                          {TRADE_RANK_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="service-pricing">Cómo cobrás</Label>
+                        <select
+                          id="service-pricing"
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                          value={form.pricingMode || 'fixed'}
+                          onChange={(event) =>
+                            setForm((current) => ({
+                              ...current,
+                              pricingMode: event.target.value as PricingMode,
+                            }))
+                          }
+                        >
+                          {PRICING_MODE_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="space-y-2 md:col-span-2">
+                        <Label htmlFor="service-photo">Foto tuya (URL)</Label>
+                        <Input
+                          id="service-photo"
+                          value={form.imageUrl || ''}
+                          onChange={(event) =>
+                            setForm((current) => ({ ...current, imageUrl: event.target.value }))
+                          }
+                          placeholder="https://… o /branding/oficioshub/photos/person-….jpg"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Tiene que verse una persona, no una foto de herramientas o stock.
+                        </p>
+                      </div>
                     </div>
                     <div className="flex flex-wrap gap-3">
                       <Button type="submit" disabled={isSaving}>
@@ -673,12 +757,18 @@ export const ProviderDashboard: React.FC = () => {
               <div className="space-y-4">
                 {products.map((product) => {
                   const isActive = product.is_active !== false && product.metadata?.status !== 'inactive';
+                  const listing = getServiceListing(product);
                   return (
                     <Card key={product.id}>
                       <CardContent className="py-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                         <div className="space-y-1">
-                          <div className="flex items-center gap-3">
+                          <div className="flex flex-wrap items-center gap-3">
                             <h3 className="text-lg font-semibold">{product.name}</h3>
+                            {listing.tradeRankLabel && (
+                              <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                                {listing.tradeRankLabel}
+                              </span>
+                            )}
                             <span
                               className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                                 isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
@@ -693,7 +783,11 @@ export const ProviderDashboard: React.FC = () => {
                           <p className="text-sm text-gray-700 line-clamp-2">
                             {product.description || 'Sin descripción'}
                           </p>
-                          <p className="text-sm font-medium">{formatPrice(product.unit_price, product.currency)}</p>
+                          <p className="text-sm font-medium">
+                            {listing.isAConvenir
+                              ? 'A convenir'
+                              : formatPrice(product.unit_price, product.currency)}
+                          </p>
                         </div>
                         <div className="flex flex-wrap gap-2">
                           <Button variant="outline" asChild>

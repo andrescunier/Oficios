@@ -88,7 +88,7 @@ def cat(
     return {
         "name": name,
         "image": image,
-        "link": f"/productos?buscar={slug}",
+        "link": f"/categoria/{slug}",
         "description": description,
         "slug": slug,
         "group": group,
@@ -96,6 +96,29 @@ def cat(
         "productCategories": [name],
         "subcategories": [],
     }
+
+
+BARRIO_OPTIONS = [
+    {"value": zone, "label": zone}
+    for zone in (
+        "Palermo",
+        "Belgrano",
+        "Caballito",
+        "Flores",
+        "Recoleta",
+        "Villa Crespo",
+        "Almagro",
+        "San Telmo",
+        "Ramos Mejía",
+        "Morón",
+        "Quilmes",
+        "Avellaneda",
+        "San Isidro",
+        "Vicente López",
+        "Lanús",
+        "Lomas de Zamora",
+    )
+]
 
 
 def build_config() -> dict:
@@ -191,6 +214,7 @@ def build_config() -> dict:
             "notifications": True,
             "analytics": False,
             "realPayments": False,
+            "skuGrouping": False,
             "benefits": [
                 {
                     "icon": "BadgeCheck",
@@ -218,8 +242,11 @@ def build_config() -> dict:
             "enabled": True,
             "capacidad": False,
             "velocidad": False,
+            "stock": False,
+            "barrio": True,
             "capacidadOptions": [],
             "velocidadOptions": [],
+            "barrioOptions": BARRIO_OPTIONS,
         },
         "paymentMethods": {
             "transferencia": True,
@@ -246,14 +273,14 @@ def build_config() -> dict:
         "shipping": {
             "enabled": True,
             "mode": "flat_rate",
-            "bannerText": "Coordinás día y horario directo con la persona",
+            "bannerText": "Indicás fecha, hora y zona; el proveedor acepta por OficiosHub",
             "label": "Visita / coordinación",
             "freeLabel": "Incluida",
-            "pendingLabel": "A coordinar",
-            "chargedMessage": "La visita se coordina al confirmar el pedido",
-            "drawerMessage": "La persona te confirma día y horario",
+            "pendingLabel": "A coordinar por OficiosHub",
+            "chargedMessage": "Sin contacto directo: todo se coordina por OficiosHub",
+            "drawerMessage": "El proveedor acepta la reserva; cobro tras tu OK de calidad",
             "productBadgeTitle": "Modalidad",
-            "productBadgeDescription": "En tu casa o donde indiques",
+            "productBadgeDescription": "Intermediado por OficiosHub",
             "chargeAmount": 0,
             "chargeProductId": None,
             "chargeProductSku": None,
@@ -417,7 +444,7 @@ def build_config() -> dict:
                 {
                     "image": photo("hero-person.jpg"),
                     "title": "Un oficio, una persona",
-                    "subtitle": "Pocas categorías. Elegí a alguien y coordiná directo",
+                    "subtitle": "Pocas categorías. Pedís, el proveedor acepta y todo pasa por OficiosHub",
                     "cta": "Explorar",
                     "link": "/productos",
                 },
@@ -492,10 +519,10 @@ def build_config() -> dict:
                 {
                     "title": "Oficios",
                     "links": [
-                        {"label": "Hogar", "href": "/productos?buscar=hogar"},
-                        {"label": "Electricidad", "href": "/productos?buscar=electricidad"},
-                        {"label": "Pintura", "href": "/productos?buscar=pintura"},
-                        {"label": "Exterior", "href": "/productos?buscar=exterior"},
+                        {"label": "Hogar", "href": "/categoria/hogar"},
+                        {"label": "Electricidad", "href": "/categoria/electricidad"},
+                        {"label": "Pintura", "href": "/categoria/pintura"},
+                        {"label": "Exterior", "href": "/categoria/exterior"},
                     ],
                 },
                 {
@@ -650,6 +677,9 @@ def build_config() -> dict:
             "homeCategoriesSubtitle": "Solo cuatro: elegí y mirá quién ofrece",
             "homeNewTitle": "Recién sumados",
             "homeNewSubtitle": "Personas que acaban de publicar su oficio",
+            "stockSemaforo": {
+                "enabled": False,
+            },
         },
     }
 

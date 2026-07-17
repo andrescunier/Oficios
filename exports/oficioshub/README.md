@@ -1,5 +1,6 @@
 # OficiosHub — marketplace de servicios
 
+Repo GitHub: **https://github.com/andrescunier/Oficios**  
 Account: `cccedb72-8267-4513-9b9f-48c2d1fae78d`  
 Slug: `oficioshub`  
 API: `https://api.cumar.com.ar`  

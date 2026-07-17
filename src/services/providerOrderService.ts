@@ -62,10 +62,44 @@ const PAID_LIKE = new Set([
   'completed',
 ]);
 
+const extractOrder = (response: unknown): ProviderOrder => {
+  if (response && typeof response === 'object') {
+    if ('id' in response) return response as ProviderOrder;
+    const envelope = response as { data?: ProviderOrder };
+    if (envelope.data && typeof envelope.data === 'object') {
+      return envelope.data;
+    }
+  }
+  throw new Error('No se pudo procesar la respuesta de la reserva');
+};
+
+export const getServiceReservation = (order: ProviderOrder) => {
+  const meta = (order.metadata || {}) as Record<string, unknown>;
+  const reservation = (meta.service_reservation || {}) as Record<string, unknown>;
+  return {
+    providerStatus: String(reservation.provider_status || 'pending_accept'),
+    qualityOk: reservation.quality_ok === true,
+    barrio: (reservation.barrio || reservation.locality || null) as string | null,
+    serviceDate: (reservation.service_date || null) as string | null,
+    serviceTime: (reservation.service_time || null) as string | null,
+    scheduledAt: (reservation.scheduled_at || null) as string | null,
+    workDetail: (reservation.work_detail || null) as string | null,
+  };
+};
+
 export const providerOrderService = {
   async listMine(): Promise<ProviderOrder[]> {
     const response = await orderService.getOrders({ page: 1, per_page: 50 });
     return (response.data || []) as unknown as ProviderOrder[];
+  },
+
+  async respond(orderId: string, action: 'accept' | 'reject', reason?: string): Promise<ProviderOrder> {
+    const accountId = getActiveAccountId();
+    const response = await httpClient.post(
+      API_ENDPOINTS.SUPPLIER_RESPOND_ORDER(accountId, orderId),
+      { action, reason: reason || null },
+    );
+    return extractOrder(response);
   },
 
   async getStorefrontStatus(orderId: string): Promise<{
@@ -90,16 +124,25 @@ export const providerOrderService = {
   async listCobros(orders: ProviderOrder[]): Promise<ProviderCobro[]> {
     const cobros: ProviderCobro[] = [];
     for (const order of orders) {
+      const reservation = getServiceReservation(order);
       let paymentStatus = order.status;
       let paidAmount = 0;
-      try {
-        const status = await this.getStorefrontStatus(order.id);
-        paymentStatus = status.payment?.status || order.status;
-        paidAmount = Number(status.payment?.amount_paid || 0);
-      } catch {
-        if (PAID_LIKE.has(String(order.status || '').toLowerCase())) {
-          paidAmount = Number(order.total || 0);
-          paymentStatus = 'pending_backend_validation';
+      const meta = (order.metadata || {}) as Record<string, unknown>;
+      const paymentIntent = (meta.payment_intent || {}) as Record<string, unknown>;
+
+      if (!reservation.qualityOk || paymentIntent.status === 'held_until_quality_ok') {
+        paymentStatus = 'held_until_quality_ok';
+        paidAmount = 0;
+      } else {
+        try {
+          const status = await this.getStorefrontStatus(order.id);
+          paymentStatus = status.payment?.status || String(paymentIntent.status || order.status);
+          paidAmount = Number(status.payment?.amount_paid || 0);
+        } catch {
+          if (PAID_LIKE.has(String(order.status || '').toLowerCase())) {
+            paidAmount = Number(order.total || 0);
+            paymentStatus = 'pending_backend_validation';
+          }
         }
       }
       const serviceName =

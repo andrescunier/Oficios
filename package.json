@@ -1,13 +1,13 @@
 {
-  "name": "diap-ecommerce",
+  "name": "oficios",
   "private": true,
-  "version": "2026.7.15",
+  "version": "2026.7.16",
   "type": "module",
-  "description": "DIAP - Distribuidora de productos tecnológicos de primera calidad",
-  "homepage": "https://diap.com",
+  "description": "OficiosHub — marketplace de personas con oficio",
+  "homepage": "https://oficioshub.cumar.com.ar",
   "repository": {
     "type": "git",
-    "url": "https://github.com/andrescunier/DIAP.git"
+    "url": "https://github.com/andrescunier/Oficios.git"
   },
   "scripts": {
     "dev": "vite",

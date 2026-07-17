@@ -13,6 +13,14 @@ export interface ShippingInfo {
   state: string;
   zipCode: string;
   country: string;
+  /** Localidad / barrio del servicio */
+  barrio?: string;
+  /** Fecha preferida YYYY-MM-DD */
+  serviceDate?: string;
+  /** Hora preferida HH:mm */
+  serviceTime?: string;
+  /** Detalle del trabajo para la reserva */
+  workDetail?: string;
 }
 
 export interface PaymentInfo {
@@ -92,10 +100,25 @@ export const buildInitialShippingInfo = (args: {
   state: args.registrationDraft?.state || '',
   zipCode: args.registrationDraft?.zipCode || '',
   country: BUSINESS.DEFAULT_COUNTRY,
+  barrio: args.registrationDraft?.city || '',
+  serviceDate: '',
+  serviceTime: '',
+  workDetail: '',
 });
 
 export const validateShippingInfo = (shippingInfo: ShippingInfo): { valid: boolean; missingField?: string } => {
-  const requiredFields: Array<keyof ShippingInfo> = ['firstName', 'lastName', 'email', 'phone', 'address', 'city', 'zipCode'];
+  const requiredFields: Array<keyof ShippingInfo> = [
+    'firstName',
+    'lastName',
+    'email',
+    'phone',
+    'address',
+    'city',
+    'zipCode',
+    'barrio',
+    'serviceDate',
+    'serviceTime',
+  ];
   const missingField = requiredFields.find((field) => !shippingInfo[field]);
   return {
     valid: !missingField,
@@ -182,6 +205,16 @@ export const buildCheckoutPayload = (args: {
     kind: 'product' as const,
   }));
 
+  const s = args.shippingInfo;
+  const scheduledLabel = [s.serviceDate, s.serviceTime].filter(Boolean).join(' ');
+  const notesParts = [
+    `Pedido web - ${s.firstName} ${s.lastName}`,
+    s.barrio ? `Barrio/localidad: ${s.barrio}` : '',
+    scheduledLabel ? `Fecha/hora preferida: ${scheduledLabel}` : '',
+    s.workDetail ? `Detalle: ${s.workDetail}` : '',
+    'Mediación OficiosHub: sin contacto directo; cobro tras OK de calidad del cliente.',
+  ].filter(Boolean);
+
   return {
     shippingInfo: args.shippingInfo,
     items: shippingCharge ? [...baseItems, shippingCharge.lineItem] : baseItems,
@@ -189,6 +222,6 @@ export const buildCheckoutPayload = (args: {
     currency: args.currency || BUSINESS.DEFAULT_CURRENCY,
     totalAmount: args.totalAmount,
     paymentMethod: args.paymentMethod,
-    notes: `Pedido web - ${args.shippingInfo.firstName} ${args.shippingInfo.lastName}`,
+    notes: notesParts.join(' | '),
   };
 };

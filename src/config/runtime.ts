@@ -144,8 +144,11 @@ export interface FilterConfig {
   enabled: boolean;
   capacidad: boolean;
   velocidad: boolean;
+  barrio: boolean;
+  stock: boolean;
   capacidadOptions?: Array<{ value: string; label: string }>;
   velocidadOptions?: Array<{ value: string; label: string }>;
+  barrioOptions?: Array<{ value: string; label: string }>;
 }
 
 export interface ObservabilityConfig {
@@ -459,6 +462,8 @@ export interface RuntimeConfig {
     notifications: boolean;
     analytics: boolean;
     realPayments: boolean;
+    /** Si false, cada producto/servicio se muestra en su propia card (sin variantes). */
+    skuGrouping: boolean;
     benefits: FeatureBenefitConfig[];
   };
   shipping: ShippingConfig;
@@ -1037,6 +1042,7 @@ const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
     notifications: false,
     analytics: false,
     realPayments: false,
+    skuGrouping: true,
     benefits: [],
   },
   shipping: {
@@ -1071,6 +1077,8 @@ const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
     enabled: false,
     capacidad: false,
     velocidad: false,
+    barrio: false,
+    stock: true,
   },
   paymentMethods: {
     transferencia: true,
@@ -2120,6 +2128,10 @@ export const getFeaturesConfig = () => {
     notifications: readBoolean(features?.notifications, DEFAULT_RUNTIME_CONFIG.features.notifications),
     analytics: readBoolean(features?.analytics, DEFAULT_RUNTIME_CONFIG.features.analytics),
     realPayments: readBoolean(features?.realPayments, DEFAULT_RUNTIME_CONFIG.features.realPayments),
+    skuGrouping: readBoolean(
+      (features as { skuGrouping?: boolean } | undefined)?.skuGrouping,
+      DEFAULT_RUNTIME_CONFIG.features.skuGrouping,
+    ),
     benefits: normalizeFeatureBenefits(features?.benefits),
   };
 };
@@ -2629,8 +2641,13 @@ export const getFiltersConfig = (): FilterConfig => {
     enabled: readBoolean(filters?.enabled, DEFAULT_RUNTIME_CONFIG.filters.enabled),
     capacidad: readBoolean(filters?.capacidad, DEFAULT_RUNTIME_CONFIG.filters.capacidad),
     velocidad: readBoolean(filters?.velocidad, DEFAULT_RUNTIME_CONFIG.filters.velocidad),
+    barrio: readBoolean((filters as { barrio?: boolean } | undefined)?.barrio, false),
+    stock: readBoolean((filters as { stock?: boolean } | undefined)?.stock, true),
     capacidadOptions: Array.isArray(filters?.capacidadOptions) ? filters.capacidadOptions : undefined,
     velocidadOptions: Array.isArray(filters?.velocidadOptions) ? filters.velocidadOptions : undefined,
+    barrioOptions: Array.isArray((filters as { barrioOptions?: Array<{ value: string; label: string }> } | undefined)?.barrioOptions)
+      ? (filters as { barrioOptions: Array<{ value: string; label: string }> }).barrioOptions
+      : undefined,
   };
 };
 

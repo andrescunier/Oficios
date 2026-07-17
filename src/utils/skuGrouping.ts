@@ -9,6 +9,7 @@
  */
 
 import type { Product } from '@/types/api';
+import { getFeaturesConfig } from '@/config/runtime';
 
 export interface ProductGroup {
   type: 'group';
@@ -147,6 +148,11 @@ const discoverOptionNames = (products: Product[]): string[] => {
  * are returned as SingleProduct items.
  */
 export const groupProductsBySku = (products: Product[]): ProductOrGroup[] => {
+  // Marketplace de personas/servicios: cada ficha es única (no variantes COLOR/TALLE).
+  if (!getFeaturesConfig().skuGrouping) {
+    return products.map((product) => ({ type: 'single' as const, product }));
+  }
+
   // 1. Bucket products by group key
   const buckets = new Map<string, Product[]>();
 

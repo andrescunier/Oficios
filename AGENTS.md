@@ -11,7 +11,7 @@ Guia rapida para agentes que tengan que entender, modificar o verificar este sto
 
 ## Estado del proyecto
 
-- Aplicacion: storefront ecommerce B2B DIAP.
+- Aplicacion: storefront OficiosHub (marketplace de personas con oficio). Repo: `andrescunier/Oficios`.
 - Stack: React 19, Vite 6, TypeScript, Zustand, React Query, Axios, Tailwind CSS 4, Vitest y Playwright.
 - Backend esperado: `/home/andis/simpleFastApi`.
 - Bootstrap permitido: solo `VITE_API_BASE_URL` y `VITE_ACCOUNT_ID`.

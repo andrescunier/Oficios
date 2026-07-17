@@ -365,6 +365,10 @@ interface CheckoutData {
     state: string;
     zipCode: string;
     country: string;
+    barrio?: string;
+    serviceDate?: string;
+    serviceTime?: string;
+    workDetail?: string;
   };
   items: SalesOrderItem[];
   lineItemsMetadata?: Array<{
@@ -793,6 +797,22 @@ class OrderService {
   }
 
   /**
+   * Cliente confirma OK de calidad → habilita cobro intermediado (sin contacto directo).
+   * POST /accounts/{account_id}/sales-orders/{order_id}/quality-ok
+   */
+  async confirmQualityOk(orderId: string, notes?: string): Promise<SalesOrder> {
+    const accountId = getActiveAccountId();
+    const response = await httpClient.post<SalesOrder | { data: SalesOrder }>(
+      API_ENDPOINTS.QUALITY_OK_ORDER(accountId, orderId),
+      { notes: notes || null },
+    );
+    if (response && typeof response === 'object' && 'data' in response && response.data) {
+      return response.data;
+    }
+    return response as SalesOrder;
+  }
+
+  /**
    * Convierte el estado de la API al formato simplificado del frontend
    */
   mapOrderStatus(apiStatus: string): 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'returned' {
@@ -958,6 +978,26 @@ class OrderService {
             amount: totalAmount,
             currency,
             informed_at: new Date().toISOString(),
+            // Cobro efectivo recién con OK de calidad del cliente
+            charge_after_quality_ok: true,
+            status: 'held_until_quality_ok',
+          },
+          mediation: {
+            channel: 'oficioshub',
+            direct_contact_forbidden: true,
+            message: 'Toda la comunicación y coordinación pasa por OficiosHub.',
+          },
+          service_reservation: {
+            scheduled_at: shippingInfo.serviceDate && shippingInfo.serviceTime
+              ? `${shippingInfo.serviceDate}T${shippingInfo.serviceTime}:00`
+              : shippingInfo.serviceDate || null,
+            service_date: shippingInfo.serviceDate || null,
+            service_time: shippingInfo.serviceTime || null,
+            barrio: shippingInfo.barrio || shippingInfo.city || null,
+            locality: shippingInfo.barrio || shippingInfo.city || null,
+            work_detail: shippingInfo.workDetail || null,
+            provider_status: 'pending_accept',
+            quality_ok: false,
           },
           line_items_variant_info: Array.isArray(lineItemsMetadata)
             ? lineItemsMetadata

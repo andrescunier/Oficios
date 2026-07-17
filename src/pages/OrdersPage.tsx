@@ -49,6 +49,7 @@ export const OrdersPage: React.FC = () => {
   const [selectedOrder, setSelectedOrder] = useState<SalesOrder | null>(null);
   const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
   const [cancelReason, setCancelReason] = useState<string>('');
+  const [qualityOkOrderId, setQualityOkOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     if (auth.isAuthenticated) {
@@ -127,6 +128,42 @@ export const OrdersPage: React.FC = () => {
       });
     } finally {
       setIsDetailLoading(false);
+    }
+  };
+
+  const getReservationInfo = (order: SalesOrder) => {
+    const meta = (order.metadata || {}) as Record<string, unknown>;
+    const reservation = (meta.service_reservation || {}) as Record<string, unknown>;
+    return {
+      providerStatus: String(reservation.provider_status || 'pending_accept'),
+      qualityOk: reservation.quality_ok === true,
+      barrio: (reservation.barrio || reservation.locality || '') as string,
+      serviceDate: (reservation.service_date || '') as string,
+      serviceTime: (reservation.service_time || '') as string,
+      scheduledAt: (reservation.scheduled_at || '') as string,
+    };
+  };
+
+  const handleConfirmQualityOk = async (order: SalesOrder) => {
+    try {
+      setQualityOkOrderId(order.id);
+      await orderService.confirmQualityOk(order.id);
+      const detail = await orderService.getOrderDetail(order.id);
+      setSelectedOrder(detail);
+      setOrders((current) => current.map((item) => (item.id === order.id ? { ...item, ...detail } : item)));
+      addNotification({
+        type: 'success',
+        title: 'OK de calidad registrado',
+        message: 'Gracias. OficiosHub puede liberar el cobro. Sin contacto directo con la persona.',
+      });
+    } catch (error: any) {
+      addNotification({
+        type: 'error',
+        title: 'No se pudo registrar el OK',
+        message: error.message || 'El proveedor debe haber aceptado la reserva primero.',
+      });
+    } finally {
+      setQualityOkOrderId(null);
     }
   };
 
@@ -607,6 +644,44 @@ export const OrdersPage: React.FC = () => {
                       <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">{selectedOrder.notes}</p>
                     </div>
                   )}
+
+                  {(() => {
+                    const reservation = getReservationInfo(selectedOrder);
+                    const providerLabel =
+                      reservation.providerStatus === 'accepted'
+                        ? 'Proveedor aceptó'
+                        : reservation.providerStatus === 'rejected'
+                          ? 'Proveedor rechazó'
+                          : 'Esperando aceptación del proveedor';
+                    return (
+                      <div className="mb-6 p-4 border border-blue-100 bg-blue-50/60 rounded-lg space-y-2">
+                        <p className="font-medium text-gray-900">Reserva del servicio</p>
+                        <p className="text-sm text-gray-700">{providerLabel}</p>
+                        {(reservation.barrio || reservation.serviceDate || reservation.serviceTime) && (
+                          <p className="text-sm text-gray-700">
+                            {[reservation.barrio, reservation.serviceDate, reservation.serviceTime]
+                              .filter(Boolean)
+                              .join(' · ')}
+                          </p>
+                        )}
+                        <p className="text-sm text-gray-600">
+                          Toda la comunicación pasa por OficiosHub. El cobro se libera con tu OK de calidad.
+                        </p>
+                        {reservation.qualityOk ? (
+                          <p className="text-sm font-medium text-green-700">OK de calidad ya registrado</p>
+                        ) : reservation.providerStatus === 'accepted' ? (
+                          <button
+                            type="button"
+                            disabled={qualityOkOrderId === selectedOrder.id}
+                            onClick={() => handleConfirmQualityOk(selectedOrder)}
+                            className="mt-2 inline-flex items-center px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-60"
+                          >
+                            {qualityOkOrderId === selectedOrder.id ? 'Registrando…' : 'Dar OK de calidad'}
+                          </button>
+                        ) : null}
+                      </div>
+                    );
+                  })()}
 
                   <div className="mb-6">
                     <label className="block text-sm font-medium text-gray-700 mb-2">{uiCfg.ordersDetailProductsLabel}</label>

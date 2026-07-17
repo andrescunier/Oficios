@@ -79,10 +79,10 @@ def main() -> int:
         {
             "title": "Oficios",
             "links": [
-                {"label": "Hogar", "href": "/productos?buscar=hogar"},
-                {"label": "Electricidad", "href": "/productos?buscar=electricidad"},
-                {"label": "Pintura", "href": "/productos?buscar=pintura"},
-                {"label": "Exterior", "href": "/productos?buscar=exterior"},
+                {"label": "Hogar", "href": "/categoria/hogar"},
+                {"label": "Electricidad", "href": "/categoria/electricidad"},
+                {"label": "Pintura", "href": "/categoria/pintura"},
+                {"label": "Exterior", "href": "/categoria/exterior"},
             ],
         },
         {
@@ -125,6 +125,7 @@ def main() -> int:
     config["app"] = app
 
     features = config.get("features") if isinstance(config.get("features"), dict) else {}
+    features["skuGrouping"] = False
     features["benefits"] = [
         {
             "icon": "ShieldCheck",
@@ -138,8 +139,8 @@ def main() -> int:
         },
         {
             "icon": "CalendarDays",
-            "title": "Reservas claras",
-            "description": "Cada contratación es una orden de venta con ficha para coordinar",
+            "title": "Reservas con aceptación",
+            "description": "Pedís fecha y zona; el proveedor acepta; cobro tras tu OK de calidad",
         },
         {
             "icon": "Users",
@@ -148,6 +149,73 @@ def main() -> int:
         },
     ]
     config["features"] = features
+
+    ui = config.get("ui") if isinstance(config.get("ui"), dict) else {}
+    stock_semaforo = ui.get("stockSemaforo") if isinstance(ui.get("stockSemaforo"), dict) else {}
+    stock_semaforo["enabled"] = False
+    ui["stockSemaforo"] = stock_semaforo
+    config["ui"] = ui
+
+    barrio_options = [
+        {"value": zone, "label": zone}
+        for zone in (
+            "Palermo",
+            "Belgrano",
+            "Caballito",
+            "Flores",
+            "Recoleta",
+            "Villa Crespo",
+            "Almagro",
+            "San Telmo",
+            "Ramos Mejía",
+            "Morón",
+            "Quilmes",
+            "Avellaneda",
+            "San Isidro",
+            "Vicente López",
+            "Lanús",
+            "Lomas de Zamora",
+        )
+    ]
+    config["filters"] = {
+        "enabled": True,
+        "capacidad": False,
+        "velocidad": False,
+        "stock": False,
+        "barrio": True,
+        "capacidadOptions": [],
+        "velocidadOptions": [],
+        "barrioOptions": barrio_options,
+    }
+
+    shipping = config.get("shipping") if isinstance(config.get("shipping"), dict) else {}
+    shipping.update(
+        {
+            "bannerText": "Indicás fecha, hora y zona; el proveedor acepta por OficiosHub",
+            "pendingLabel": "A coordinar por OficiosHub",
+            "chargedMessage": "Sin contacto directo: todo se coordina por OficiosHub",
+            "drawerMessage": "El proveedor acepta la reserva; cobro tras tu OK de calidad",
+            "productBadgeDescription": "Intermediado por OficiosHub",
+        }
+    )
+    config["shipping"] = shipping
+
+    images = config.get("images") if isinstance(config.get("images"), dict) else {}
+    categories = images.get("categories") if isinstance(images.get("categories"), list) else []
+    for category in categories:
+        if not isinstance(category, dict):
+            continue
+        slug = str(category.get("slug") or "").strip()
+        if slug:
+            category["link"] = f"/categoria/{slug}"
+    hero_slides = images.get("heroSlides") if isinstance(images.get("heroSlides"), list) else []
+    if len(hero_slides) > 1 and isinstance(hero_slides[1], dict):
+        hero_slides[1]["subtitle"] = (
+            "Pocas categorías. Pedís, el proveedor acepta y todo pasa por OficiosHub"
+        )
+    images["categories"] = categories
+    images["heroSlides"] = hero_slides
+    config["images"] = images
 
     out = Path(__file__).resolve().parent / "ecommerce-config.body.json"
     out.write_text(json.dumps(config, ensure_ascii=False, indent=2), encoding="utf-8")

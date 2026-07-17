@@ -7,19 +7,33 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useStore } from '@/store/useStore';
-import { getBusinessConfig, getUIConfig } from '@/config/runtime';
+import { getBusinessConfig, getFiltersConfig, getUIConfig } from '@/config/runtime';
 import { BRANDING } from '@/config/branding';
 import { productsQueryOptions } from '@/features/catalog/queries';
 import { groupProductsBySku } from '@/utils/skuGrouping';
 import { ProductGroupCard } from '@/components/product/ProductGroupCard';
 import { ProductCard } from '@/components/product/ProductCard';
 import { ProductCardSkeleton } from '@/components/product/ProductCardSkeleton';
+import type { Product } from '@/types/api';
+
+const productZoneHaystack = (product: Product): string => {
+  const meta = (product.metadata || {}) as Record<string, unknown>;
+  const provider = (meta.provider || {}) as Record<string, unknown>;
+  const pub = (meta.public || {}) as Record<string, unknown>;
+  return [provider.zone, pub.provider_zone, product.description, product.name]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+};
 
 export const ProductsPageApiReal: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState(() => searchParams.get('buscar') || '');
   const perPage = getBusinessConfig().productsPerPage;
   const uiCfg = getUIConfig();
+  const filtersCfg = getFiltersConfig();
+  const barrioOptions = filtersCfg.barrioOptions || [];
+  const selectedBarrio = searchParams.get('barrio') || '';
 
   const currentPage = Number(searchParams.get('page')) || 1;
 
@@ -75,12 +89,17 @@ export const ProductsPageApiReal: React.FC = () => {
 
   const filteredProducts = useMemo(
     () =>
-      products.filter(
-        (product) =>
-          product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          product.description?.toLowerCase().includes(searchTerm.toLowerCase()),
-      ),
-    [products, searchTerm],
+      products.filter((product) => {
+        const matchesSearch =
+          !searchTerm
+          || product.name.toLowerCase().includes(searchTerm.toLowerCase())
+          || product.description?.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesBarrio =
+          !selectedBarrio
+          || productZoneHaystack(product).includes(selectedBarrio.toLowerCase());
+        return matchesSearch && matchesBarrio;
+      }),
+    [products, searchTerm, selectedBarrio],
   );
 
   const groupedProducts = useMemo(
@@ -103,6 +122,36 @@ export const ProductsPageApiReal: React.FC = () => {
       </section>
 
       <div className="container mx-auto px-4 py-8">
+        {(filtersCfg.barrio && barrioOptions.length > 0) && (
+          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div className="w-full max-w-sm space-y-2">
+              <label htmlFor="barrio-filter" className="text-sm font-medium text-foreground">
+                Localidad / barrio
+              </label>
+              <select
+                id="barrio-filter"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                value={selectedBarrio}
+                onChange={(event) => {
+                  const params = new URLSearchParams(searchParams);
+                  const value = event.target.value;
+                  if (value) params.set('barrio', value);
+                  else params.delete('barrio');
+                  params.delete('page');
+                  setSearchParams(params);
+                }}
+              >
+                <option value="">Todas las zonas</option>
+                {barrioOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
+            <p className="text-sm text-muted-foreground max-w-md">
+              Filtrá por zona donde la persona ofrece el oficio. La coordinación y el pago pasan por OficiosHub.
+            </p>
+          </div>
+        )}
         {loading && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {[...Array(8)].map((_, i) => (

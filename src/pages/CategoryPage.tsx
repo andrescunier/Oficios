@@ -24,8 +24,25 @@ interface FilterOption {
 interface ActiveFilters {
   capacidad?: string[];
   velocidad?: string[];
+  barrio?: string[];
   enStock?: boolean;
 }
+
+const productZoneHaystack = (product: Product): string => {
+  const meta = (product.metadata || {}) as Record<string, unknown>;
+  const provider = (meta.provider || {}) as Record<string, unknown>;
+  const pub = (meta.public || {}) as Record<string, unknown>;
+  return [
+    provider.zone,
+    pub.provider_zone,
+    product.description,
+    product.name,
+    product.category,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+};
 
 type FilterSectionsMap = Record<string, { label: string; options: FilterOption[] }>;
 
@@ -56,10 +73,11 @@ export const CategoryPage: React.FC = () => {
   const currentPage = Math.max(Number(searchParams.get('page')) || 1, 1);
 
   const [showMobileFilters, setShowMobileFilters] = useState(false);
-  const [expandedFilters, setExpandedFilters] = useState<string[]>(['capacidad', 'velocidad']);
+  const [expandedFilters, setExpandedFilters] = useState<string[]>(['barrio', 'capacidad', 'velocidad']);
   const [activeFilters, setActiveFilters] = useState<ActiveFilters>({
     capacidad: [],
     velocidad: [],
+    barrio: [],
     enStock: false,
   });
   const [sortBy, setSortBy] = useState<string>('nombre-asc');
@@ -110,6 +128,12 @@ export const CategoryPage: React.FC = () => {
     ];
 
     const config: FilterSectionsMap = {};
+    if (filtersConfig.barrio && (filtersConfig.barrioOptions?.length || 0) > 0) {
+      config.barrio = {
+        label: 'Localidad / barrio',
+        options: filtersConfig.barrioOptions || [],
+      };
+    }
     if (filtersConfig.capacidad) {
       config.capacidad = {
         label: 'Capacidad',
@@ -146,6 +170,7 @@ export const CategoryPage: React.FC = () => {
     setActiveFilters({
       capacidad: searchParams.getAll('capacidad'),
       velocidad: searchParams.getAll('velocidad'),
+      barrio: searchParams.getAll('barrio'),
       enStock: searchParams.get('stock') === 'true',
     });
 
@@ -201,8 +226,15 @@ export const CategoryPage: React.FC = () => {
       });
     }
 
+    if (activeFilters.barrio && activeFilters.barrio.length > 0) {
+      result = result.filter((product) => {
+        const haystack = productZoneHaystack(product);
+        return activeFilters.barrio!.some((zone) => haystack.includes(zone.toLowerCase()));
+      });
+    }
+
     return result;
-  }, [activeFilters.capacidad, activeFilters.velocidad, products]);
+  }, [activeFilters.capacidad, activeFilters.velocidad, activeFilters.barrio, products]);
 
   const totalProducts = pagination?.total ?? filteredProducts.length;
   const totalPages = Math.max(pagination?.total_pages ?? 1, 1);
@@ -231,6 +263,7 @@ export const CategoryPage: React.FC = () => {
     const clearedFilters: ActiveFilters = {
       capacidad: [],
       velocidad: [],
+      barrio: [],
       enStock: false,
     };
     setActiveFilters(clearedFilters);
@@ -258,6 +291,7 @@ export const CategoryPage: React.FC = () => {
   const activeFilterCount =
     (activeFilters.capacidad?.length || 0)
     + (activeFilters.velocidad?.length || 0)
+    + (activeFilters.barrio?.length || 0)
     + (activeFilters.enStock ? 1 : 0);
 
   const FilterSection = ({ filterKey, config }: { filterKey: string; config: { label: string; options: FilterOption[] } }) => {
@@ -333,7 +367,9 @@ export const CategoryPage: React.FC = () => {
           </div>
 
           <h1 className="text-3xl md:text-4xl font-bold mb-2">{categoryName}</h1>
-          <p className="text-lg opacity-90">{categoryConfig?.description || 'Productos de alta calidad'}</p>
+          {categoryConfig?.description && (
+            <p className="text-lg opacity-90 max-w-3xl">{categoryConfig.description}</p>
+          )}
 
           {navSubcategories.length > 0 && (
             <div className="mt-4 flex flex-wrap gap-2">
@@ -397,17 +433,19 @@ export const CategoryPage: React.FC = () => {
                     )}
                   </div>
 
-                  <div className="border-b border-gray-200 py-4">
-                    <label className="flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={activeFilters.enStock || false}
-                        onChange={(e) => updateFilters('enStock', e.target.checked)}
-                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                      />
-                      <span className="ml-3 text-sm font-medium text-gray-900">Solo con stock</span>
-                    </label>
-                  </div>
+                  {filtersConfig.stock !== false && (
+                    <div className="border-b border-gray-200 py-4">
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={activeFilters.enStock || false}
+                          onChange={(e) => updateFilters('enStock', e.target.checked)}
+                          className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                        />
+                        <span className="ml-3 text-sm font-medium text-gray-900">Solo con stock</span>
+                      </label>
+                    </div>
+                  )}
 
                   {Object.entries(filterConfig).map(([key, config]) => (
                     <FilterSection key={key} filterKey={key} config={config} />
@@ -464,17 +502,19 @@ export const CategoryPage: React.FC = () => {
                       </button>
                     )}
 
-                    <div className="border-b border-gray-200 py-4">
-                      <label className="flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={activeFilters.enStock || false}
-                          onChange={(e) => updateFilters('enStock', e.target.checked)}
-                          className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                        />
-                        <span className="ml-3 text-sm font-medium text-gray-900">Solo con stock</span>
-                      </label>
-                    </div>
+                    {filtersConfig.stock !== false && (
+                      <div className="border-b border-gray-200 py-4">
+                        <label className="flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={activeFilters.enStock || false}
+                            onChange={(e) => updateFilters('enStock', e.target.checked)}
+                            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                          />
+                          <span className="ml-3 text-sm font-medium text-gray-900">Solo con stock</span>
+                        </label>
+                      </div>
+                    )}
 
                     {Object.entries(filterConfig).map(([key, config]) => (
                       <FilterSection key={key} filterKey={key} config={config} />
@@ -486,7 +526,7 @@ export const CategoryPage: React.FC = () => {
                       onClick={() => setShowMobileFilters(false)}
                       className="w-full py-3 bg-primary text-primary-foreground font-semibold uppercase tracking-[0.15em] text-sm"
                     >
-                      Ver {totalProducts} productos
+                      Ver {totalProducts} resultados
                     </button>
                   </div>
                 </div>

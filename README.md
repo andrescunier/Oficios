@@ -1,6 +1,9 @@
-# DIAP Ecommerce
+# Oficios (OficiosHub)
 
-Frontend ecommerce B2B en React + Vite orientado a consumir configuración de tenant desde API.
+Storefront del marketplace **OficiosHub**: personas con oficio (no ecommerce de stock).  
+Repo: https://github.com/andrescunier/Oficios · Live: https://oficioshub.cumar.com.ar
+
+Stack React + Vite multi-tenant; branding y reglas de negocio vienen del `ecommerce-config` del account.
 
 ## Stack
 

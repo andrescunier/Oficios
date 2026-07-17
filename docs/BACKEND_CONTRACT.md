@@ -158,6 +158,8 @@ POST /api/accounts/{account_id}/sales-orders/{order_id}/submit
 POST /api/accounts/{account_id}/sales-orders/{order_id}/cancel-v2
 POST /api/accounts/{account_id}/sales-orders/{order_id}/return
 GET /api/accounts/{account_id}/sales-orders/{order_id}/storefront-status
+POST /api/accounts/{account_id}/sales-orders/{order_id}/supplier-respond
+POST /api/accounts/{account_id}/sales-orders/{order_id}/quality-ok
 GET /api/accounts/{account_id}/sales-orders/{order_id}/status-history
 GET /api/accounts/{account_id}/sales-orders/{order_id}/valid-transitions
 POST /api/accounts/{account_id}/loans

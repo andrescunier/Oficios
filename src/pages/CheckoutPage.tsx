@@ -499,6 +499,60 @@ export const CheckoutPage: React.FC = () => {
                       />
                     </div>
                   </div>
+
+                  <div className="border-t pt-4 mt-2">
+                    <h3 className="font-medium text-gray-800 mb-2">Reserva del servicio</h3>
+                    <p className="text-sm text-gray-600 mb-4">
+                      No hay contacto directo con la persona: todo se coordina por OficiosHub.
+                      El cobro se libera recién cuando vos das el OK de calidad.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Barrio / localidad *</label>
+                    <input
+                      type="text"
+                      value={shippingInfo.barrio || ''}
+                      onChange={(e) => setShippingInfo({ ...shippingInfo, barrio: e.target.value })}
+                      placeholder="Ej: Palermo, Ramos Mejía, Quilmes"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Fecha preferida *</label>
+                      <input
+                        type="date"
+                        value={shippingInfo.serviceDate || ''}
+                        onChange={(e) => setShippingInfo({ ...shippingInfo, serviceDate: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Hora preferida *</label>
+                      <input
+                        type="time"
+                        value={shippingInfo.serviceTime || ''}
+                        onChange={(e) => setShippingInfo({ ...shippingInfo, serviceTime: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Detalle del trabajo</label>
+                    <textarea
+                      value={shippingInfo.workDetail || ''}
+                      onChange={(e) => setShippingInfo({ ...shippingInfo, workDetail: e.target.value })}
+                      placeholder="Contá el problema, acceso al domicilio y cualquier detalle útil"
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
                   
                   <button
                     type="submit"
@@ -731,8 +785,22 @@ export const CheckoutPage: React.FC = () => {
                   <p>{shippingInfo.firstName} {shippingInfo.lastName}</p>
                   <p>{shippingInfo.address}</p>
                   <p>{shippingInfo.city}, {shippingInfo.state} {shippingInfo.zipCode}</p>
+                  {shippingInfo.barrio && <p><strong>Barrio / localidad:</strong> {shippingInfo.barrio}</p>}
+                  {(shippingInfo.serviceDate || shippingInfo.serviceTime) && (
+                    <p>
+                      <strong>Fecha y hora preferida:</strong>{' '}
+                      {[shippingInfo.serviceDate, shippingInfo.serviceTime].filter(Boolean).join(' · ')}
+                    </p>
+                  )}
+                  {shippingInfo.workDetail && (
+                    <p><strong>Detalle:</strong> {shippingInfo.workDetail}</p>
+                  )}
                   <p>{shippingInfo.email}</p>
                   <p>{shippingInfo.phone}</p>
+                  <p className="text-sm text-gray-600 mt-3">
+                    Sin contacto directo: todo pasa por OficiosHub. El proveedor debe aceptar la reserva
+                    y el cobro se libera recién con tu OK de calidad.
+                  </p>
                 </div>
                 
                 {/* Payment Info Review */}

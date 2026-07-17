@@ -65,6 +65,10 @@ export const API_ENDPOINTS = {
   CANCEL_ORDER: (accountId: string, orderId: string) => `/api/accounts/${accountId}/sales-orders/${orderId}/cancel-v2`,
   RETURN_ORDER: (accountId: string, orderId: string) => `/api/accounts/${accountId}/sales-orders/${orderId}/return`,
   ORDER_STOREFRONT_STATUS: (accountId: string, orderId: string) => `/api/accounts/${accountId}/sales-orders/${orderId}/storefront-status`,
+  SUPPLIER_RESPOND_ORDER: (accountId: string, orderId: string) =>
+    `/api/accounts/${accountId}/sales-orders/${orderId}/supplier-respond`,
+  QUALITY_OK_ORDER: (accountId: string, orderId: string) =>
+    `/api/accounts/${accountId}/sales-orders/${orderId}/quality-ok`,
   STATUS_HISTORY: (accountId: string, orderId: string) => `/api/accounts/${accountId}/sales-orders/${orderId}/status-history`,
   VALID_TRANSITIONS: (accountId: string, orderId: string) => `/api/accounts/${accountId}/sales-orders/${orderId}/valid-transitions`,
 

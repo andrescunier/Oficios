@@ -177,6 +177,8 @@ const featuresSchema = z.object({
   notifications: z.boolean().optional(),
   analytics: z.boolean().optional(),
   realPayments: z.boolean().optional(),
+  /** Agrupar productos por prefijo de SKU (variantes COLOR/TALLE). Off en marketplaces de personas. */
+  skuGrouping: z.boolean().optional(),
   benefits: z.array(featureBenefitSchema).optional(),
 });
 
@@ -204,8 +206,11 @@ const filtersSchema = z.object({
   enabled: z.boolean().optional(),
   capacidad: z.boolean().optional(),
   velocidad: z.boolean().optional(),
+  barrio: z.boolean().optional(),
+  stock: z.boolean().optional(),
   capacidadOptions: z.array(z.object({ value: z.string(), label: z.string() })).optional(),
   velocidadOptions: z.array(z.object({ value: z.string(), label: z.string() })).optional(),
+  barrioOptions: z.array(z.object({ value: z.string(), label: z.string() })).optional(),
 });
 
 const paymentMethodsSchema = z.object({

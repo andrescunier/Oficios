@@ -8,6 +8,8 @@ export interface ProviderProductInput {
   description?: string;
   unit_price: number;
   category?: string;
+  /** Zona / barrio donde ofrece el servicio (filtro de catálogo) */
+  zone?: string;
   sku?: string;
   status?: 'active' | 'inactive';
 }
@@ -26,8 +28,9 @@ const slugify = (value: string): string =>
     .replace(/^-+|-+$/g, '')
     .slice(0, 40) || 'servicio';
 
+/** Prefijo único por servicio: evita que el agrupador DIAP (primer segmento SKU) junte personas. */
 export const buildProviderSku = (name: string): string =>
-  `OH-${slugify(name)}-${Date.now()}`;
+  `OH${Date.now()}-${slugify(name)}`;
 
 const extractProducts = (response: unknown): Product[] => {
   if (Array.isArray(response)) {
@@ -83,11 +86,13 @@ const buildCreatePayload = (input: ProviderProductInput, businessPartnerId: stri
       provider: {
         business_partner_id: businessPartnerId,
         type: 'person',
+        zone: input.zone?.trim() || undefined,
       },
       provider_business_partner_id: businessPartnerId,
       public: {
         channels: [channel],
         showecommerce: true,
+        provider_zone: input.zone?.trim() || undefined,
       },
     },
   };

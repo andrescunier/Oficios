@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { BRANDING } from '@/config/branding';
-import { getBusinessConfig, getCategoriesConfig, getUIConfig } from '@/config/runtime';
+import { getBusinessConfig, getCategoriesConfig, getFiltersConfig, getUIConfig } from '@/config/runtime';
 import { getBusinessPartnerId } from '@/features/auth/session';
 import { isSupplierPartner, isSupplierUserRole } from '@/services/businessPartnerService';
 import {
@@ -24,6 +24,7 @@ import {
   type ProviderProductInput,
 } from '@/services/providerProductService';
 import {
+  getServiceReservation,
   providerOrderService,
   type ProviderCobro,
   type ProviderOrder,
@@ -85,6 +86,11 @@ const statusLabel = (status: string) => {
     partially_paid: 'Pago parcial',
     validated: 'Pago validado',
     pending_backend_validation: 'A validar',
+    pending_accept: 'Espera tu aceptación',
+    accepted: 'Aceptada',
+    rejected: 'Rechazada',
+    held_until_quality_ok: 'Retenido hasta OK de calidad',
+    ready_to_charge: 'Listo para cobrar',
   };
   return map[status] || status;
 };
@@ -97,6 +103,7 @@ export const ProviderDashboard: React.FC = () => {
   const uiCfg = getUIConfig();
   const businessCfg = getBusinessConfig();
   const categoryOptions = useMemo(() => flattenCategoryOptions(), []);
+  const barrioOptions = getFiltersConfig().barrioOptions || [];
 
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<ProviderOrder[]>([]);
@@ -108,6 +115,9 @@ export const ProviderDashboard: React.FC = () => {
   const [formError, setFormError] = useState<string | null>(null);
   const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
   const [taskUpdatingId, setTaskUpdatingId] = useState<string | null>(null);
+  const [respondingOrderId, setRespondingOrderId] = useState<string | null>(null);
+  const [reservaStatusFilter, setReservaStatusFilter] = useState<string>('all');
+  const [reservaBarrioFilter, setReservaBarrioFilter] = useState<string>('');
 
   const tabParam = searchParams.get('tab') as TabId | null;
   const activeTab: TabId = TABS.some((t) => t.id === tabParam) ? (tabParam as TabId) : 'servicios';
@@ -122,6 +132,7 @@ export const ProviderDashboard: React.FC = () => {
     description: '',
     unit_price: 0,
     category: categoryOptions[0]?.value || '',
+    zone: barrioOptions[0]?.value || '',
     sku: '',
     status: 'active',
   });
@@ -228,6 +239,7 @@ export const ProviderDashboard: React.FC = () => {
       description: '',
       unit_price: 0,
       category: categoryOptions[0]?.value || '',
+      zone: barrioOptions[0]?.value || '',
       sku: buildProviderSku('servicio'),
       status: 'active',
     });
@@ -329,6 +341,50 @@ export const ProviderDashboard: React.FC = () => {
       setTaskUpdatingId(null);
     }
   };
+
+  const handleRespondReservation = async (order: ProviderOrder, action: 'accept' | 'reject') => {
+    try {
+      setRespondingOrderId(order.id);
+      const updated = await providerOrderService.respond(
+        order.id,
+        action,
+        action === 'reject' ? 'No puedo tomar esta reserva' : undefined,
+      );
+      setOrders((current) => current.map((item) => (item.id === order.id ? { ...item, ...updated } : item)));
+      const cobroList = await providerOrderService.listCobros(
+        orders.map((item) => (item.id === order.id ? { ...item, ...updated } : item)),
+      ).catch(() => cobros);
+      setCobros(cobroList);
+      addNotification({
+        type: 'success',
+        title: action === 'accept' ? 'Reserva aceptada' : 'Reserva rechazada',
+        message: action === 'accept'
+          ? 'Coordiná el trabajo por OficiosHub. El cobro se libera con el OK de calidad del cliente.'
+          : 'El cliente podrá ver que no tomaste esta reserva.',
+      });
+    } catch (error) {
+      addNotification({
+        type: 'error',
+        title: 'No se pudo responder la reserva',
+        message: error instanceof Error ? error.message : 'Intentá de nuevo.',
+      });
+    } finally {
+      setRespondingOrderId(null);
+    }
+  };
+
+  const filteredReservas = useMemo(() => {
+    return orders.filter((order) => {
+      const reservation = getServiceReservation(order);
+      const matchesStatus =
+        reservaStatusFilter === 'all'
+        || reservation.providerStatus === reservaStatusFilter;
+      const matchesBarrio =
+        !reservaBarrioFilter
+        || (reservation.barrio || '').toLowerCase().includes(reservaBarrioFilter.toLowerCase());
+      return matchesStatus && matchesBarrio;
+    });
+  }, [orders, reservaStatusFilter, reservaBarrioFilter]);
 
   if (!auth.isAuthenticated) {
     return (
@@ -447,8 +503,10 @@ export const ProviderDashboard: React.FC = () => {
                 calidad de trabajo y nivel de vida. Esas capacitaciones te llegan acá como <strong>tareas</strong>.
               </p>
               <p>
-                Cuando un cliente te contrata, la reserva llega como <strong>orden de venta</strong>
-                (tu caso de compra del servicio). En Cobros ves lo asociado a esos servicios prestados.
+                Cuando un cliente te contrata, la reserva llega como <strong>orden de venta</strong>.
+                Tenés que <strong>aceptarla</strong> con fecha y zona. No hay contacto directo:
+                toda la comunicación pasa por OficiosHub. El cobro se libera recién con el
+                <strong> OK de calidad</strong> del cliente.
               </p>
               <Button type="button" variant="outline" onClick={() => setTab('capacitaciones')}>
                 Ver mis capacitaciones
@@ -543,6 +601,35 @@ export const ProviderDashboard: React.FC = () => {
                             ))
                           )}
                         </select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="service-zone">Localidad / barrio</Label>
+                        {barrioOptions.length > 0 ? (
+                          <select
+                            id="service-zone"
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                            value={form.zone || ''}
+                            onChange={(event) =>
+                              setForm((current) => ({ ...current, zone: event.target.value }))
+                            }
+                          >
+                            <option value="">Elegí zona</option>
+                            {barrioOptions.map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <Input
+                            id="service-zone"
+                            value={form.zone || ''}
+                            onChange={(event) =>
+                              setForm((current) => ({ ...current, zone: event.target.value }))
+                            }
+                            placeholder="Ej: Palermo, Ramos Mejía"
+                          />
+                        )}
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-3">
@@ -640,29 +727,79 @@ export const ProviderDashboard: React.FC = () => {
             <div className="mb-2">
               <h2 className="text-xl font-semibold">Ficha de reservas</h2>
               <p className="text-sm text-muted-foreground">
-                Cada contratación de tu servicio llega como orden de venta. Acá está la ficha para coordinar.
+                Aceptá o rechazá cada pedido con fecha y zona. Sin contacto directo: todo pasa por OficiosHub.
               </p>
             </div>
+            {orders.length > 0 && (
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <Label htmlFor="reserva-status-filter">Estado de aceptación</Label>
+                  <select
+                    id="reserva-status-filter"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    value={reservaStatusFilter}
+                    onChange={(event) => setReservaStatusFilter(event.target.value)}
+                  >
+                    <option value="all">Todas</option>
+                    <option value="pending_accept">Pendientes de aceptar</option>
+                    <option value="accepted">Aceptadas</option>
+                    <option value="rejected">Rechazadas</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="reserva-barrio-filter">Localidad / barrio</Label>
+                  {barrioOptions.length > 0 ? (
+                    <select
+                      id="reserva-barrio-filter"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      value={reservaBarrioFilter}
+                      onChange={(event) => setReservaBarrioFilter(event.target.value)}
+                    >
+                      <option value="">Todas las zonas</option>
+                      {barrioOptions.map((opt) => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <Input
+                      id="reserva-barrio-filter"
+                      value={reservaBarrioFilter}
+                      onChange={(event) => setReservaBarrioFilter(event.target.value)}
+                      placeholder="Filtrar por barrio"
+                    />
+                  )}
+                </div>
+              </div>
+            )}
             {orders.length === 0 ? (
               <Card>
                 <CardContent className="py-10 text-center text-muted-foreground">
                   Todavía no tenés reservas. Cuando alguien te contrate, la orden aparece acá.
                 </CardContent>
               </Card>
+            ) : filteredReservas.length === 0 ? (
+              <Card>
+                <CardContent className="py-10 text-center text-muted-foreground">
+                  No hay reservas con esos filtros.
+                </CardContent>
+              </Card>
             ) : (
-              orders.map((order) => {
-                const meta = (order.metadata || {}) as Record<string, unknown>;
-                const reservation = (meta.service_reservation || meta.reservation || {}) as Record<string, unknown>;
+              filteredReservas.map((order) => {
+                const reservation = getServiceReservation(order);
                 const scheduled =
-                  (reservation.scheduled_at as string | undefined)
+                  reservation.scheduledAt
+                  || (reservation.serviceDate && reservation.serviceTime
+                    ? `${reservation.serviceDate}T${reservation.serviceTime}:00`
+                    : reservation.serviceDate)
                   || order.due_at
-                  || order.issued_at
                   || order.created_at;
                 const address = order.shipping_address
                   ? [order.shipping_address.line1, order.shipping_address.city, order.shipping_address.state]
                       .filter(Boolean)
                       .join(', ')
-                  : 'A coordinar con el cliente';
+                  : 'Zona a coordinar por OficiosHub';
+                const pendingAccept = reservation.providerStatus === 'pending_accept'
+                  || reservation.providerStatus === 'pending';
                 return (
                   <Card key={order.id}>
                     <CardHeader className="pb-2">
@@ -671,12 +808,16 @@ export const ProviderDashboard: React.FC = () => {
                         <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground">
                           {statusLabel(order.status)}
                         </span>
+                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                          {statusLabel(reservation.providerStatus)}
+                        </span>
                       </CardTitle>
                       <CardDescription>
                         Cliente: {order.customer?.name || 'Cliente'} · {formatDate(scheduled)}
+                        {reservation.barrio ? ` · ${reservation.barrio}` : ''}
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-2 text-sm">
+                    <CardContent className="space-y-3 text-sm">
                       <p>
                         <span className="font-medium">Servicio: </span>
                         {order.items?.map((i) => i.description).filter(Boolean).join(', ') || 'Servicio'}
@@ -685,20 +826,43 @@ export const ProviderDashboard: React.FC = () => {
                         <span className="font-medium">Dónde: </span>
                         {address}
                       </p>
-                      {order.notes && (
+                      {(reservation.workDetail || order.notes) && (
                         <p>
                           <span className="font-medium">Detalle del trabajo: </span>
-                          {order.notes}
+                          {reservation.workDetail || order.notes}
                         </p>
                       )}
-                      {order.customer?.phone && (
-                        <p>
-                          <span className="font-medium">Contacto: </span>
-                          {order.customer.phone}
-                          {order.customer.email ? ` · ${order.customer.email}` : ''}
-                        </p>
-                      )}
+                      <p className="text-muted-foreground">
+                        Coordinación solo por OficiosHub · cobro tras OK de calidad del cliente
+                        {reservation.qualityOk ? ' · OK de calidad recibido' : ''}
+                      </p>
                       <p className="font-medium">{formatPrice(Number(order.total || 0), order.currency)}</p>
+                      {pendingAccept && (
+                        <div className="flex flex-wrap gap-2 pt-1">
+                          <Button
+                            type="button"
+                            disabled={respondingOrderId === order.id}
+                            onClick={() => handleRespondReservation(order, 'accept')}
+                          >
+                            {respondingOrderId === order.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <>
+                                <CheckCircle2 className="h-4 w-4 mr-2" />
+                                Aceptar reserva
+                              </>
+                            )}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            disabled={respondingOrderId === order.id}
+                            onClick={() => handleRespondReservation(order, 'reject')}
+                          >
+                            Rechazar
+                          </Button>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 );
@@ -767,7 +931,7 @@ export const ProviderDashboard: React.FC = () => {
               <div>
                 <h2 className="text-xl font-semibold">Cobros por servicios prestados</h2>
                 <p className="text-sm text-muted-foreground">
-                  Seguimiento de lo asociado a tus órdenes de venta. La plataforma intermedia y registra el estado.
+                  El cobro queda retenido hasta el OK de calidad del cliente. OficiosHub intermedia el pago.
                 </p>
               </div>
               <p className="text-lg font-semibold">

@@ -102,8 +102,8 @@
       },
       {
         "icon": "CalendarDays",
-        "title": "Reservas claras",
-        "description": "Cada contratación es una orden de venta con ficha para coordinar"
+        "title": "Reservas con aceptación",
+        "description": "Pedís fecha y zona; el proveedor acepta; cobro tras tu OK de calidad"
       },
       {
         "icon": "Users",
@@ -116,8 +116,76 @@
     "enabled": true,
     "capacidad": false,
     "velocidad": false,
+    "stock": false,
+    "barrio": true,
     "capacidadOptions": [],
-    "velocidadOptions": []
+    "velocidadOptions": [],
+    "barrioOptions": [
+      {
+        "value": "Palermo",
+        "label": "Palermo"
+      },
+      {
+        "value": "Belgrano",
+        "label": "Belgrano"
+      },
+      {
+        "value": "Caballito",
+        "label": "Caballito"
+      },
+      {
+        "value": "Flores",
+        "label": "Flores"
+      },
+      {
+        "value": "Recoleta",
+        "label": "Recoleta"
+      },
+      {
+        "value": "Villa Crespo",
+        "label": "Villa Crespo"
+      },
+      {
+        "value": "Almagro",
+        "label": "Almagro"
+      },
+      {
+        "value": "San Telmo",
+        "label": "San Telmo"
+      },
+      {
+        "value": "Ramos Mejía",
+        "label": "Ramos Mejía"
+      },
+      {
+        "value": "Morón",
+        "label": "Morón"
+      },
+      {
+        "value": "Quilmes",
+        "label": "Quilmes"
+      },
+      {
+        "value": "Avellaneda",
+        "label": "Avellaneda"
+      },
+      {
+        "value": "San Isidro",
+        "label": "San Isidro"
+      },
+      {
+        "value": "Vicente López",
+        "label": "Vicente López"
+      },
+      {
+        "value": "Lanús",
+        "label": "Lanús"
+      },
+      {
+        "value": "Lomas de Zamora",
+        "label": "Lomas de Zamora"
+      }
+    ]
   },
   "paymentMethods": {
     "transferencia": true,
@@ -150,7 +218,7 @@
         "image": "/branding/oficioshub/photos/hero-person.jpg?v=20260716b",
         "mobileImage": null,
         "title": "Un oficio, una persona",
-        "subtitle": "Pocas categorías. Elegí a alguien y coordiná directo",
+        "subtitle": "Pocas categorías. Pedís, el proveedor acepta y todo pasa por OficiosHub",
         "cta": "Explorar",
         "link": "/productos"
       }
@@ -159,7 +227,7 @@
       {
         "name": "Hogar",
         "image": "/branding/oficioshub/photos/cat-hogar.jpg?v=20260716b",
-        "link": "/productos?buscar=hogar",
+        "link": "/categoria/hogar",
         "description": "Arreglos y manos en casa: caños, puertas, refacciones chicas",
         "slug": "hogar",
         "group": "Personas",
@@ -177,7 +245,7 @@
       {
         "name": "Electricidad",
         "image": "/branding/oficioshub/photos/cat-electricidad.jpg?v=20260716b",
-        "link": "/productos?buscar=electricidad",
+        "link": "/categoria/electricidad",
         "description": "Enchufes, luces, tablero y aires a cargo de una persona",
         "slug": "electricidad",
         "group": "Personas",
@@ -195,7 +263,7 @@
       {
         "name": "Pintura",
         "image": "/branding/oficioshub/photos/cat-pintura.jpg?v=20260716b",
-        "link": "/productos?buscar=pintura",
+        "link": "/categoria/pintura",
         "description": "Pintura de ambientes o frentes, sin cuadrillas",
         "slug": "pintura",
         "group": "Personas",
@@ -212,7 +280,7 @@
       {
         "name": "Exterior",
         "image": "/branding/oficioshub/photos/cat-exterior.jpg?v=20260716b",
-        "link": "/productos?buscar=exterior",
+        "link": "/categoria/exterior",
         "description": "Jardín, poda y mantenimiento afuera de casa",
         "slug": "exterior",
         "group": "Personas",
@@ -258,14 +326,14 @@
   "shipping": {
     "enabled": true,
     "mode": "flat_rate",
-    "bannerText": "Coordinás día y horario directo con la persona",
+    "bannerText": "Indicás fecha, hora y zona; el proveedor acepta por OficiosHub",
     "label": "Visita / coordinación",
     "freeLabel": "Incluida",
-    "pendingLabel": "A coordinar",
-    "chargedMessage": "La visita se coordina al confirmar el pedido",
-    "drawerMessage": "La persona te confirma día y horario",
+    "pendingLabel": "A coordinar por OficiosHub",
+    "chargedMessage": "Sin contacto directo: todo se coordina por OficiosHub",
+    "drawerMessage": "El proveedor acepta la reserva; cobro tras tu OK de calidad",
     "productBadgeTitle": "Modalidad",
-    "productBadgeDescription": "En tu casa o donde indiques",
+    "productBadgeDescription": "Intermediado por OficiosHub",
     "chargeAmount": 0.0,
     "chargeProductId": null,
     "chargeProductSku": null,
@@ -468,10 +536,11 @@
           "type": "list",
           "title": "Para quien contrata",
           "items": [
-            "Entrá al catálogo y elegí una persona / servicio.",
+            "Entrá al catálogo, filtrá por oficio o localidad/barrio y elegí una persona.",
             "Creá tu cuenta de cliente si todavía no tenés.",
-            "Confirmá el pedido: eso genera la reserva (orden de venta).",
-            "Coordiná con la persona fecha, acceso y detalle del trabajo.",
+            "Pedí el servicio con fecha, hora, zona y detalle del trabajo.",
+            "No hay contacto directo: toda la comunicación pasa por OficiosHub.",
+            "El proveedor debe aceptar la reserva. El cobro se libera recién con tu OK de calidad.",
             "Después podés dejar reseña (servicio, limpieza, puntualidad, calidad)."
           ]
         },
@@ -481,8 +550,9 @@
           "items": [
             "Registrate como persona con oficio (no como empresa de rubro).",
             "La plataforma valida idoneidad y antecedentes.",
-            "Publicá un servicio claro en Hogar, Electricidad, Pintura o Exterior.",
-            "Cuando te contraten, ves la ficha de reserva en tu panel.",
+            "Publicá un servicio claro con tu zona (Hogar, Electricidad, Pintura o Exterior).",
+            "Cuando te contraten, aceptá o rechazá la reserva en tu panel.",
+            "Coordiná solo por OficiosHub; el cobro llega tras el OK de calidad del cliente.",
             "Completá capacitaciones (tareas) y seguí tus cobros por servicios prestados."
           ]
         },
@@ -819,19 +889,19 @@
         "links": [
           {
             "label": "Hogar",
-            "href": "/productos?buscar=hogar"
+            "href": "/categoria/hogar"
           },
           {
             "label": "Electricidad",
-            "href": "/productos?buscar=electricidad"
+            "href": "/categoria/electricidad"
           },
           {
             "label": "Pintura",
-            "href": "/productos?buscar=pintura"
+            "href": "/categoria/pintura"
           },
           {
             "label": "Exterior",
-            "href": "/productos?buscar=exterior"
+            "href": "/categoria/exterior"
           }
         ]
       },

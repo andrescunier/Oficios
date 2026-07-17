@@ -448,7 +448,9 @@ const CategoriesSlider: React.FC<CategoriesSliderProps> = ({ categories, fallbac
   const showArrows = categories.length > desktopPerView;
   const sidePadding = Math.max(0, uiCfg.homeCategoriesSidePadding ?? 0);
   const loanCfg = getLoanConfig();
-  const categoriesEyebrow = loanCfg.enabled ? loanCfg.providerName : 'Comprá por estilo';
+  const categoriesEyebrow = loanCfg.enabled
+    ? loanCfg.providerName
+    : (uiCfg.homeCategoriesEyebrow || uiCfg.homeCategoriesSubtitle || 'Elegí un oficio');
 
   return (
     <section className="py-12 md:py-16">
@@ -511,14 +513,9 @@ const CategoriesSlider: React.FC<CategoriesSliderProps> = ({ categories, fallbac
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                     onError={(e) => handleImgError(e, fallbackImage)}
                   />
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-black/5 to-transparent" />
-                  <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 px-6 text-center text-background">
-                    {category.description && (
-                      <p className="text-sm font-light italic tracking-wide drop-shadow-md md:text-base">
-                        {category.description}
-                      </p>
-                    )}
-                    <h3 className="mt-1 text-2xl font-bold uppercase tracking-[0.15em] drop-shadow-md md:text-3xl">
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
+                  <div className="absolute inset-x-0 bottom-0 px-5 pb-5 text-center text-background">
+                    <h3 className="text-2xl font-bold uppercase tracking-[0.12em] drop-shadow-md md:text-3xl">
                       {category.name}
                     </h3>
                   </div>

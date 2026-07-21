@@ -36,6 +36,8 @@ import {
   type PricingMode,
   type TradeRank,
 } from '@/utils/serviceListing';
+import { MediationChat } from '@/components/chat/MediationChat';
+import { CapacitacionContent } from '@/components/capacitacion/CapacitacionContent';
 import { taskService, type ProviderTask } from '@/services/taskService';
 import type { Product } from '@/types/api';
 import { Button } from '@/components/ui/button';
@@ -939,6 +941,14 @@ export const ProviderDashboard: React.FC = () => {
                         Coordinación solo por OficiosHub · cobro tras OK de calidad del cliente
                         {reservation.qualityOk ? ' · OK de calidad recibido' : ''}
                       </p>
+                      {!pendingAccept && reservation.providerStatus === 'accepted' && (
+                        <MediationChat
+                          orderId={order.id}
+                          viewerRole="supplier"
+                          enabled
+                          className="mt-2"
+                        />
+                      )}
                       <p className="font-medium">{formatPrice(Number(order.total || 0), order.currency)}</p>
                       {pendingAccept && (
                         <div className="flex flex-wrap gap-2 pt-1">
@@ -1003,6 +1013,10 @@ export const ProviderDashboard: React.FC = () => {
                       {task.description && (
                         <p className="text-sm text-gray-700 whitespace-pre-wrap">{task.description}</p>
                       )}
+                      <CapacitacionContent
+                        metadata={task.metadata}
+                        description={null}
+                      />
                       <p className="text-xs text-muted-foreground">Vence: {formatDate(task.due_at)}</p>
                     </div>
                     {task.status !== 'done' && (

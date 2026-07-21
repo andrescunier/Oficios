@@ -102,6 +102,19 @@ export const API_ENDPOINTS = {
   // Capacitaciones del proveedor (tareas asignadas)
   TASKS_MINE: (accountId: string) => `/api/accounts/${accountId}/tasks/mine`,
   TASK: (accountId: string, taskId: string) => `/api/accounts/${accountId}/tasks/${taskId}`,
+
+  // Chat intermediado (APIs nuevas)
+  CONVERSATIONS: (accountId: string) => `/api/accounts/${accountId}/conversations`,
+  CONVERSATION: (accountId: string, conversationId: string) =>
+    `/api/accounts/${accountId}/conversations/${conversationId}`,
+  CONVERSATION_FROM_ORDER: (accountId: string, orderId: string) =>
+    `/api/accounts/${accountId}/conversations/from-order/${orderId}`,
+  CONVERSATION_MESSAGES: (accountId: string, conversationId: string) =>
+    `/api/accounts/${accountId}/conversations/${conversationId}/messages`,
+  CONVERSATION_CLOSE: (accountId: string, conversationId: string) =>
+    `/api/accounts/${accountId}/conversations/${conversationId}/close`,
+  CONVERSATION_MODERATE: (accountId: string, conversationId: string) =>
+    `/api/accounts/${accountId}/conversations/${conversationId}/moderate`,
 } as const;
 
 // Configuración de timeouts

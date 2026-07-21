@@ -23,6 +23,7 @@ import {
 import { useStore } from '@/store/useStore';
 import { orderService } from '@/services/orderService';
 import { getBusinessConfig, getUIConfig } from '@/config/runtime';
+import { MediationChat } from '@/components/chat/MediationChat';
 import { getBusinessPartnerId } from '@/features/auth/session';
 import type { LoanResponse, SalesOrder } from '@/services/orderService';
 
@@ -679,6 +680,19 @@ export const OrdersPage: React.FC = () => {
                             {qualityOkOrderId === selectedOrder.id ? 'Registrando…' : 'Dar OK de calidad'}
                           </button>
                         ) : null}
+                      </div>
+                    );
+                  })()}
+
+                  {(() => {
+                    const reservation = getReservationInfo(selectedOrder);
+                    return (
+                      <div className="mb-6">
+                        <MediationChat
+                          orderId={selectedOrder.id}
+                          viewerRole="customer"
+                          enabled={reservation.providerStatus === 'accepted'}
+                        />
                       </div>
                     );
                   })()}

@@ -103,6 +103,12 @@ export const API_ENDPOINTS = {
   TASKS_MINE: (accountId: string) => `/api/accounts/${accountId}/tasks/mine`,
   TASK: (accountId: string, taskId: string) => `/api/accounts/${accountId}/tasks/${taskId}`,
 
+  // Capacitaciones (gestión plataforma — API nueva)
+  CAPACITACIONES: (accountId: string) => `/api/accounts/${accountId}/capacitaciones`,
+  CAPACITACION: (accountId: string, id: string) => `/api/accounts/${accountId}/capacitaciones/${id}`,
+  CAPACITACION_PROVIDERS: (accountId: string) =>
+    `/api/accounts/${accountId}/capacitaciones/providers`,
+
   // Chat intermediado (APIs nuevas)
   CONVERSATIONS: (accountId: string) => `/api/accounts/${accountId}/conversations`,
   CONVERSATION: (accountId: string, conversationId: string) =>

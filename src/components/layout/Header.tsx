@@ -31,6 +31,7 @@ import { useStore } from '@/store/useStore';
 import { BRANDING, ASSETS } from '@/config/branding';
 import { getCategoriesConfig, getUIConfig } from '@/config/runtime';
 import { isSupplierUserRole } from '@/services/businessPartnerService';
+import { isPlatformManagerRole } from '@/services/capacitacionService';
 
 export const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -45,7 +46,7 @@ export const Header: React.FC = () => {
   const logout = useStore((state) => state.logout);
   const isAuthenticated = auth.isAuthenticated;
   const user = auth.user;
-  const showProviderNav = isSupplierUserRole(user?.role);
+  const showProviderNav = isSupplierUserRole(user?.role) || isPlatformManagerRole(user?.role);
   const cartItemCount = cart.items.length;
 
   useEffect(() => {
@@ -334,7 +335,11 @@ export const Header: React.FC = () => {
                   </DropdownMenuItem>
                   {showProviderNav && (
                     <DropdownMenuItem asChild>
-                      <Link to="/proveedor">Mis servicios</Link>
+                      <Link to="/proveedor?tab=capacitaciones">
+                        {isPlatformManagerRole(user?.role) && !isSupplierUserRole(user?.role)
+                          ? 'Capacitaciones'
+                          : 'Mis servicios'}
+                      </Link>
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem asChild>
@@ -513,9 +518,11 @@ export const Header: React.FC = () => {
                   </Button>
                   {showProviderNav && (
                     <Button variant="ghost" className="w-full justify-start" asChild>
-                      <Link to="/proveedor" onClick={() => setIsMenuOpen(false)}>
+                      <Link to="/proveedor?tab=capacitaciones" onClick={() => setIsMenuOpen(false)}>
                         <Briefcase className="h-4 w-4 mr-2" />
-                        Mis servicios
+                        {isPlatformManagerRole(user?.role) && !isSupplierUserRole(user?.role)
+                          ? 'Capacitaciones'
+                          : 'Mis servicios'}
                       </Link>
                     </Button>
                   )}

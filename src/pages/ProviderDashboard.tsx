@@ -38,7 +38,12 @@ import {
 } from '@/utils/serviceListing';
 import { MediationChat } from '@/components/chat/MediationChat';
 import { CapacitacionContent } from '@/components/capacitacion/CapacitacionContent';
+import { CapacitacionManager } from '@/components/capacitacion/CapacitacionManager';
 import { taskService, type ProviderTask } from '@/services/taskService';
+import {
+  capacitacionService,
+  isPlatformManagerRole,
+} from '@/services/capacitacionService';
 import type { Product } from '@/types/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -121,6 +126,7 @@ export const ProviderDashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [supplierAccess, setSupplierAccess] = useState<boolean | null>(null);
+  const isPlatformManager = isPlatformManagerRole(auth.user?.role);
   const [formError, setFormError] = useState<string | null>(null);
   const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
   const [taskUpdatingId, setTaskUpdatingId] = useState<string | null>(null);
@@ -128,8 +134,19 @@ export const ProviderDashboard: React.FC = () => {
   const [reservaStatusFilter, setReservaStatusFilter] = useState<string>('all');
   const [reservaBarrioFilter, setReservaBarrioFilter] = useState<string>('');
 
+  const visibleTabs = useMemo(() => {
+    if (isPlatformManager && !isSupplierUserRole(auth.user?.role)) {
+      return TABS.filter((tab) => tab.id === 'capacitaciones' || tab.id === 'plataforma');
+    }
+    return TABS;
+  }, [auth.user?.role, isPlatformManager]);
+
   const tabParam = searchParams.get('tab') as TabId | null;
-  const activeTab: TabId = TABS.some((t) => t.id === tabParam) ? (tabParam as TabId) : 'servicios';
+  const activeTab: TabId = visibleTabs.some((t) => t.id === tabParam)
+    ? (tabParam as TabId)
+    : isPlatformManager && !isSupplierUserRole(auth.user?.role)
+      ? 'capacitaciones'
+      : 'servicios';
 
   const showCreateForm =
     location.pathname === '/proveedor/servicios/nuevo'
@@ -163,7 +180,43 @@ export const ProviderDashboard: React.FC = () => {
   };
 
   useEffect(() => {
-    if (!auth.isAuthenticated || !businessPartnerId) {
+    if (!auth.isAuthenticated) {
+      setIsLoading(false);
+      return;
+    }
+
+    // Plataforma puede gestionar capacitaciones sin ser supplier.
+    if (isPlatformManager && !businessPartnerId) {
+      let cancelled = false;
+      (async () => {
+        setIsLoading(true);
+        setSupplierAccess(true);
+        try {
+          const taskList = await capacitacionService.list().catch(() => [] as ProviderTask[]);
+          if (!cancelled) {
+            setProducts([]);
+            setOrders([]);
+            setCobros([]);
+            setTasks(taskList);
+          }
+        } catch (error) {
+          if (!cancelled) {
+            addNotification({
+              type: 'error',
+              title: 'No pudimos cargar capacitaciones',
+              message: error instanceof Error ? error.message : 'Intentá de nuevo.',
+            });
+          }
+        } finally {
+          if (!cancelled) setIsLoading(false);
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    if (!businessPartnerId) {
       setIsLoading(false);
       return;
     }
@@ -173,8 +226,9 @@ export const ProviderDashboard: React.FC = () => {
     const load = async () => {
       setIsLoading(true);
       try {
-        const allowedByRole = isSupplierUserRole(auth.user?.role);
-        const allowedByPartner = allowedByRole || (await isSupplierPartner(businessPartnerId));
+        const allowedByRole = isSupplierUserRole(auth.user?.role) || isPlatformManager;
+        const allowedByPartner =
+          isPlatformManager || allowedByRole || (await isSupplierPartner(businessPartnerId));
         if (cancelled) return;
         setSupplierAccess(allowedByPartner);
 
@@ -186,10 +240,23 @@ export const ProviderDashboard: React.FC = () => {
           return;
         }
 
+        if (isPlatformManager && !isSupplierUserRole(auth.user?.role)) {
+          const taskList = await capacitacionService.list().catch(() => [] as ProviderTask[]);
+          if (cancelled) return;
+          setProducts([]);
+          setOrders([]);
+          setCobros([]);
+          setTasks(taskList);
+          return;
+        }
+
         const [mine, orderList, taskList] = await Promise.all([
           providerProductService.listMine(),
           providerOrderService.listMine().catch(() => [] as ProviderOrder[]),
-          taskService.listMine({ project: 'capacitacion' }).catch(() => [] as ProviderTask[]),
+          (isPlatformManager
+            ? capacitacionService.list()
+            : taskService.listMine({ project: 'capacitacion' })
+          ).catch(() => [] as ProviderTask[]),
         ]);
         if (cancelled) return;
         setProducts(mine);
@@ -214,7 +281,7 @@ export const ProviderDashboard: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [addNotification, auth.isAuthenticated, auth.user?.role, businessPartnerId]);
+  }, [addNotification, auth.isAuthenticated, auth.user?.role, businessPartnerId, isPlatformManager]);
 
   useEffect(() => {
     if (showCreateForm && !form.sku && form.name.trim()) {
@@ -341,7 +408,7 @@ export const ProviderDashboard: React.FC = () => {
   const handleTaskDone = async (task: ProviderTask) => {
     try {
       setTaskUpdatingId(task.id);
-      const updated = await taskService.updateStatus(task.id, 'done');
+      const updated = await capacitacionService.updateStatus(task.id, 'done');
       setTasks((current) => current.map((item) => (item.id === task.id ? updated : item)));
       addNotification({
         type: 'success',
@@ -422,7 +489,7 @@ export const ProviderDashboard: React.FC = () => {
     );
   }
 
-  if (!businessPartnerId) {
+  if (!businessPartnerId && !isPlatformManager) {
     navigate('/login', { replace: true, state: { from: '/proveedor' } });
     return null;
   }
@@ -485,7 +552,7 @@ export const ProviderDashboard: React.FC = () => {
         </div>
 
         <div className="scroll-x-safe flex gap-2 pb-2 mb-8 -mx-1 px-1">
-          {TABS.map((tab) => (
+          {visibleTabs.map((tab) => (
             <Button
               key={tab.id}
               type="button"
@@ -985,60 +1052,81 @@ export const ProviderDashboard: React.FC = () => {
         )}
 
         {activeTab === 'capacitaciones' && (
-          <div className="space-y-4">
-            <div className="mb-2">
-              <h2 className="text-xl font-semibold">Capacitaciones</h2>
-              <p className="text-sm text-muted-foreground">
-                Te llegan como tareas. Completalas para mejorar calidad y seguimiento de OficiosHub.
-              </p>
-            </div>
-            {tasks.length === 0 ? (
-              <Card>
-                <CardContent className="py-10 text-center text-muted-foreground">
-                  No tenés capacitaciones asignadas por ahora. Cuando la plataforma te asigne una, aparece acá.
-                </CardContent>
-              </Card>
-            ) : (
-              tasks.map((task) => (
-                <Card key={task.id}>
-                  <CardContent className="py-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <GraduationCap className="h-4 w-4 text-primary" />
-                        <h3 className="font-semibold">{task.title}</h3>
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-muted">
-                          {statusLabel(task.status)}
-                        </span>
-                      </div>
-                      {task.description && (
-                        <p className="text-sm text-gray-700 whitespace-pre-wrap">{task.description}</p>
-                      )}
-                      <CapacitacionContent
-                        metadata={task.metadata}
-                        description={null}
-                      />
-                      <p className="text-xs text-muted-foreground">Vence: {formatDate(task.due_at)}</p>
-                    </div>
-                    {task.status !== 'done' && (
-                      <Button
-                        type="button"
-                        disabled={taskUpdatingId === task.id}
-                        onClick={() => handleTaskDone(task)}
-                      >
-                        {taskUpdatingId === task.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <>
-                            <CheckCircle2 className="h-4 w-4 mr-2" />
-                            Marcar hecha
-                          </>
-                        )}
-                      </Button>
-                    )}
+          <div className="space-y-6">
+            {isPlatformManager && (
+              <CapacitacionManager
+                onCreated={(created) => {
+                  setTasks((current) => [...created, ...current]);
+                  addNotification({
+                    type: 'success',
+                    title: 'Capacitación publicada',
+                    message: `Se asignó a ${created.length} proveedor(es).`,
+                  });
+                }}
+              />
+            )}
+
+            <div className="space-y-4">
+              <div className="mb-2">
+                <h2 className="text-xl font-semibold">
+                  {isPlatformManager ? 'Capacitaciones asignadas' : 'Capacitaciones'}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {isPlatformManager
+                    ? 'Listado de capacitaciones creadas para los proveedores.'
+                    : 'Te llegan como tareas. Completalas para mejorar calidad y seguimiento de OficiosHub.'}
+                </p>
+              </div>
+              {tasks.length === 0 ? (
+                <Card>
+                  <CardContent className="py-10 text-center text-muted-foreground">
+                    {isPlatformManager
+                      ? 'Todavía no hay capacitaciones cargadas. Creá la primera arriba.'
+                      : 'No tenés capacitaciones asignadas por ahora. Cuando la plataforma te asigne una, aparece acá.'}
                   </CardContent>
                 </Card>
-              ))
-            )}
+              ) : (
+                tasks.map((task) => (
+                  <Card key={task.id}>
+                    <CardContent className="py-5 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                      <div className="space-y-1 min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <GraduationCap className="h-4 w-4 text-primary shrink-0" />
+                          <h3 className="font-semibold">{task.title}</h3>
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-muted">
+                            {statusLabel(task.status)}
+                          </span>
+                        </div>
+                        {task.description && (
+                          <p className="text-sm text-gray-700 whitespace-pre-wrap">{task.description}</p>
+                        )}
+                        <CapacitacionContent
+                          metadata={task.metadata}
+                          description={null}
+                        />
+                        <p className="text-xs text-muted-foreground">Vence: {formatDate(task.due_at)}</p>
+                      </div>
+                      {!isPlatformManager && task.status !== 'done' && (
+                        <Button
+                          type="button"
+                          disabled={taskUpdatingId === task.id}
+                          onClick={() => handleTaskDone(task)}
+                        >
+                          {taskUpdatingId === task.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <>
+                              <CheckCircle2 className="h-4 w-4 mr-2" />
+                              Marcar hecha
+                            </>
+                          )}
+                        </Button>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
           </div>
         )}
 

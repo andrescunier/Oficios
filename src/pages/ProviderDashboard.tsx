@@ -482,7 +482,7 @@ export const ProviderDashboard: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex gap-2 overflow-x-auto pb-2 mb-8">
+        <div className="scroll-x-safe flex gap-2 pb-2 mb-8 -mx-1 px-1">
           {TABS.map((tab) => (
             <Button
               key={tab.id}

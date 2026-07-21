@@ -110,9 +110,9 @@ function App() {
         <PendingRedirectHandler />
         <ScrollToTop />
         <TokenExpiryMonitor />
-        <div className="min-h-screen flex flex-col">
+        <div className="min-h-screen flex flex-col overflow-x-clip">
           <Header />
-          <main className="flex-1">
+          <main className="flex-1 min-w-0 pb-20 md:pb-8">
             <Suspense fallback={<RouteLoader />}>
               <Routes>
                 <Route path="/" element={<Home />} />

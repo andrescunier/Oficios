@@ -177,6 +177,14 @@ export const CategoryPage: React.FC = () => {
     setSortBy(searchParams.get('orden') || 'nombre-asc');
   }, [category, subcategory, subsubcategory, searchParams]);
 
+  useEffect(() => {
+    if (!showMobileFilters) return;
+    document.body.classList.add('mobile-nav-open');
+    return () => {
+      document.body.classList.remove('mobile-nav-open');
+    };
+  }, [showMobileFilters]);
+
   const syncUrlState = (nextFilters: ActiveFilters, nextSort: string, nextPage: number) => {
     const params = new URLSearchParams();
 
@@ -487,15 +495,15 @@ export const CategoryPage: React.FC = () => {
             {showFilters && showMobileFilters && (
               <div className="fixed inset-0 z-50 lg:hidden">
                 <div className="absolute inset-0 bg-black/50" onClick={() => setShowMobileFilters(false)} />
-                <div className="absolute right-0 top-0 h-full w-80 max-w-full bg-white shadow-xl overflow-y-auto">
-                  <div className="p-4 border-b flex items-center justify-between">
+                <div className="absolute right-0 top-0 flex h-dvh max-h-dvh w-80 max-w-full flex-col bg-white shadow-xl">
+                  <div className="flex shrink-0 items-center justify-between border-b p-4">
                     <h2 className="font-semibold text-lg">Filtros</h2>
-                    <button onClick={() => setShowMobileFilters(false)}>
+                    <button type="button" onClick={() => setShowMobileFilters(false)} aria-label="Cerrar filtros">
                       <X className="w-6 h-6" />
                     </button>
                   </div>
 
-                  <div className="p-4">
+                  <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4">
                     {activeFilterCount > 0 && (
                       <button onClick={clearFilters} className="w-full mb-4 py-2 text-primary border border-primary">
                         Limpiar filtros ({activeFilterCount})
@@ -521,7 +529,7 @@ export const CategoryPage: React.FC = () => {
                     ))}
                   </div>
 
-                  <div className="p-4 border-t">
+                  <div className="shrink-0 border-t p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
                     <button
                       onClick={() => setShowMobileFilters(false)}
                       className="w-full py-3 bg-primary text-primary-foreground font-semibold uppercase tracking-[0.15em] text-sm"

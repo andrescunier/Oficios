@@ -101,8 +101,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
       <SheetTrigger asChild>
         {children}
       </SheetTrigger>
-      <SheetContent className="w-full sm:max-w-lg">
-        <SheetHeader>
+      <SheetContent className="flex h-dvh max-h-dvh w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-lg">
+        <SheetHeader className="shrink-0 border-b px-4 pr-12 pt-4 pb-3">
           <SheetTitle className="flex items-center space-x-2">
             <ShoppingCart className="h-5 w-5" />
             <span>{uiCfg.cartTitle}</span>
@@ -118,26 +118,28 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
           </SheetDescription>
         </SheetHeader>
 
-        <div className="flex flex-col h-full">
+        <div className="flex min-h-0 flex-1 flex-col">
           {/* Free shipping indicator */}
           {itemsCount > 0 && (
-            <div className="mt-4 p-3 bg-muted rounded-lg">
-              <div className="flex items-center space-x-2 text-green-600">
-                <Package className="h-4 w-4" />
-                <span className="text-sm font-medium">
-                  {shippingAmount > 0 ? shippingCfg.chargedMessage : shippingCfg.drawerMessage}
-                </span>
+            <div className="shrink-0 px-4 pt-3">
+              <div className="rounded-lg bg-muted p-3">
+                <div className="flex items-center space-x-2 text-green-600">
+                  <Package className="h-4 w-4 shrink-0" />
+                  <span className="text-sm font-medium">
+                    {shippingAmount > 0 ? shippingCfg.chargedMessage : shippingCfg.drawerMessage}
+                  </span>
+                </div>
               </div>
             </div>
           )}
 
           {/* Cart items */}
-          <div className="flex-1 overflow-y-auto mt-4">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4">
             {cart.items.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center">
-                <ShoppingCart className="h-16 w-16 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium mb-2">{uiCfg.cartEmptyTitle}</h3>
-                <p className="text-muted-foreground mb-4">
+              <div className="flex min-h-[40vh] flex-col items-center justify-center text-center">
+                <ShoppingCart className="mb-4 h-16 w-16 text-muted-foreground" />
+                <h3 className="mb-2 text-lg font-medium">{uiCfg.cartEmptyTitle}</h3>
+                <p className="mb-4 text-muted-foreground">
                   {uiCfg.cartEmptyBody}
                 </p>
                 <Link to="/productos">
@@ -150,29 +152,29 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
             ) : (
               <div className="space-y-4">
                 {cart.items.map((item) => (
-                  <div key={item.line_id} className="flex space-x-3 p-3 border rounded-lg">
+                  <div key={item.line_id} className="flex space-x-3 rounded-lg border p-3">
                     <div className="flex-shrink-0">
                       <img
                         src={item.product.image_url || '/placeholder-product.svg'}
                         alt={item.product.name}
-                        className="w-16 h-16 object-cover rounded-md"
+                        className="h-16 w-16 rounded-md object-cover"
                       />
                     </div>
                     
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-medium line-clamp-2 mb-1">
+                    <div className="min-w-0 flex-1">
+                      <h4 className="mb-1 line-clamp-2 text-sm font-medium">
                         {item.variant?.name || item.product.name}
                       </h4>
                       {!getServiceListing(item.product).isService && (item.variant?.sku || item.product.sku) && (
-                        <p className="text-xs text-muted-foreground/60 mb-0.5">SKU: {item.variant?.sku || item.product.sku}</p>
+                        <p className="mb-0.5 text-xs text-muted-foreground/60">SKU: {item.variant?.sku || item.product.sku}</p>
                       )}
                       {item.selected_options && Object.keys(item.selected_options).length > 0 && (
-                        <p className="text-xs text-muted-foreground mb-1">
+                        <p className="mb-1 text-xs text-muted-foreground">
                           {Object.entries(item.selected_options).map(([key, value]) => `${key}: ${value}`).join(' • ')}
                         </p>
                       )}
                       
-                      <div className="flex items-center justify-between mb-2">
+                      <div className="mb-2 flex items-center justify-between">
                         <span className="text-sm font-bold">
                           {formatPrice(item.unit_price, item.product.currency)}
                         </span>
@@ -199,7 +201,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
                             >
                               <Minus className="h-3 w-3" />
                             </Button>
-                            <span className="text-sm font-medium w-8 text-center">
+                            <span className="w-8 text-center text-sm font-medium">
                               {item.quantity}
                             </span>
                             <Button
@@ -213,7 +215,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
                             </Button>
                           </div>
                           {item.quantity > 1 && (
-                            <p className="text-xs text-muted-foreground mt-1">
+                            <p className="mt-1 text-xs text-muted-foreground">
                               Subtotal: {formatPrice(item.unit_price * item.quantity, item.product.currency)}
                             </p>
                           )}
@@ -228,14 +230,14 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
 
           {/* Cart footer */}
           {cart.items.length > 0 && (
-            <div className="border-t pt-4 mt-4">
+            <div className="shrink-0 border-t px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
               <div className="space-y-3">
-                <div className="flex justify-between items-center">
+                <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">{uiCfg.cartDrawerSubtotalLabel}</span>
                   <span className="font-medium">{formatPrice(cart.total_amount)}</span>
                 </div>
                 
-                <div className="flex justify-between items-center">
+                <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">{shippingCfg.label}:</span>
                   <span className="font-medium">
                     {shippingAmount > 0 ? formatPrice(shippingAmount) : shippingCfg.freeLabel}
@@ -244,7 +246,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ children }) => {
                 
                 <Separator />
                 
-                <div className="flex justify-between items-center">
+                <div className="flex items-center justify-between">
                   <span className="text-lg font-bold">{uiCfg.cartDrawerTotalLabel}</span>
                   <span className="text-lg font-bold">{formatPrice(total)}</span>
                 </div>

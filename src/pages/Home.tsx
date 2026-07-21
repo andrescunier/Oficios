@@ -492,7 +492,7 @@ const CategoriesSlider: React.FC<CategoriesSliderProps> = ({ categories, fallbac
 
           <div
             ref={scrollerRef}
-            className="flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth pb-2 md:gap-5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+            className="scroll-x-safe flex snap-x snap-mandatory gap-3 pb-2 md:gap-5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
             style={{
               ['--cats-desktop' as string]: String(desktopPerView),
               ['--cats-tablet' as string]: String(tabletPerView),

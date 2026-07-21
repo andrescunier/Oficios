@@ -25,6 +25,17 @@ export const ConsentBanner: React.FC = () => {
     }
   }, [cfg.enabled, cfg.storageKey]);
 
+  useEffect(() => {
+    if (!visible) {
+      document.body.classList.remove('has-consent-banner');
+      return;
+    }
+    document.body.classList.add('has-consent-banner');
+    return () => {
+      document.body.classList.remove('has-consent-banner');
+    };
+  }, [visible]);
+
   if (!cfg.enabled || !visible) return null;
 
   const handleAccept = () => {
@@ -41,7 +52,7 @@ export const ConsentBanner: React.FC = () => {
       role="dialog"
       aria-live="polite"
       aria-label={cfg.title}
-      className="fixed inset-x-0 bottom-0 z-[100] border-t border-border bg-background/95 backdrop-blur shadow-2xl"
+      className="fixed inset-x-0 bottom-0 z-[100] border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur shadow-2xl"
     >
       <div className="container mx-auto flex flex-col gap-4 px-4 py-4 md:flex-row md:items-center md:justify-between">
         <div className="flex-1">

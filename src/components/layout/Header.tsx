@@ -2,8 +2,8 @@
  * Header profesional para Ecommerce
  */
 
-import React, { useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Search, 
   ShoppingCart, 
@@ -36,6 +36,7 @@ export const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
   
   // Usar el store real para autenticación y carrito
   const auth = useStore((state) => state.auth);
@@ -46,6 +47,18 @@ export const Header: React.FC = () => {
   const user = auth.user;
   const showProviderNav = isSupplierUserRole(user?.role);
   const cartItemCount = cart.items.length;
+
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    document.body.classList.add('mobile-nav-open');
+    return () => {
+      document.body.classList.remove('mobile-nav-open');
+    };
+  }, [isMenuOpen]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -355,7 +368,13 @@ export const Header: React.FC = () => {
         </div>
 
         {isMenuOpen && (
-          <div className="md:hidden border-t py-4">
+          <div
+            className="md:hidden fixed inset-x-0 bottom-0 top-[calc(env(safe-area-inset-top,0px)+6.5rem)] z-40 border-t bg-background"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Menú de navegación"
+          >
+            <div className="h-full overflow-y-auto overscroll-contain px-4 py-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
             <form onSubmit={handleSearch} className="relative mb-4">
                   <Input
                     type="search"
@@ -421,6 +440,20 @@ export const Header: React.FC = () => {
                 onClick={() => setIsMenuOpen(false)}
               >
                 {getUIConfig().headerAllProductsLabel}
+              </Link>
+              <Link
+                to="/como-funciona"
+                className="block py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Cómo funciona
+              </Link>
+              <Link
+                to="/contacto"
+                className="block py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Contacto
               </Link>
             </nav>
 
@@ -501,6 +534,7 @@ export const Header: React.FC = () => {
                   </Button>
                 </>
               )}
+            </div>
             </div>
           </div>
         )}

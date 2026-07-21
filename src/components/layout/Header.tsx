@@ -53,7 +53,29 @@ export const Header: React.FC = () => {
   }, [location.pathname]);
 
   useEffect(() => {
-    if (!isMenuOpen) return;
+    const clearStuckLock = () => {
+      document.body.classList.remove('mobile-nav-open');
+    };
+    clearStuckLock();
+
+    const onResize = () => {
+      if (window.matchMedia('(min-width: 768px)').matches) {
+        setIsMenuOpen(false);
+        clearStuckLock();
+      }
+    };
+    window.addEventListener('resize', onResize);
+    return () => {
+      window.removeEventListener('resize', onResize);
+      clearStuckLock();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isMenuOpen) {
+      document.body.classList.remove('mobile-nav-open');
+      return;
+    }
     document.body.classList.add('mobile-nav-open');
     return () => {
       document.body.classList.remove('mobile-nav-open');

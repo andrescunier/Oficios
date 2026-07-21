@@ -118,21 +118,17 @@
     @apply border-border outline-ring/50;
   }
   html {
-    height: 100%;
     overflow-x: clip;
     -webkit-text-size-adjust: 100%;
   }
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    min-height: 100%;
     min-height: 100dvh;
     overflow-x: clip;
-    overflow-y: auto;
-    overscroll-behavior-y: none;
-    -webkit-overflow-scrolling: touch;
+    /* El documento (html/window) scrollea: no crear un scrollport en body
+       que trabe la rueda del mouse / trackpad. */
   }
   #root {
-    min-height: 100%;
     min-height: 100dvh;
     overflow-x: clip;
   }
@@ -143,8 +139,11 @@
   body.has-consent-banner {
     padding-bottom: max(7.5rem, env(safe-area-inset-bottom, 0px));
   }
-  body.mobile-nav-open {
-    overflow: hidden;
+  /* Solo bloquear body en mobile cuando el menú/overlay está abierto */
+  @media (max-width: 767px) {
+    body.mobile-nav-open {
+      overflow: hidden;
+    }
   }
 }
 
@@ -170,9 +169,11 @@
   .animate-marquee {
     animation: marquee 28s linear infinite;
   }
-  /* Carruseles horizontales: no pelear con el scroll vertical de la página */
+  /* Carruseles horizontales: overflow-y explícito para que la rueda
+     no quede atrapada (overflow-x:auto implica overflow-y:auto). */
   .scroll-x-safe {
     overflow-x: auto;
+    overflow-y: hidden;
     overscroll-behavior-x: contain;
     touch-action: pan-x pan-y;
     -webkit-overflow-scrolling: touch;
